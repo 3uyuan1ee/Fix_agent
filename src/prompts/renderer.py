@@ -158,19 +158,49 @@ class AdvancedPromptRenderer(PromptRenderer):
         if not template.template:
             errors.append("Template content cannot be empty")
 
-        # 参数格式验证
+        # 检查是否存在混合的分隔符类型
+        delimiter_patterns = [
+            (r'\{\{', r'\}\}'),  # {{...}}
+            (r'\[\[', r'\]\]'),  # [[...]]
+            (r'\(\(', r'\)\)'),  # ((...))
+            (r'<\%', r'\%>'),  # <%...%>
+        ]
+
+        used_delimiters = []
+
+        for start_pattern, end_pattern in delimiter_patterns:
+            start_count = len(re.findall(start_pattern, template.template))
+            end_count = len(re.findall(end_pattern, template.template))
+
+            if start_count > 0 or end_count > 0:
+                used_delimiters.append((start_pattern, end_pattern, start_count, end_count))
+
+                # 检查这种分隔符是否匹配
+                if start_count != end_count:
+                    # 移除转义字符用于显示
+                    start_display = start_pattern.replace('\\', '')
+                    end_display = end_pattern.replace('\\', '')
+                    errors.append(f"Mismatched delimiters: Found {start_count} opening '{start_display}' and {end_count} closing '{end_display}'")
+
+        # 如果使用了多种分隔符，报告错误
+        if len(used_delimiters) > 1:
+            delimiter_list = []
+            for start_pattern, end_pattern, count, _ in used_delimiters:
+                if count > 0:
+                    start_display = start_pattern.replace('\\', '')
+                    end_display = end_pattern.replace('\\', '')
+                    delimiter_list.append(f"'{start_display}...{end_display}'")
+
+            if len(delimiter_list) > 1:
+                errors.append(f"Mismatched delimiters: Found multiple delimiter types: {', '.join(delimiter_list)}. Use consistent delimiter style.")
+
+        # 参数格式验证（只验证配置的分隔符）
         pattern = re.escape(self.delimiter_start) + r'([^}{]*)' + re.escape(self.delimiter_end)
         matches = re.findall(pattern, template.template)
 
         for match in matches:
             if not re.match(r'^[a-zA-Z_]\w*$', match):
                 errors.append(f"Invalid parameter name: '{match}'. Must start with letter or underscore and contain only alphanumeric characters and underscores.")
-
-        # 检查未闭合的占位符
-        open_count = template.template.count(self.delimiter_start)
-        close_count = template.template.count(self.delimiter_end)
-        if open_count != close_count:
-            errors.append(f"Mismatched delimiters: {open_count} opening, {close_count} closing")
 
         return errors
 
