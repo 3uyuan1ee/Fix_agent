@@ -1,0 +1,43 @@
+# AI Agent框架
+langchain>=0.1.0
+langchain-openai>=0.0.5
+langchain-anthropic>=0.0.3
+
+# Web框架
+flask>=2.3.0
+flask-cors>=4.0.0
+
+# 静态分析工具
+pylint>=3.0.0
+flake8>=6.0.0
+bandit>=1.7.0
+mccabe>=0.7.0
+
+# 文件处理
+pyyaml>=6.0.1
+click>=8.1.0
+chardet>=5.0.0
+
+# 异步处理
+asyncio>=3.4.3
+aiofiles>=23.0.0
+
+# 测试框架
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+
+# 日志和缓存
+loguru>=0.7.0
+redis>=4.6.0
+
+# 工具库
+requests>=2.31.0
+python-dotenv>=1.0.0
+rich>=13.0.0
+tqdm>=4.66.0
+
+# 开发工具
+black>=23.0.0
+isort>=5.12.0
+mypy>=1.5.0

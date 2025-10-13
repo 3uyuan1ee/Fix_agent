@@ -1,0 +1,37 @@
+2025-10-12 22:40:25 | INFO | logger | Memory cache backend initialized, max_size: 100
+2025-10-12 22:40:46 | INFO | logger | Memory cache backend initialized, max_size: 100
+2025-10-12 22:53:00 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpf0x7ubx0, found 3 files
+2025-10-12 22:53:17 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp3tviba3f, found 3 files
+2025-10-12 22:53:17 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpxqdscs_y, found 1 files
+2025-10-12 22:53:17 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpdxmw_syv, found 2 files
+2025-10-12 22:53:17 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpja9r1dtc, found 2 files
+2025-10-12 22:53:17 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpyl2s8shi, found 4 files
+2025-10-12 22:53:17 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp1kaptnxo, found 3 files
+2025-10-12 22:53:17 | INFO | logger | Created backup: backups/original_1760280797.txt
+2025-10-12 22:53:48 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpav4_qnf0, found 3 files
+2025-10-12 22:53:48 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpc1he4e0y, found 1 files
+2025-10-12 22:53:48 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpw5sxhj8b, found 2 files
+2025-10-12 22:53:48 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpy494fjl1, found 2 files
+2025-10-12 22:53:48 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpexzdo9p6, found 4 files
+2025-10-12 22:53:48 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp2169fxc0, found 3 files
+2025-10-12 22:53:48 | INFO | logger | Created backup: backups/original_1760280828.txt.backup
+2025-10-12 22:55:39 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpfqo85va0, found 3 files
+2025-10-12 22:55:39 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp6pqbwr_r, found 1 files
+2025-10-12 22:55:39 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpbciy0e9a, found 2 files
+2025-10-12 22:55:39 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4rw_7pt6, found 2 files
+2025-10-12 22:55:39 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpc7sea227, found 4 files
+2025-10-12 22:55:39 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp7tx2p7dy, found 3 files
+2025-10-12 22:55:39 | INFO | logger | Created backup: backups/original_1760280939.txt.backup
+2025-10-12 23:08:31 | WARNING | logger | AST分析语法错误 /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpudye5brk/broken.py: 语法错误: invalid syntax (行 2)
+2025-10-12 23:09:39 | WARNING | logger | AST syntax error /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp3lmvvu9r/broken.py: Syntax error: invalid syntax (line 2)
+2025-10-12 23:10:18 | WARNING | logger | AST syntax error /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpgwoel0tb/broken.py: Syntax error: invalid syntax (line 2)
+2025-10-13 17:21:35 | WARNING | logger | Flake8 analysis timeout for /private/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/pytest-of-macbookair/pytest-0/test_analyze_file_timeout0/test.py
+2025-10-13 17:22:55 | WARNING | logger | Flake8 analysis timeout for /private/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/pytest-of-macbookair/pytest-1/test_timeout_handling0/timeout_test.py
+2025-10-13 17:23:37 | WARNING | logger | Flake8 analysis timeout for /private/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/pytest-of-macbookair/pytest-2/test_timeout_handling0/timeout_test.py
+2025-10-13 17:23:51 | WARNING | logger | Flake8 analysis timeout for /private/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/pytest-of-macbookair/pytest-3/test_analyze_file_timeout0/test.py
+2025-10-13 17:23:51 | WARNING | logger | Flake8 analysis timeout for /private/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/pytest-of-macbookair/pytest-3/test_timeout_handling0/timeout_test.py
+2025-10-13 17:37:55 | WARNING | logger | Bandit analysis timeout for /private/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/pytest-of-macbookair/pytest-4/test_analyze_file_timeout0/test.py
+2025-10-13 17:41:17 | WARNING | logger | Bandit analysis timeout for /private/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/pytest-of-macbookair/pytest-5/test_analyze_file_timeout0/test.py
+2025-10-13 17:47:36 | WARNING | logger | Bandit analysis timeout for /private/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/pytest-of-macbookair/pytest-6/test_timeout_handling0/test.py
+2025-10-13 17:47:43 | WARNING | logger | Bandit analysis timeout for /private/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/pytest-of-macbookair/pytest-7/test_analyze_file_timeout0/test.py
+2025-10-13 17:47:44 | WARNING | logger | Bandit analysis timeout for /private/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/pytest-of-macbookair/pytest-7/test_timeout_handling0/test.py
