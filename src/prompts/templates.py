@@ -87,7 +87,15 @@ class StaticAnalysisTemplate:
                 "summary.high_issues": "高危问题数",
                 "summary.medium_issues": "中危问题数",
                 "summary.low_issues": "低危问题数",
-                "issues": "问题列表"
+                "issues": "问题列表",
+                "type": "问题类型",
+                "severity": "严重性",
+                "file": "文件",
+                "line": "行号",
+                "description": "描述",
+                "code_snippet": "代码片段",
+                "rule": "规则",
+                "index": "索引"
             },
             version="1.0",
             author="AIDefectDetector",
@@ -129,7 +137,12 @@ class StaticAnalysisTemplate:
                 "high_defects": "高危缺陷数",
                 "false_positives": "误报数量",
                 "top_defects": "最严重缺陷列表",
-                "overall_assessment": "总体评估"
+                "overall_assessment": "总体评估",
+                "index": "索引",
+                "type": "类型",
+                "file": "文件",
+                "line": "行号",
+                "description": "描述"
             },
             version="1.0",
             author="AIDefectDetector",
@@ -238,11 +251,13 @@ class DeepAnalysisTemplate:
                 "code_lines": "代码行数",
                 "code_content": "代码内容",
                 "dependencies": "依赖项列表",
-                "usage_context": "使用场景"
+                "usage_context": "使用场景",
+                "name": "名称",
+                "version": "版本"
             },
             version="1.0",
             author="AIDefectDetector",
-            tags=["code_analysis", "security", "performance", "architecture"]
+            tags=["deep_analysis", "code_analysis", "security", "performance", "architecture"]
         )
 
     @staticmethod
@@ -315,11 +330,14 @@ class DeepAnalysisTemplate:
                 "description": "漏洞描述",
                 "language": "编程语言",
                 "vulnerable_code": "漏洞代码",
-                "attack_scenarios": "攻击场景列表"
+                "attack_scenarios": "攻击场景列表",
+                "title": "标题",
+                "impact": "影响程度",
+                "difficulty": "利用难度"
             },
             version="1.0",
             author="AIDefectDetector",
-            tags=["vulnerability", "security_assessment", "risk_analysis"]
+            tags=["deep_analysis", "security", "vulnerability", "security_assessment", "risk_analysis"]
         )
 
 
@@ -439,11 +457,22 @@ class RepairSuggestionTemplate:
                 "constraints": "约束条件",
                 "multiple_solutions": "是否多方案",
                 "fix_code": "修复代码",
-                "fix_explanation": "修复说明"
+                "fix_explanation": "修复说明",
+                "type": "类型",
+                "fix_code_solution_1": "修复代码方案1",
+                "solution_1_explanation": "方案1说明",
+                "solution_1_advantages": "方案1优点",
+                "solution_1_disadvantages": "方案1缺点",
+                "solution_1_risks": "方案1风险",
+                "fix_code_solution_2": "修复代码方案2",
+                "solution_2_explanation": "方案2说明",
+                "solution_2_advantages": "方案2优点",
+                "solution_2_disadvantages": "方案2缺点",
+                "else": "else"
             },
             version="1.0",
             author="AIDefectDetector",
-            tags=["fix_suggestion", "code_repair", "best_practices"]
+            tags=["repair", "fix_suggestion", "code_fix", "code_repair", "best_practices"]
         )
 
     @staticmethod
@@ -520,7 +549,11 @@ class RepairSuggestionTemplate:
                 "step_1_description": "步骤1描述",
                 "step_1_code": "步骤1代码",
                 "step_2_description": "步骤2描述",
-                "step_2_code": "步骤2代码"
+                "step_2_code": "步骤2代码",
+                "type": "类型",
+                "index": "索引",
+                "description": "描述",
+                "code": "代码"
             },
             version="1.0",
             author="AIDefectDetector",
