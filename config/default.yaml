@@ -1,0 +1,128 @@
+# AIDefectDetector 默认配置文件
+
+# 应用基础配置
+app:
+  name: "AIDefectDetector"
+  version: "1.0.0"
+  debug: false
+
+# 日志配置
+logging:
+  level: "INFO"
+  format: "{time:YYYY-MM-DD HH:mm:ss} | {level} | {module} | {message}"
+  file_path: "logs/app.log"
+  max_size: "10 MB"
+  backup_count: 5
+  enable_console: true
+
+# 缓存配置
+cache:
+  type: "memory"  # memory, redis
+  ttl: 3600  # 秒
+  max_size: 1000
+  redis_url: "redis://localhost:6379/0"
+
+# LLM配置
+llm:
+  default_provider: "openai"  # openai, anthropic, custom
+  max_tokens: 4096
+  temperature: 0.1
+  timeout: 30
+
+  # OpenAI配置
+  openai:
+    api_key: "${OPENAI_API_KEY}"
+    model: "gpt-4"
+    base_url: "https://api.openai.com/v1"
+
+  # Anthropic配置
+  anthropic:
+    api_key: "${ANTHROPIC_API_KEY}"
+    model: "claude-3-sonnet-20240229"
+    base_url: "https://api.anthropic.com"
+
+  # 自定义配置
+  custom:
+    api_key: "${CUSTOM_API_KEY}"
+    model: "custom-model"
+    base_url: "${CUSTOM_API_URL}"
+
+# 静态分析工具配置
+static_analysis:
+  enabled_tools:
+    - "ast"
+    - "pylint"
+    - "flake8"
+    - "bandit"
+
+  # AST分析配置
+  ast:
+    max_file_size: 1048576  # 1MB
+
+  # Pylint配置
+  pylint:
+    config_file: ".pylintrc"
+    disable_codes: ["C0114", "C0115", "C0116"]
+
+  # Flake8配置
+  flake8:
+    max_line_length: 88
+    ignore_codes: ["E203", "W503"]
+
+  # Bandit配置
+  bandit:
+    config_file: ".bandit"
+    severity_level: "medium"
+
+# 文件操作配置
+file_operations:
+  max_file_size: 10485760  # 10MB
+  supported_extensions:
+    - ".py"
+    - ".js"
+    - ".ts"
+    - ".java"
+    - ".cpp"
+    - ".c"
+    - ".h"
+    - ".hpp"
+
+  # 文件选择配置
+  file_selection:
+    max_files: 50
+    priority_extensions: [".py", ".js", ".ts"]
+    exclude_patterns:
+      - ".*_test.py"
+      - ".*_spec.py"
+      - "*/node_modules/*"
+      - "*/venv/*"
+      - "*/env/*"
+      - "*/.git/*"
+
+# Web界面配置
+web:
+  host: "127.0.0.1"
+  port: 5000
+  debug: false
+  secret_key: "${SECRET_KEY}"
+  upload_folder: "uploads"
+  max_upload_size: 52428800  # 50MB
+
+# CLI配置
+cli:
+  output_format: "rich"  # rich, plain, json
+  progress_bar: true
+  colored_output: true
+
+# 安全配置
+security:
+  backup_enabled: true
+  backup_dir: "backups"
+  max_backups: 10
+  require_confirmation: true
+
+# 性能配置
+performance:
+  max_concurrent_files: 5
+  analysis_timeout: 300  # 5分钟
+  llm_request_timeout: 60
