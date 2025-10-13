@@ -160,3 +160,166 @@
 2025-10-13 18:04:32 | WARNING | logger | Halstead metrics analysis failed: 'Halstead' object has no attribute 'difficulty'
 2025-10-13 18:06:12 | WARNING | logger | Maintainability index analysis failed: 'Module' object has no attribute 'splitlines'
 2025-10-13 18:06:12 | WARNING | logger | Halstead metrics analysis failed: 'Halstead' object has no attribute 'difficulty'
+2025-10-13 18:29:41 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp1alte6fk.yaml
+2025-10-13 18:29:41 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:41 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp5rjy5ygc.yaml
+2025-10-13 18:29:41 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:41 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp_7dd0gtr.yaml
+2025-10-13 18:29:41 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:41 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpczssjqeo.yaml
+2025-10-13 18:29:41 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:41 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpin5qbxnn.yaml
+2025-10-13 18:29:41 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:41 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphrdnoh9v.yaml
+2025-10-13 18:29:41 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:41 | INFO | logger | Added config for provider: custom
+2025-10-13 18:29:41 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpb0i1mzx7.yaml
+2025-10-13 18:29:41 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:41 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpaa7nnv1a.yaml
+2025-10-13 18:29:41 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:41 | INFO | logger | Removed config for provider: openai
+2025-10-13 18:29:41 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp_gfz119u.yaml
+2025-10-13 18:29:41 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:41 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmplayhab1n.yaml
+2025-10-13 18:29:41 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:41 | INFO | logger | Updated config for provider: openai
+2025-10-13 18:29:41 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpcxo3bn_r.yaml
+2025-10-13 18:29:41 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:41 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpq58xayhw.yaml
+2025-10-13 18:29:41 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:41 | ERROR | logger | Failed to update config for provider openai: Temperature must be between 0 and 2
+2025-10-13 18:29:41 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp2qecisaz.yaml
+2025-10-13 18:29:41 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:41 | INFO | logger | Saved LLM config to /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpmd1_d1z3.yaml
+2025-10-13 18:29:41 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmptqykrwpu.yaml
+2025-10-13 18:29:41 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:41 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp9nzcnzuu.yaml
+2025-10-13 18:29:41 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:41 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpe1qc6unm.yaml
+2025-10-13 18:29:41 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:41 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphiikzyst.yaml
+2025-10-13 18:29:41 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:41 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpwf7w4z1b.yaml
+2025-10-13 18:29:41 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:41 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp9rei6nu3.yaml
+2025-10-13 18:29:41 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:41 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp3_5j8tfr.yaml
+2025-10-13 18:29:41 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:41 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpvlpe4162.yaml
+2025-10-13 18:29:41 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:41 | INFO | logger | Imported 3 provider configs
+2025-10-13 18:29:41 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpu8ihmrm8.yaml
+2025-10-13 18:29:41 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:41 | INFO | logger | Imported 3 provider configs
+2025-10-13 18:29:41 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpmnsm7w8e.yaml
+2025-10-13 18:29:41 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:41 | ERROR | logger | Failed to import config: mapping values are not allowed here
+  in "<unicode string>", line 1, column 14:
+    invalid: yaml: content:
+                 ^
+2025-10-13 18:29:41 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpyz0hinmd.yaml
+2025-10-13 18:29:41 | INFO | logger | Loaded OpenAI config from environment
+2025-10-13 18:29:41 | INFO | logger | Loaded Anthropic config from environment
+2025-10-13 18:29:41 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:41 | INFO | logger | Loaded OpenAI config from environment
+2025-10-13 18:29:41 | INFO | logger | Loaded Anthropic config from environment
+2025-10-13 18:29:41 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:41 | ERROR | logger | Failed to load provider config invalid: Provider is required
+2025-10-13 18:29:41 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpck_ek4tn.yaml
+2025-10-13 18:29:41 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:41 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp44f2yq2q.yaml
+2025-10-13 18:29:41 | INFO | logger | Loaded LLM config from global config
+2025-10-13 18:29:42 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpvxeledkx.yaml
+2025-10-13 18:29:42 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:42 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpskgglhm8.yaml
+2025-10-13 18:29:42 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:42 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpxsb_u33y.yaml
+2025-10-13 18:29:42 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:42 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpoa5n54mp.yaml
+2025-10-13 18:29:42 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:42 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpapxprzlx.yaml
+2025-10-13 18:29:42 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:42 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpe80uidik.yaml
+2025-10-13 18:29:42 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:42 | ERROR | logger | Failed to update config for provider openai: Temperature must be between 0 and 2
+2025-10-13 18:29:42 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpwpi__s5g.yaml
+2025-10-13 18:29:42 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:42 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpodim31l4.yaml
+2025-10-13 18:29:42 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:42 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpooqjo9wa.yaml
+2025-10-13 18:29:42 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:42 | INFO | logger | Added default system message for Anthropic
+2025-10-13 18:29:42 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpgyr7azf6.yaml
+2025-10-13 18:29:42 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:42 | WARNING | logger | Tool calls usually require a system message
+2025-10-13 18:29:42 | INFO | logger | Added default system message for Anthropic
+2025-10-13 18:29:42 | INFO | logger | Added default system message for Anthropic
+2025-10-13 18:29:55 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp1juklc16.yaml
+2025-10-13 18:29:55 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:55 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4c_gfxyw.yaml
+2025-10-13 18:29:55 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:55 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpno0rjl2a.yaml
+2025-10-13 18:29:55 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:55 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphf78yurv.yaml
+2025-10-13 18:29:55 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:55 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpk3u012kr.yaml
+2025-10-13 18:29:55 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:55 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpk8mjex9q.yaml
+2025-10-13 18:29:55 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:55 | INFO | logger | Added config for provider: custom
+2025-10-13 18:29:55 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpo1htkl5v.yaml
+2025-10-13 18:29:55 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:55 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpx1r27qjx.yaml
+2025-10-13 18:29:55 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:55 | INFO | logger | Removed config for provider: openai
+2025-10-13 18:29:55 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpbm5jki1v.yaml
+2025-10-13 18:29:55 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:55 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp6sjvwtq3.yaml
+2025-10-13 18:29:55 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:55 | INFO | logger | Updated config for provider: openai
+2025-10-13 18:29:55 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpvz4efvz3.yaml
+2025-10-13 18:29:55 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:55 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpfx0p066x.yaml
+2025-10-13 18:29:55 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:55 | ERROR | logger | Failed to update config for provider openai: Temperature must be between 0 and 2
+2025-10-13 18:29:55 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpwl997s0l.yaml
+2025-10-13 18:29:55 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:55 | INFO | logger | Saved LLM config to /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpts7sckaa.yaml
+2025-10-13 18:29:55 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpmrqdi7mv.yaml
+2025-10-13 18:29:55 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:55 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpb7d2fgf3.yaml
+2025-10-13 18:29:55 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:55 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp0tcvw0xr.yaml
+2025-10-13 18:29:55 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:55 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp_6dva7az.yaml
+2025-10-13 18:29:55 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:55 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmplmi0q_ow.yaml
+2025-10-13 18:29:55 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:55 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpuylrxmcq.yaml
+2025-10-13 18:29:55 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:55 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphr0oxnig.yaml
+2025-10-13 18:29:55 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:55 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmppfieh3i9.yaml
+2025-10-13 18:29:55 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:55 | INFO | logger | Imported 3 provider configs
+2025-10-13 18:29:55 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpp58ls45t.yaml
+2025-10-13 18:29:55 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:55 | INFO | logger | Imported 3 provider configs
+2025-10-13 18:29:55 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpvm5u402j.yaml
+2025-10-13 18:29:55 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:55 | ERROR | logger | Failed to import config: mapping values are not allowed here
+  in "<unicode string>", line 1, column 14:
+    invalid: yaml: content:
+                 ^
+2025-10-13 18:29:55 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpi2monhvz.yaml
+2025-10-13 18:29:55 | INFO | logger | Loaded OpenAI config from environment
+2025-10-13 18:29:55 | INFO | logger | Loaded Anthropic config from environment
+2025-10-13 18:29:55 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:55 | INFO | logger | Loaded OpenAI config from environment
+2025-10-13 18:29:55 | INFO | logger | Loaded Anthropic config from environment
+2025-10-13 18:29:55 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:55 | ERROR | logger | Failed to load provider config invalid: Provider is required
+2025-10-13 18:29:55 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpdmyvaahp.yaml
+2025-10-13 18:29:55 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-13 18:29:55 | INFO | logger | Loaded LLM config from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpjw8jedfn.yaml
+2025-10-13 18:29:55 | INFO | logger | Loaded LLM config from global config
