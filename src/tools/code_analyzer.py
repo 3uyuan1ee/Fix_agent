@@ -169,17 +169,28 @@ class CodeAnalyzer:
 
         # 代码行数指标
         try:
-            loc_metrics = radon.metrics.raw_functions(source_code)
+            lines = source_code.splitlines()
+            loc_metrics = radon.metrics.analyze(source_code)
             complexity_result["loc_metrics"] = {
-                "loc": len(source_code.splitlines()),
-                "lloc": loc_metrics.get('lloc', 0),
-                "sloc": loc_metrics.get('sloc', 0),
-                "comments": loc_metrics.get('comments', 0),
-                "multi": loc_metrics.get('multi', 0),
-                "blank": loc_metrics.get('blank', 0)
+                "loc": len(lines),
+                "lloc": loc_metrics.lloc,
+                "sloc": loc_metrics.sloc,
+                "comments": loc_metrics.comments,
+                "multi": loc_metrics.multi,
+                "blank": loc_metrics.blank
             }
         except Exception as e:
             self.logger.warning(f"LOC metrics analysis failed: {e}")
+            # 提供默认值
+            lines = source_code.splitlines()
+            complexity_result["loc_metrics"] = {
+                "loc": len(lines),
+                "lloc": len(lines),
+                "sloc": len(lines),
+                "comments": 0,
+                "multi": 0,
+                "blank": 0
+            }
 
         return complexity_result
 
@@ -204,7 +215,7 @@ class CodeAnalyzer:
                     anti_patterns.append(param_info)
 
             # 深度嵌套检测
-            nested_info = self._check_deeply_nested(node, lines)
+            nested_info = self._check_deeply_nested(tree, lines)
             if nested_info:
                 anti_patterns.append(nested_info)
 
@@ -296,7 +307,7 @@ class CodeAnalyzer:
                     }
         return None
 
-    def _check_deeply_nested(self, node: ast.AST, lines: List[str]) -> Optional[Dict[str, Any]]:
+    def _check_deeply_nested(self, tree: ast.AST, lines: List[str]) -> Optional[Dict[str, Any]]:
         """检查深度嵌套"""
         def get_nesting_depth(node):
             depth = 0
@@ -338,14 +349,23 @@ class CodeAnalyzer:
         """检查魔法数字"""
         magic_numbers = []
 
-        if isinstance(node, ast.Constant) and isinstance(node.value, int):
+        # 处理不同Python版本的AST节点
+        value = None
+        if hasattr(node, 'value'):  # Python 3.8+
+            if isinstance(node, ast.Constant) and isinstance(node.value, int):
+                value = node.value
+        elif hasattr(node, 'n'):  # Python 3.7及以下
+            if isinstance(node, ast.Num):
+                value = node.n
+
+        if value is not None:
             # 检查是否匹配魔法数字模式
             pattern = re.compile(self.anti_patterns['magic_numbers']['pattern'])
-            if pattern.match(str(node.value)):
+            if pattern.match(str(value)):
                 magic_numbers.append({
                     "type": "magic_numbers",
                     "line": node.lineno,
-                    "value": node.value,
+                    "value": value,
                     "description": self.anti_patterns['magic_numbers']['description'],
                     "severity": "low"
                 })
