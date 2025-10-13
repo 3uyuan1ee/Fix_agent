@@ -566,3 +566,84 @@
 2025-10-13 19:19:10 | WARNING | logger | Prompt config file not found: /nonexistent/file.json
 2025-10-13 19:19:10 | INFO | logger | Loaded 9 builtin prompt templates
 2025-10-13 19:19:10 | INFO | logger | Loaded templates from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmplca3nrzt.yaml
+2025-10-13 20:34:31 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:34:31 | INFO | logger | Set default renderer to: conditional
+2025-10-13 20:35:36 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:35:36 | INFO | logger | Set default renderer to: conditional
+2025-10-13 20:35:48 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:35:48 | INFO | logger | Set default renderer to: function
+2025-10-13 20:36:21 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:36:21 | INFO | logger | Set default renderer to: function
+2025-10-13 20:36:21 | INFO | logger | Set default renderer to: function
+2025-10-13 20:40:04 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:04 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:04 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:04 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:04 | INFO | logger | Set default renderer to: conditional
+2025-10-13 20:40:04 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:04 | INFO | logger | Set default renderer to: function
+2025-10-13 20:40:04 | INFO | logger | Set default renderer to: function
+2025-10-13 20:40:04 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:04 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:04 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:04 | INFO | logger | Imported 9 templates
+2025-10-13 20:40:04 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:04 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:04 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Set default renderer to: conditional
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Set default renderer to: function
+2025-10-13 20:40:19 | INFO | logger | Set default renderer to: function
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Imported 9 templates
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Set default renderer to: conditional
+2025-10-13 20:40:19 | INFO | logger | Set default renderer to: function
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Added custom renderer: custom
+2025-10-13 20:40:19 | INFO | logger | Set default renderer to: custom
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Imported 1 templates
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Imported 1 templates
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | WARNING | logger | Template 'overwrite_test' already exists, skipping
+2025-10-13 20:40:19 | INFO | logger | Imported 0 templates
+2025-10-13 20:40:19 | INFO | logger | Imported 1 templates
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Loaded templates from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpblgve_jv.json
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | WARNING | logger | Prompt config file not found: /nonexistent/file.json
+2025-10-13 20:40:19 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-13 20:40:19 | INFO | logger | Loaded templates from /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp7k71e89m.yaml

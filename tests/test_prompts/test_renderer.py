@@ -98,7 +98,9 @@ class TestAdvancedPromptRenderer:
         )
         result = renderer.render(template, {})
 
-        assert result.success is False  # 仍然失败，因为严格模式下基础逻辑会检查
+        assert result.success is True  # 非严格模式下成功，但保留占位符
+        assert result.content == "Hello {{name}}!"  # 原始占位符被保留
+        assert len(result.missing_parameters) > 0  # 记录缺失参数
 
     def test_postprocess_content(self, renderer):
         """测试内容后处理"""

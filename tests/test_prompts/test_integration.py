@@ -178,6 +178,10 @@ cursor.execute(query, (username, password))''',
 
         # 准备带条件的数据
         data = {
+            "project_name": "Test Project",
+            "language": "Python",
+            "lines_of_code": "5000",
+            "tool_name": "pylint",
             "show_details": True,
             "user_type": "admin",
             "permissions": ["read", "write", "delete"],
@@ -185,7 +189,25 @@ cursor.execute(query, (username, password))''',
                 "name": "Alice",
                 "role": "Administrator",
                 "department": "IT"
-            }
+            },
+            "summary": {
+                "total_issues": 5,
+                "critical_issues": 1,
+                "high_issues": 1,
+                "medium_issues": 2,
+                "low_issues": 1
+            },
+            "issues": [
+                {
+                    "type": "Style Issue",
+                    "severity": "Medium",
+                    "file": "main.py",
+                    "line": 10,
+                    "description": "Code style issue",
+                    "code_snippet": "sample code",
+                    "rule": "C0111"
+                }
+            ]
         }
 
         # 创建自定义模板测试条件渲染
@@ -204,7 +226,9 @@ cursor.execute(query, (username, password))''',
         def custom_function(text):
             return f"[CUSTOM]{text}[/CUSTOM]"
 
-        manager.add_custom_renderer("function").add_function("custom", custom_function)
+        # 获取当前的函数渲染器并添加自定义函数
+        function_renderer = manager.renderers["function"]
+        function_renderer.add_function("custom", custom_function)
         manager.set_renderer("function")
 
         # 创建测试模板
