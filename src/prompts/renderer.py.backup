@@ -269,151 +269,51 @@ class ConditionalPromptRenderer(AdvancedPromptRenderer):
 
     def _render_conditionals(self, content: str, parameters: Dict[str, Any]) -> str:
         """渲染条件块"""
-        # 手动解析条件块，正确处理嵌套
-        result = []
-        i = 0
-        n = len(content)
+        pattern = r'\{\{#if\s+(\w+)\}\}(.*?)\{\{/if\}'
 
-        while i < n:
-            # 查找条件块开始
-            start_match = re.search(r'\{\{#if\s+(\w+)\}\}', content[i:])
-            if not start_match:
-                # 没有更多条件块，添加剩余内容
-                result.append(content[i:])
-                break
+        def replace_conditional(match):
+            param_name = match.group(1)
+            conditional_content = match.group(2)
 
-            start_pos = i + start_match.start()
-            end_pos = i + start_match.end()
-            param_name = start_match.group(1)
-
-            # 添加条件块之前的内容
-            result.append(content[i:start_pos])
-
-            # 查找对应的结束标签，考虑嵌套
-            nesting_level = 1
-            search_start = end_pos
-            corresponding_end = None
-
-            while nesting_level > 0 and search_start < n:
-                # 查找下一个if或endif
-                next_if = content.find('{{#if', search_start)
-                next_endif = content.find('{{/if}}', search_start)
-
-                if next_endif == -1:
-                    # 没有找到结束标签，语法错误
-                    break
-                elif next_if == -1 or next_endif < next_if:
-                    # 找到结束标签
-                    nesting_level -= 1
-                    if nesting_level == 0:
-                        corresponding_end = next_endif
-                    search_start = next_endif + 7  # 长度 of "{{/if}}"
-                else:
-                    # 找到嵌套的if，增加嵌套层级
-                    nesting_level += 1
-                    search_start = next_if + 5  # 跳过 "{{#if"
-
-            if corresponding_end is not None:
-                # 提取条件块内容
-                conditional_content = content[end_pos:corresponding_end]
-
-                if param_name in parameters and parameters[param_name]:
-                    # 条件为真，递归渲染内容
-                    processed_content = self._render_conditionals(conditional_content, parameters)
-                    result.append(processed_content)
-                # 条件为假时，不添加任何内容
-
-                # 移动到结束标签之后
-                i = corresponding_end + 7  # 长度 of "{{/if}}"
+            if param_name in parameters and parameters[param_name]:
+                # 递归渲染条件块内的内容
+                return self._render_nested_content(conditional_content, parameters)
             else:
-                # 语法错误，保持原样
-                result.append(content[start_pos:end_pos])
-                i = end_pos
+                return ""
 
-        return ''.join(result)
+        return re.sub(pattern, replace_conditional, content, flags=re.DOTALL)
 
     def _render_loops(self, content: str, parameters: Dict[str, Any]) -> str:
         """渲染循环块"""
-        # 手动解析循环块，类似于条件渲染器
-        result = []
-        i = 0
-        n = len(content)
+        pattern = r'\{\{#each\s+(\w+)\}\}(.*?)\{\{/each\}'
 
-        while i < n:
-            # 查找循环块开始
-            start_match = re.search(r'\{\{#each\s+(\w+)\}\}', content[i:])
-            if not start_match:
-                # 没有更多循环块，添加剩余内容
-                result.append(content[i:])
-                break
+        def replace_loop(match):
+            param_name = match.group(1)
+            loop_content = match.group(2)
 
-            start_pos = i + start_match.start()
-            end_pos = i + start_match.end()
-            param_name = start_match.group(1)
-
-            # 临时保存循环块之前的内容，稍后处理是否保留
-            before_content = content[i:start_pos]
-
-            # 查找对应的结束标签，考虑嵌套
-            nesting_level = 1
-            search_start = end_pos
-            corresponding_end = None
-
-            while nesting_level > 0 and search_start < n:
-                # 查找下一个each或endeach
-                next_each = content.find('{{#each', search_start)
-                next_endeach = content.find('{{/each}}', search_start)
-
-                if next_endeach == -1:
-                    # 没有找到结束标签，语法错误
-                    break
-                elif next_each == -1 or next_endeach < next_each:
-                    # 找到结束标签
-                    nesting_level -= 1
-                    if nesting_level == 0:
-                        corresponding_end = next_endeach
-                    search_start = next_endeach + 9  # 长度 of "{{/each}}"
-                else:
-                    # 找到嵌套的each，增加嵌套层级
-                    nesting_level += 1
-                    search_start = next_each + 7  # 跳过 "{{#each"
-
-            if corresponding_end is not None:
-                # 提取循环块内容
-                loop_content = content[end_pos:corresponding_end]
-
-                if param_name in parameters and isinstance(parameters[param_name], list) and parameters[param_name]:
-                    # 有数据时，保留之前的内容并正常渲染循环
-                    result.append(before_content)
-                    loop_result = []
-                    for index, item in enumerate(parameters[param_name]):
-                        item_content = loop_content
-                        if isinstance(item, dict):
-                            # 替换对象属性
-                            for key, value in item.items():
-                                item_content = item_content.replace(f"{{{{{key}}}}}", str(value))
-                            # 替换index相关
-                            item_content = item_content.replace("{{index}}", str(index))
-                            item_content = item_content.replace("{{index + 1}}", str(index + 1))
-                        else:
-                            item_content = item_content.replace("{{this}}", str(item))
-                            item_content = item_content.replace("{{.}}", str(item))
-                            item_content = item_content.replace("{{index}}", str(index))
-                            item_content = item_content.replace("{{index + 1}}", str(index + 1))
-                        loop_result.append(item_content)
-
-                    rendered_loop = "\n".join(loop_result)
-                    result.append(rendered_loop)
-                # 无数据时不添加之前的内容和循环内容（这样就移除了前面的"Items:\n"）
-
-                # 移动到结束标签之后
-                i = corresponding_end + 9  # 长度 of "{{/each}}"
+            if param_name in parameters and isinstance(parameters[param_name], list):
+                result = []
+                for index, item in enumerate(parameters[param_name]):
+                    # 简单的变量替换，支持对象属性、{{this}}、{{.}}和index
+                    item_content = loop_content
+                    if isinstance(item, dict):
+                        # 替换对象属性
+                        for key, value in item.items():
+                            item_content = item_content.replace(f"{{{{{key}}}}}", str(value))
+                        # 替换index相关
+                        item_content = item_content.replace("{{index}}", str(index))
+                        item_content = item_content.replace("{{index + 1}}", str(index + 1))
+                    else:
+                        item_content = item_content.replace("{{this}}", str(item))
+                        item_content = item_content.replace("{{.}}", str(item))
+                        item_content = item_content.replace("{{index}}", str(index))
+                        item_content = item_content.replace("{{index + 1}}", str(index + 1))
+                    result.append(item_content)
+                return "\n".join(result)
             else:
-                # 语法错误，保持原样
-                result.append(content[start_pos:end_pos])
-                i = end_pos
+                return ""
 
-        return ''.join(result)
+        return re.sub(pattern, replace_loop, content, flags=re.DOTALL)
 
     def _render_nested_content(self, content: str, parameters: Dict[str, Any]) -> str:
         """渲染嵌套内容，支持点号表示法"""
@@ -464,12 +364,6 @@ class TemplateFunctionRenderer(AdvancedPromptRenderer):
             'length': len,
             'default': self._default_function,
         }
-
-    def _postprocess_content(self, content: str) -> str:
-        """重写后处理方法，只清理多余空行，保留尾部空格"""
-        # 清理多余的空行，但保留尾部空格
-        content = re.sub(r'\n\s*\n\s*\n', '\n\n', content)
-        return content
 
     def _default_function(self, value: str, default: str = "") -> str:
         """默认值函数"""

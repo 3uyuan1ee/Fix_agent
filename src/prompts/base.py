@@ -46,13 +46,17 @@ class PromptTemplate:
         if not self.template:
             raise ValueError("Template content cannot be empty")
 
-        # 从模板中提取参数
-        self.parameters = self._extract_parameters()
+        # 从模板中提取参数并与手动设置的参数合并
+        extracted_params = self._extract_parameters()
+        # 保留手动设置的参数描述，添加自动提取的新参数
+        for param, description in extracted_params.items():
+            if param not in self.parameters:
+                self.parameters[param] = description
 
     def _extract_parameters(self) -> Dict[str, str]:
         """从模板中提取参数"""
-        # 匹配 {{parameter}} 格式的参数，只匹配简单的参数名（不包含空格和特殊字符）
-        pattern = r'\{\{([a-zA-Z_]\w*)\}\}'
+        # 匹配 {{parameter}} 格式的参数，匹配所有有效的参数名
+        pattern = r'\{\{([a-zA-Z_][a-zA-Z0-9_]*)\}\}'
         matches = re.findall(pattern, self.template)
 
         parameters = {}
