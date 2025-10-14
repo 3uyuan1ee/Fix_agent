@@ -5,6 +5,7 @@ Agent核心模块
 
 from .planner import TaskPlanner, AnalysisMode, UserRequest, Task, ExecutionPlan
 from .file_selector import FileSelector, FileInfo, SelectionCriteria
+from .execution_engine import ExecutionEngine, ExecutionResult, TaskStatus, ToolStatus
 
 __all__ = [
     'TaskPlanner',
@@ -14,5 +15,9 @@ __all__ = [
     'ExecutionPlan',
     'FileSelector',
     'FileInfo',
-    'SelectionCriteria'
+    'SelectionCriteria',
+    'ExecutionEngine',
+    'ExecutionResult',
+    'TaskStatus',
+    'ToolStatus'
 ]

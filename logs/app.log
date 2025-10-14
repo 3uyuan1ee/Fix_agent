@@ -1695,3 +1695,961 @@
 2025-10-14 20:27:56 | INFO | logger | Plan validation passed
 2025-10-14 20:27:56 | INFO | logger | Plan validation passed
 2025-10-14 20:27:56 | INFO | logger | Plan validation passed
+2025-10-14 20:55:57 | INFO | logger | Cleaning up execution engine
+2025-10-14 20:55:57 | INFO | logger | Cleaning up execution engine
+2025-10-14 20:55:57 | INFO | logger | Cleaning up execution engine
+2025-10-14 20:55:57 | INFO | logger | Cleaning up execution engine
+2025-10-14 20:55:57 | INFO | logger | Cleaning up execution engine
+2025-10-14 20:55:57 | INFO | logger | Cleaning up execution engine
+2025-10-14 20:55:57 | INFO | logger | Cleaning up execution engine
+2025-10-14 20:55:57 | INFO | logger | Cleaning up execution engine
+2025-10-14 20:55:57 | INFO | logger | Cleaning up execution engine
+2025-10-14 20:55:57 | INFO | logger | Cleaning up execution engine
+2025-10-14 20:55:57 | INFO | logger | Cleaning up execution engine
+2025-10-14 20:55:57 | INFO | logger | Cleaning up execution engine
+2025-10-14 20:55:57 | INFO | logger | Cleaning up execution engine
+2025-10-14 20:55:57 | INFO | logger | Cleaning up execution engine
+2025-10-14 20:55:57 | INFO | logger | Cleaning up execution engine
+2025-10-14 20:55:57 | INFO | logger | Cleaning up execution engine
+2025-10-14 20:55:57 | INFO | logger | Cleaning up execution engine
+2025-10-14 20:55:57 | INFO | logger | Cleaning up execution engine
+2025-10-14 20:55:57 | INFO | logger | Cleaning up execution engine
+2025-10-14 20:55:57 | INFO | logger | Cleaning up execution engine
+2025-10-14 20:55:57 | INFO | logger | Cleaning up execution engine
+2025-10-14 20:55:57 | INFO | logger | Cleaning up execution engine
+2025-10-14 20:55:57 | INFO | logger | Cleaning up execution engine
+2025-10-14 20:55:57 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:00:49 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:00:49 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:00:49 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:00:49 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:00:49 | INFO | logger | Tool test_tool registered successfully
+2025-10-14 22:00:49 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:00:49 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:00:49 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:00:49 | INFO | logger | Tool duplicate_tool registered successfully
+2025-10-14 22:00:49 | WARNING | logger | Tool duplicate_tool already registered, updating...
+2025-10-14 22:00:49 | INFO | logger | Tool duplicate_tool registered successfully
+2025-10-14 22:00:49 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:00:49 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:00:49 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:00:49 | INFO | logger | Tool temp_tool registered successfully
+2025-10-14 22:00:49 | INFO | logger | Tool temp_tool unregistered successfully
+2025-10-14 22:00:49 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:00:49 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:00:49 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:00:49 | WARNING | logger | Tool nonexistent_tool not found
+2025-10-14 22:00:49 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:00:49 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:00:49 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:00:49 | INFO | logger | Tool tool1 registered successfully
+2025-10-14 22:00:49 | INFO | logger | Tool tool2 registered successfully
+2025-10-14 22:00:49 | INFO | logger | Tool tool3 registered successfully
+2025-10-14 22:00:49 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:00:49 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:00:49 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:00:49 | INFO | logger | Tool info_tool registered successfully
+2025-10-14 22:00:49 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:00:49 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:00:49 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:00:49 | INFO | logger | Tool success_tool registered successfully
+2025-10-14 22:00:49 | INFO | logger | Executing task test_task_1 with tool success_tool
+2025-10-14 22:00:49 | ERROR | logger | Task test_task_1 failed: execute() missing 1 required positional argument: 'self'
+2025-10-14 22:00:49 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:00:49 | INFO | logger | Tool fail_tool registered successfully
+2025-10-14 22:00:49 | INFO | logger | Executing task test_task_2 with tool fail_tool
+2025-10-14 22:00:49 | ERROR | logger | Task test_task_2 failed: execute() missing 1 required positional argument: 'self'
+2025-10-14 22:00:49 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:00:49 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:00:49 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:00:49 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:00:49 | INFO | logger | Tool async_tool registered successfully
+2025-10-14 22:00:49 | INFO | logger | Executing task async_task_1 with tool async_tool
+2025-10-14 22:00:49 | ERROR | logger | Task async_task_1 failed: execute() missing 1 required positional argument: 'self'
+2025-10-14 22:00:49 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:00:49 | INFO | logger | Tool batch_tool1 registered successfully
+2025-10-14 22:00:49 | INFO | logger | Tool batch_tool2 registered successfully
+2025-10-14 22:00:49 | INFO | logger | Executing 3 tasks
+2025-10-14 22:00:49 | INFO | logger | Executing task batch_task_1 with tool batch_tool1
+2025-10-14 22:00:49 | ERROR | logger | Task batch_task_1 failed: execute() missing 1 required positional argument: 'self'
+2025-10-14 22:00:49 | INFO | logger | Executing task batch_task_2 with tool batch_tool2
+2025-10-14 22:00:49 | INFO | logger | Executing task batch_task_3 with tool batch_tool1
+2025-10-14 22:00:49 | ERROR | logger | Task batch_task_2 failed: execute() missing 1 required positional argument: 'self'
+2025-10-14 22:00:49 | ERROR | logger | Task batch_task_3 failed: execute() missing 1 required positional argument: 'self'
+2025-10-14 22:00:49 | INFO | logger | Completed 3 tasks with 0 successes
+2025-10-14 22:00:49 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:00:49 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:00:49 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:00:49 | INFO | logger | Tool good_tool registered successfully
+2025-10-14 22:00:49 | INFO | logger | Tool bad_tool registered successfully
+2025-10-14 22:00:49 | INFO | logger | Executing 2 tasks
+2025-10-14 22:00:49 | INFO | logger | Executing task good_task with tool good_tool
+2025-10-14 22:00:49 | ERROR | logger | Task good_task failed: execute() missing 1 required positional argument: 'self'
+2025-10-14 22:00:49 | INFO | logger | Executing task bad_task with tool bad_tool
+2025-10-14 22:00:49 | ERROR | logger | Task bad_task failed: execute() missing 1 required positional argument: 'self'
+2025-10-14 22:00:49 | INFO | logger | Completed 2 tasks with 0 successes
+2025-10-14 22:00:49 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:00:49 | INFO | logger | Tool plan_tool registered successfully
+2025-10-14 22:00:49 | INFO | logger | Executing plan test_plan with 2 tasks
+2025-10-14 22:00:49 | INFO | logger | Executing 2 tasks
+2025-10-14 22:00:49 | INFO | logger | Executing task plan_task_1 with tool plan_tool
+2025-10-14 22:00:49 | ERROR | logger | Task plan_task_1 failed: execute() missing 1 required positional argument: 'self'
+2025-10-14 22:00:49 | INFO | logger | Executing task plan_task_2 with tool plan_tool
+2025-10-14 22:00:49 | ERROR | logger | Task plan_task_2 failed: execute() missing 1 required positional argument: 'self'
+2025-10-14 22:00:49 | INFO | logger | Completed 2 tasks with 0 successes
+2025-10-14 22:00:49 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:00:49 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:00:49 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:00:49 | INFO | logger | Tool slow_tool registered successfully
+2025-10-14 22:00:49 | INFO | logger | Executing task cancellable_task with tool slow_tool
+2025-10-14 22:00:49 | ERROR | logger | Task cancellable_task failed: execute() missing 1 required positional argument: 'self'
+2025-10-14 22:00:49 | WARNING | logger | Task cancellable_task not found in running tasks
+2025-10-14 22:00:49 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:00:49 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:00:49 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:00:49 | WARNING | logger | Task nonexistent_task not found in running tasks
+2025-10-14 22:00:49 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:00:49 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:00:49 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:00:49 | INFO | logger | Tool result_tool registered successfully
+2025-10-14 22:00:49 | INFO | logger | Executing task result_task with tool result_tool
+2025-10-14 22:00:49 | ERROR | logger | Task result_task failed: execute() missing 1 required positional argument: 'self'
+2025-10-14 22:00:49 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:00:49 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:00:49 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:00:49 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:00:49 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:00:49 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:00:49 | INFO | logger | Tool running_tool registered successfully
+2025-10-14 22:00:49 | INFO | logger | Executing task running_task with tool running_tool
+2025-10-14 22:00:49 | ERROR | logger | Task running_task failed: execute() missing 1 required positional argument: 'self'
+2025-10-14 22:00:49 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:00:49 | INFO | logger | Tool stats_tool registered successfully
+2025-10-14 22:00:49 | INFO | logger | Tool fail_stats_tool registered successfully
+2025-10-14 22:00:49 | INFO | logger | Executing task stats_task_1 with tool stats_tool
+2025-10-14 22:00:49 | ERROR | logger | Task stats_task_1 failed: execute() missing 1 required positional argument: 'self'
+2025-10-14 22:00:49 | INFO | logger | Executing task stats_task_2 with tool fail_stats_tool
+2025-10-14 22:00:49 | ERROR | logger | Task stats_task_2 failed: execute() missing 1 required positional argument: 'self'
+2025-10-14 22:00:49 | INFO | logger | Executing task stats_task_3 with tool stats_tool
+2025-10-14 22:00:49 | ERROR | logger | Task stats_task_3 failed: execute() missing 1 required positional argument: 'self'
+2025-10-14 22:00:49 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:00:49 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:00:49 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:00:49 | INFO | logger | Tool custom_tool registered successfully
+2025-10-14 22:00:49 | INFO | logger | Executing task custom_task with tool custom_tool
+2025-10-14 22:00:49 | INFO | logger | Task custom_task completed successfully in 0.00s
+2025-10-14 22:00:49 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:00:49 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:00:49 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:00:49 | INFO | logger | Tool static_tool registered successfully
+2025-10-14 22:00:49 | INFO | logger | Executing task static_task with tool static_tool
+2025-10-14 22:00:49 | INFO | logger | Task static_task completed successfully in 0.00s
+2025-10-14 22:00:49 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:00:49 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:00:49 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:00:49 | INFO | logger | Tool cleanup_tool registered successfully
+2025-10-14 22:00:49 | INFO | logger | Executing task cleanup_task_1 with tool cleanup_tool
+2025-10-14 22:00:49 | ERROR | logger | Task cleanup_task_1 failed: execute() missing 1 required positional argument: 'self'
+2025-10-14 22:00:49 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:00:49 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:00:49 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:00:49 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:00:49 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:00:49 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:00:49 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:00:49 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:00:49 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:00:49 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:00:49 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:00:49 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:00:49 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-14 22:00:49 | INFO | logger | Tool engine1_tool registered successfully
+2025-10-14 22:00:49 | INFO | logger | Tool engine2_tool registered successfully
+2025-10-14 22:00:49 | INFO | logger | Executing task task1 with tool engine1_tool
+2025-10-14 22:00:49 | ERROR | logger | Task task1 failed: execute() missing 1 required positional argument: 'self'
+2025-10-14 22:00:49 | INFO | logger | Executing task task2 with tool engine2_tool
+2025-10-14 22:00:49 | ERROR | logger | Task task2 failed: execute() missing 1 required positional argument: 'self'
+2025-10-14 22:00:49 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:00:49 | INFO | logger | Tool concurrent_tool registered successfully
+2025-10-14 22:00:49 | INFO | logger | Executing task concurrent_task_0 with tool concurrent_tool
+2025-10-14 22:00:49 | INFO | logger | Executing task concurrent_task_1 with tool concurrent_tool
+2025-10-14 22:00:49 | ERROR | logger | Task concurrent_task_0 failed: execute() missing 1 required positional argument: 'self'
+2025-10-14 22:00:49 | ERROR | logger | Task concurrent_task_1 failed: execute() missing 1 required positional argument: 'self'
+2025-10-14 22:00:49 | INFO | logger | Executing task concurrent_task_2 with tool concurrent_tool
+2025-10-14 22:00:49 | INFO | logger | Executing task concurrent_task_3 with tool concurrent_tool
+2025-10-14 22:00:49 | ERROR | logger | Task concurrent_task_2 failed: execute() missing 1 required positional argument: 'self'
+2025-10-14 22:00:49 | ERROR | logger | Task concurrent_task_3 failed: execute() missing 1 required positional argument: 'self'
+2025-10-14 22:00:49 | INFO | logger | Executing task concurrent_task_4 with tool concurrent_tool
+2025-10-14 22:00:49 | ERROR | logger | Task concurrent_task_4 failed: execute() missing 1 required positional argument: 'self'
+2025-10-14 22:00:49 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:00:49 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:00:49 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:00:49 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:00:49 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:00:49 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:01:29 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:01:29 | INFO | logger | Tool success_tool registered successfully
+2025-10-14 22:01:29 | INFO | logger | Executing task test_task_1 with tool success_tool
+2025-10-14 22:01:29 | INFO | logger | Task test_task_1 completed successfully in 0.00s
+2025-10-14 22:01:29 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:01:29 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:01:41 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:01:41 | INFO | logger | Tool fail_tool registered successfully
+2025-10-14 22:01:41 | INFO | logger | Executing task test_task_2 with tool fail_tool
+2025-10-14 22:01:41 | ERROR | logger | Task test_task_2 failed: Mock tool mock_tool failed intentionally
+2025-10-14 22:01:59 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:01:59 | INFO | logger | Tool fail_tool registered successfully
+2025-10-14 22:01:59 | INFO | logger | Executing task test_task_2 with tool fail_tool
+2025-10-14 22:01:59 | ERROR | logger | Task test_task_2 failed: Mock tool mock_tool failed intentionally
+2025-10-14 22:01:59 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:01:59 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:02:10 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:02:10 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:02:10 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:02:10 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:02:10 | INFO | logger | Tool test_tool registered successfully
+2025-10-14 22:02:10 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:02:10 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:02:10 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:02:10 | INFO | logger | Tool duplicate_tool registered successfully
+2025-10-14 22:02:10 | WARNING | logger | Tool duplicate_tool already registered, updating...
+2025-10-14 22:02:10 | INFO | logger | Tool duplicate_tool registered successfully
+2025-10-14 22:02:10 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:02:10 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:02:10 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:02:10 | INFO | logger | Tool temp_tool registered successfully
+2025-10-14 22:02:10 | INFO | logger | Tool temp_tool unregistered successfully
+2025-10-14 22:02:10 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:02:10 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:02:10 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:02:10 | WARNING | logger | Tool nonexistent_tool not found
+2025-10-14 22:02:10 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:02:10 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:02:10 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:02:10 | INFO | logger | Tool tool1 registered successfully
+2025-10-14 22:02:10 | INFO | logger | Tool tool2 registered successfully
+2025-10-14 22:02:10 | INFO | logger | Tool tool3 registered successfully
+2025-10-14 22:02:10 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:02:10 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:02:10 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:02:10 | INFO | logger | Tool info_tool registered successfully
+2025-10-14 22:02:10 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:02:10 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:02:10 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:02:10 | INFO | logger | Tool success_tool registered successfully
+2025-10-14 22:02:10 | INFO | logger | Executing task test_task_1 with tool success_tool
+2025-10-14 22:02:10 | INFO | logger | Task test_task_1 completed successfully in 0.00s
+2025-10-14 22:02:10 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:02:10 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:02:10 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:02:10 | INFO | logger | Tool fail_tool registered successfully
+2025-10-14 22:02:10 | INFO | logger | Executing task test_task_2 with tool fail_tool
+2025-10-14 22:02:10 | ERROR | logger | Task test_task_2 failed: Mock tool mock_tool failed intentionally
+2025-10-14 22:02:10 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:02:10 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:02:10 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:02:10 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:02:10 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:02:10 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:02:10 | INFO | logger | Tool async_tool registered successfully
+2025-10-14 22:02:10 | INFO | logger | Executing task async_task_1 with tool async_tool
+2025-10-14 22:02:10 | INFO | logger | Task async_task_1 completed successfully in 0.00s
+2025-10-14 22:02:10 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:02:10 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:02:10 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:02:10 | INFO | logger | Tool batch_tool1 registered successfully
+2025-10-14 22:02:10 | INFO | logger | Tool batch_tool2 registered successfully
+2025-10-14 22:02:10 | INFO | logger | Executing 3 tasks
+2025-10-14 22:02:10 | INFO | logger | Executing task batch_task_1 with tool batch_tool1
+2025-10-14 22:02:10 | INFO | logger | Task batch_task_1 completed successfully in 0.00s
+2025-10-14 22:02:10 | INFO | logger | Executing task batch_task_2 with tool batch_tool2
+2025-10-14 22:02:10 | INFO | logger | Executing task batch_task_3 with tool batch_tool1
+2025-10-14 22:02:10 | INFO | logger | Task batch_task_2 completed successfully in 0.00s
+2025-10-14 22:02:10 | INFO | logger | Task batch_task_3 completed successfully in 0.00s
+2025-10-14 22:02:10 | INFO | logger | Completed 3 tasks with 3 successes
+2025-10-14 22:02:10 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:02:10 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:02:10 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:02:10 | INFO | logger | Tool good_tool registered successfully
+2025-10-14 22:02:10 | INFO | logger | Tool bad_tool registered successfully
+2025-10-14 22:02:10 | INFO | logger | Executing 2 tasks
+2025-10-14 22:02:10 | INFO | logger | Executing task good_task with tool good_tool
+2025-10-14 22:02:10 | INFO | logger | Task good_task completed successfully in 0.00s
+2025-10-14 22:02:10 | INFO | logger | Executing task bad_task with tool bad_tool
+2025-10-14 22:02:10 | ERROR | logger | Task bad_task failed: Mock tool mock_tool failed intentionally
+2025-10-14 22:02:10 | INFO | logger | Completed 2 tasks with 1 successes
+2025-10-14 22:02:10 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:02:10 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:02:10 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:02:10 | INFO | logger | Tool plan_tool registered successfully
+2025-10-14 22:02:10 | INFO | logger | Executing plan test_plan with 2 tasks
+2025-10-14 22:02:10 | INFO | logger | Executing 2 tasks
+2025-10-14 22:02:10 | INFO | logger | Executing task plan_task_1 with tool plan_tool
+2025-10-14 22:02:10 | INFO | logger | Task plan_task_1 completed successfully in 0.00s
+2025-10-14 22:02:10 | INFO | logger | Executing task plan_task_2 with tool plan_tool
+2025-10-14 22:02:10 | INFO | logger | Task plan_task_2 completed successfully in 0.00s
+2025-10-14 22:02:10 | INFO | logger | Completed 2 tasks with 2 successes
+2025-10-14 22:02:10 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:02:10 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:02:10 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:02:10 | INFO | logger | Tool slow_tool registered successfully
+2025-10-14 22:02:10 | INFO | logger | Executing task cancellable_task with tool slow_tool
+2025-10-14 22:02:10 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:02:10 | WARNING | logger | Task nonexistent_task not found in running tasks
+2025-10-14 22:02:10 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:02:10 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:02:10 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:02:10 | INFO | logger | Tool result_tool registered successfully
+2025-10-14 22:02:10 | INFO | logger | Executing task result_task with tool result_tool
+2025-10-14 22:02:10 | INFO | logger | Task result_task completed successfully in 0.00s
+2025-10-14 22:02:10 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:02:10 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:02:10 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:02:10 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:02:10 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:02:10 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:02:10 | INFO | logger | Tool running_tool registered successfully
+2025-10-14 22:02:10 | INFO | logger | Executing task running_task with tool running_tool
+2025-10-14 22:02:10 | INFO | logger | Task running_task completed successfully in 0.00s
+2025-10-14 22:02:10 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:02:10 | INFO | logger | Tool stats_tool registered successfully
+2025-10-14 22:02:10 | INFO | logger | Tool fail_stats_tool registered successfully
+2025-10-14 22:02:10 | INFO | logger | Executing task stats_task_1 with tool stats_tool
+2025-10-14 22:02:10 | INFO | logger | Task stats_task_1 completed successfully in 0.00s
+2025-10-14 22:02:10 | INFO | logger | Executing task stats_task_2 with tool fail_stats_tool
+2025-10-14 22:02:10 | ERROR | logger | Task stats_task_2 failed: Mock tool mock_tool failed intentionally
+2025-10-14 22:02:10 | INFO | logger | Executing task stats_task_3 with tool stats_tool
+2025-10-14 22:02:10 | INFO | logger | Task stats_task_3 completed successfully in 0.00s
+2025-10-14 22:02:10 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:02:10 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:02:10 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:02:10 | INFO | logger | Tool custom_tool registered successfully
+2025-10-14 22:02:10 | INFO | logger | Executing task custom_task with tool custom_tool
+2025-10-14 22:02:10 | INFO | logger | Task custom_task completed successfully in 0.00s
+2025-10-14 22:02:10 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:02:10 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:02:10 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:02:10 | INFO | logger | Tool static_tool registered successfully
+2025-10-14 22:02:10 | INFO | logger | Executing task static_task with tool static_tool
+2025-10-14 22:02:10 | INFO | logger | Task static_task completed successfully in 0.00s
+2025-10-14 22:02:10 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:02:10 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:02:10 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:02:10 | INFO | logger | Tool cleanup_tool registered successfully
+2025-10-14 22:02:10 | INFO | logger | Executing task cleanup_task_1 with tool cleanup_tool
+2025-10-14 22:02:10 | INFO | logger | Task cleanup_task_1 completed successfully in 0.00s
+2025-10-14 22:02:10 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:02:10 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:02:10 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-14 22:02:10 | INFO | logger | Tool engine1_tool registered successfully
+2025-10-14 22:02:10 | INFO | logger | Tool engine2_tool registered successfully
+2025-10-14 22:02:10 | INFO | logger | Executing task task1 with tool engine1_tool
+2025-10-14 22:02:10 | INFO | logger | Task task1 completed successfully in 0.00s
+2025-10-14 22:02:10 | INFO | logger | Executing task task2 with tool engine2_tool
+2025-10-14 22:02:10 | INFO | logger | Task task2 completed successfully in 0.00s
+2025-10-14 22:02:10 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:02:10 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:02:10 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:02:10 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:02:10 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:02:10 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:02:10 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:02:10 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:02:10 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:02:10 | INFO | logger | Tool concurrent_tool registered successfully
+2025-10-14 22:02:10 | INFO | logger | Executing task concurrent_task_0 with tool concurrent_tool
+2025-10-14 22:02:10 | INFO | logger | Executing task concurrent_task_1 with tool concurrent_tool
+2025-10-14 22:02:10 | INFO | logger | Task concurrent_task_0 completed successfully in 0.00s
+2025-10-14 22:02:10 | INFO | logger | Task concurrent_task_1 completed successfully in 0.00s
+2025-10-14 22:02:10 | INFO | logger | Executing task concurrent_task_2 with tool concurrent_tool
+2025-10-14 22:02:10 | INFO | logger | Executing task concurrent_task_3 with tool concurrent_tool
+2025-10-14 22:02:10 | INFO | logger | Task concurrent_task_2 completed successfully in 0.00s
+2025-10-14 22:02:10 | INFO | logger | Task concurrent_task_3 completed successfully in 0.00s
+2025-10-14 22:02:10 | INFO | logger | Executing task concurrent_task_4 with tool concurrent_tool
+2025-10-14 22:02:10 | INFO | logger | Task concurrent_task_4 completed successfully in 0.00s
+2025-10-14 22:02:10 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:02:10 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:02:10 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:02:10 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:02:10 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:02:10 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:02:11 | INFO | logger | Task cancellable_task completed successfully in 1.01s
+2025-10-14 22:02:11 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:03:24 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:03:24 | INFO | logger | Tool running_tool registered successfully
+2025-10-14 22:03:24 | INFO | logger | Executing task running_task with tool running_tool
+2025-10-14 22:03:24 | INFO | logger | Task running_task completed successfully in 0.11s
+2025-10-14 22:03:24 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:03:24 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:03:40 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:03:40 | INFO | logger | Tool cleanup_tool registered successfully
+2025-10-14 22:03:40 | INFO | logger | Executing task cleanup_task_1 with tool cleanup_tool
+2025-10-14 22:03:40 | INFO | logger | Executing task cleanup_task_2 with tool cleanup_tool
+2025-10-14 22:03:40 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:03:40 | INFO | logger | Task cleanup_task_1 completed successfully in 0.10s
+2025-10-14 22:03:40 | INFO | logger | Task cleanup_task_2 completed successfully in 0.11s
+2025-10-14 22:03:40 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:03:40 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:03:40 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:03:47 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:03:47 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:03:47 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:03:47 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:03:47 | INFO | logger | Tool test_tool registered successfully
+2025-10-14 22:03:47 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:03:47 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:03:47 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:03:47 | INFO | logger | Tool duplicate_tool registered successfully
+2025-10-14 22:03:47 | WARNING | logger | Tool duplicate_tool already registered, updating...
+2025-10-14 22:03:47 | INFO | logger | Tool duplicate_tool registered successfully
+2025-10-14 22:03:47 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:03:47 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:03:47 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:03:47 | INFO | logger | Tool temp_tool registered successfully
+2025-10-14 22:03:47 | INFO | logger | Tool temp_tool unregistered successfully
+2025-10-14 22:03:47 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:03:47 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:03:47 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:03:47 | WARNING | logger | Tool nonexistent_tool not found
+2025-10-14 22:03:47 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:03:47 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:03:47 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:03:47 | INFO | logger | Tool tool1 registered successfully
+2025-10-14 22:03:47 | INFO | logger | Tool tool2 registered successfully
+2025-10-14 22:03:47 | INFO | logger | Tool tool3 registered successfully
+2025-10-14 22:03:47 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:03:47 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:03:47 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:03:47 | INFO | logger | Tool info_tool registered successfully
+2025-10-14 22:03:47 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:03:47 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:03:47 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:03:47 | INFO | logger | Tool success_tool registered successfully
+2025-10-14 22:03:47 | INFO | logger | Executing task test_task_1 with tool success_tool
+2025-10-14 22:03:47 | INFO | logger | Task test_task_1 completed successfully in 0.00s
+2025-10-14 22:03:47 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:03:47 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:03:47 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:03:47 | INFO | logger | Tool fail_tool registered successfully
+2025-10-14 22:03:47 | INFO | logger | Executing task test_task_2 with tool fail_tool
+2025-10-14 22:03:47 | ERROR | logger | Task test_task_2 failed: Mock tool mock_tool failed intentionally
+2025-10-14 22:03:47 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:03:47 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:03:47 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:03:47 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:03:47 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:03:47 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:03:47 | INFO | logger | Tool async_tool registered successfully
+2025-10-14 22:03:47 | INFO | logger | Executing task async_task_1 with tool async_tool
+2025-10-14 22:03:47 | INFO | logger | Task async_task_1 completed successfully in 0.00s
+2025-10-14 22:03:47 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:03:47 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:03:47 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:03:47 | INFO | logger | Tool batch_tool1 registered successfully
+2025-10-14 22:03:47 | INFO | logger | Tool batch_tool2 registered successfully
+2025-10-14 22:03:47 | INFO | logger | Executing 3 tasks
+2025-10-14 22:03:47 | INFO | logger | Executing task batch_task_1 with tool batch_tool1
+2025-10-14 22:03:47 | INFO | logger | Task batch_task_1 completed successfully in 0.00s
+2025-10-14 22:03:47 | INFO | logger | Executing task batch_task_2 with tool batch_tool2
+2025-10-14 22:03:47 | INFO | logger | Task batch_task_2 completed successfully in 0.00s
+2025-10-14 22:03:47 | INFO | logger | Executing task batch_task_3 with tool batch_tool1
+2025-10-14 22:03:47 | INFO | logger | Task batch_task_3 completed successfully in 0.00s
+2025-10-14 22:03:47 | INFO | logger | Completed 3 tasks with 3 successes
+2025-10-14 22:03:47 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:03:47 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:03:47 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:03:47 | INFO | logger | Tool good_tool registered successfully
+2025-10-14 22:03:47 | INFO | logger | Tool bad_tool registered successfully
+2025-10-14 22:03:47 | INFO | logger | Executing 2 tasks
+2025-10-14 22:03:47 | INFO | logger | Executing task good_task with tool good_tool
+2025-10-14 22:03:47 | INFO | logger | Task good_task completed successfully in 0.00s
+2025-10-14 22:03:47 | INFO | logger | Executing task bad_task with tool bad_tool
+2025-10-14 22:03:47 | ERROR | logger | Task bad_task failed: Mock tool mock_tool failed intentionally
+2025-10-14 22:03:47 | INFO | logger | Completed 2 tasks with 1 successes
+2025-10-14 22:03:47 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:03:47 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:03:47 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:03:47 | INFO | logger | Tool plan_tool registered successfully
+2025-10-14 22:03:47 | INFO | logger | Executing plan test_plan with 2 tasks
+2025-10-14 22:03:47 | INFO | logger | Executing 2 tasks
+2025-10-14 22:03:47 | INFO | logger | Executing task plan_task_1 with tool plan_tool
+2025-10-14 22:03:47 | INFO | logger | Task plan_task_1 completed successfully in 0.00s
+2025-10-14 22:03:47 | INFO | logger | Executing task plan_task_2 with tool plan_tool
+2025-10-14 22:03:47 | INFO | logger | Task plan_task_2 completed successfully in 0.00s
+2025-10-14 22:03:47 | INFO | logger | Completed 2 tasks with 2 successes
+2025-10-14 22:03:47 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:03:47 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:03:47 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:03:47 | INFO | logger | Tool slow_tool registered successfully
+2025-10-14 22:03:47 | INFO | logger | Executing task cancellable_task with tool slow_tool
+2025-10-14 22:03:47 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:03:47 | WARNING | logger | Task nonexistent_task not found in running tasks
+2025-10-14 22:03:47 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:03:47 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:03:47 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:03:47 | INFO | logger | Tool result_tool registered successfully
+2025-10-14 22:03:47 | INFO | logger | Executing task result_task with tool result_tool
+2025-10-14 22:03:47 | INFO | logger | Task result_task completed successfully in 0.00s
+2025-10-14 22:03:47 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:03:47 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:03:47 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:03:47 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:03:47 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:03:47 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:03:47 | INFO | logger | Tool running_tool registered successfully
+2025-10-14 22:03:47 | INFO | logger | Executing task running_task with tool running_tool
+2025-10-14 22:03:47 | INFO | logger | Task running_task completed successfully in 0.11s
+2025-10-14 22:03:47 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:03:47 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:03:47 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:03:47 | INFO | logger | Tool stats_tool registered successfully
+2025-10-14 22:03:47 | INFO | logger | Tool fail_stats_tool registered successfully
+2025-10-14 22:03:47 | INFO | logger | Executing task stats_task_1 with tool stats_tool
+2025-10-14 22:03:47 | INFO | logger | Task stats_task_1 completed successfully in 0.00s
+2025-10-14 22:03:47 | INFO | logger | Executing task stats_task_2 with tool fail_stats_tool
+2025-10-14 22:03:47 | ERROR | logger | Task stats_task_2 failed: Mock tool mock_tool failed intentionally
+2025-10-14 22:03:47 | INFO | logger | Executing task stats_task_3 with tool stats_tool
+2025-10-14 22:03:47 | INFO | logger | Task stats_task_3 completed successfully in 0.00s
+2025-10-14 22:03:47 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:03:47 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:03:47 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:03:47 | INFO | logger | Tool custom_tool registered successfully
+2025-10-14 22:03:47 | INFO | logger | Executing task custom_task with tool custom_tool
+2025-10-14 22:03:47 | INFO | logger | Task custom_task completed successfully in 0.00s
+2025-10-14 22:03:47 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:03:47 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:03:47 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:03:47 | INFO | logger | Tool static_tool registered successfully
+2025-10-14 22:03:47 | INFO | logger | Executing task static_task with tool static_tool
+2025-10-14 22:03:47 | INFO | logger | Task static_task completed successfully in 0.00s
+2025-10-14 22:03:47 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:03:47 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:03:47 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:03:47 | INFO | logger | Tool cleanup_tool registered successfully
+2025-10-14 22:03:47 | INFO | logger | Executing task cleanup_task_1 with tool cleanup_tool
+2025-10-14 22:03:47 | INFO | logger | Executing task cleanup_task_2 with tool cleanup_tool
+2025-10-14 22:03:47 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:03:47 | INFO | logger | Task cleanup_task_1 completed successfully in 0.11s
+2025-10-14 22:03:47 | INFO | logger | Task cleanup_task_2 completed successfully in 0.11s
+2025-10-14 22:03:47 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:03:47 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:03:47 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:03:47 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:03:47 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-14 22:03:47 | INFO | logger | Tool engine1_tool registered successfully
+2025-10-14 22:03:47 | INFO | logger | Tool engine2_tool registered successfully
+2025-10-14 22:03:47 | INFO | logger | Executing task task1 with tool engine1_tool
+2025-10-14 22:03:47 | INFO | logger | Task task1 completed successfully in 0.00s
+2025-10-14 22:03:47 | INFO | logger | Executing task task2 with tool engine2_tool
+2025-10-14 22:03:47 | INFO | logger | Task task2 completed successfully in 0.00s
+2025-10-14 22:03:47 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:03:47 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:03:47 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:03:47 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:03:47 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:03:47 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:03:47 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:03:47 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:03:47 | INFO | logger | ExecutionEngine initialized with 2 workers
+2025-10-14 22:03:47 | INFO | logger | Tool concurrent_tool registered successfully
+2025-10-14 22:03:47 | INFO | logger | Executing task concurrent_task_0 with tool concurrent_tool
+2025-10-14 22:03:47 | INFO | logger | Task concurrent_task_0 completed successfully in 0.00s
+2025-10-14 22:03:47 | INFO | logger | Executing task concurrent_task_1 with tool concurrent_tool
+2025-10-14 22:03:47 | INFO | logger | Task concurrent_task_1 completed successfully in 0.00s
+2025-10-14 22:03:47 | INFO | logger | Executing task concurrent_task_2 with tool concurrent_tool
+2025-10-14 22:03:47 | INFO | logger | Task concurrent_task_2 completed successfully in 0.00s
+2025-10-14 22:03:47 | INFO | logger | Executing task concurrent_task_3 with tool concurrent_tool
+2025-10-14 22:03:47 | INFO | logger | Task concurrent_task_3 completed successfully in 0.00s
+2025-10-14 22:03:47 | INFO | logger | Executing task concurrent_task_4 with tool concurrent_tool
+2025-10-14 22:03:47 | INFO | logger | Task concurrent_task_4 completed successfully in 0.00s
+2025-10-14 22:03:47 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:03:47 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:03:48 | INFO | logger | Task cancellable_task completed successfully in 1.01s
+2025-10-14 22:03:48 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:10:26 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-14 22:10:26 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-14 22:10:26 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-14 22:10:26 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-14 22:10:26 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-14 22:10:26 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-14 22:10:26 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-14 22:10:26 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-14 22:10:26 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-14 22:10:26 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-14 22:10:26 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:10:26 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:10:26 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-14 22:10:26 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-14 22:10:26 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-14 22:10:26 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-14 22:10:26 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-14 22:10:26 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-14 22:10:26 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-14 22:10:26 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-14 22:10:26 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-14 22:10:26 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-14 22:10:26 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:10:26 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:10:26 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:10:26 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:10:26 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:10:26 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:10:26 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-14 22:10:26 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-14 22:10:26 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-14 22:10:26 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-14 22:10:26 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-14 22:10:26 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-14 22:10:26 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-14 22:10:26 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-14 22:10:26 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-14 22:10:26 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-14 22:10:26 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:10:26 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:10:26 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:10:26 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:10:56 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-14 22:10:56 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-14 22:10:56 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-14 22:10:56 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-14 22:10:56 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-14 22:10:56 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-14 22:10:56 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:10:56 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:11:01 | INFO | logger | StaticAnalysisReportGenerator initialized
+2025-10-14 22:11:39 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-14 22:11:39 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-14 22:11:39 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-14 22:11:39 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-14 22:11:39 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-14 22:11:39 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-14 22:11:39 | INFO | logger | StaticAnalysisReportGenerator initialized
+2025-10-14 22:11:39 | INFO | logger | Starting static analysis for 2 files
+2025-10-14 22:11:39 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphq5z7cqz/test_project/good_code.py
+2025-10-14 22:11:39 | INFO | logger | Executing 4 tasks
+2025-10-14 22:11:39 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphq5z7cqz/test_project/good_code.py with tool ast_analysis
+2025-10-14 22:11:39 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphq5z7cqz/test_project/good_code.py with tool pylint_analysis
+2025-10-14 22:11:39 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphq5z7cqz/test_project/good_code.py with tool flake8_analysis
+2025-10-14 22:11:39 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphq5z7cqz/test_project/good_code.py with tool bandit_analysis
+2025-10-14 22:11:39 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphq5z7cqz/test_project/good_code.py completed successfully in 0.00s
+2025-10-14 22:11:39 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphq5z7cqz/test_project/good_code.py completed successfully in 0.11s
+2025-10-14 22:11:39 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphq5z7cqz/test_project/good_code.py completed successfully in 0.15s
+2025-10-14 22:11:40 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphq5z7cqz/test_project/good_code.py completed successfully in 0.30s
+2025-10-14 22:11:40 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-14 22:11:40 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphq5z7cqz/test_project/good_code.py: 4 issues in 0.30s
+2025-10-14 22:11:40 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphq5z7cqz/test_project/bad_code.py
+2025-10-14 22:11:40 | INFO | logger | Executing 4 tasks
+2025-10-14 22:11:40 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphq5z7cqz/test_project/bad_code.py with tool ast_analysis
+2025-10-14 22:11:40 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphq5z7cqz/test_project/bad_code.py with tool pylint_analysis
+2025-10-14 22:11:40 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphq5z7cqz/test_project/bad_code.py with tool flake8_analysis
+2025-10-14 22:11:40 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphq5z7cqz/test_project/bad_code.py with tool bandit_analysis
+2025-10-14 22:11:40 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphq5z7cqz/test_project/bad_code.py completed successfully in 0.00s
+2025-10-14 22:11:40 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphq5z7cqz/test_project/bad_code.py completed successfully in 0.08s
+2025-10-14 22:11:40 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphq5z7cqz/test_project/bad_code.py completed successfully in 0.10s
+2025-10-14 22:11:40 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphq5z7cqz/test_project/bad_code.py completed successfully in 0.41s
+2025-10-14 22:11:40 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-14 22:11:40 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphq5z7cqz/test_project/bad_code.py: 21 issues in 0.41s
+2025-10-14 22:11:40 | INFO | logger | Generating json report for 2 files
+2025-10-14 22:11:40 | INFO | logger | Merged 2 analysis results with 25 total issues
+2025-10-14 22:11:40 | INFO | logger | Generated json report with 25 issues
+2025-10-14 22:12:10 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-14 22:12:10 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-14 22:12:10 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-14 22:12:10 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-14 22:12:10 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-14 22:12:10 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-14 22:12:10 | INFO | logger | StaticAnalysisReportGenerator initialized
+2025-10-14 22:12:10 | INFO | logger | Starting static analysis for 2 files
+2025-10-14 22:12:10 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp7stvp_2_/test_project/good_code.py
+2025-10-14 22:12:10 | INFO | logger | Executing 4 tasks
+2025-10-14 22:12:10 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp7stvp_2_/test_project/good_code.py with tool ast_analysis
+2025-10-14 22:12:10 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp7stvp_2_/test_project/good_code.py with tool pylint_analysis
+2025-10-14 22:12:10 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp7stvp_2_/test_project/good_code.py with tool flake8_analysis
+2025-10-14 22:12:10 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp7stvp_2_/test_project/good_code.py with tool bandit_analysis
+2025-10-14 22:12:10 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp7stvp_2_/test_project/good_code.py completed successfully in 0.00s
+2025-10-14 22:12:10 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp7stvp_2_/test_project/good_code.py completed successfully in 0.09s
+2025-10-14 22:12:10 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp7stvp_2_/test_project/good_code.py completed successfully in 0.13s
+2025-10-14 22:12:11 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp7stvp_2_/test_project/good_code.py completed successfully in 0.28s
+2025-10-14 22:12:11 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-14 22:12:11 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp7stvp_2_/test_project/good_code.py: 4 issues in 0.28s
+2025-10-14 22:12:11 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp7stvp_2_/test_project/bad_code.py
+2025-10-14 22:12:11 | INFO | logger | Executing 4 tasks
+2025-10-14 22:12:11 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp7stvp_2_/test_project/bad_code.py with tool ast_analysis
+2025-10-14 22:12:11 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp7stvp_2_/test_project/bad_code.py with tool pylint_analysis
+2025-10-14 22:12:11 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp7stvp_2_/test_project/bad_code.py with tool flake8_analysis
+2025-10-14 22:12:11 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp7stvp_2_/test_project/bad_code.py with tool bandit_analysis
+2025-10-14 22:12:11 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp7stvp_2_/test_project/bad_code.py completed successfully in 0.00s
+2025-10-14 22:12:11 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp7stvp_2_/test_project/bad_code.py completed successfully in 0.08s
+2025-10-14 22:12:11 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp7stvp_2_/test_project/bad_code.py completed successfully in 0.10s
+2025-10-14 22:12:11 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp7stvp_2_/test_project/bad_code.py completed successfully in 0.40s
+2025-10-14 22:12:11 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-14 22:12:11 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp7stvp_2_/test_project/bad_code.py: 21 issues in 0.40s
+2025-10-14 22:12:11 | INFO | logger | Generating json report for 2 files
+2025-10-14 22:12:11 | INFO | logger | Merged 2 analysis results with 25 total issues
+2025-10-14 22:12:11 | INFO | logger | Generated json report with 25 issues
+2025-10-14 22:12:11 | INFO | logger | Report saved to: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpm1a070ij/end_to_end_report.json
+2025-10-14 22:12:11 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:12:11 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:12:18 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-14 22:12:18 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-14 22:12:18 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-14 22:12:18 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-14 22:12:18 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-14 22:12:18 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-14 22:12:18 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:12:18 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:12:18 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-14 22:12:18 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-14 22:12:18 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-14 22:12:18 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-14 22:12:18 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-14 22:12:18 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-14 22:12:18 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp9u8mfals/test_project/good_code.py
+2025-10-14 22:12:18 | INFO | logger | Executing 4 tasks
+2025-10-14 22:12:18 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp9u8mfals/test_project/good_code.py with tool ast_analysis
+2025-10-14 22:12:18 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp9u8mfals/test_project/good_code.py with tool pylint_analysis
+2025-10-14 22:12:18 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp9u8mfals/test_project/good_code.py with tool flake8_analysis
+2025-10-14 22:12:18 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp9u8mfals/test_project/good_code.py completed successfully in 0.00s
+2025-10-14 22:12:18 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp9u8mfals/test_project/good_code.py with tool bandit_analysis
+2025-10-14 22:12:18 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp9u8mfals/test_project/good_code.py completed successfully in 0.08s
+2025-10-14 22:12:18 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp9u8mfals/test_project/good_code.py completed successfully in 0.10s
+2025-10-14 22:12:18 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp9u8mfals/test_project/good_code.py completed successfully in 0.25s
+2025-10-14 22:12:18 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-14 22:12:18 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp9u8mfals/test_project/good_code.py: 4 issues in 0.25s
+2025-10-14 22:12:18 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:12:18 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:12:18 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-14 22:12:18 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-14 22:12:18 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-14 22:12:18 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-14 22:12:18 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-14 22:12:18 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-14 22:12:18 | INFO | logger | Starting static analysis for 2 files
+2025-10-14 22:12:18 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp6otwkqww/test_project/good_code.py
+2025-10-14 22:12:18 | INFO | logger | Executing 4 tasks
+2025-10-14 22:12:18 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp6otwkqww/test_project/good_code.py with tool ast_analysis
+2025-10-14 22:12:18 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp6otwkqww/test_project/good_code.py with tool pylint_analysis
+2025-10-14 22:12:18 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp6otwkqww/test_project/good_code.py with tool flake8_analysis
+2025-10-14 22:12:18 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp6otwkqww/test_project/good_code.py with tool bandit_analysis
+2025-10-14 22:12:18 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp6otwkqww/test_project/good_code.py completed successfully in 0.00s
+2025-10-14 22:12:18 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp6otwkqww/test_project/good_code.py completed successfully in 0.08s
+2025-10-14 22:12:18 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp6otwkqww/test_project/good_code.py completed successfully in 0.10s
+2025-10-14 22:12:18 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp6otwkqww/test_project/good_code.py completed successfully in 0.25s
+2025-10-14 22:12:18 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-14 22:12:18 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp6otwkqww/test_project/good_code.py: 4 issues in 0.25s
+2025-10-14 22:12:18 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp6otwkqww/test_project/bad_code.py
+2025-10-14 22:12:18 | INFO | logger | Executing 4 tasks
+2025-10-14 22:12:18 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp6otwkqww/test_project/bad_code.py with tool ast_analysis
+2025-10-14 22:12:18 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp6otwkqww/test_project/bad_code.py with tool pylint_analysis
+2025-10-14 22:12:18 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp6otwkqww/test_project/bad_code.py with tool flake8_analysis
+2025-10-14 22:12:18 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp6otwkqww/test_project/bad_code.py with tool bandit_analysis
+2025-10-14 22:12:18 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp6otwkqww/test_project/bad_code.py completed successfully in 0.00s
+2025-10-14 22:12:18 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp6otwkqww/test_project/bad_code.py completed successfully in 0.08s
+2025-10-14 22:12:18 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp6otwkqww/test_project/bad_code.py completed successfully in 0.10s
+2025-10-14 22:12:18 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp6otwkqww/test_project/bad_code.py completed successfully in 0.39s
+2025-10-14 22:12:18 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-14 22:12:18 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp6otwkqww/test_project/bad_code.py: 21 issues in 0.39s
+2025-10-14 22:12:18 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:12:18 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:12:18 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-14 22:12:18 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-14 22:12:18 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-14 22:12:18 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-14 22:12:18 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-14 22:12:18 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-14 22:12:18 | INFO | logger | Updated enabled tools: ['ast', 'flake8']
+2025-10-14 22:12:18 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:12:18 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:12:18 | INFO | logger | StaticAnalysisReportGenerator initialized
+2025-10-14 22:12:18 | INFO | logger | StaticAnalysisReportGenerator initialized
+2025-10-14 22:12:18 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-14 22:12:18 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-14 22:12:18 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-14 22:12:18 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-14 22:12:18 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-14 22:12:18 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-14 22:12:18 | INFO | logger | Starting static analysis for 2 files
+2025-10-14 22:12:18 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp90jli_qp/test_project/good_code.py
+2025-10-14 22:12:18 | INFO | logger | Executing 4 tasks
+2025-10-14 22:12:18 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp90jli_qp/test_project/good_code.py with tool ast_analysis
+2025-10-14 22:12:18 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp90jli_qp/test_project/good_code.py with tool pylint_analysis
+2025-10-14 22:12:18 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp90jli_qp/test_project/good_code.py with tool flake8_analysis
+2025-10-14 22:12:18 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp90jli_qp/test_project/good_code.py with tool bandit_analysis
+2025-10-14 22:12:18 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp90jli_qp/test_project/good_code.py completed successfully in 0.00s
+2025-10-14 22:12:19 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp90jli_qp/test_project/good_code.py completed successfully in 0.08s
+2025-10-14 22:12:19 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp90jli_qp/test_project/good_code.py completed successfully in 0.10s
+2025-10-14 22:12:19 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp90jli_qp/test_project/good_code.py completed successfully in 0.26s
+2025-10-14 22:12:19 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-14 22:12:19 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp90jli_qp/test_project/good_code.py: 4 issues in 0.26s
+2025-10-14 22:12:19 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp90jli_qp/test_project/bad_code.py
+2025-10-14 22:12:19 | INFO | logger | Executing 4 tasks
+2025-10-14 22:12:19 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp90jli_qp/test_project/bad_code.py with tool ast_analysis
+2025-10-14 22:12:19 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp90jli_qp/test_project/bad_code.py with tool pylint_analysis
+2025-10-14 22:12:19 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp90jli_qp/test_project/bad_code.py with tool flake8_analysis
+2025-10-14 22:12:19 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp90jli_qp/test_project/bad_code.py with tool bandit_analysis
+2025-10-14 22:12:19 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp90jli_qp/test_project/bad_code.py completed successfully in 0.00s
+2025-10-14 22:12:19 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp90jli_qp/test_project/bad_code.py completed successfully in 0.08s
+2025-10-14 22:12:19 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp90jli_qp/test_project/bad_code.py completed successfully in 0.10s
+2025-10-14 22:12:19 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp90jli_qp/test_project/bad_code.py completed successfully in 0.40s
+2025-10-14 22:12:19 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-14 22:12:19 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp90jli_qp/test_project/bad_code.py: 21 issues in 0.40s
+2025-10-14 22:12:19 | INFO | logger | Merged 2 analysis results with 25 total issues
+2025-10-14 22:12:19 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:12:19 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:12:19 | INFO | logger | StaticAnalysisReportGenerator initialized
+2025-10-14 22:12:19 | INFO | logger | StaticAnalysisReportGenerator initialized
+2025-10-14 22:12:19 | INFO | logger | StaticAnalysisReportGenerator initialized
+2025-10-14 22:12:19 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-14 22:12:19 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-14 22:12:19 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-14 22:12:19 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-14 22:12:19 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-14 22:12:19 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-14 22:12:19 | INFO | logger | Starting static analysis for 1 files
+2025-10-14 22:12:19 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpg_146zmr/test_project/bad_code.py
+2025-10-14 22:12:19 | INFO | logger | Executing 4 tasks
+2025-10-14 22:12:19 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpg_146zmr/test_project/bad_code.py with tool ast_analysis
+2025-10-14 22:12:19 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpg_146zmr/test_project/bad_code.py with tool pylint_analysis
+2025-10-14 22:12:19 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpg_146zmr/test_project/bad_code.py with tool flake8_analysis
+2025-10-14 22:12:19 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpg_146zmr/test_project/bad_code.py with tool bandit_analysis
+2025-10-14 22:12:19 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpg_146zmr/test_project/bad_code.py completed successfully in 0.00s
+2025-10-14 22:12:19 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpg_146zmr/test_project/bad_code.py completed successfully in 0.08s
+2025-10-14 22:12:19 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpg_146zmr/test_project/bad_code.py completed successfully in 0.10s
+2025-10-14 22:12:20 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpg_146zmr/test_project/bad_code.py completed successfully in 0.42s
+2025-10-14 22:12:20 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-14 22:12:20 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpg_146zmr/test_project/bad_code.py: 21 issues in 0.42s
+2025-10-14 22:12:20 | INFO | logger | Generating json report for 1 files
+2025-10-14 22:12:20 | INFO | logger | Merged 1 analysis results with 21 total issues
+2025-10-14 22:12:20 | INFO | logger | Generated json report with 21 issues
+2025-10-14 22:12:20 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:12:20 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:12:20 | INFO | logger | StaticAnalysisReportGenerator initialized
+2025-10-14 22:12:20 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-14 22:12:20 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-14 22:12:20 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-14 22:12:20 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-14 22:12:20 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-14 22:12:20 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-14 22:12:20 | INFO | logger | Starting static analysis for 1 files
+2025-10-14 22:12:20 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpea0klwao/test_project/bad_code.py
+2025-10-14 22:12:20 | INFO | logger | Executing 4 tasks
+2025-10-14 22:12:20 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpea0klwao/test_project/bad_code.py with tool ast_analysis
+2025-10-14 22:12:20 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpea0klwao/test_project/bad_code.py with tool pylint_analysis
+2025-10-14 22:12:20 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpea0klwao/test_project/bad_code.py with tool flake8_analysis
+2025-10-14 22:12:20 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpea0klwao/test_project/bad_code.py with tool bandit_analysis
+2025-10-14 22:12:20 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpea0klwao/test_project/bad_code.py completed successfully in 0.00s
+2025-10-14 22:12:20 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpea0klwao/test_project/bad_code.py completed successfully in 0.08s
+2025-10-14 22:12:20 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpea0klwao/test_project/bad_code.py completed successfully in 0.10s
+2025-10-14 22:12:20 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpea0klwao/test_project/bad_code.py completed successfully in 0.41s
+2025-10-14 22:12:20 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-14 22:12:20 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpea0klwao/test_project/bad_code.py: 21 issues in 0.41s
+2025-10-14 22:12:20 | INFO | logger | Generating summary report for 1 files
+2025-10-14 22:12:20 | INFO | logger | Merged 1 analysis results with 21 total issues
+2025-10-14 22:12:20 | INFO | logger | Generated summary report with 21 issues
+2025-10-14 22:12:20 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:12:20 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:12:20 | INFO | logger | StaticAnalysisReportGenerator initialized
+2025-10-14 22:12:20 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-14 22:12:20 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-14 22:12:20 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-14 22:12:20 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-14 22:12:20 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-14 22:12:20 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-14 22:12:20 | INFO | logger | Starting static analysis for 1 files
+2025-10-14 22:12:20 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpxdo41qev/test_project/good_code.py
+2025-10-14 22:12:20 | INFO | logger | Executing 4 tasks
+2025-10-14 22:12:20 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpxdo41qev/test_project/good_code.py with tool ast_analysis
+2025-10-14 22:12:20 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpxdo41qev/test_project/good_code.py with tool pylint_analysis
+2025-10-14 22:12:20 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpxdo41qev/test_project/good_code.py with tool flake8_analysis
+2025-10-14 22:12:20 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpxdo41qev/test_project/good_code.py with tool bandit_analysis
+2025-10-14 22:12:20 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpxdo41qev/test_project/good_code.py completed successfully in 0.00s
+2025-10-14 22:12:20 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpxdo41qev/test_project/good_code.py completed successfully in 0.08s
+2025-10-14 22:12:20 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpxdo41qev/test_project/good_code.py completed successfully in 0.10s
+2025-10-14 22:12:20 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpxdo41qev/test_project/good_code.py completed successfully in 0.25s
+2025-10-14 22:12:20 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-14 22:12:20 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpxdo41qev/test_project/good_code.py: 4 issues in 0.25s
+2025-10-14 22:12:20 | INFO | logger | Generating json report for 1 files
+2025-10-14 22:12:20 | INFO | logger | Merged 1 analysis results with 4 total issues
+2025-10-14 22:12:20 | INFO | logger | Generated json report with 4 issues
+2025-10-14 22:12:20 | INFO | logger | Report saved to: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpo37xnt8p/test_report.json
+2025-10-14 22:12:20 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:12:20 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:12:20 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-14 22:12:20 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-14 22:12:20 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-14 22:12:20 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-14 22:12:20 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-14 22:12:20 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-14 22:12:20 | INFO | logger | StaticAnalysisReportGenerator initialized
+2025-10-14 22:12:20 | INFO | logger | Starting static analysis for 2 files
+2025-10-14 22:12:20 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4rq7qtsz/test_project/good_code.py
+2025-10-14 22:12:20 | INFO | logger | Executing 4 tasks
+2025-10-14 22:12:20 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4rq7qtsz/test_project/good_code.py with tool ast_analysis
+2025-10-14 22:12:20 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4rq7qtsz/test_project/good_code.py with tool pylint_analysis
+2025-10-14 22:12:20 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4rq7qtsz/test_project/good_code.py with tool flake8_analysis
+2025-10-14 22:12:20 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4rq7qtsz/test_project/good_code.py with tool bandit_analysis
+2025-10-14 22:12:20 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4rq7qtsz/test_project/good_code.py completed successfully in 0.00s
+2025-10-14 22:12:20 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4rq7qtsz/test_project/good_code.py completed successfully in 0.08s
+2025-10-14 22:12:20 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4rq7qtsz/test_project/good_code.py completed successfully in 0.10s
+2025-10-14 22:12:20 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4rq7qtsz/test_project/good_code.py completed successfully in 0.25s
+2025-10-14 22:12:20 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-14 22:12:20 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4rq7qtsz/test_project/good_code.py: 4 issues in 0.25s
+2025-10-14 22:12:20 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4rq7qtsz/test_project/bad_code.py
+2025-10-14 22:12:20 | INFO | logger | Executing 4 tasks
+2025-10-14 22:12:20 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4rq7qtsz/test_project/bad_code.py with tool ast_analysis
+2025-10-14 22:12:20 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4rq7qtsz/test_project/bad_code.py with tool pylint_analysis
+2025-10-14 22:12:20 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4rq7qtsz/test_project/bad_code.py with tool flake8_analysis
+2025-10-14 22:12:20 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4rq7qtsz/test_project/bad_code.py with tool bandit_analysis
+2025-10-14 22:12:20 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4rq7qtsz/test_project/bad_code.py completed successfully in 0.00s
+2025-10-14 22:12:21 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4rq7qtsz/test_project/bad_code.py completed successfully in 0.08s
+2025-10-14 22:12:21 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4rq7qtsz/test_project/bad_code.py completed successfully in 0.10s
+2025-10-14 22:12:21 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4rq7qtsz/test_project/bad_code.py completed successfully in 0.41s
+2025-10-14 22:12:21 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-14 22:12:21 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4rq7qtsz/test_project/bad_code.py: 21 issues in 0.41s
+2025-10-14 22:12:21 | INFO | logger | Generating json report for 2 files
+2025-10-14 22:12:21 | INFO | logger | Merged 2 analysis results with 25 total issues
+2025-10-14 22:12:21 | INFO | logger | Generated json report with 25 issues
+2025-10-14 22:12:21 | INFO | logger | Report saved to: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpdxe4fxw9/end_to_end_report.json
+2025-10-14 22:12:21 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:12:21 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:12:21 | INFO | logger | StaticAnalysisReportGenerator initialized
+2025-10-14 22:12:21 | INFO | logger | Generating json report for 0 files
+2025-10-14 22:12:21 | INFO | logger | Generated json report with 0 issues
+2025-10-14 22:12:21 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-14 22:12:21 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-14 22:12:21 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-14 22:12:21 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-14 22:12:21 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-14 22:12:21 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-14 22:12:21 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:12:21 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:12:21 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:12:21 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:13:01 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-14 22:13:01 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-14 22:13:01 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-14 22:13:01 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-14 22:13:01 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-14 22:13:01 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-14 22:13:01 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpgkadm_z9/demo_project/example.py
+2025-10-14 22:13:01 | INFO | logger | Executing 4 tasks
+2025-10-14 22:13:01 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpgkadm_z9/demo_project/example.py with tool ast_analysis
+2025-10-14 22:13:01 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpgkadm_z9/demo_project/example.py with tool pylint_analysis
+2025-10-14 22:13:01 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpgkadm_z9/demo_project/example.py with tool flake8_analysis
+2025-10-14 22:13:01 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpgkadm_z9/demo_project/example.py with tool bandit_analysis
+2025-10-14 22:13:01 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpgkadm_z9/demo_project/example.py completed successfully in 0.00s
+2025-10-14 22:13:01 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpgkadm_z9/demo_project/example.py completed successfully in 0.11s
+2025-10-14 22:13:01 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpgkadm_z9/demo_project/example.py completed successfully in 0.14s
+2025-10-14 22:13:02 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpgkadm_z9/demo_project/example.py completed successfully in 0.44s
+2025-10-14 22:13:02 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-14 22:13:02 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpgkadm_z9/demo_project/example.py: 17 issues in 0.44s
+2025-10-14 22:13:02 | INFO | logger | StaticAnalysisReportGenerator initialized
+2025-10-14 22:13:02 | INFO | logger | Generating json report for 1 files
+2025-10-14 22:13:02 | INFO | logger | Merged 1 analysis results with 17 total issues
+2025-10-14 22:13:02 | INFO | logger | Generated json report with 17 issues
+2025-10-14 22:13:02 | INFO | logger | Report saved to: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpgkadm_z9/reports/static_analysis_report.json
+2025-10-14 22:13:02 | INFO | logger | Report saved to: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpgkadm_z9/reports/static_analysis_report.txt
+2025-10-14 22:13:02 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:13:02 | INFO | logger | Execution engine cleaned up
+2025-10-14 22:13:02 | INFO | logger | Cleaning up execution engine
+2025-10-14 22:13:02 | INFO | logger | Execution engine cleaned up
