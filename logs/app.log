@@ -1503,3 +1503,143 @@
 2025-10-14 11:54:01 | INFO | logger | Creating execution plan for mode: static
 2025-10-14 11:54:01 | INFO | logger | Created execution plan plan_713daf7d with 0 tasks
 2025-10-14 11:54:01 | INFO | logger | Plan validation passed
+2025-10-14 20:04:03 | INFO | logger | FileSelector initialized
+2025-10-14 20:04:03 | INFO | logger | FileSelector initialized
+2025-10-14 20:04:03 | INFO | logger | FileSelector initialized
+2025-10-14 20:04:03 | INFO | logger | FileSelector initialized
+2025-10-14 20:04:03 | INFO | logger | FileSelector initialized
+2025-10-14 20:04:03 | INFO | logger | FileSelector initialized
+2025-10-14 20:04:03 | INFO | logger | FileSelector initialized
+2025-10-14 20:04:03 | INFO | logger | FileSelector initialized
+2025-10-14 20:04:03 | INFO | logger | FileSelector initialized
+2025-10-14 20:04:03 | INFO | logger | FileSelector initialized
+2025-10-14 20:04:03 | INFO | logger | FileSelector initialized
+2025-10-14 20:04:03 | INFO | logger | FileSelector initialized
+2025-10-14 20:04:03 | INFO | logger | FileSelector initialized
+2025-10-14 20:04:03 | INFO | logger | FileSelector initialized
+2025-10-14 20:04:03 | INFO | logger | FileSelector initialized
+2025-10-14 20:04:03 | INFO | logger | FileSelector initialized
+2025-10-14 20:04:03 | INFO | logger | FileSelector initialized
+2025-10-14 20:07:12 | INFO | logger | FileSelector initialized
+2025-10-14 20:08:17 | INFO | logger | FileSelector initialized
+2025-10-14 20:08:46 | INFO | logger | FileSelector initialized
+2025-10-14 20:09:51 | INFO | logger | FileSelector initialized
+2025-10-14 20:10:27 | INFO | logger | FileSelector initialized
+2025-10-14 20:10:32 | INFO | logger | FileSelector initialized
+2025-10-14 20:11:15 | INFO | logger | FileSelector initialized
+2025-10-14 20:12:18 | INFO | logger | FileSelector initialized
+2025-10-14 20:12:18 | INFO | logger | FileSelector initialized
+2025-10-14 20:12:18 | INFO | logger | Starting intelligent file selection in: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp31g0grb6/test_project
+2025-10-14 20:12:18 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp31g0grb6/test_project, found 8 files
+2025-10-14 20:12:18 | INFO | logger | Selected 5 files out of 8
+2025-10-14 20:12:18 | INFO | logger | FileSelector initialized
+2025-10-14 20:12:18 | INFO | logger | Starting intelligent file selection in: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpppyzr5_0/test_project
+2025-10-14 20:12:18 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpppyzr5_0/test_project, found 8 files
+2025-10-14 20:12:18 | INFO | logger | Selected 5 files out of 8
+2025-10-14 20:12:18 | INFO | logger | FileSelector initialized
+2025-10-14 20:12:18 | INFO | logger | Starting intelligent file selection in: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpwxnr4l8l/test_project
+2025-10-14 20:12:18 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpwxnr4l8l/test_project, found 8 files
+2025-10-14 20:12:18 | INFO | logger | Selected 2 files out of 8
+2025-10-14 20:12:18 | INFO | logger | FileSelector initialized
+2025-10-14 20:12:18 | INFO | logger | Starting intelligent file selection in: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpxkajg6pe/test_project
+2025-10-14 20:12:18 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpxkajg6pe/test_project, found 8 files
+2025-10-14 20:12:18 | INFO | logger | Selected 3 files out of 8
+2025-10-14 20:12:18 | INFO | logger | FileSelector initialized
+2025-10-14 20:12:18 | INFO | logger | Starting intelligent file selection in: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpykft3ogk/test_project
+2025-10-14 20:12:18 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpykft3ogk/test_project, found 8 files
+2025-10-14 20:12:18 | INFO | logger | Selected 8 files out of 8
+2025-10-14 20:12:18 | INFO | logger | FileSelector initialized
+2025-10-14 20:12:18 | INFO | logger | Starting intelligent file selection in: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp28kkhbzg/test_project
+2025-10-14 20:12:18 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp28kkhbzg/test_project, found 8 files
+2025-10-14 20:12:18 | INFO | logger | Selected 8 files out of 8
+2025-10-14 20:12:18 | INFO | logger | FileSelector initialized
+2025-10-14 20:12:18 | INFO | logger | Starting intelligent file selection in: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp6fre9jkt/test_project
+2025-10-14 20:12:18 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp6fre9jkt/test_project, found 10 files
+2025-10-14 20:12:18 | INFO | logger | Selected 10 files out of 10
+2025-10-14 20:12:18 | INFO | logger | FileSelector initialized
+2025-10-14 20:12:18 | INFO | logger | Starting intelligent file selection in: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmph03y_r5d/test_project
+2025-10-14 20:12:18 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmph03y_r5d/test_project, found 8 files
+2025-10-14 20:12:18 | INFO | logger | Selected 8 files out of 8
+2025-10-14 20:12:18 | INFO | logger | FileSelector initialized
+2025-10-14 20:12:18 | INFO | logger | Starting intelligent file selection in: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpeebs2_5g/test_project
+2025-10-14 20:12:18 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpeebs2_5g/test_project, found 8 files
+2025-10-14 20:12:18 | INFO | logger | Selected 8 files out of 8
+2025-10-14 20:12:18 | INFO | logger | FileSelector initialized
+2025-10-14 20:12:18 | INFO | logger | Starting intelligent file selection in: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpjl_w4cld/test_project
+2025-10-14 20:12:18 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpjl_w4cld/test_project, found 8 files
+2025-10-14 20:12:18 | INFO | logger | Selected 5 files out of 8
+2025-10-14 20:12:18 | INFO | logger | FileSelector initialized
+2025-10-14 20:12:18 | INFO | logger | Starting intelligent file selection in: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp87kl3cxk/test_project
+2025-10-14 20:12:18 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp87kl3cxk/test_project, found 8 files
+2025-10-14 20:12:18 | INFO | logger | Selected 5 files out of 8
+2025-10-14 20:12:18 | INFO | logger | FileSelector initialized
+2025-10-14 20:12:18 | INFO | logger | Starting intelligent file selection in: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpdasg_qwc/test_project
+2025-10-14 20:12:18 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpdasg_qwc/test_project, found 8 files
+2025-10-14 20:12:18 | INFO | logger | Selected 3 files out of 8
+2025-10-14 20:12:18 | INFO | logger | Starting intelligent file selection in: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpdasg_qwc/test_project
+2025-10-14 20:12:18 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpdasg_qwc/test_project, found 8 files
+2025-10-14 20:12:18 | INFO | logger | Selected 8 files out of 8
+2025-10-14 20:12:18 | INFO | logger | FileSelector initialized
+2025-10-14 20:12:18 | INFO | logger | FileSelector initialized
+2025-10-14 20:12:18 | INFO | logger | FileSelector initialized
+2025-10-14 20:12:18 | INFO | logger | FileSelector initialized
+2025-10-14 20:12:41 | INFO | logger | FileSelector initialized
+2025-10-14 20:12:41 | INFO | logger | Starting intelligent file selection in: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpqkh_quwm/test_project
+2025-10-14 20:12:41 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpqkh_quwm/test_project, found 10 files
+2025-10-14 20:12:41 | INFO | logger | Selected 10 files out of 10
+2025-10-14 20:12:46 | INFO | logger | FileSelector initialized
+2025-10-14 20:12:46 | INFO | logger | FileSelector initialized
+2025-10-14 20:12:46 | INFO | logger | Starting intelligent file selection in: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp1fjc9nic/test_project
+2025-10-14 20:12:46 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp1fjc9nic/test_project, found 8 files
+2025-10-14 20:12:46 | INFO | logger | Selected 5 files out of 8
+2025-10-14 20:12:46 | INFO | logger | FileSelector initialized
+2025-10-14 20:12:46 | INFO | logger | Starting intelligent file selection in: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmptn_pbawk/test_project
+2025-10-14 20:12:46 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmptn_pbawk/test_project, found 8 files
+2025-10-14 20:12:46 | INFO | logger | Selected 5 files out of 8
+2025-10-14 20:12:46 | INFO | logger | FileSelector initialized
+2025-10-14 20:12:46 | INFO | logger | Starting intelligent file selection in: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpckynqwq2/test_project
+2025-10-14 20:12:46 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpckynqwq2/test_project, found 8 files
+2025-10-14 20:12:46 | INFO | logger | Selected 2 files out of 8
+2025-10-14 20:12:46 | INFO | logger | FileSelector initialized
+2025-10-14 20:12:46 | INFO | logger | Starting intelligent file selection in: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpy_h3hfia/test_project
+2025-10-14 20:12:46 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpy_h3hfia/test_project, found 8 files
+2025-10-14 20:12:46 | INFO | logger | Selected 3 files out of 8
+2025-10-14 20:12:46 | INFO | logger | FileSelector initialized
+2025-10-14 20:12:46 | INFO | logger | Starting intelligent file selection in: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphmvvjokh/test_project
+2025-10-14 20:12:46 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphmvvjokh/test_project, found 8 files
+2025-10-14 20:12:46 | INFO | logger | Selected 8 files out of 8
+2025-10-14 20:12:46 | INFO | logger | FileSelector initialized
+2025-10-14 20:12:46 | INFO | logger | Starting intelligent file selection in: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpppdgqj6d/test_project
+2025-10-14 20:12:46 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpppdgqj6d/test_project, found 8 files
+2025-10-14 20:12:46 | INFO | logger | Selected 8 files out of 8
+2025-10-14 20:12:46 | INFO | logger | FileSelector initialized
+2025-10-14 20:12:46 | INFO | logger | Starting intelligent file selection in: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpogwmhilh/test_project
+2025-10-14 20:12:46 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpogwmhilh/test_project, found 10 files
+2025-10-14 20:12:46 | INFO | logger | Selected 10 files out of 10
+2025-10-14 20:12:46 | INFO | logger | FileSelector initialized
+2025-10-14 20:12:46 | INFO | logger | Starting intelligent file selection in: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpqtb5p_ag/test_project
+2025-10-14 20:12:46 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpqtb5p_ag/test_project, found 8 files
+2025-10-14 20:12:46 | INFO | logger | Selected 8 files out of 8
+2025-10-14 20:12:46 | INFO | logger | FileSelector initialized
+2025-10-14 20:12:46 | INFO | logger | Starting intelligent file selection in: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpl6ylkj75/test_project
+2025-10-14 20:12:46 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpl6ylkj75/test_project, found 8 files
+2025-10-14 20:12:46 | INFO | logger | Selected 8 files out of 8
+2025-10-14 20:12:46 | INFO | logger | FileSelector initialized
+2025-10-14 20:12:46 | INFO | logger | Starting intelligent file selection in: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp7ip_gb9m/test_project
+2025-10-14 20:12:46 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp7ip_gb9m/test_project, found 8 files
+2025-10-14 20:12:46 | INFO | logger | Selected 5 files out of 8
+2025-10-14 20:12:46 | INFO | logger | FileSelector initialized
+2025-10-14 20:12:46 | INFO | logger | Starting intelligent file selection in: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpoafa9t9d/test_project
+2025-10-14 20:12:46 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpoafa9t9d/test_project, found 8 files
+2025-10-14 20:12:46 | INFO | logger | Selected 5 files out of 8
+2025-10-14 20:12:46 | INFO | logger | FileSelector initialized
+2025-10-14 20:12:46 | INFO | logger | Starting intelligent file selection in: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpzotnhm3g/test_project
+2025-10-14 20:12:46 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpzotnhm3g/test_project, found 8 files
+2025-10-14 20:12:46 | INFO | logger | Selected 3 files out of 8
+2025-10-14 20:12:46 | INFO | logger | Starting intelligent file selection in: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpzotnhm3g/test_project
+2025-10-14 20:12:46 | INFO | logger | Scanned directory /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpzotnhm3g/test_project, found 8 files
+2025-10-14 20:12:46 | INFO | logger | Selected 8 files out of 8
+2025-10-14 20:12:46 | INFO | logger | FileSelector initialized
+2025-10-14 20:12:46 | INFO | logger | FileSelector initialized
+2025-10-14 20:12:46 | INFO | logger | FileSelector initialized
+2025-10-14 20:12:46 | INFO | logger | FileSelector initialized
