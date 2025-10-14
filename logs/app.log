@@ -2762,3 +2762,11 @@
 2025-10-14 22:34:43 | INFO | logger | Generated json deep analysis report
 2025-10-14 22:34:43 | INFO | logger | Deep analysis report saved to: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmph0ny6ba3/reports/deep_analysis_report.json
 2025-10-14 22:34:43 | INFO | logger | Deep analysis report saved to: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmph0ny6ba3/reports/deep_analysis_report.txt
+2025-10-14 22:51:55 | INFO | logger | DiffViewer initialized
+2025-10-14 22:51:55 | INFO | logger | FixConfirmationManager initialized
+2025-10-14 22:56:35 | INFO | logger | DiffViewer initialized
+2025-10-14 22:56:35 | INFO | logger | FixConfirmationManager initialized
+2025-10-14 22:56:35 | ERROR | logger | Failed to analyze change complexity: 'added'
+2025-10-14 22:59:58 | INFO | logger | DiffViewer initialized
+2025-10-14 22:59:58 | INFO | logger | FixConfirmationManager initialized
+2025-10-14 22:59:58 | ERROR | logger | Failed to analyze change complexity: 'added'
