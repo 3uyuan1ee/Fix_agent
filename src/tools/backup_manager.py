@@ -380,10 +380,15 @@ class BackupManager:
 
     def _get_backup_path(self, file_path: Path, backup_id: str) -> Path:
         """获取备份文件路径"""
-        # 保持相对路径结构
-        relative_path = file_path.relative_to(Path.cwd())
-        backup_dir = self.backup_dir / relative_path.parent
-        return backup_dir / f"{relative_path.stem}_{backup_id}{relative_path.suffix}"
+        try:
+            # 尝试保持相对路径结构
+            relative_path = file_path.relative_to(Path.cwd())
+            backup_dir = self.backup_dir / relative_path.parent
+            return backup_dir / f"{relative_path.stem}_{backup_id}{relative_path.suffix}"
+        except ValueError:
+            # 如果文件不在当前工作目录的子路径中，使用文件名
+            backup_dir = self.backup_dir
+            return backup_dir / f"{file_path.stem}_{backup_id}{file_path.suffix}"
 
     def _calculate_file_hash(self, file_path: Path) -> str:
         """计算文件哈希"""

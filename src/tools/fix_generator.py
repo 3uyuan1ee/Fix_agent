@@ -162,13 +162,14 @@ class FixGenerator:
 
             llm_response = await self.llm_client.complete(llm_request)
 
-            # 4. 解析修复建议
-            suggestions = self._parse_fix_suggestions(llm_response.content, request)
+            # 4. 解析LLM响应获取修复建议和完整文件内容
+            suggestions, complete_fixed_content = self._parse_llm_response(llm_response.content, request)
 
-            # 5. 生成完整修复内容
-            complete_fixed_content = self._generate_complete_fixed_content(
-                request.original_content, suggestions
-            )
+            # 5. 如果没有完整文件内容，则生成
+            if not complete_fixed_content:
+                complete_fixed_content = self._generate_complete_fixed_content(
+                    request.original_content, suggestions
+                )
 
             # 6. 构建结果
             result.success = True
@@ -346,6 +347,41 @@ Please provide your response in the following JSON format:
             formatted_issues.append(issue_text)
 
         return "\n".join(formatted_issues)
+
+    def _parse_llm_response(self, llm_response: str, request: FixRequest) -> Tuple[List[FixSuggestion], str]:
+        """解析LLM响应，返回修复建议和完整文件内容"""
+        suggestions = []
+        complete_fixed_content = ""
+
+        try:
+            # 尝试解析JSON格式响应
+            if llm_response.strip().startswith('{'):
+                data = json.loads(llm_response)
+                suggestions = self._parse_json_fixes(data, request)
+                complete_fixed_content = data.get('complete_fixed_file', '')
+                return suggestions, complete_fixed_content
+
+            # 尝试提取JSON部分
+            json_start = llm_response.find('{')
+            json_end = llm_response.rfind('}') + 1
+            if json_start != -1 and json_end > json_start:
+                json_content = llm_response[json_start:json_end]
+                data = json.loads(json_content)
+                suggestions = self._parse_json_fixes(data, request)
+                complete_fixed_content = data.get('complete_fixed_file', '')
+                return suggestions, complete_fixed_content
+
+            # 如果不是JSON格式，尝试解析文本格式
+            suggestions = self._parse_text_fixes(llm_response, request)
+            return suggestions, complete_fixed_content
+
+        except json.JSONDecodeError as e:
+            self.logger.warning(f"Failed to parse JSON fix response: {e}")
+            suggestions = self._parse_text_fixes(llm_response, request)
+            return suggestions, complete_fixed_content
+        except Exception as e:
+            self.logger.error(f"Error parsing LLM response: {e}")
+            return [], ""
 
     def _parse_fix_suggestions(self, llm_response: str, request: FixRequest) -> List[FixSuggestion]:
         """解析LLM响应中的修复建议"""
