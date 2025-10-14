@@ -14,6 +14,8 @@ from .config import LLMConfigManager
 from .http_client import HTTPClient, RetryConfig
 from .openai_provider import OpenAIProvider
 from .anthropic_provider import AnthropicProvider
+from .client import LLMClient, LLMClientConfig
+from .response_parser import LLMResponseParser, ParsedAnalysis, ParseResult
 
 __all__ = [
     'LLMProvider',
@@ -37,5 +39,10 @@ __all__ = [
     'HTTPClient',
     'RetryConfig',
     'OpenAIProvider',
-    'AnthropicProvider'
+    'AnthropicProvider',
+    'LLMClient',
+    'LLMClientConfig',
+    'LLMResponseParser',
+    'ParsedAnalysis',
+    'ParseResult'
 ]
