@@ -12,6 +12,12 @@ from .static_coordinator import StaticAnalysisCoordinator, AnalysisIssue, Static
 from .report_generator import StaticAnalysisReportGenerator
 from .deep_analyzer import DeepAnalyzer, DeepAnalysisRequest, DeepAnalysisResult
 from .deep_report_generator import DeepAnalysisReportGenerator
+from .fix_generator import FixGenerator, FixRequest, FixResult, FixSuggestion
+from .backup_manager import BackupManager, BackupMetadata, BackupResult
+from .diff_viewer import DiffViewer, DiffResult, DiffChunk
+from .fix_confirmation import FixConfirmationManager, ConfirmationRequest, ConfirmationResponse, ConfirmationStatus
+from .fix_executor import FixExecutor, ExecutionResult, ExecutionStatus, BatchExecutionResult
+from .fix_coordinator import FixCoordinator, FixAnalysisRequest, FixProcessResult, BatchFixProcessResult
 
 __all__ = [
     'FileOperations',
@@ -32,5 +38,27 @@ __all__ = [
     'DeepAnalyzer',
     'DeepAnalysisRequest',
     'DeepAnalysisResult',
-    'DeepAnalysisReportGenerator'
+    'DeepAnalysisReportGenerator',
+    'FixGenerator',
+    'FixRequest',
+    'FixResult',
+    'FixSuggestion',
+    'BackupManager',
+    'BackupMetadata',
+    'BackupResult',
+    'DiffViewer',
+    'DiffResult',
+    'DiffChunk',
+    'FixConfirmationManager',
+    'ConfirmationRequest',
+    'ConfirmationResponse',
+    'ConfirmationStatus',
+    'FixExecutor',
+    'ExecutionResult',
+    'ExecutionStatus',
+    'BatchExecutionResult',
+    'FixCoordinator',
+    'FixAnalysisRequest',
+    'FixProcessResult',
+    'BatchFixProcessResult'
 ]
