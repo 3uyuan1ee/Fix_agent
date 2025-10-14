@@ -115,6 +115,11 @@ class HTTPClient:
                     response_data = await self._parse_response(response)
                     return response_data
 
+            except (LLMError, LLMAuthenticationError, LLMRateLimitError, LLMQuotaExceededError) as e:
+                # LLM相关异常不需要重试，直接抛出
+                self.logger.warning(f"LLM error (attempt {attempt + 1}/{self.retry_config.max_retries + 1}): {e}")
+                raise e
+
             except asyncio.TimeoutError as e:
                 self.logger.warning(f"Request timeout (attempt {attempt + 1}/{self.retry_config.max_retries + 1}): {e}")
                 if attempt == self.retry_config.max_retries:
@@ -201,6 +206,11 @@ class HTTPClient:
 
                     return  # 成功完成，退出重试循环
 
+            except (LLMError, LLMAuthenticationError, LLMRateLimitError, LLMQuotaExceededError) as e:
+                # LLM相关异常不需要重试，直接抛出
+                self.logger.warning(f"LLM stream error (attempt {attempt + 1}/{self.retry_config.max_retries + 1}): {e}")
+                raise e
+
             except asyncio.TimeoutError as e:
                 self.logger.warning(f"Stream request timeout (attempt {attempt + 1}/{self.retry_config.max_retries + 1}): {e}")
                 if attempt == self.retry_config.max_retries:
@@ -282,9 +292,9 @@ class HTTPClient:
             # Server-Sent Events格式
             async for line in response.content:
                 if line:
-                    line = line.decode('utf-8').strip()
-                    if line.startswith('data: '):
-                        data_str = line[6:]  # 移除 "data: " 前缀
+                    line_str = line.decode('utf-8').strip()
+                    if line_str.startswith('data: '):
+                        data_str = line_str[6:]  # 移除 "data: " 前缀
                         if data_str == '[DONE]':
                             break
                         try:

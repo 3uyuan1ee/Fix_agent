@@ -229,7 +229,13 @@ class TestHTTPClient:
             mock_response = AsyncMock()
             mock_response.status = 200
             mock_response.headers = {'Content-Type': 'text/event-stream'}
-            mock_response.content.__aiter__ = AsyncMock(return_value=iter(stream_data))
+
+            # 创建正确的异步迭代器模拟
+            async def mock_content_iter():
+                for data in stream_data:
+                    yield data
+
+            mock_response.content = mock_content_iter()
 
             mock_request.return_value.__aenter__.return_value = mock_response
 
@@ -258,7 +264,13 @@ class TestHTTPClient:
             mock_response = AsyncMock()
             mock_response.status = 200
             mock_response.headers = {'Content-Type': 'application/json'}
-            mock_response.content.__aiter__ = AsyncMock(return_value=iter(stream_data))
+
+            # 创建正确的异步迭代器模拟
+            async def mock_content_iter():
+                for data in stream_data:
+                    yield data
+
+            mock_response.content = mock_content_iter()
 
             mock_request.return_value.__aenter__.return_value = mock_response
 
