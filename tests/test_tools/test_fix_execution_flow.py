@@ -89,40 +89,75 @@ class Calculator:
         mock_client = AsyncMock()
 
         # 模拟修复响应
-        mock_response = AsyncMock()
-        mock_response.content = """{
-    "fixes": [
-        {
-            "issue_id": "fix_1",
-            "issue_type": "Hardcoded Credentials",
-            "description": "Hardcoded password found in source code",
-            "location": {"line": 5, "column": 1},
-            "severity": "high",
-            "fixed_code": "# Use environment variable for password\nPASSWORD = os.environ.get('APP_PASSWORD')",
-            "explanation": "Hardcoded passwords should be stored in environment variables",
-            "confidence": 0.95,
-            "tags": ["security", "credentials"]
-        },
-        {
-            "issue_id": "fix_2",
-            "issue_type": "SQL Injection",
-            "description": "SQL injection vulnerability in user input",
-            "location": {"line": 8, "column": 13},
-            "severity": "critical",
-            "fixed_code": "query = \"SELECT * FROM users WHERE id = ?\"",
-            "explanation": "Use parameterized queries to prevent SQL injection",
-            "confidence": 0.98,
-            "tags": ["security", "sql_injection"]
+        mock_response = Mock()
+
+        # 创建语法正确的完整修复文件内容
+        complete_fixed_file = """import os
+import subprocess
+
+# Use environment variable for password
+PASSWORD = os.environ.get('APP_PASSWORD')
+
+def get_user_data(user_id):
+    # SQL injection vulnerability fixed
+    query = "SELECT * FROM users WHERE id = ?"
+    return query
+
+def execute_command(command):
+    # Command injection vulnerability
+    return subprocess.run(command, shell=True, capture_output=True)
+
+class DataProcessor:
+    def __init__(self):
+        self.data = []
+
+    def load_data(self, source):
+        # Unsafe deserialization
+        import pickle
+        with open(source, 'rb') as f:
+            self.data = pickle.load(f)"""
+
+        # 转义换行符
+        escaped_content = complete_fixed_file.replace('\n', '\\n')
+
+        # 构建JSON结构
+        response_data = {
+            "fixes": [
+                {
+                    "issue_id": "fix_1",
+                    "issue_type": "Hardcoded Credentials",
+                    "description": "Hardcoded password found in source code",
+                    "location": {"line": 5, "column": 1},
+                    "severity": "high",
+                    "fixed_code": "# Use environment variable for password\nPASSWORD = os.environ.get('APP_PASSWORD')",
+                    "explanation": "Hardcoded passwords should be stored in environment variables",
+                    "confidence": 0.95,
+                    "tags": ["security", "credentials"]
+                },
+                {
+                    "issue_id": "fix_2",
+                    "issue_type": "SQL Injection",
+                    "description": "SQL injection vulnerability in user input",
+                    "location": {"line": 8, "column": 13},
+                    "severity": "critical",
+                    "fixed_code": "query = \"SELECT * FROM users WHERE id = ?\"",
+                    "explanation": "Use parameterized queries to prevent SQL injection",
+                    "confidence": 0.98,
+                    "tags": ["security", "sql_injection"]
+                }
+            ],
+            "complete_fixed_file": complete_fixed_file,
+            "summary": "Fixed 2 security vulnerabilities: hardcoded credentials and SQL injection",
+            "risk_assessment": "Low risk from these changes, both fixes improve security"
         }
-    ],
-    "complete_fixed_file": "import os\nimport subprocess\n\n# Use environment variable for password\nPASSWORD = os.environ.get('APP_PASSWORD')\n\ndef get_user_data(user_id):\n    # SQL injection vulnerability fixed\n    query = \"SELECT * FROM users WHERE id = ?\"\n    return query\n\ndef execute_command(command):\n    # Command injection vulnerability\n    return subprocess.run(command, shell=True, capture_output=True)\n\nclass DataProcessor:\n    def __init__(self):\n        self.data = []\n    \n    def load_data(self, source):\n        # Unsafe deserialization\n        import pickle\n        with open(source, 'rb') as f:\n            self.data = pickle.load(f)",
-    "summary": "Fixed 2 security vulnerabilities: hardcoded credentials and SQL injection",
-    "risk_assessment": "Low risk from these changes, both fixes improve security"
-}"""
+
+        mock_response.content = json.dumps(response_data)
         mock_response.usage = {"total_tokens": 2500, "prompt_tokens": 1200, "completion_tokens": 1300}
         mock_response.model = "gpt-4"
 
-        mock_client.complete.return_value = mock_response
+        # 设置complete方法返回正确的响应
+        mock_client.complete = AsyncMock(return_value=mock_response)
+
         return mock_client
 
     @pytest.fixture
@@ -155,6 +190,7 @@ class Calculator:
         generator._get_default_fix_system_message = FixGenerator._get_default_fix_system_message.__get__(generator, FixGenerator)
         generator._construct_fix_user_message = FixGenerator._construct_fix_user_message.__get__(generator, FixGenerator)
         generator._format_issues_for_prompt = FixGenerator._format_issues_for_prompt.__get__(generator, FixGenerator)
+        generator._parse_llm_response = FixGenerator._parse_llm_response.__get__(generator, FixGenerator)
         generator._parse_fix_suggestions = FixGenerator._parse_fix_suggestions.__get__(generator, FixGenerator)
         generator._parse_json_fixes = FixGenerator._parse_json_fixes.__get__(generator, FixGenerator)
         generator._generate_complete_fixed_content = FixGenerator._generate_complete_fixed_content.__get__(generator, FixGenerator)
@@ -254,6 +290,7 @@ class Calculator:
         # 绑定真实方法
         coordinator.validate_fix_request = FixCoordinator.validate_fix_request.__get__(coordinator, FixCoordinator)
         coordinator.get_process_statistics = FixCoordinator.get_process_statistics.__get__(coordinator, FixCoordinator)
+        coordinator.get_supported_analysis_types = FixCoordinator.get_supported_analysis_types.__get__(coordinator, FixCoordinator)
 
         return coordinator
 
@@ -578,8 +615,8 @@ class Calculator:
         valid_code = "def test():\n    return 1"
         assert fix_executor._validate_syntax(valid_code, "/test.py") is True
 
-        # 无效代码
-        invalid_code = "def test():\n    return 1\n    # 缺少缩进"
+        # 无效代码 - 真正的语法错误
+        invalid_code = "def test():\n    return 1\n    def unclosed_function():\n        if True:\n            print('hello'"
         assert fix_executor._validate_syntax(invalid_code, "/test.py") is False
 
     # 测试修复流程协调器
