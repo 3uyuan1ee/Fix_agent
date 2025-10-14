@@ -4,11 +4,15 @@ Agent核心模块
 """
 
 from .planner import TaskPlanner, AnalysisMode, UserRequest, Task, ExecutionPlan
+from .file_selector import FileSelector, FileInfo, SelectionCriteria
 
 __all__ = [
     'TaskPlanner',
     'AnalysisMode',
     'UserRequest',
     'Task',
-    'ExecutionPlan'
+    'ExecutionPlan',
+    'FileSelector',
+    'FileInfo',
+    'SelectionCriteria'
 ]
