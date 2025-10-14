@@ -1325,3 +1325,181 @@
 2025-10-14 11:34:01 | INFO | logger | 成功解析LLM响应，发现1个缺陷
 2025-10-14 11:34:01 | WARNING | logger | 部分解析成功，从文本中提取到2个缺陷
 2025-10-14 11:34:01 | INFO | logger | 成功解析LLM响应，发现1个缺陷
+2025-10-14 11:48:26 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:48:26 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:48:26 | INFO | logger | Parsed request: mode=static, target=/test/path, intent=安全漏洞扫描
+2025-10-14 11:48:26 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:48:26 | INFO | logger | Parsed request: mode=deep, target=/test/path, intent=性能优化分析
+2025-10-14 11:48:26 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:48:26 | INFO | logger | Parsed request: mode=fix, target=/test/path, intent=问题修复建议
+2025-10-14 11:48:26 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:48:26 | INFO | logger | Parsed request: mode=static, target=/path/to/project, intent=基础静态分析
+2025-10-14 11:48:26 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:48:26 | INFO | logger | Parsed request: mode=fix, target=/test/path, intent=自动修复问题
+2025-10-14 11:48:26 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:48:26 | INFO | logger | Parsed request: mode=static, target=/test/path/src, intent=基础静态分析
+2025-10-14 11:48:26 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:48:26 | INFO | logger | Creating execution plan for mode: static
+2025-10-14 11:48:26 | INFO | logger | Created execution plan plan_990b27de with 0 tasks
+2025-10-14 11:48:26 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:48:26 | INFO | logger | Creating execution plan for mode: deep
+2025-10-14 11:48:26 | INFO | logger | Created execution plan plan_d4a1a437 with 0 tasks
+2025-10-14 11:48:26 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:48:26 | INFO | logger | Creating execution plan for mode: fix
+2025-10-14 11:48:26 | INFO | logger | Created execution plan plan_22474a6a with 0 tasks
+2025-10-14 11:48:26 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:48:26 | WARNING | logger | Plan validation failed: ['Target path does not exist: /test']
+2025-10-14 11:48:26 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:48:26 | WARNING | logger | Plan validation failed: ['Target path does not exist: /nonexistent/path']
+2025-10-14 11:48:26 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:48:26 | WARNING | logger | Plan validation failed: ['Target path does not exist: /test', 'No tasks in execution plan']
+2025-10-14 11:48:26 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:48:26 | WARNING | logger | Plan validation failed: ['Target path does not exist: /test', 'Task task1 depends on non-existent task nonexistent']
+2025-10-14 11:48:26 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:48:26 | WARNING | logger | Plan validation failed: ['Target path does not exist: /test', 'Task task1 has invalid priority: 0']
+2025-10-14 11:48:26 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:48:26 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:48:27 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:48:27 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:48:27 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:48:27 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:48:27 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:48:27 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:48:27 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:48:27 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:48:27 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:48:27 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:48:27 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:50:18 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:50:18 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:50:18 | INFO | logger | Parsed request: mode=static, target=/test/path, intent=安全漏洞扫描
+2025-10-14 11:50:18 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:50:18 | INFO | logger | Parsed request: mode=deep, target=/test/path, intent=性能优化分析
+2025-10-14 11:50:18 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:50:18 | INFO | logger | Parsed request: mode=fix, target=/test/path, intent=问题修复建议
+2025-10-14 11:50:18 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:50:18 | INFO | logger | Parsed request: mode=static, target=/path/to/project, intent=基础静态分析
+2025-10-14 11:50:18 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:50:18 | INFO | logger | Parsed request: mode=fix, target=/test/path, intent=自动修复问题
+2025-10-14 11:50:18 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:50:18 | INFO | logger | Parsed request: mode=static, target=/test/path/src, intent=基础静态分析
+2025-10-14 11:50:18 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:50:18 | INFO | logger | Creating execution plan for mode: static
+2025-10-14 11:50:18 | INFO | logger | Created execution plan plan_a8b510c7 with 0 tasks
+2025-10-14 11:50:18 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:50:18 | INFO | logger | Creating execution plan for mode: deep
+2025-10-14 11:50:18 | INFO | logger | Created execution plan plan_4cd9f60f with 0 tasks
+2025-10-14 11:50:18 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:50:18 | INFO | logger | Creating execution plan for mode: fix
+2025-10-14 11:50:18 | INFO | logger | Created execution plan plan_51b01aac with 0 tasks
+2025-10-14 11:50:18 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:50:18 | INFO | logger | Plan validation passed
+2025-10-14 11:50:18 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:50:18 | WARNING | logger | Plan validation failed: ['Target path does not exist: /nonexistent/path']
+2025-10-14 11:50:18 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:50:18 | WARNING | logger | Plan validation failed: ['Target path does not exist: /test', 'No tasks in execution plan']
+2025-10-14 11:50:18 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:50:18 | WARNING | logger | Plan validation failed: ['Target path does not exist: /test', 'Task task1 depends on non-existent task nonexistent']
+2025-10-14 11:50:18 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:50:18 | WARNING | logger | Plan validation failed: ['Target path does not exist: /test', 'Task task1 has invalid priority: 0']
+2025-10-14 11:50:18 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:50:18 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:50:18 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:50:18 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:50:18 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:50:18 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:50:18 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:50:18 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:50:18 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:50:18 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:50:18 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:50:18 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:50:18 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:50:40 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:51:32 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:51:32 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:51:32 | INFO | logger | Parsed request: mode=static, target=/test/path, intent=安全漏洞扫描
+2025-10-14 11:51:32 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:51:32 | INFO | logger | Parsed request: mode=deep, target=/test/path, intent=性能优化分析
+2025-10-14 11:51:32 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:51:32 | INFO | logger | Parsed request: mode=fix, target=/test/path, intent=问题修复建议
+2025-10-14 11:51:32 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:51:32 | INFO | logger | Parsed request: mode=static, target=/path/to/project, intent=基础静态分析
+2025-10-14 11:51:32 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:51:32 | INFO | logger | Parsed request: mode=fix, target=/test/path, intent=自动修复问题
+2025-10-14 11:51:32 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:51:32 | INFO | logger | Parsed request: mode=static, target=/test/path/src, intent=基础静态分析
+2025-10-14 11:51:32 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:51:32 | INFO | logger | Creating execution plan for mode: static
+2025-10-14 11:51:32 | INFO | logger | Created execution plan plan_2d913926 with 0 tasks
+2025-10-14 11:51:32 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:51:32 | INFO | logger | Creating execution plan for mode: deep
+2025-10-14 11:51:32 | INFO | logger | Created execution plan plan_facb3fe6 with 0 tasks
+2025-10-14 11:51:32 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:51:32 | INFO | logger | Creating execution plan for mode: fix
+2025-10-14 11:51:32 | INFO | logger | Created execution plan plan_2f244672 with 0 tasks
+2025-10-14 11:51:32 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:51:32 | INFO | logger | Plan validation passed
+2025-10-14 11:51:32 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:51:32 | WARNING | logger | Plan validation failed: ['Target path does not exist: /nonexistent/path']
+2025-10-14 11:51:32 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:51:32 | WARNING | logger | Plan validation failed: ['Target path does not exist: /test', 'No tasks in execution plan']
+2025-10-14 11:51:32 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:51:32 | WARNING | logger | Plan validation failed: ['Target path does not exist: /test', 'Task task1 depends on non-existent task nonexistent']
+2025-10-14 11:51:32 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:51:32 | WARNING | logger | Plan validation failed: ['Target path does not exist: /test', 'Task task1 has invalid priority: 0']
+2025-10-14 11:51:32 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:51:32 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:51:32 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:51:32 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:51:32 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:51:32 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:51:32 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:51:32 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:51:32 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:51:32 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:51:32 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:51:32 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:51:32 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:52:44 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:52:44 | INFO | logger | Parsed request: mode=static, target=/test/path, intent=安全漏洞扫描
+2025-10-14 11:52:44 | INFO | logger | Parsed request: mode=deep, target=/test/path, intent=深度代码分析
+2025-10-14 11:52:44 | INFO | logger | Parsed request: mode=fix, target=/test/path, intent=问题修复建议
+2025-10-14 11:52:44 | INFO | logger | Parsed request: mode=static, target=/test/path, intent=快速检查代码质量
+2025-10-14 11:52:44 | INFO | logger | Parsed request: mode=fix, target=/test/path, intent=问题修复建议
+2025-10-14 11:52:44 | INFO | logger | Parsed request: mode=static, target=/home/user/project, intent=基础静态分析
+2025-10-14 11:52:44 | INFO | logger | Parsed request: mode=deep, target=/current/path, intent=性能优化分析
+2025-10-14 11:52:44 | INFO | logger | Parsed request: mode=fix, target=/current/path, intent=自动修复问题
+2025-10-14 11:52:44 | INFO | logger | Parsed request: mode=static, target=/current/path/src, intent=代码风格检查
+2025-10-14 11:52:44 | INFO | logger | Parsed request: mode=deep, target=/current/path, intent=架构分析
+2025-10-14 11:52:44 | INFO | logger | Creating execution plan for mode: static
+2025-10-14 11:52:44 | INFO | logger | Created execution plan plan_7c5034f4 with 0 tasks
+2025-10-14 11:52:44 | INFO | logger | Creating execution plan for mode: deep
+2025-10-14 11:52:44 | INFO | logger | Created execution plan plan_cef6ea96 with 0 tasks
+2025-10-14 11:52:44 | INFO | logger | Creating execution plan for mode: fix
+2025-10-14 11:52:44 | INFO | logger | Created execution plan plan_8b633e58 with 0 tasks
+2025-10-14 11:52:44 | INFO | logger | Parsed request: mode=static, target=/project/root/src, intent=安全漏洞扫描
+2025-10-14 11:52:44 | INFO | logger | Creating execution plan for mode: static
+2025-10-14 11:52:44 | INFO | logger | Created execution plan plan_67c61333 with 0 tasks
+2025-10-14 11:52:44 | WARNING | logger | Plan validation failed: ['No tasks in execution plan']
+2025-10-14 11:54:01 | INFO | logger | TaskPlanner initialized
+2025-10-14 11:54:01 | INFO | logger | Parsed request: mode=static, target=/test/path, intent=安全漏洞扫描
+2025-10-14 11:54:01 | INFO | logger | Parsed request: mode=deep, target=/test/path, intent=深度代码分析
+2025-10-14 11:54:01 | INFO | logger | Parsed request: mode=fix, target=/test/path, intent=问题修复建议
+2025-10-14 11:54:01 | INFO | logger | Parsed request: mode=static, target=/test/path, intent=快速检查代码质量
+2025-10-14 11:54:01 | INFO | logger | Parsed request: mode=fix, target=/test/path, intent=问题修复建议
+2025-10-14 11:54:01 | INFO | logger | Parsed request: mode=static, target=/home/user/project, intent=基础静态分析
+2025-10-14 11:54:01 | INFO | logger | Parsed request: mode=deep, target=/current/path, intent=性能优化分析
+2025-10-14 11:54:01 | INFO | logger | Parsed request: mode=fix, target=/current/path, intent=自动修复问题
+2025-10-14 11:54:01 | INFO | logger | Parsed request: mode=static, target=/current/path/src, intent=代码风格检查
+2025-10-14 11:54:01 | INFO | logger | Parsed request: mode=deep, target=/current/path, intent=架构分析
+2025-10-14 11:54:01 | INFO | logger | Creating execution plan for mode: static
+2025-10-14 11:54:01 | INFO | logger | Created execution plan plan_1b0cf54a with 0 tasks
+2025-10-14 11:54:01 | INFO | logger | Creating execution plan for mode: deep
+2025-10-14 11:54:01 | INFO | logger | Created execution plan plan_53c30192 with 0 tasks
+2025-10-14 11:54:01 | INFO | logger | Creating execution plan for mode: fix
+2025-10-14 11:54:01 | INFO | logger | Created execution plan plan_9d202483 with 0 tasks
+2025-10-14 11:54:01 | INFO | logger | Parsed request: mode=static, target=/project/root/src, intent=安全漏洞扫描
+2025-10-14 11:54:01 | INFO | logger | Creating execution plan for mode: static
+2025-10-14 11:54:01 | INFO | logger | Created execution plan plan_713daf7d with 0 tasks
+2025-10-14 11:54:01 | INFO | logger | Plan validation passed
