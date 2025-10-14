@@ -1643,3 +1643,55 @@
 2025-10-14 20:12:46 | INFO | logger | FileSelector initialized
 2025-10-14 20:12:46 | INFO | logger | FileSelector initialized
 2025-10-14 20:12:46 | INFO | logger | FileSelector initialized
+2025-10-14 20:27:04 | INFO | logger | TaskPlanner initialized
+2025-10-14 20:27:04 | INFO | logger | Creating execution plan for mode: static
+2025-10-14 20:27:04 | INFO | logger | Created execution plan plan_aaf86cec with 6 tasks
+2025-10-14 20:27:04 | INFO | logger | TaskPlanner initialized
+2025-10-14 20:27:04 | INFO | logger | Creating execution plan for mode: deep
+2025-10-14 20:27:04 | INFO | logger | Created execution plan plan_b2a41bab with 5 tasks
+2025-10-14 20:27:04 | INFO | logger | TaskPlanner initialized
+2025-10-14 20:27:04 | INFO | logger | Creating execution plan for mode: fix
+2025-10-14 20:27:04 | INFO | logger | Created execution plan plan_14af094f with 6 tasks
+2025-10-14 20:27:04 | INFO | logger | TaskPlanner initialized
+2025-10-14 20:27:04 | INFO | logger | Creating execution plan for mode: static
+2025-10-14 20:27:04 | INFO | logger | Created execution plan plan_1cc44b0f with 6 tasks
+2025-10-14 20:27:04 | INFO | logger | TaskPlanner initialized
+2025-10-14 20:27:04 | INFO | logger | Creating execution plan for mode: deep
+2025-10-14 20:27:04 | INFO | logger | Created execution plan plan_c02ec5bb with 5 tasks
+2025-10-14 20:27:04 | INFO | logger | TaskPlanner initialized
+2025-10-14 20:27:04 | INFO | logger | Creating execution plan for mode: static
+2025-10-14 20:27:04 | INFO | logger | Created execution plan plan_1f0cb8a0 with 6 tasks
+2025-10-14 20:27:04 | INFO | logger | TaskPlanner initialized
+2025-10-14 20:27:04 | INFO | logger | TaskPlanner initialized
+2025-10-14 20:27:04 | INFO | logger | Creating execution plan for mode: static
+2025-10-14 20:27:04 | INFO | logger | Created execution plan plan_7fb0d16e with 6 tasks
+2025-10-14 20:27:04 | INFO | logger | Plan validation passed
+2025-10-14 20:27:04 | INFO | logger | TaskPlanner initialized
+2025-10-14 20:27:04 | INFO | logger | Creating execution plan for mode: static
+2025-10-14 20:27:04 | INFO | logger | Created execution plan plan_b8810b37 with 6 tasks
+2025-10-14 20:27:04 | INFO | logger | TaskPlanner initialized
+2025-10-14 20:27:04 | INFO | logger | Creating execution plan for mode: deep
+2025-10-14 20:27:04 | INFO | logger | Created execution plan plan_b76cc4f6 with 5 tasks
+2025-10-14 20:27:04 | INFO | logger | TaskPlanner initialized
+2025-10-14 20:27:04 | INFO | logger | Creating execution plan for mode: static
+2025-10-14 20:27:04 | INFO | logger | Created execution plan plan_e58750d5 with 6 tasks
+2025-10-14 20:27:04 | INFO | logger | Creating execution plan for mode: deep
+2025-10-14 20:27:04 | INFO | logger | Created execution plan plan_cca3bcaf with 5 tasks
+2025-10-14 20:27:04 | INFO | logger | Creating execution plan for mode: fix
+2025-10-14 20:27:04 | INFO | logger | Created execution plan plan_0fe99f0f with 6 tasks
+2025-10-14 20:27:04 | INFO | logger | TaskPlanner initialized
+2025-10-14 20:27:04 | INFO | logger | Creating execution plan for mode: static
+2025-10-14 20:27:04 | INFO | logger | Created execution plan plan_0de3bf73 with 6 tasks
+2025-10-14 20:27:56 | INFO | logger | TaskPlanner initialized
+2025-10-14 20:27:56 | INFO | logger | Parsed request: mode=static, target=/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphpfaa4l2/demo_project, intent=安全漏洞扫描
+2025-10-14 20:27:56 | INFO | logger | Creating execution plan for mode: static
+2025-10-14 20:27:56 | INFO | logger | Created execution plan plan_11d5d05f with 6 tasks
+2025-10-14 20:27:56 | INFO | logger | Parsed request: mode=deep, target=/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphpfaa4l2/demo_project, intent=性能优化分析
+2025-10-14 20:27:56 | INFO | logger | Creating execution plan for mode: deep
+2025-10-14 20:27:56 | INFO | logger | Created execution plan plan_7f3966bc with 5 tasks
+2025-10-14 20:27:56 | INFO | logger | Parsed request: mode=fix, target=/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphpfaa4l2/demo_project, intent=问题修复建议
+2025-10-14 20:27:56 | INFO | logger | Creating execution plan for mode: fix
+2025-10-14 20:27:56 | INFO | logger | Created execution plan plan_a2852604 with 6 tasks
+2025-10-14 20:27:56 | INFO | logger | Plan validation passed
+2025-10-14 20:27:56 | INFO | logger | Plan validation passed
+2025-10-14 20:27:56 | INFO | logger | Plan validation passed

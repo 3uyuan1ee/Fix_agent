@@ -332,19 +332,301 @@ class TaskPlanner:
         tasks = []
 
         if request.mode == AnalysisMode.STATIC:
-            # 静态分析任务 - 暂时返回空列表
-            tasks = []
-
+            tasks = self._create_static_analysis_tasks(request)
         elif request.mode == AnalysisMode.DEEP:
-            # 深度分析任务 - 暂时返回空列表
-            tasks = []
-
+            tasks = self._create_deep_analysis_tasks(request)
         elif request.mode == AnalysisMode.FIX:
-            # 修复分析任务 - 暂时返回空列表
-            tasks = []
+            tasks = self._create_fix_analysis_tasks(request)
 
         self.logger.debug(f"Created {len(tasks)} tasks for {request.mode.value} mode")
         return tasks
+
+    def _create_static_analysis_tasks(self, request: UserRequest) -> List[Task]:
+        """创建静态分析任务序列"""
+        tasks = []
+
+        # 任务1: 文件选择
+        file_selector_task = Task(
+            task_id="static_file_selection",
+            task_type="file_selection",
+            description="选择需要分析的Python文件",
+            priority=1,
+            parameters={
+                "keywords": request.keywords,
+                "max_files": request.options.get("max_files", 100),
+                "target_path": request.target_path
+            }
+        )
+        tasks.append(file_selector_task)
+
+        # 任务2: AST语法分析
+        ast_task = Task(
+            task_id="static_ast_analysis",
+            task_type="ast_analysis",
+            description="执行AST语法分析，检查语法错误和基本结构",
+            priority=2,
+            dependencies=["static_file_selection"],
+            parameters={
+                "check_syntax": True,
+                "extract_structure": True
+            }
+        )
+        tasks.append(ast_task)
+
+        # 任务3: Pylint代码质量检查
+        pylint_task = Task(
+            task_id="static_pylint_analysis",
+            task_type="pylint_analysis",
+            description="执行Pylint代码质量检查",
+            priority=3,
+            dependencies=["static_file_selection"],
+            parameters={
+                "disable_rules": request.options.get("pylint_disable", []),
+                "enable_rules": request.options.get("pylint_enable", [])
+            }
+        )
+        tasks.append(pylint_task)
+
+        # 任务4: Flake8代码风格检查
+        flake8_task = Task(
+            task_id="static_flake8_analysis",
+            task_type="flake8_analysis",
+            description="执行Flake8代码风格检查",
+            priority=3,
+            dependencies=["static_file_selection"],
+            parameters={
+                "max_line_length": request.options.get("max_line_length", 88),
+                "ignore_errors": request.options.get("flake8_ignore", [])
+            }
+        )
+        tasks.append(flake8_task)
+
+        # 任务5: Bandit安全检查
+        bandit_task = Task(
+            task_id="static_bandit_analysis",
+            task_type="bandit_analysis",
+            description="执行Bandit安全漏洞检查",
+            priority=3,
+            dependencies=["static_file_selection"],
+            parameters={
+                "severity_level": request.options.get("security_level", "medium"),
+                "confidence_level": request.options.get("confidence_level", "medium")
+            }
+        )
+        tasks.append(bandit_task)
+
+        # 任务6: 结果合并和报告生成
+        report_task = Task(
+            task_id="static_report_generation",
+            task_type="report_generation",
+            description="合并分析结果并生成综合报告",
+            priority=4,
+            dependencies=["static_ast_analysis", "static_pylint_analysis",
+                         "static_flake8_analysis", "static_bandit_analysis"],
+            parameters={
+                "output_format": request.options.get("output_format", "json"),
+                "sort_by_severity": True,
+                "group_by_file": True
+            }
+        )
+        tasks.append(report_task)
+
+        return tasks
+
+    def _create_deep_analysis_tasks(self, request: UserRequest) -> List[Task]:
+        """创建深度分析任务序列"""
+        tasks = []
+
+        # 任务1: 智能文件选择
+        file_selector_task = Task(
+            task_id="deep_file_selection",
+            task_type="intelligent_file_selection",
+            description="基于用户需求和依赖关系智能选择重要文件",
+            priority=1,
+            parameters={
+                "keywords": request.keywords,
+                "max_files": request.options.get("max_files", 20),
+                "target_path": request.target_path,
+                "analyze_dependencies": True,
+                "prioritize_recent": True
+            }
+        )
+        tasks.append(file_selector_task)
+
+        # 任务2: 文件内容读取和分析
+        content_analysis_task = Task(
+            task_id="deep_content_analysis",
+            task_type="content_analysis",
+            description="深度分析选定文件的内容和结构",
+            priority=2,
+            dependencies=["deep_file_selection"],
+            parameters={
+                "analyze_complexity": True,
+                "extract_patterns": True,
+                "identify_smells": True
+            }
+        )
+        tasks.append(content_analysis_task)
+
+        # 任务3: LLM分析准备
+        llm_prep_task = Task(
+            task_id="deep_llm_preparation",
+            task_type="llm_preparation",
+            description="准备LLM分析的上下文和prompt",
+            priority=3,
+            dependencies=["deep_content_analysis"],
+            parameters={
+                "analysis_type": self._determine_analysis_type(request),
+                "include_context": True,
+                "prompt_template": "deep_analysis"
+            }
+        )
+        tasks.append(llm_prep_task)
+
+        # 任务4: LLM深度分析
+        llm_analysis_task = Task(
+            task_id="deep_llm_analysis",
+            task_type="llm_analysis",
+            description="使用LLM进行深度代码分析",
+            priority=4,
+            dependencies=["deep_llm_preparation"],
+            parameters={
+                "model": request.options.get("model", "gpt-3.5-turbo"),
+                "temperature": request.options.get("temperature", 0.3),
+                "max_tokens": request.options.get("max_tokens", 2000)
+            }
+        )
+        tasks.append(llm_analysis_task)
+
+        # 任务5: 结果整理和格式化
+        result_format_task = Task(
+            task_id="deep_result_formatting",
+            task_type="result_formatting",
+            description="整理和格式化LLM分析结果",
+            priority=5,
+            dependencies=["deep_llm_analysis"],
+            parameters={
+                "output_format": request.options.get("output_format", "structured"),
+                "include_suggestions": True,
+                "include_examples": True
+            }
+        )
+        tasks.append(result_format_task)
+
+        return tasks
+
+    def _create_fix_analysis_tasks(self, request: UserRequest) -> List[Task]:
+        """创建修复分析任务序列"""
+        tasks = []
+
+        # 任务1: 问题检测和分析
+        problem_detection_task = Task(
+            task_id="fix_problem_detection",
+            task_type="problem_detection",
+            description="检测代码中存在的问题",
+            priority=1,
+            parameters={
+                "target_path": request.target_path,
+                "analysis_scope": request.options.get("scope", "all"),
+                "severity_threshold": request.options.get("severity", "medium")
+            }
+        )
+        tasks.append(problem_detection_task)
+
+        # 任务2: 问题分类和优先级排序
+        problem_classification_task = Task(
+            task_id="fix_problem_classification",
+            task_type="problem_classification",
+            description="对检测到的问题进行分类和优先级排序",
+            priority=2,
+            dependencies=["fix_problem_detection"],
+            parameters={
+                "group_by_type": True,
+                "sort_by_priority": True,
+                "auto_fixable_only": request.options.get("auto_fix_only", False)
+            }
+        )
+        tasks.append(problem_classification_task)
+
+        # 任务3: LLM修复建议生成
+        fix_suggestion_task = Task(
+            task_id="fix_suggestion_generation",
+            task_type="fix_suggestion_generation",
+            description="使用LLM生成具体的修复建议和代码",
+            priority=3,
+            dependencies=["fix_problem_classification"],
+            parameters={
+                "include_explanation": True,
+                "include_diff": True,
+                "verify_fix": True
+            }
+        )
+        tasks.append(fix_suggestion_task)
+
+        # 任务4: 用户确认和验证
+        user_confirmation_task = Task(
+            task_id="fix_user_confirmation",
+            task_type="user_confirmation",
+            description="等待用户确认修复操作",
+            priority=4,
+            dependencies=["fix_suggestion_generation"],
+            parameters={
+                "show_diff": True,
+                "show_backup_info": True,
+                "allow_batch_confirmation": request.options.get("batch", False)
+            }
+        )
+        tasks.append(user_confirmation_task)
+
+        # 任务5: 代码修复执行
+        fix_execution_task = Task(
+            task_id="fix_execution",
+            task_type="fix_execution",
+            description="执行代码修复操作",
+            priority=5,
+            dependencies=["fix_user_confirmation"],
+            parameters={
+                "create_backup": True,
+                "apply_fixes": True,
+                "verify_after_fix": True
+            }
+        )
+        tasks.append(fix_execution_task)
+
+        # 任务6: 修复结果报告
+        fix_report_task = Task(
+            task_id="fix_report_generation",
+            task_type="fix_report_generation",
+            description="生成修复结果报告",
+            priority=6,
+            dependencies=["fix_execution"],
+            parameters={
+                "include_summary": True,
+                "include_changes": True,
+                "include_validation": True
+            }
+        )
+        tasks.append(fix_report_task)
+
+        return tasks
+
+    def _determine_analysis_type(self, request: UserRequest) -> str:
+        """确定深度分析的类型"""
+        intent = request.intent.lower()
+        keywords = [k.lower() for k in request.keywords]
+
+        if any(word in intent or word in keywords for word in ['architecture', 'design', '架构', '设计']):
+            return "architecture"
+        elif any(word in intent or word in keywords for word in ['performance', 'optimize', '性能', '优化']):
+            return "performance"
+        elif any(word in intent or word in keywords for word in ['security', 'vulnerability', '安全', '漏洞']):
+            return "security"
+        elif any(word in intent or word in keywords for word in ['maintainability', 'readability', '可维护性', '可读性']):
+            return "maintainability"
+        elif any(word in intent or word in keywords for word in ['refactor', 'cleanup', '重构', '清理']):
+            return "refactor"
+        else:
+            return "comprehensive"
 
     def get_supported_modes(self) -> List[str]:
         """获取支持的分析模式"""
