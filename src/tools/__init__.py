@@ -10,6 +10,8 @@ from .flake8_analyzer import Flake8Analyzer, Flake8AnalysisError
 from .bandit_analyzer import BanditAnalyzer, BanditAnalysisError
 from .static_coordinator import StaticAnalysisCoordinator, AnalysisIssue, StaticAnalysisResult, SeverityLevel
 from .report_generator import StaticAnalysisReportGenerator
+from .deep_analyzer import DeepAnalyzer, DeepAnalysisRequest, DeepAnalysisResult
+from .deep_report_generator import DeepAnalysisReportGenerator
 
 __all__ = [
     'FileOperations',
@@ -26,5 +28,9 @@ __all__ = [
     'AnalysisIssue',
     'StaticAnalysisResult',
     'SeverityLevel',
-    'StaticAnalysisReportGenerator'
+    'StaticAnalysisReportGenerator',
+    'DeepAnalyzer',
+    'DeepAnalysisRequest',
+    'DeepAnalysisResult',
+    'DeepAnalysisReportGenerator'
 ]
