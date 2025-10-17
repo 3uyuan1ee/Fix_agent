@@ -3405,3 +3405,110 @@
 2025-10-16 15:07:27 | INFO | logger | AgentOrchestrator initialized
 2025-10-16 15:07:27 | INFO | logger | Cleaning up execution engine
 2025-10-16 15:07:27 | INFO | logger | Execution engine cleaned up
+2025-10-17 23:20:16 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:20:16 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:20:16 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:20:16 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:20:16 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:20:16 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:20:16 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:20:16 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:20:16 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:20:16 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:20:16 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:20:16 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:20:16 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:20:16 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:21:21 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:21:27 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:21:27 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:21:27 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:21:27 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:21:27 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:21:27 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:21:27 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:21:27 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:21:27 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:21:27 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:21:27 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:21:27 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:21:27 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:21:27 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:21:35 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:21:40 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:22:51 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:23:02 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:23:02 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:23:02 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:23:02 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:23:02 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:23:02 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:23:02 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:23:02 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:23:02 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:23:02 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:23:02 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:23:02 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:23:02 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:23:02 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:23:45 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:23:45 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:23:45 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:23:45 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:23:45 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:23:45 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:23:45 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:23:45 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:23:45 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:23:45 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:23:45 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:23:45 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:23:45 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:23:45 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:24:42 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:24:42 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:24:42 | INFO | logger | RequestRouter initialized
+2025-10-17 23:24:42 | INFO | logger | Routing request: 静态分析 src/ 目录...
+2025-10-17 23:24:42 | INFO | logger | Recognized mode: static (confidence: 0.70)
+2025-10-17 23:24:42 | ERROR | logger | Error routing request: name 'SessionState' is not defined
+2025-10-17 23:24:42 | INFO | logger | Routing request: 深度分析项目的架构设计...
+2025-10-17 23:24:42 | INFO | logger | Recognized mode: deep (confidence: 1.00)
+2025-10-17 23:24:42 | ERROR | logger | Error routing request: name 'SessionState' is not defined
+2025-10-17 23:24:42 | INFO | logger | Routing request: 修复代码中的安全问题...
+2025-10-17 23:24:42 | INFO | logger | Recognized mode: fix (confidence: 0.90)
+2025-10-17 23:24:42 | ERROR | logger | Error routing request: name 'SessionState' is not defined
+2025-10-17 23:24:42 | INFO | logger | Routing request: 分析代码...
+2025-10-17 23:24:42 | INFO | logger | Recognized mode: deep (confidence: 0.70)
+2025-10-17 23:24:42 | ERROR | logger | Error routing request: name 'SessionState' is not defined
+2025-10-17 23:24:42 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:24:42 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:25:04 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:25:04 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:25:04 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:25:04 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:25:04 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:25:04 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:25:04 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:25:04 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:25:04 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:25:04 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:25:04 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:25:04 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:25:04 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:25:04 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:25:40 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:25:40 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:25:40 | INFO | logger | RequestRouter initialized
+2025-10-17 23:25:40 | INFO | logger | Routing request: 静态分析 src/ 目录...
+2025-10-17 23:25:40 | INFO | logger | Recognized mode: static (confidence: 0.70)
+2025-10-17 23:25:40 | INFO | logger | Routing request: 深度分析项目的架构设计...
+2025-10-17 23:25:40 | INFO | logger | Recognized mode: deep (confidence: 1.00)
+2025-10-17 23:25:40 | ERROR | logger | Error routing request: name 'SessionState' is not defined
+2025-10-17 23:25:40 | INFO | logger | Routing request: 修复代码中的安全问题...
+2025-10-17 23:25:40 | INFO | logger | Recognized mode: fix (confidence: 0.90)
+2025-10-17 23:25:40 | ERROR | logger | Error routing request: name 'SessionState' is not defined
+2025-10-17 23:25:40 | INFO | logger | Routing request: 分析代码...
+2025-10-17 23:25:40 | INFO | logger | Recognized mode: deep (confidence: 0.70)
+2025-10-17 23:25:40 | ERROR | logger | Error routing request: name 'SessionState' is not defined
+2025-10-17 23:25:40 | INFO | logger | ModeRecognizer initialized
+2025-10-17 23:25:40 | INFO | logger | ModeRecognizer initialized
