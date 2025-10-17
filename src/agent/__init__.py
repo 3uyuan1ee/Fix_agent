@@ -8,6 +8,10 @@ from .planner import TaskPlanner, AnalysisMode, UserRequest, Task, ExecutionPlan
 from .file_selector import FileSelector, FileInfo, SelectionCriteria
 from .execution_engine import ExecutionEngine, ExecutionResult, TaskStatus, ToolStatus
 from .mode_router import ModeRecognizer, RequestRouter, RouteRequest, RouteResult
+from .user_interaction import (
+    UserInteractionHandler, InputParser, ParameterValidator, ResponseFormatter,
+    ParsedInput, ValidationResult, FormattedOutput, InputType, OutputFormat
+)
 
 __all__ = [
     'AgentOrchestrator',
@@ -30,5 +34,14 @@ __all__ = [
     'ModeRecognizer',
     'RequestRouter',
     'RouteRequest',
-    'RouteResult'
+    'RouteResult',
+    'UserInteractionHandler',
+    'InputParser',
+    'ParameterValidator',
+    'ResponseFormatter',
+    'ParsedInput',
+    'ValidationResult',
+    'FormattedOutput',
+    'InputType',
+    'OutputFormat'
 ]
