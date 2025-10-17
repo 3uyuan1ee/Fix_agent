@@ -64,6 +64,8 @@ class CLIArguments:
     sub_verbose: bool = False  # 子命令中的verbose参数
     sub_quiet: bool = False  # 子命令中的quiet参数
     sub_dry_run: bool = False  # 子命令中的dry_run参数
+    sub_no_confirm: bool = False  # fix子命令中的no-confirm参数
+    sub_backup_dir: Optional[str] = None  # fix子命令中的backup-dir参数
 
 
 
@@ -334,16 +336,45 @@ class CLIArgumentParser:
             help='静默模式，最小化输出'
         )
 
-        # fix子命令（占位符）
+        # fix子命令
         fix_parser = analyze_subparsers.add_parser(
             'fix',
-            help='执行分析修复（开发中）',
-            description='分析问题并提供修复建议'
+            help='执行分析修复',
+            description='分析代码问题并提供修复建议和自动修复功能'
         )
 
         fix_parser.add_argument(
             'target',
             help='目标文件或目录路径'
+        )
+
+        fix_parser.add_argument(
+            '--no-confirm',
+            action='store_true',
+            help='跳过确认步骤，自动应用所有修复建议'
+        )
+
+        fix_parser.add_argument(
+            '--backup-dir',
+            help='指定备份文件目录 (默认: .fix_backups)'
+        )
+
+        fix_parser.add_argument(
+            '--verbose', '-v',
+            action='store_true',
+            help='显示详细输出信息'
+        )
+
+        fix_parser.add_argument(
+            '--quiet', '-q',
+            action='store_true',
+            help='静默模式，最小化输出'
+        )
+
+        fix_parser.add_argument(
+            '--dry-run',
+            action='store_true',
+            help='模拟运行，只显示修复建议不实际应用'
         )
 
     def _add_advanced_arguments(self):
@@ -409,7 +440,9 @@ class CLIArgumentParser:
                 sub_output=getattr(parsed, 'output', None),
                 sub_verbose=getattr(parsed, 'verbose', False),
                 sub_quiet=getattr(parsed, 'quiet', False),
-                sub_dry_run=getattr(parsed, 'dry_run', False)
+                sub_dry_run=getattr(parsed, 'dry_run', False),
+                sub_no_confirm=getattr(parsed, 'no_confirm', False),
+                sub_backup_dir=getattr(parsed, 'backup_dir', None)
             )
 
             # 验证参数组合
