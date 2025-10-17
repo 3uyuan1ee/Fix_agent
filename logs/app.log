@@ -2773,3 +2773,635 @@
 2025-10-14 23:15:31 | INFO | logger | DiffViewer initialized
 2025-10-14 23:15:31 | INFO | logger | FixConfirmationManager initialized
 2025-10-14 23:15:31 | ERROR | logger | Failed to analyze change complexity: 'added'
+2025-10-16 13:58:35 | INFO | logger | DiffViewer initialized
+2025-10-16 13:58:35 | INFO | logger | FixConfirmationManager initialized
+2025-10-16 13:58:35 | ERROR | logger | Failed to analyze change complexity: 'added'
+2025-10-16 13:59:02 | INFO | logger | DeepAnalysisReportGenerator initialized
+2025-10-16 13:59:02 | INFO | logger | DeepAnalysisReportGenerator initialized
+2025-10-16 13:59:02 | INFO | logger | Generating json deep analysis report for 1 files
+2025-10-16 13:59:02 | INFO | logger | Generated json deep analysis report
+2025-10-16 13:59:02 | INFO | logger | DeepAnalysisReportGenerator initialized
+2025-10-16 13:59:02 | INFO | logger | Generating json deep analysis report for 1 files
+2025-10-16 13:59:02 | INFO | logger | Generated json deep analysis report
+2025-10-16 13:59:02 | INFO | logger | DeepAnalysisReportGenerator initialized
+2025-10-16 13:59:02 | INFO | logger | Generating json deep analysis report for 1 files
+2025-10-16 13:59:02 | INFO | logger | Generated json deep analysis report
+2025-10-16 13:59:02 | INFO | logger | Deep analysis report saved to: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpr37si4tu/test_report.json
+2025-10-16 13:59:02 | INFO | logger | DeepAnalysisReportGenerator initialized
+2025-10-16 13:59:02 | INFO | logger | Generating json deep analysis report for 2 files
+2025-10-16 13:59:02 | INFO | logger | Generated json deep analysis report
+2025-10-16 13:59:02 | INFO | logger | Deep analysis report saved to: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpkee8vkcs/end_to_end_report.json
+2025-10-16 14:00:10 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 14:00:10 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-16 14:00:10 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-16 14:00:10 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-16 14:00:10 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-16 14:00:10 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-16 14:00:10 | INFO | logger | Cleaning up execution engine
+2025-10-16 14:00:10 | INFO | logger | Execution engine cleaned up
+2025-10-16 14:00:10 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 14:00:10 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-16 14:00:10 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-16 14:00:10 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-16 14:00:10 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-16 14:00:10 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-16 14:00:10 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpyd5cwkz8/test_project/good_code.py
+2025-10-16 14:00:10 | INFO | logger | Executing 4 tasks
+2025-10-16 14:00:10 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpyd5cwkz8/test_project/good_code.py with tool ast_analysis
+2025-10-16 14:00:10 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpyd5cwkz8/test_project/good_code.py with tool pylint_analysis
+2025-10-16 14:00:10 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpyd5cwkz8/test_project/good_code.py with tool flake8_analysis
+2025-10-16 14:00:10 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpyd5cwkz8/test_project/good_code.py with tool bandit_analysis
+2025-10-16 14:00:10 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpyd5cwkz8/test_project/good_code.py completed successfully in 0.00s
+2025-10-16 14:00:10 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpyd5cwkz8/test_project/good_code.py completed successfully in 0.11s
+2025-10-16 14:00:10 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpyd5cwkz8/test_project/good_code.py completed successfully in 0.15s
+2025-10-16 14:00:10 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpyd5cwkz8/test_project/good_code.py completed successfully in 0.33s
+2025-10-16 14:00:10 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-16 14:00:10 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpyd5cwkz8/test_project/good_code.py: 4 issues in 0.33s
+2025-10-16 14:00:10 | INFO | logger | Cleaning up execution engine
+2025-10-16 14:00:10 | INFO | logger | Execution engine cleaned up
+2025-10-16 14:00:10 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 14:00:10 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-16 14:00:10 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-16 14:00:10 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-16 14:00:10 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-16 14:00:10 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-16 14:00:10 | INFO | logger | Starting static analysis for 2 files
+2025-10-16 14:00:10 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpyl9v4ncq/test_project/good_code.py
+2025-10-16 14:00:10 | INFO | logger | Executing 4 tasks
+2025-10-16 14:00:10 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpyl9v4ncq/test_project/good_code.py with tool ast_analysis
+2025-10-16 14:00:10 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpyl9v4ncq/test_project/good_code.py with tool pylint_analysis
+2025-10-16 14:00:10 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpyl9v4ncq/test_project/good_code.py with tool flake8_analysis
+2025-10-16 14:00:10 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpyl9v4ncq/test_project/good_code.py with tool bandit_analysis
+2025-10-16 14:00:10 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpyl9v4ncq/test_project/good_code.py completed successfully in 0.00s
+2025-10-16 14:00:10 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpyl9v4ncq/test_project/good_code.py completed successfully in 0.09s
+2025-10-16 14:00:10 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpyl9v4ncq/test_project/good_code.py completed successfully in 0.11s
+2025-10-16 14:00:11 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpyl9v4ncq/test_project/good_code.py completed successfully in 0.27s
+2025-10-16 14:00:11 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-16 14:00:11 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpyl9v4ncq/test_project/good_code.py: 4 issues in 0.27s
+2025-10-16 14:00:11 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpyl9v4ncq/test_project/bad_code.py
+2025-10-16 14:00:11 | INFO | logger | Executing 4 tasks
+2025-10-16 14:00:11 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpyl9v4ncq/test_project/bad_code.py with tool ast_analysis
+2025-10-16 14:00:11 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpyl9v4ncq/test_project/bad_code.py with tool pylint_analysis
+2025-10-16 14:00:11 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpyl9v4ncq/test_project/bad_code.py with tool flake8_analysis
+2025-10-16 14:00:11 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpyl9v4ncq/test_project/bad_code.py with tool bandit_analysis
+2025-10-16 14:00:11 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpyl9v4ncq/test_project/bad_code.py completed successfully in 0.00s
+2025-10-16 14:00:11 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpyl9v4ncq/test_project/bad_code.py completed successfully in 0.09s
+2025-10-16 14:00:11 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpyl9v4ncq/test_project/bad_code.py completed successfully in 0.11s
+2025-10-16 14:00:11 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpyl9v4ncq/test_project/bad_code.py completed successfully in 0.40s
+2025-10-16 14:00:11 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-16 14:00:11 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpyl9v4ncq/test_project/bad_code.py: 21 issues in 0.40s
+2025-10-16 14:00:11 | INFO | logger | Cleaning up execution engine
+2025-10-16 14:00:11 | INFO | logger | Execution engine cleaned up
+2025-10-16 14:00:11 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 14:00:11 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-16 14:00:11 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-16 14:00:11 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-16 14:00:11 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-16 14:00:11 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-16 14:00:11 | INFO | logger | Updated enabled tools: ['ast', 'flake8']
+2025-10-16 14:00:11 | INFO | logger | Cleaning up execution engine
+2025-10-16 14:00:11 | INFO | logger | Execution engine cleaned up
+2025-10-16 14:00:11 | INFO | logger | StaticAnalysisReportGenerator initialized
+2025-10-16 14:00:11 | INFO | logger | StaticAnalysisReportGenerator initialized
+2025-10-16 14:00:11 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 14:00:11 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-16 14:00:11 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-16 14:00:11 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-16 14:00:11 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-16 14:00:11 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-16 14:00:11 | INFO | logger | Starting static analysis for 2 files
+2025-10-16 14:00:11 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprefnarj5/test_project/good_code.py
+2025-10-16 14:00:11 | INFO | logger | Executing 4 tasks
+2025-10-16 14:00:11 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprefnarj5/test_project/good_code.py with tool ast_analysis
+2025-10-16 14:00:11 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprefnarj5/test_project/good_code.py with tool pylint_analysis
+2025-10-16 14:00:11 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprefnarj5/test_project/good_code.py completed successfully in 0.00s
+2025-10-16 14:00:11 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprefnarj5/test_project/good_code.py with tool flake8_analysis
+2025-10-16 14:00:11 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprefnarj5/test_project/good_code.py with tool bandit_analysis
+2025-10-16 14:00:11 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprefnarj5/test_project/good_code.py completed successfully in 0.08s
+2025-10-16 14:00:11 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprefnarj5/test_project/good_code.py completed successfully in 0.10s
+2025-10-16 14:00:11 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprefnarj5/test_project/good_code.py completed successfully in 0.27s
+2025-10-16 14:00:11 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-16 14:00:11 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprefnarj5/test_project/good_code.py: 4 issues in 0.27s
+2025-10-16 14:00:11 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprefnarj5/test_project/bad_code.py
+2025-10-16 14:00:11 | INFO | logger | Executing 4 tasks
+2025-10-16 14:00:11 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprefnarj5/test_project/bad_code.py with tool ast_analysis
+2025-10-16 14:00:11 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprefnarj5/test_project/bad_code.py with tool pylint_analysis
+2025-10-16 14:00:11 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprefnarj5/test_project/bad_code.py with tool flake8_analysis
+2025-10-16 14:00:11 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprefnarj5/test_project/bad_code.py with tool bandit_analysis
+2025-10-16 14:00:11 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprefnarj5/test_project/bad_code.py completed successfully in 0.00s
+2025-10-16 14:00:11 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprefnarj5/test_project/bad_code.py completed successfully in 0.08s
+2025-10-16 14:00:11 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprefnarj5/test_project/bad_code.py completed successfully in 0.11s
+2025-10-16 14:00:12 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprefnarj5/test_project/bad_code.py completed successfully in 0.41s
+2025-10-16 14:00:12 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-16 14:00:12 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprefnarj5/test_project/bad_code.py: 21 issues in 0.41s
+2025-10-16 14:00:12 | INFO | logger | Merged 2 analysis results with 25 total issues
+2025-10-16 14:00:12 | INFO | logger | Cleaning up execution engine
+2025-10-16 14:00:12 | INFO | logger | Execution engine cleaned up
+2025-10-16 14:00:12 | INFO | logger | StaticAnalysisReportGenerator initialized
+2025-10-16 14:00:12 | INFO | logger | StaticAnalysisReportGenerator initialized
+2025-10-16 14:00:12 | INFO | logger | StaticAnalysisReportGenerator initialized
+2025-10-16 14:00:12 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 14:00:12 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-16 14:00:12 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-16 14:00:12 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-16 14:00:12 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-16 14:00:12 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-16 14:00:12 | INFO | logger | Starting static analysis for 1 files
+2025-10-16 14:00:12 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpysqptjlz/test_project/bad_code.py
+2025-10-16 14:00:12 | INFO | logger | Executing 4 tasks
+2025-10-16 14:00:12 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpysqptjlz/test_project/bad_code.py with tool ast_analysis
+2025-10-16 14:00:12 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpysqptjlz/test_project/bad_code.py with tool pylint_analysis
+2025-10-16 14:00:12 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpysqptjlz/test_project/bad_code.py completed successfully in 0.00s
+2025-10-16 14:00:12 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpysqptjlz/test_project/bad_code.py with tool flake8_analysis
+2025-10-16 14:00:12 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpysqptjlz/test_project/bad_code.py with tool bandit_analysis
+2025-10-16 14:00:12 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpysqptjlz/test_project/bad_code.py completed successfully in 0.08s
+2025-10-16 14:00:12 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpysqptjlz/test_project/bad_code.py completed successfully in 0.10s
+2025-10-16 14:00:12 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpysqptjlz/test_project/bad_code.py completed successfully in 0.45s
+2025-10-16 14:00:12 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-16 14:00:12 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpysqptjlz/test_project/bad_code.py: 21 issues in 0.45s
+2025-10-16 14:00:12 | INFO | logger | Generating json report for 1 files
+2025-10-16 14:00:12 | INFO | logger | Merged 1 analysis results with 21 total issues
+2025-10-16 14:00:12 | INFO | logger | Generated json report with 21 issues
+2025-10-16 14:00:12 | INFO | logger | Cleaning up execution engine
+2025-10-16 14:00:12 | INFO | logger | Execution engine cleaned up
+2025-10-16 14:00:12 | INFO | logger | StaticAnalysisReportGenerator initialized
+2025-10-16 14:00:12 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 14:00:12 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-16 14:00:12 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-16 14:00:12 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-16 14:00:12 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-16 14:00:12 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-16 14:00:12 | INFO | logger | Starting static analysis for 1 files
+2025-10-16 14:00:12 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpkx7tnjp0/test_project/bad_code.py
+2025-10-16 14:00:12 | INFO | logger | Executing 4 tasks
+2025-10-16 14:00:12 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpkx7tnjp0/test_project/bad_code.py with tool ast_analysis
+2025-10-16 14:00:12 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpkx7tnjp0/test_project/bad_code.py with tool pylint_analysis
+2025-10-16 14:00:12 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpkx7tnjp0/test_project/bad_code.py with tool flake8_analysis
+2025-10-16 14:00:12 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpkx7tnjp0/test_project/bad_code.py with tool bandit_analysis
+2025-10-16 14:00:12 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpkx7tnjp0/test_project/bad_code.py completed successfully in 0.00s
+2025-10-16 14:00:12 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpkx7tnjp0/test_project/bad_code.py completed successfully in 0.08s
+2025-10-16 14:00:12 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpkx7tnjp0/test_project/bad_code.py completed successfully in 0.11s
+2025-10-16 14:00:13 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpkx7tnjp0/test_project/bad_code.py completed successfully in 0.43s
+2025-10-16 14:00:13 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-16 14:00:13 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpkx7tnjp0/test_project/bad_code.py: 21 issues in 0.43s
+2025-10-16 14:00:13 | INFO | logger | Generating summary report for 1 files
+2025-10-16 14:00:13 | INFO | logger | Merged 1 analysis results with 21 total issues
+2025-10-16 14:00:13 | INFO | logger | Generated summary report with 21 issues
+2025-10-16 14:00:13 | INFO | logger | Cleaning up execution engine
+2025-10-16 14:00:13 | INFO | logger | Execution engine cleaned up
+2025-10-16 14:00:13 | INFO | logger | StaticAnalysisReportGenerator initialized
+2025-10-16 14:00:13 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 14:00:13 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-16 14:00:13 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-16 14:00:13 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-16 14:00:13 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-16 14:00:13 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-16 14:00:13 | INFO | logger | Starting static analysis for 1 files
+2025-10-16 14:00:13 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphi7eij3e/test_project/good_code.py
+2025-10-16 14:00:13 | INFO | logger | Executing 4 tasks
+2025-10-16 14:00:13 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphi7eij3e/test_project/good_code.py with tool ast_analysis
+2025-10-16 14:00:13 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphi7eij3e/test_project/good_code.py with tool pylint_analysis
+2025-10-16 14:00:13 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphi7eij3e/test_project/good_code.py with tool flake8_analysis
+2025-10-16 14:00:13 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphi7eij3e/test_project/good_code.py with tool bandit_analysis
+2025-10-16 14:00:13 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphi7eij3e/test_project/good_code.py completed successfully in 0.00s
+2025-10-16 14:00:13 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphi7eij3e/test_project/good_code.py completed successfully in 0.08s
+2025-10-16 14:00:13 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphi7eij3e/test_project/good_code.py completed successfully in 0.11s
+2025-10-16 14:00:13 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphi7eij3e/test_project/good_code.py completed successfully in 0.25s
+2025-10-16 14:00:13 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-16 14:00:13 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphi7eij3e/test_project/good_code.py: 4 issues in 0.25s
+2025-10-16 14:00:13 | INFO | logger | Generating json report for 1 files
+2025-10-16 14:00:13 | INFO | logger | Merged 1 analysis results with 4 total issues
+2025-10-16 14:00:13 | INFO | logger | Generated json report with 4 issues
+2025-10-16 14:00:13 | INFO | logger | Report saved to: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp08djhkkj/test_report.json
+2025-10-16 14:00:13 | INFO | logger | Cleaning up execution engine
+2025-10-16 14:00:13 | INFO | logger | Execution engine cleaned up
+2025-10-16 14:00:13 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 14:00:13 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-16 14:00:13 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-16 14:00:13 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-16 14:00:13 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-16 14:00:13 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-16 14:00:13 | INFO | logger | StaticAnalysisReportGenerator initialized
+2025-10-16 14:00:13 | INFO | logger | Starting static analysis for 2 files
+2025-10-16 14:00:13 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpcu1dhci3/test_project/good_code.py
+2025-10-16 14:00:13 | INFO | logger | Executing 4 tasks
+2025-10-16 14:00:13 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpcu1dhci3/test_project/good_code.py with tool ast_analysis
+2025-10-16 14:00:13 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpcu1dhci3/test_project/good_code.py with tool pylint_analysis
+2025-10-16 14:00:13 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpcu1dhci3/test_project/good_code.py with tool flake8_analysis
+2025-10-16 14:00:13 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpcu1dhci3/test_project/good_code.py with tool bandit_analysis
+2025-10-16 14:00:13 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpcu1dhci3/test_project/good_code.py completed successfully in 0.00s
+2025-10-16 14:00:13 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpcu1dhci3/test_project/good_code.py completed successfully in 0.08s
+2025-10-16 14:00:13 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpcu1dhci3/test_project/good_code.py completed successfully in 0.11s
+2025-10-16 14:00:13 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpcu1dhci3/test_project/good_code.py completed successfully in 0.28s
+2025-10-16 14:00:13 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-16 14:00:13 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpcu1dhci3/test_project/good_code.py: 4 issues in 0.28s
+2025-10-16 14:00:13 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpcu1dhci3/test_project/bad_code.py
+2025-10-16 14:00:13 | INFO | logger | Executing 4 tasks
+2025-10-16 14:00:13 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpcu1dhci3/test_project/bad_code.py with tool ast_analysis
+2025-10-16 14:00:13 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpcu1dhci3/test_project/bad_code.py with tool pylint_analysis
+2025-10-16 14:00:13 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpcu1dhci3/test_project/bad_code.py with tool flake8_analysis
+2025-10-16 14:00:13 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpcu1dhci3/test_project/bad_code.py with tool bandit_analysis
+2025-10-16 14:00:13 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpcu1dhci3/test_project/bad_code.py completed successfully in 0.00s
+2025-10-16 14:00:13 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpcu1dhci3/test_project/bad_code.py completed successfully in 0.08s
+2025-10-16 14:00:13 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpcu1dhci3/test_project/bad_code.py completed successfully in 0.11s
+2025-10-16 14:00:13 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpcu1dhci3/test_project/bad_code.py completed successfully in 0.42s
+2025-10-16 14:00:13 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-16 14:00:13 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpcu1dhci3/test_project/bad_code.py: 21 issues in 0.42s
+2025-10-16 14:00:13 | INFO | logger | Generating json report for 2 files
+2025-10-16 14:00:13 | INFO | logger | Merged 2 analysis results with 25 total issues
+2025-10-16 14:00:13 | INFO | logger | Generated json report with 25 issues
+2025-10-16 14:00:13 | INFO | logger | Report saved to: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp05nei8ce/end_to_end_report.json
+2025-10-16 14:00:13 | INFO | logger | Cleaning up execution engine
+2025-10-16 14:00:13 | INFO | logger | Execution engine cleaned up
+2025-10-16 14:00:13 | INFO | logger | StaticAnalysisReportGenerator initialized
+2025-10-16 14:00:13 | INFO | logger | Generating json report for 0 files
+2025-10-16 14:00:13 | INFO | logger | Generated json report with 0 issues
+2025-10-16 14:00:13 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 14:00:13 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-16 14:00:13 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-16 14:00:13 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-16 14:00:13 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-16 14:00:13 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-16 14:00:13 | INFO | logger | Cleaning up execution engine
+2025-10-16 14:00:13 | INFO | logger | Execution engine cleaned up
+2025-10-16 14:00:13 | INFO | logger | Cleaning up execution engine
+2025-10-16 14:00:13 | INFO | logger | Execution engine cleaned up
+2025-10-16 14:45:13 | INFO | logger | TaskPlanner initialized
+2025-10-16 14:45:13 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 14:45:13 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 14:45:13 | INFO | logger | Cleaning up execution engine
+2025-10-16 14:45:13 | INFO | logger | Execution engine cleaned up
+2025-10-16 14:45:13 | INFO | logger | TaskPlanner initialized
+2025-10-16 14:45:13 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 14:45:13 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 14:45:13 | INFO | logger | Created session session_4f574835e999 for user test_user
+2025-10-16 14:45:13 | INFO | logger | TaskPlanner initialized
+2025-10-16 14:45:13 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 14:45:13 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 14:45:13 | INFO | logger | Created session session_ee6c5f019dc4 for user test_user
+2025-10-16 14:45:13 | INFO | logger | Cleaning up execution engine
+2025-10-16 14:45:13 | INFO | logger | Execution engine cleaned up
+2025-10-16 14:45:13 | INFO | logger | TaskPlanner initialized
+2025-10-16 14:45:13 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 14:45:13 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 14:45:13 | INFO | logger | Created session session_643b208945b0 for user test_user
+2025-10-16 14:45:13 | INFO | logger | Created session session_dcc7689c0830 for user test_user
+2025-10-16 14:45:13 | INFO | logger | Created session session_4f415ae8f949 for user other_user
+2025-10-16 14:45:13 | INFO | logger | Cleaning up execution engine
+2025-10-16 14:45:13 | INFO | logger | Execution engine cleaned up
+2025-10-16 14:45:13 | INFO | logger | TaskPlanner initialized
+2025-10-16 14:45:13 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 14:45:13 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 14:45:13 | INFO | logger | Created session session_cdbc656323bb for user test_user
+2025-10-16 14:45:13 | ERROR | logger | Failed to process user input for session session_cdbc656323bb: Mock object has no attribute 'mode'
+2025-10-16 14:45:13 | INFO | logger | TaskPlanner initialized
+2025-10-16 14:45:13 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 14:45:13 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 14:45:13 | INFO | logger | Cleaning up execution engine
+2025-10-16 14:45:13 | INFO | logger | Execution engine cleaned up
+2025-10-16 14:45:13 | INFO | logger | TaskPlanner initialized
+2025-10-16 14:45:13 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 14:45:13 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 14:45:13 | INFO | logger | Created session session_1d63a1acd857 for user test_user
+2025-10-16 14:45:13 | INFO | logger | Cleaning up execution engine
+2025-10-16 14:45:13 | INFO | logger | Execution engine cleaned up
+2025-10-16 14:45:13 | INFO | logger | TaskPlanner initialized
+2025-10-16 14:45:13 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 14:45:13 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 14:45:13 | INFO | logger | Created session session_cb2e6f816223 for user test_user
+2025-10-16 14:45:13 | INFO | logger | Cleaning up execution engine
+2025-10-16 14:45:13 | INFO | logger | Execution engine cleaned up
+2025-10-16 14:45:13 | INFO | logger | TaskPlanner initialized
+2025-10-16 14:45:13 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 14:45:13 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 14:45:13 | INFO | logger | Created session session_da3f6db3db7f for user test_user
+2025-10-16 14:45:13 | INFO | logger | Cleaning up execution engine
+2025-10-16 14:45:13 | INFO | logger | Execution engine cleaned up
+2025-10-16 14:45:13 | INFO | logger | TaskPlanner initialized
+2025-10-16 14:45:13 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 14:45:13 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 14:45:13 | INFO | logger | Created session session_f38570216760 for user test_user
+2025-10-16 14:45:13 | INFO | logger | Session session_f38570216760 state transition: created -> active (user_input)
+2025-10-16 14:45:13 | WARNING | logger | Invalid state transition: active -> created
+2025-10-16 14:45:13 | ERROR | logger | Session non_existent not found for state transition
+2025-10-16 14:45:13 | INFO | logger | Cleaning up execution engine
+2025-10-16 14:45:13 | INFO | logger | Execution engine cleaned up
+2025-10-16 14:45:13 | INFO | logger | TaskPlanner initialized
+2025-10-16 14:45:13 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 14:45:13 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 14:45:13 | INFO | logger | Created session session_7425a25e19e6 for user test_user
+2025-10-16 14:45:13 | INFO | logger | Closed session session_7425a25e19e6 (test_close)
+2025-10-16 14:45:13 | INFO | logger | Cleaning up execution engine
+2025-10-16 14:45:13 | INFO | logger | Execution engine cleaned up
+2025-10-16 14:45:13 | INFO | logger | TaskPlanner initialized
+2025-10-16 14:45:13 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 14:45:13 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 14:45:13 | INFO | logger | Created session session_865e500c9408 for user test_user
+2025-10-16 14:45:13 | INFO | logger | Cleaning up execution engine
+2025-10-16 14:45:13 | INFO | logger | Execution engine cleaned up
+2025-10-16 14:45:13 | INFO | logger | TaskPlanner initialized
+2025-10-16 14:45:13 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 14:45:13 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 14:45:13 | INFO | logger | Created session session_7023b7655513 for user test_user
+2025-10-16 14:45:13 | INFO | logger | Created session session_322b25762604 for user test_user
+2025-10-16 14:45:13 | INFO | logger | Created session session_f3fadb620610 for user test_user
+2025-10-16 14:45:13 | INFO | logger | Cleaning up execution engine
+2025-10-16 14:45:13 | INFO | logger | Execution engine cleaned up
+2025-10-16 14:45:13 | INFO | logger | TaskPlanner initialized
+2025-10-16 14:45:13 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 14:45:13 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 14:45:13 | INFO | logger | Created session session_80e1c79383cc for user user1
+2025-10-16 14:45:13 | INFO | logger | Created session session_fe5998e64a27 for user user2
+2025-10-16 14:45:13 | INFO | logger | Created session session_8955a356195a for user user3
+2025-10-16 14:45:13 | INFO | logger | Cleaning up execution engine
+2025-10-16 14:45:13 | INFO | logger | Execution engine cleaned up
+2025-10-16 14:45:13 | INFO | logger | TaskPlanner initialized
+2025-10-16 14:45:13 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 14:45:13 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 14:45:13 | INFO | logger | Cleaning up execution engine
+2025-10-16 14:45:13 | INFO | logger | Execution engine cleaned up
+2025-10-16 14:45:13 | INFO | logger | TaskPlanner initialized
+2025-10-16 14:45:13 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 14:45:13 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 14:45:13 | INFO | logger | Created session session_a4d54df75220 for user test_user
+2025-10-16 14:45:13 | INFO | logger | Cleaning up execution engine
+2025-10-16 14:45:13 | INFO | logger | Execution engine cleaned up
+2025-10-16 14:45:13 | INFO | logger | TaskPlanner initialized
+2025-10-16 14:45:13 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 14:45:13 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 14:45:13 | INFO | logger | Cleaning up execution engine
+2025-10-16 14:45:13 | INFO | logger | Execution engine cleaned up
+2025-10-16 14:45:13 | INFO | logger | TaskPlanner initialized
+2025-10-16 14:45:13 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 14:45:13 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 14:45:13 | INFO | logger | Cleaning up execution engine
+2025-10-16 14:45:13 | INFO | logger | Execution engine cleaned up
+2025-10-16 14:45:13 | INFO | logger | Cleaning up execution engine
+2025-10-16 14:45:13 | INFO | logger | Execution engine cleaned up
+2025-10-16 14:45:13 | INFO | logger | Cleaning up execution engine
+2025-10-16 14:45:13 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:03:42 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:03:42 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:03:42 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:03:42 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:03:42 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:03:42 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:03:42 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:03:42 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:03:42 | INFO | logger | Created session session_21821195e2c8 for user test_user
+2025-10-16 15:03:42 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:03:42 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:03:42 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:03:42 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:03:42 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:03:42 | INFO | logger | Created session session_aece3967e730 for user test_user
+2025-10-16 15:03:42 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:03:42 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:03:42 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:03:42 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:03:42 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:03:42 | INFO | logger | Created session session_7ecc46c36fe6 for user test_user
+2025-10-16 15:03:42 | INFO | logger | Created session session_93e1a49d3e19 for user test_user
+2025-10-16 15:03:42 | INFO | logger | Created session session_0ac7c79f6e6d for user other_user
+2025-10-16 15:03:42 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:03:42 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:03:42 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:03:42 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:03:42 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:03:42 | INFO | logger | Created session session_ee6309301e16 for user test_user
+2025-10-16 15:03:42 | INFO | logger | Processed user input for session session_ee6309301e16, created plan plan_123
+2025-10-16 15:03:42 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:03:42 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:03:42 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:03:42 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:03:42 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:03:42 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:03:42 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:03:42 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:03:42 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:03:42 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:03:42 | INFO | logger | Created session session_21cc5dd02304 for user test_user
+2025-10-16 15:03:42 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:03:42 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:03:42 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:03:42 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:03:42 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:03:42 | INFO | logger | Created session session_545ab62022f5 for user test_user
+2025-10-16 15:03:42 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:03:42 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:03:42 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:03:42 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:03:42 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:03:42 | INFO | logger | Created session session_58d7b77b9649 for user test_user
+2025-10-16 15:03:42 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:03:42 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:03:42 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:03:42 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:03:42 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:03:42 | INFO | logger | Created session session_50fb763e96ea for user test_user
+2025-10-16 15:03:42 | INFO | logger | Session session_50fb763e96ea state transition: created -> active (user_input)
+2025-10-16 15:03:42 | WARNING | logger | Invalid state transition: active -> created
+2025-10-16 15:03:42 | ERROR | logger | Session non_existent not found for state transition
+2025-10-16 15:03:42 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:03:42 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:03:42 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:03:42 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:03:42 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:03:42 | INFO | logger | Created session session_35cccef1a122 for user test_user
+2025-10-16 15:03:42 | INFO | logger | Closed session session_35cccef1a122 (test_close)
+2025-10-16 15:03:42 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:03:42 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:03:42 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:03:42 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:03:42 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:03:42 | INFO | logger | Created session session_5ce4985c7e4f for user test_user
+2025-10-16 15:03:42 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:03:42 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:03:42 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:03:42 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:03:42 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:03:42 | INFO | logger | Created session session_1fa923a8a5e7 for user test_user
+2025-10-16 15:03:42 | INFO | logger | Created session session_3050ceca0a34 for user test_user
+2025-10-16 15:03:42 | INFO | logger | Created session session_9bee4fa17219 for user test_user
+2025-10-16 15:03:42 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:03:42 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:03:42 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:03:42 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:03:42 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:03:42 | INFO | logger | Created session session_8b7720d9f7b0 for user user1
+2025-10-16 15:03:42 | INFO | logger | Created session session_f66a36f0129b for user user2
+2025-10-16 15:03:42 | INFO | logger | Created session session_440afef8ee2f for user user3
+2025-10-16 15:03:42 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:03:42 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:03:42 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:03:42 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:03:42 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:03:42 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:03:42 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:03:42 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:03:42 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:03:42 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:03:42 | INFO | logger | Created session session_78baba7cd1b6 for user test_user
+2025-10-16 15:03:42 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:03:42 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:03:42 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:03:42 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:03:42 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:03:42 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:03:42 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:03:42 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:03:42 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:03:42 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:03:42 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:03:42 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:06:59 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:06:59 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:06:59 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:06:59 | INFO | logger | Created session session_dcbc1ae5233e for user alice
+2025-10-16 15:06:59 | INFO | logger | Created session session_38226994bbcc for user bob
+2025-10-16 15:06:59 | INFO | logger | Created session session_4e5fb9ef6582 for user charlie
+2025-10-16 15:06:59 | INFO | logger | Session session_dcbc1ae5233e state transition: created -> active (用户激活会话)
+2025-10-16 15:06:59 | INFO | logger | Session session_dcbc1ae5233e state transition: active -> waiting_input (等待用户输入)
+2025-10-16 15:06:59 | INFO | logger | Session session_dcbc1ae5233e state transition: waiting_input -> processing (处理用户请求)
+2025-10-16 15:06:59 | INFO | logger | Session session_dcbc1ae5233e state transition: processing -> active (处理完成，回到活跃状态)
+2025-10-16 15:06:59 | INFO | logger | Session session_dcbc1ae5233e state transition: active -> completed (完成会话)
+2025-10-16 15:06:59 | WARNING | logger | Invalid state transition: completed -> created
+2025-10-16 15:06:59 | INFO | logger | Session session_4e5fb9ef6582 state transition: created -> active
+2025-10-16 15:06:59 | INFO | logger | Parsed request: mode=static, target=/Users/macbookair/Fff/Software_Engine/Agent/Fix_agent/src, intent=基础静态分析
+2025-10-16 15:06:59 | INFO | logger | Creating execution plan for mode: static
+2025-10-16 15:06:59 | INFO | logger | Created execution plan plan_723a699d with 6 tasks
+2025-10-16 15:06:59 | INFO | logger | Plan validation passed
+2025-10-16 15:06:59 | INFO | logger | Executing plan plan_723a699d with 6 tasks
+2025-10-16 15:06:59 | INFO | logger | Executing 6 tasks
+2025-10-16 15:06:59 | INFO | logger | Completed 6 tasks with 0 successes
+2025-10-16 15:06:59 | INFO | logger | Processed user input for session session_4e5fb9ef6582, created plan plan_723a699d
+2025-10-16 15:06:59 | INFO | logger | Parsed request: mode=deep, target=/Users/macbookair/Fff/Software_Engine/Agent/Fix_agent/src/utils/config.py, intent=深度代码分析
+2025-10-16 15:06:59 | INFO | logger | Creating execution plan for mode: deep
+2025-10-16 15:06:59 | INFO | logger | Created execution plan plan_2ce5e5b2 with 5 tasks
+2025-10-16 15:06:59 | INFO | logger | Plan validation passed
+2025-10-16 15:06:59 | INFO | logger | Executing plan plan_2ce5e5b2 with 5 tasks
+2025-10-16 15:06:59 | INFO | logger | Executing 5 tasks
+2025-10-16 15:06:59 | INFO | logger | Completed 5 tasks with 0 successes
+2025-10-16 15:06:59 | INFO | logger | Processed user input for session session_4e5fb9ef6582, created plan plan_2ce5e5b2
+2025-10-16 15:06:59 | INFO | logger | Parsed request: mode=fix, target=/Users/macbookair/Fff/Software_Engine/Agent/Fix_agent/src/tools/analyzer.py, intent=问题修复建议
+2025-10-16 15:06:59 | INFO | logger | Creating execution plan for mode: fix
+2025-10-16 15:06:59 | INFO | logger | Created execution plan plan_26e79a1c with 6 tasks
+2025-10-16 15:06:59 | WARNING | logger | Plan validation failed: ['Target path does not exist: /Users/macbookair/Fff/Software_Engine/Agent/Fix_agent/src/tools/analyzer.py']
+2025-10-16 15:06:59 | INFO | logger | Closed session session_dcbc1ae5233e (演示清理)
+2025-10-16 15:06:59 | INFO | logger | Closed session session_38226994bbcc (演示清理)
+2025-10-16 15:06:59 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:06:59 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:07:27 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:07:27 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:07:27 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:07:27 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:07:27 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:07:27 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:07:27 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:07:27 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:07:27 | INFO | logger | Created session session_050fcf6ba8f0 for user test_user
+2025-10-16 15:07:27 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:07:27 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:07:27 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:07:27 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:07:27 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:07:27 | INFO | logger | Created session session_87b001ee8188 for user test_user
+2025-10-16 15:07:27 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:07:27 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:07:27 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:07:27 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:07:27 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:07:27 | INFO | logger | Created session session_d0ff604138b9 for user test_user
+2025-10-16 15:07:27 | INFO | logger | Created session session_47895448173d for user test_user
+2025-10-16 15:07:27 | INFO | logger | Created session session_256a9920c0cd for user other_user
+2025-10-16 15:07:27 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:07:27 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:07:27 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:07:27 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:07:27 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:07:27 | INFO | logger | Created session session_8d42899c2c3f for user test_user
+2025-10-16 15:07:27 | INFO | logger | Processed user input for session session_8d42899c2c3f, created plan plan_123
+2025-10-16 15:07:27 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:07:27 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:07:27 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:07:27 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:07:27 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:07:27 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:07:27 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:07:27 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:07:27 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:07:27 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:07:27 | INFO | logger | Created session session_438b8daf8aa6 for user test_user
+2025-10-16 15:07:27 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:07:27 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:07:27 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:07:27 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:07:27 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:07:27 | INFO | logger | Created session session_e87eb5656a04 for user test_user
+2025-10-16 15:07:27 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:07:27 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:07:27 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:07:27 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:07:27 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:07:27 | INFO | logger | Created session session_3a7288b975af for user test_user
+2025-10-16 15:07:27 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:07:27 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:07:27 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:07:27 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:07:27 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:07:27 | INFO | logger | Created session session_65203d7f99f1 for user test_user
+2025-10-16 15:07:27 | INFO | logger | Session session_65203d7f99f1 state transition: created -> active (user_input)
+2025-10-16 15:07:27 | WARNING | logger | Invalid state transition: active -> created
+2025-10-16 15:07:27 | ERROR | logger | Session non_existent not found for state transition
+2025-10-16 15:07:27 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:07:27 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:07:27 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:07:27 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:07:27 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:07:27 | INFO | logger | Created session session_1b9d96ded085 for user test_user
+2025-10-16 15:07:27 | INFO | logger | Closed session session_1b9d96ded085 (test_close)
+2025-10-16 15:07:27 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:07:27 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:07:27 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:07:27 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:07:27 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:07:27 | INFO | logger | Created session session_a106d7cb55e6 for user test_user
+2025-10-16 15:07:27 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:07:27 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:07:27 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:07:27 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:07:27 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:07:27 | INFO | logger | Created session session_977112394b17 for user test_user
+2025-10-16 15:07:27 | INFO | logger | Created session session_9e2841f184ac for user test_user
+2025-10-16 15:07:27 | INFO | logger | Created session session_6c0b24341657 for user test_user
+2025-10-16 15:07:27 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:07:27 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:07:27 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:07:27 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:07:27 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:07:27 | INFO | logger | Created session session_72dceea6963d for user user1
+2025-10-16 15:07:27 | INFO | logger | Created session session_653a288cf8e3 for user user2
+2025-10-16 15:07:27 | INFO | logger | Created session session_70b143ea4bff for user user3
+2025-10-16 15:07:27 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:07:27 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:07:27 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:07:27 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:07:27 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:07:27 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:07:27 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:07:27 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:07:27 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:07:27 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:07:27 | INFO | logger | Created session session_9c7df00844b8 for user test_user
+2025-10-16 15:07:27 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:07:27 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:07:27 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:07:27 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:07:27 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:07:27 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:07:27 | INFO | logger | Execution engine cleaned up
+2025-10-16 15:07:27 | INFO | logger | TaskPlanner initialized
+2025-10-16 15:07:27 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-16 15:07:27 | INFO | logger | AgentOrchestrator initialized
+2025-10-16 15:07:27 | INFO | logger | Cleaning up execution engine
+2025-10-16 15:07:27 | INFO | logger | Execution engine cleaned up
