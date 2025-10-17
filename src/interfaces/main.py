@@ -16,6 +16,7 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from .cli import CLIArgumentParser, CLIArguments, CLIHelper
+from .static_commands import StaticAnalysisCommand
 from ..utils.config import ConfigManager
 from ..utils.logger import get_logger, setup_logging
 from ..agent.orchestrator import AgentOrchestrator
@@ -72,6 +73,10 @@ class CLIMainApplication:
             if self._handle_special_commands():
                 return 0
 
+            # 处理子命令
+            if self.args.command == 'analyze':
+                return self._handle_analyze_command()
+
             # 加载配置
             self._load_configuration()
 
@@ -119,6 +124,72 @@ class CLIMainApplication:
                 return True
 
         return False
+
+    def _handle_analyze_command(self) -> int:
+        """
+        处理analyze子命令
+
+        Returns:
+            int: 退出码
+        """
+        try:
+            if self.args.analyze_command == 'static':
+                return self._handle_static_analysis_command()
+            elif self.args.analyze_command == 'deep':
+                print("❌ 深度分析模式正在开发中")
+                return 1
+            elif self.args.analyze_command == 'fix':
+                print("❌ 分析修复模式正在开发中")
+                return 1
+            else:
+                print("❌ 未知的分析模式，使用 'aidetector analyze --help' 查看可用模式")
+                return 1
+
+        except Exception as e:
+            logger.error(f"处理analyze命令失败: {e}")
+            if self.args.verbose:
+                import traceback
+                traceback.print_exc()
+            return 1
+
+    def _handle_static_analysis_command(self) -> int:
+        """
+        处理静态分析命令
+
+        Returns:
+            int: 退出码
+        """
+        try:
+            # 验证必需参数
+            if not self.args.sub_target:
+                print("❌ 静态分析需要指定目标路径")
+                return 1
+
+            # 创建静态分析命令处理器
+            static_cmd = StaticAnalysisCommand(self.config if hasattr(self, 'config') and self.config else None)
+
+            # 执行静态分析
+            result = static_cmd.execute_static_analysis(
+                target=self.args.sub_target,
+                tools=self.args.sub_tools,
+                output_format=self.args.sub_format or "simple",
+                output_file=self.args.sub_output,
+                verbose=self.args.sub_verbose,
+                quiet=self.args.sub_quiet,
+                dry_run=self.args.sub_dry_run
+            )
+
+            return 0 if result.success else 1
+
+        except FileNotFoundError as e:
+            print(f"❌ 文件或路径不存在: {e}")
+            return 1
+        except Exception as e:
+            logger.error(f"静态分析执行失败: {e}")
+            if self.args.verbose:
+                import traceback
+                traceback.print_exc()
+            return 1
 
     def _load_configuration(self):
         """加载配置文件"""
