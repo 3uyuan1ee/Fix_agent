@@ -4,7 +4,13 @@
 # 用户API密钥配置
 llm:
   # 选择默认的LLM提供商
-  default_provider: "openai"  # 可选: openai, anthropic, custom
+  default_provider: "zhipu"  # 可选: zhipu, openai, anthropic, custom
+
+  # 智谱AI配置
+  zhipu:
+    api_key: "your-zhipu-api-key-here"
+    model: "glm-4.5"
+    base_url: "https://open.bigmodel.cn/api/paas/v4/"
 
   # OpenAI配置
   openai:
