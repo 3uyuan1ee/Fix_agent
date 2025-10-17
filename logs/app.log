@@ -3792,3 +3792,111 @@
 2025-10-17 23:47:45 | INFO | logger | UserInteractionHandler initialized
 2025-10-17 23:47:45 | INFO | logger | InputParser initialized
 2025-10-17 23:47:45 | INFO | logger | ParameterValidator initialized
+2025-10-18 00:28:02 | ERROR | logger | 未知错误: 'Namespace' object has no attribute 'help'
+2025-10-18 00:28:02 | ERROR | logger | 未知错误: 'Namespace' object has no attribute 'help'
+2025-10-18 00:28:02 | ERROR | logger | 未知错误: 'Namespace' object has no attribute 'help'
+2025-10-18 00:28:02 | ERROR | logger | 未知错误: 'Namespace' object has no attribute 'help'
+2025-10-18 00:28:02 | ERROR | logger | 未知错误: 'Namespace' object has no attribute 'help'
+2025-10-18 00:28:58 | ERROR | logger | 参数验证失败: 目标路径不存在: utils/
+2025-10-18 00:28:58 | ERROR | logger | 参数验证失败: 批处理文件不存在: commands.txt
+2025-10-18 00:29:04 | ERROR | logger | 参数验证失败: 指定 --export 时需要提供 --output 参数
+2025-10-18 00:29:04 | ERROR | logger | 参数验证失败: 不能同时指定 --verbose 和 --quiet
+2025-10-18 00:29:04 | ERROR | logger | 参数验证失败: 批处理文件不存在: commands.txt
+2025-10-18 00:29:04 | ERROR | logger | 参数验证失败: 指定模式时需要提供 --target 参数
+2025-10-18 00:29:04 | ERROR | logger | 参数验证失败: 指定模式时需要提供 --target 参数
+2025-10-18 00:29:04 | ERROR | logger | 参数验证失败: 指定模式时需要提供 --target 参数
+2025-10-18 00:29:04 | ERROR | logger | 参数验证失败: 指定模式时需要提供 --target 参数
+2025-10-18 00:29:05 | INFO | logger | 缓存功能已禁用
+2025-10-18 00:29:05 | WARNING | logger | 设置LLM模型失败: 'llm_interface'
+2025-10-18 00:29:05 | INFO | logger | 使用指定模式: static
+2025-10-18 00:29:05 | INFO | logger | 使用指定工具: pylint, bandit
+2025-10-18 00:29:05 | ERROR | logger | 批处理文件不存在: commands.txt
+2025-10-18 00:29:05 | ERROR | logger | 交互式模式执行失败: 'NoneType' object has no attribute 'create_session'
+2025-10-18 00:29:05 | ERROR | logger | 非交互式模式执行失败: 'NoneType' object has no attribute 'create_session'
+2025-10-18 00:29:05 | ERROR | logger | 获取工具信息失败: 'ConfigManager' object has no attribute 'get_tools_config'
+2025-10-18 00:29:05 | INFO | logger | Agent编排器初始化完成
+2025-10-18 00:29:05 | ERROR | logger | 配置文件加载失败: 配置文件不存在
+2025-10-18 00:29:05 | INFO | logger | 配置文件加载成功
+2025-10-18 00:29:05 | ERROR | logger | 获取工具信息失败: 'ConfigManager' object has no attribute 'get_tools_config'
+2025-10-18 00:29:05 | INFO | logger | 日志系统初始化完成
+2025-10-18 00:29:05 | INFO | logger | 日志系统初始化完成
+2025-10-18 00:29:05 | INFO | logger | 日志系统初始化完成
+2025-10-18 00:29:05 | ERROR | logger | 参数验证失败: 批处理文件不存在: /nonexistent/batch.txt
+2025-10-18 00:29:05 | ERROR | logger | 参数验证失败: 目标路径不存在: /nonexistent/
+2025-10-18 00:29:05 | ERROR | logger | 参数验证失败: 不能同时指定 --verbose 和 --quiet
+2025-10-18 00:29:05 | ERROR | logger | 参数验证失败: 指定 --export 时需要提供 --output 参数
+2025-10-18 00:29:05 | ERROR | logger | 参数验证失败: 指定模式时需要提供 --target 参数
+2025-10-18 00:35:05 | ERROR | logger | 参数验证失败: 指定模式时需要提供 --target 参数
+2025-10-18 00:36:20 | ERROR | logger | 参数验证失败: 指定 --export 时需要提供 --output 参数
+2025-10-18 00:36:20 | ERROR | logger | 参数验证失败: 不能同时指定 --verbose 和 --quiet
+2025-10-18 00:36:20 | ERROR | logger | 参数验证失败: 指定模式时需要提供 --target 参数
+2025-10-18 00:36:20 | INFO | logger | 缓存功能已禁用
+2025-10-18 00:36:20 | WARNING | logger | 设置LLM模型失败: 'llm_interface'
+2025-10-18 00:36:20 | INFO | logger | 使用指定模式: static
+2025-10-18 00:36:20 | INFO | logger | 使用指定工具: pylint, bandit
+2025-10-18 00:36:20 | ERROR | logger | 批处理文件不存在: commands.txt
+2025-10-18 00:36:20 | ERROR | logger | 交互式模式执行失败: 'NoneType' object has no attribute 'create_session'
+2025-10-18 00:36:20 | ERROR | logger | 非交互式模式执行失败: 'NoneType' object has no attribute 'create_session'
+2025-10-18 00:36:20 | ERROR | logger | 获取工具信息失败: 'ConfigManager' object has no attribute 'get_tools_config'
+2025-10-18 00:36:20 | INFO | logger | Agent编排器初始化完成
+2025-10-18 00:36:20 | ERROR | logger | 配置文件加载失败: 配置文件不存在
+2025-10-18 00:36:20 | INFO | logger | 配置文件加载成功
+2025-10-18 00:36:20 | ERROR | logger | 获取工具信息失败: 'ConfigManager' object has no attribute 'get_tools_config'
+2025-10-18 00:36:20 | INFO | logger | 日志系统初始化完成
+2025-10-18 00:36:20 | INFO | logger | 日志系统初始化完成
+2025-10-18 00:36:20 | INFO | logger | 日志系统初始化完成
+2025-10-18 00:36:20 | ERROR | logger | 参数验证失败: 批处理文件不存在: /nonexistent/batch.txt
+2025-10-18 00:36:20 | ERROR | logger | 参数验证失败: 目标路径不存在: /nonexistent/
+2025-10-18 00:36:20 | ERROR | logger | 参数验证失败: 不能同时指定 --verbose 和 --quiet
+2025-10-18 00:36:20 | ERROR | logger | 参数验证失败: 指定 --export 时需要提供 --output 参数
+2025-10-18 00:36:20 | ERROR | logger | 参数验证失败: 指定模式时需要提供 --target 参数
+2025-10-18 00:37:14 | ERROR | logger | 参数验证失败: 指定 --export 时需要提供 --output 参数
+2025-10-18 00:37:14 | ERROR | logger | 参数验证失败: 不能同时指定 --verbose 和 --quiet
+2025-10-18 00:37:14 | ERROR | logger | 参数验证失败: 指定模式时需要提供 --target 参数
+2025-10-18 00:37:14 | INFO | logger | 缓存功能已禁用
+2025-10-18 00:37:14 | WARNING | logger | 设置LLM模型失败: 'llm_interface'
+2025-10-18 00:37:14 | INFO | logger | 使用指定模式: static
+2025-10-18 00:37:14 | INFO | logger | 使用指定工具: pylint, bandit
+2025-10-18 00:37:14 | ERROR | logger | 批处理文件不存在: commands.txt
+2025-10-18 00:37:14 | ERROR | logger | 交互式模式执行失败: 'NoneType' object has no attribute 'create_session'
+2025-10-18 00:37:14 | ERROR | logger | 非交互式模式执行失败: 'NoneType' object has no attribute 'create_session'
+2025-10-18 00:37:14 | ERROR | logger | 获取工具信息失败: 'ConfigManager' object has no attribute 'get_tools_config'
+2025-10-18 00:37:14 | INFO | logger | Agent编排器初始化完成
+2025-10-18 00:37:14 | ERROR | logger | 配置文件加载失败: 配置文件不存在
+2025-10-18 00:37:14 | INFO | logger | 配置文件加载成功
+2025-10-18 00:37:14 | ERROR | logger | 获取工具信息失败: 'ConfigManager' object has no attribute 'get_tools_config'
+2025-10-18 00:37:14 | INFO | logger | 日志系统初始化完成
+2025-10-18 00:37:14 | INFO | logger | 日志系统初始化完成
+2025-10-18 00:37:14 | INFO | logger | 日志系统初始化完成
+2025-10-18 00:37:14 | ERROR | logger | 参数验证失败: 批处理文件不存在: /nonexistent/batch.txt
+2025-10-18 00:37:14 | ERROR | logger | 参数验证失败: 目标路径不存在: /nonexistent/
+2025-10-18 00:37:14 | ERROR | logger | 参数验证失败: 不能同时指定 --verbose 和 --quiet
+2025-10-18 00:37:14 | ERROR | logger | 参数验证失败: 指定 --export 时需要提供 --output 参数
+2025-10-18 00:37:14 | ERROR | logger | 参数验证失败: 指定模式时需要提供 --target 参数
+2025-10-18 00:38:25 | ERROR | logger | 参数验证失败: 指定 --export 时需要提供 --output 参数
+2025-10-18 00:38:25 | ERROR | logger | 参数验证失败: 不能同时指定 --verbose 和 --quiet
+2025-10-18 00:38:25 | ERROR | logger | 参数验证失败: 指定模式时需要提供 --target 参数
+2025-10-18 00:38:25 | INFO | logger | 缓存功能已禁用
+2025-10-18 00:38:25 | WARNING | logger | 设置LLM模型失败: 'llm_interface'
+2025-10-18 00:38:25 | INFO | logger | 使用指定模式: static
+2025-10-18 00:38:25 | INFO | logger | 使用指定工具: pylint, bandit
+2025-10-18 00:38:25 | ERROR | logger | 批处理文件不存在: commands.txt
+2025-10-18 00:38:25 | ERROR | logger | 交互式模式执行失败: 'NoneType' object has no attribute 'create_session'
+2025-10-18 00:38:25 | ERROR | logger | 非交互式模式执行失败: 'NoneType' object has no attribute 'create_session'
+2025-10-18 00:38:25 | ERROR | logger | 获取工具信息失败: 'ConfigManager' object has no attribute 'get_tools_config'
+2025-10-18 00:38:25 | INFO | logger | Agent编排器初始化完成
+2025-10-18 00:38:25 | ERROR | logger | 配置文件加载失败: 配置文件不存在
+2025-10-18 00:38:25 | INFO | logger | 配置文件加载成功
+2025-10-18 00:38:25 | ERROR | logger | 获取工具信息失败: 'ConfigManager' object has no attribute 'get_tools_config'
+2025-10-18 00:38:25 | INFO | logger | 日志系统初始化完成
+2025-10-18 00:38:25 | INFO | logger | 日志系统初始化完成
+2025-10-18 00:38:25 | INFO | logger | 日志系统初始化完成
+2025-10-18 00:38:25 | ERROR | logger | 参数验证失败: 批处理文件不存在: /nonexistent/batch.txt
+2025-10-18 00:38:25 | ERROR | logger | 参数验证失败: 目标路径不存在: /nonexistent/
+2025-10-18 00:38:25 | ERROR | logger | 参数验证失败: 不能同时指定 --verbose 和 --quiet
+2025-10-18 00:38:25 | ERROR | logger | 参数验证失败: 指定 --export 时需要提供 --output 参数
+2025-10-18 00:38:25 | ERROR | logger | 参数验证失败: 指定模式时需要提供 --target 参数
+2025-10-18 00:38:31 | ERROR | logger | 参数验证失败: 目标路径不存在: utils/
+2025-10-18 00:38:31 | ERROR | logger | 参数验证失败: 批处理文件不存在: commands.txt
+2025-10-18 00:38:57 | ERROR | logger | 参数验证失败: 目标路径不存在: utils/
+2025-10-18 00:38:57 | ERROR | logger | 参数验证失败: 批处理文件不存在: commands.txt
