@@ -12,8 +12,9 @@ from datetime import datetime
 
 from ..utils.logger import get_logger
 from ..utils.config import get_config_manager
-from .planner import TaskPlanner, UserRequest, ExecutionPlan
+from .planner import TaskPlanner, UserRequest, ExecutionPlan, AnalysisMode
 from .execution_engine import ExecutionEngine, ExecutionResult
+from .mode_router import ModeRecognizer, RequestRouter, RouteRequest, RouteResult
 
 
 class SessionState(Enum):
@@ -154,6 +155,10 @@ class AgentOrchestrator:
         self.task_planner = TaskPlanner(config_manager)
         self.execution_engine = ExecutionEngine(config_manager)
 
+        # 初始化模式路由器
+        self.mode_recognizer = ModeRecognizer(config_manager)
+        self.request_router = RequestRouter(config_manager, self.task_planner, self.execution_engine)
+
         # 会话存储
         self.sessions: Dict[str, Session] = {}
         self.user_sessions: Dict[str, List[str]] = {}  # user_id -> [session_ids]
@@ -239,7 +244,7 @@ class AgentOrchestrator:
 
     def process_user_input(self, session_id: str, user_input: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
-        处理用户输入
+        处理用户输入（使用模式路由）
 
         Args:
             session_id: 会话ID
@@ -274,69 +279,73 @@ class AgentOrchestrator:
                     "error_type": "MessageLimitExceededError"
                 }
 
-            # 更新会话状态
-            session.update_state(SessionState.PROCESSING, {"processing_input": user_input})
-
-            # 添加用户消息
-            user_message = session.add_message(
-                MessageRole.USER,
-                user_input,
-                context or {}
+            # 创建路由请求
+            route_request = RouteRequest(
+                user_input=user_input,
+                session=session,
+                context=context or {},
+                options=context.get('options', {}) if context else {}
             )
 
-            # 解析用户请求
-            current_path = context.get('current_path', '.') if context else '.'
-            user_request = self.task_planner.parse_user_request(user_input, current_path)
-            session.current_request = user_request
-
-            # 创建执行计划
-            execution_plan = self.task_planner.create_execution_plan(user_request)
-            session.current_plan = execution_plan
-
-            # 验证执行计划
-            is_valid, errors = self.task_planner.validate_plan(execution_plan)
-            if not is_valid:
-                session.update_state(SessionState.ERROR, {"validation_errors": errors})
-                return {
-                    "success": False,
-                    "error": f"Invalid execution plan: {', '.join(errors)}",
-                    "error_type": "InvalidPlanError",
-                    "validation_errors": errors
-                }
-
-            # 执行计划（异步执行任务）
-            self.execution_engine.execute_plan(execution_plan)
+            # 使用路由器处理请求
+            route_result = self.request_router.route_request(route_request)
 
             # 更新会话状态
-            session.update_state(SessionState.ACTIVE, {
-                "last_user_input": user_input,
-                "plan_id": execution_plan.plan_id,
-                "task_count": len(execution_plan.tasks)
+            session.update_state(route_result.next_state, {
+                "routing_completed": True,
+                "execution_method": route_result.execution_method,
+                "mode": route_result.mode.value
             })
 
-            # 生成助手响应
-            assistant_response = self._generate_assistant_response(session, execution_plan)
-            assistant_message = session.add_message(
-                MessageRole.ASSISTANT,
-                assistant_response,
-                {"response_type": "plan_created", "plan_id": execution_plan.plan_id}
-            )
+            # 添加助手响应消息（如果有的话）
+            if route_result.response_message:
+                session.add_message(
+                    MessageRole.ASSISTANT,
+                    route_result.response_message,
+                    {
+                        "mode": route_result.mode.value,
+                        "execution_method": route_result.execution_method,
+                        "routing_success": route_result.success
+                    }
+                )
 
-            self.logger.info(f"Processed user input for session {session_id}, created plan {execution_plan.plan_id}")
+            # 记录执行结果
+            if route_result.execution_plan:
+                session.current_plan = route_result.execution_plan
 
-            return {
-                "success": True,
+            self.logger.info(f"Routed user input for session {session_id}: "
+                            f"mode={route_result.mode.value}, "
+                            f"method={route_result.execution_method}, "
+                            f"success={route_result.success}")
+
+            # 转换为返回格式
+            result = {
+                "success": route_result.success,
                 "session_id": session_id,
-                "user_message_id": user_message.message_id,
-                "assistant_message_id": assistant_message.message_id,
-                "execution_plan": execution_plan.plan_id,
-                "task_count": len(execution_plan.tasks),
-                "estimated_duration": self._estimate_plan_duration(execution_plan),
-                "response": assistant_response
+                "mode": route_result.mode.value,
+                "execution_method": route_result.execution_method,
+                "response": route_result.response_message,
+                "next_state": route_result.next_state.value,
+                "metadata": route_result.metadata
             }
 
+            if route_result.execution_plan:
+                result.update({
+                    "execution_plan": route_result.execution_plan.plan_id,
+                    "task_count": len(route_result.execution_plan.tasks),
+                    "estimated_duration": self._estimate_plan_duration(route_result.execution_plan)
+                })
+
+            if not route_result.success:
+                result.update({
+                    "error": route_result.error,
+                    "error_type": route_result.error_type
+                })
+
+            return result
+
         except Exception as e:
-            session.update_state(SessionState.ERROR, {"error": str(e), "error_type": type(e).__name__})
+            session.update_state(SessionState.ERROR, {"processing_error": str(e), "error_type": type(e).__name__})
             self.logger.error(f"Failed to process user input for session {session_id}: {e}")
 
             return {
@@ -605,3 +614,168 @@ class AgentOrchestrator:
 
         total_duration = sum(s.updated_at - s.created_at for s in sessions)
         return total_duration / len(sessions)
+
+    def recognize_mode(self, user_input: str, session_id: Optional[str] = None) -> Dict[str, Any]:
+        """
+        识别用户输入的分析模式
+
+        Args:
+            user_input: 用户输入
+            session_id: 会话ID（可选）
+
+        Returns:
+            识别结果
+        """
+        try:
+            session = self.get_session(session_id) if session_id else None
+
+            # 使用模式识别器
+            mode, confidence = self.mode_recognizer.recognize_mode(user_input, session)
+
+            return {
+                "mode": mode.value,
+                "confidence": confidence,
+                "suggestions": self.mode_recognizer.get_mode_suggestions(user_input, 3)
+            }
+
+        except Exception as e:
+            self.logger.error(f"Failed to recognize mode: {e}")
+            return {
+                "mode": "static",
+                "confidence": 0.0,
+                "error": str(e)
+            }
+
+    def switch_mode(self, session_id: str, target_mode: AnalysisMode, reason: Optional[str] = None) -> bool:
+        """
+        切换会话的分析模式
+
+        Args:
+            session_id: 会话ID
+            target_mode: 目标模式
+            reason: 切换原因
+
+        Returns:
+            切换是否成功
+        """
+        session = self.get_session(session_id)
+        if not session:
+            return False
+
+        try:
+            # 更新会话元数据
+            session.metadata.update({
+                "mode_switch": {
+                    "target_mode": target_mode.value,
+                    "previous_mode": session.current_request.mode.value if session.current_request else "none",
+                    "reason": reason or "manual_switch",
+                    "timestamp": time.time()
+                }
+            })
+
+            # 如果有当前请求，更新其模式
+            if session.current_request:
+                session.current_request.mode = target_mode
+
+                # 重新创建执行计划
+                try:
+                    new_plan = self.task_planner.create_execution_plan(session.current_request)
+                    session.current_plan = new_plan
+
+                    self.logger.info(f"Switched session {session_id} mode to {target_mode.value} with new plan {new_plan.plan_id}")
+                    return True
+
+                except Exception as e:
+                    self.logger.error(f"Failed to create new plan after mode switch: {e}")
+                    return False
+
+            self.logger.info(f"Switched session {session_id} mode to {target_mode.value}")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"Failed to switch session {session_id} mode: {e}")
+            return False
+
+    def get_supported_modes(self) -> List[str]:
+        """获取支持的分析模式"""
+        return self.request_router.get_supported_modes()
+
+    def get_mode_description(self, mode: str) -> str:
+        """获取模式描述"""
+        return self.request_router.get_mode_description(mode)
+
+    def execute_plan_directly(self, session_id: str) -> Dict[str, Any]:
+        """
+        直接执行当前会话的执行计划
+
+        Args:
+            session_id: 会话ID
+
+        Returns:
+            执行结果
+        """
+        session = self.get_session(session_id)
+        if not session:
+            return {
+                "success": False,
+                "error": f"Session {session_id} not found",
+                "error_type": "SessionNotFoundError"
+            }
+
+        if not session.current_plan:
+            return {
+                "success": False,
+                "error": "No execution plan found in session",
+                "error_type": "NoPlanError"
+            }
+
+        try:
+            # 更新状态
+            session.update_state(SessionState.PROCESSING, {"direct_execution": True})
+
+            # 执行计划
+            execution_results = self.execution_engine.execute_plan(session.current_plan)
+            session.execution_results.extend(execution_results)
+
+            # 生成响应
+            if session.current_request and session.current_request.mode:
+                if session.current_request.mode == AnalysisMode.STATIC:
+                    response = self._generate_static_response(session.current_plan, execution_results)
+                elif session.current_request.mode == AnalysisMode.DEEP:
+                    response = self._generate_deep_response(session.current_plan, execution_results)
+                elif session.current_request.mode == AnalysisMode.FIX:
+                    response = self._generate_fix_response(session.current_plan, execution_results)
+                else:
+                    response = f"执行计划 {session.current_plan.plan_id} 完成"
+            else:
+                response = f"执行计划 {session.current_plan.plan_id} 完成"
+
+            # 添加助手消息
+            session.add_message(
+                MessageRole.ASSISTANT,
+                response,
+                {"direct_execution": True, "results_count": len(execution_results)}
+            )
+
+            # 更新状态
+            session.update_state(SessionState.ACTIVE, {
+                "execution_completed": True,
+                "results_count": len(execution_results)
+            })
+
+            return {
+                "success": True,
+                "session_id": session_id,
+                "execution_plan": session.current_plan.plan_id,
+                "results_count": len(execution_results),
+                "response": response
+            }
+
+        except Exception as e:
+            session.update_state(SessionState.ERROR, {"execution_error": str(e)})
+            return {
+                "success": False,
+                "error": str(e),
+                "error_type": type(e).__name__,
+                "session_id": session_id
+            }

@@ -7,6 +7,7 @@ from .orchestrator import AgentOrchestrator, Session, ChatMessage, SessionState,
 from .planner import TaskPlanner, AnalysisMode, UserRequest, Task, ExecutionPlan
 from .file_selector import FileSelector, FileInfo, SelectionCriteria
 from .execution_engine import ExecutionEngine, ExecutionResult, TaskStatus, ToolStatus
+from .mode_router import ModeRecognizer, RequestRouter, RouteRequest, RouteResult
 
 __all__ = [
     'AgentOrchestrator',
@@ -25,5 +26,9 @@ __all__ = [
     'ExecutionEngine',
     'ExecutionResult',
     'TaskStatus',
-    'ToolStatus'
+    'ToolStatus',
+    'ModeRecognizer',
+    'RequestRouter',
+    'RouteRequest',
+    'RouteResult'
 ]
