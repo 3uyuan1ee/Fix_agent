@@ -157,7 +157,7 @@ class TestClass:
 
         # 不指定工具，返回启用的工具
         tools = cmd._get_selected_tools(None)
-        self.assertEqual(sorted(tools), ['bandit', 'pylint', 'mypy'])
+        self.assertEqual(set(tools), {'bandit', 'pylint', 'mypy'})
 
         # 指定工具，过滤可用工具
         tools = cmd._get_selected_tools(['pylint', 'flake8', 'unknown_tool'])
