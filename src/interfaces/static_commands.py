@@ -78,6 +78,22 @@ class StaticAnalysisCommand:
     def __init__(self, config: Optional[ConfigManager] = None):
         """初始化静态分析命令处理器"""
         self.config = config or ConfigManager()
+        # 确保配置已加载
+        if not hasattr(self.config, '_config') or self.config._config is None:
+            try:
+                self.config.load_config()
+            except Exception:
+                # 如果配置加载失败，使用默认配置
+                self.config._config = {
+                    'static_analysis': {
+                        'tools': {
+                            'pylint': {'enabled': True},
+                            'bandit': {'enabled': True},
+                            'flake8': {'enabled': True},
+                            'mypy': {'enabled': True}
+                        }
+                    }
+                }
         self.orchestrator = AgentOrchestrator()
         self.formatter = ResponseFormatter()
 
@@ -243,14 +259,27 @@ class StaticAnalysisCommand:
     def _get_selected_tools(self, requested_tools: Optional[List[str]]) -> List[str]:
         """获取选中的分析工具"""
         try:
-            tools_config = self.config.get_section('static_analysis')
-            available_tools = tools_config.get('tools', {})
+            # 检查配置是否已加载
+            if not hasattr(self.config, '_config') or self.config._config is None:
+                # 使用默认工具配置
+                enabled_tools = ['pylint', 'bandit', 'flake8', 'mypy']
+            else:
+                tools_config = self.config.get_section('static_analysis')
 
-            # 过滤启用的工具
-            enabled_tools = [
-                name for name, config in available_tools.items()
-                if config.get('enabled', True)
-            ]
+                # 适配实际配置文件格式
+                if 'enabled_tools' in tools_config:
+                    # 新格式：使用 enabled_tools 列表
+                    enabled_tools = tools_config['enabled_tools']
+                elif 'tools' in tools_config:
+                    # 旧格式：使用 tools 字典
+                    available_tools = tools_config['tools']
+                    enabled_tools = [
+                        name for name, config in available_tools.items()
+                        if config.get('enabled', True)
+                    ]
+                else:
+                    # 默认工具列表
+                    enabled_tools = ['pylint', 'bandit', 'flake8', 'mypy']
 
             # 如果用户指定了工具，进行过滤
             if requested_tools:
@@ -266,7 +295,8 @@ class StaticAnalysisCommand:
 
         except Exception as e:
             logger.error(f"获取工具配置失败: {e}")
-            return []
+            # 返回默认工具列表
+            return ['pylint', 'bandit', 'flake8', 'mypy']
 
     def _run_analysis(
         self,
