@@ -54,7 +54,18 @@ class CLIArguments:
     version: bool = False
     list_tools: bool = False
 
-    
+    # 子命令相关
+    command: Optional[str] = None
+    analyze_command: Optional[str] = None
+    sub_target: Optional[str] = None  # 子命令中的target参数
+    sub_tools: Optional[List[str]] = None  # 子命令中的tools参数
+    sub_format: Optional[str] = None  # 子命令中的format参数
+    sub_output: Optional[str] = None  # 子命令中的output参数
+    sub_verbose: bool = False  # 子命令中的verbose参数
+    sub_quiet: bool = False  # 子命令中的quiet参数
+    sub_dry_run: bool = False  # 子命令中的dry_run参数
+
+
 
 class CLIArgumentParser:
     """CLI参数解析器"""
@@ -74,6 +85,14 @@ class CLIArgumentParser:
             epilog=self._get_examples_epilog()
         )
 
+        # 添加子命令解析器
+        self.subparsers = self.parser.add_subparsers(
+            dest='command',
+            help='可用命令',
+            metavar='{analyze,version,help}'
+        )
+
+        self._add_analyze_subcommand()
         self._add_global_arguments()
         self._add_analysis_arguments()
         self._add_output_arguments()
@@ -223,6 +242,93 @@ class CLIArgumentParser:
             help='批处理文件，包含待执行的命令'
         )
 
+    def _add_analyze_subcommand(self):
+        """添加analyze子命令"""
+        analyze_parser = self.subparsers.add_parser(
+            'analyze',
+            help='执行代码分析',
+            description='执行静态分析、深度分析或修复分析'
+        )
+
+        # analyze子命令的子命令
+        analyze_subparsers = analyze_parser.add_subparsers(
+            dest='analyze_command',
+            help='分析模式',
+            metavar='{static,deep,fix}'
+        )
+
+        # static子命令
+        static_parser = analyze_subparsers.add_parser(
+            'static',
+            help='执行静态分析',
+            description='使用传统静态分析工具进行代码质量检查'
+        )
+
+        static_parser.add_argument(
+            'target',
+            help='目标文件或目录路径'
+        )
+
+        static_parser.add_argument(
+            '--tools',
+            nargs='+',
+            help='指定要使用的静态分析工具'
+        )
+
+        static_parser.add_argument(
+            '--format', '-f',
+            choices=['simple', 'detailed', 'json', 'table', 'markdown'],
+            default='simple',
+            help='输出格式 (默认: simple)'
+        )
+
+        static_parser.add_argument(
+            '--output', '-o',
+            help='输出文件路径'
+        )
+
+        static_parser.add_argument(
+            '--verbose', '-v',
+            action='store_true',
+            help='显示详细输出信息'
+        )
+
+        static_parser.add_argument(
+            '--quiet', '-q',
+            action='store_true',
+            help='静默模式，最小化输出'
+        )
+
+        static_parser.add_argument(
+            '--dry-run',
+            action='store_true',
+            help='模拟运行，不执行实际的分析操作'
+        )
+
+        # deep子命令（占位符）
+        deep_parser = analyze_subparsers.add_parser(
+            'deep',
+            help='执行深度分析（开发中）',
+            description='使用大语言模型进行深度代码分析'
+        )
+
+        deep_parser.add_argument(
+            'target',
+            help='目标文件或目录路径'
+        )
+
+        # fix子命令（占位符）
+        fix_parser = analyze_subparsers.add_parser(
+            'fix',
+            help='执行分析修复（开发中）',
+            description='分析问题并提供修复建议'
+        )
+
+        fix_parser.add_argument(
+            'target',
+            help='目标文件或目录路径'
+        )
+
     def _add_advanced_arguments(self):
         """添加高级参数"""
         advanced_group = self.parser.add_argument_group('高级选项')
@@ -276,7 +382,17 @@ class CLIArgumentParser:
                 dry_run=parsed.dry_run,
                 help=getattr(parsed, 'help', False),
                 version=parsed.version,
-                list_tools=parsed.list_tools
+                list_tools=parsed.list_tools,
+                # 子命令参数
+                command=getattr(parsed, 'command', None),
+                analyze_command=getattr(parsed, 'analyze_command', None),
+                sub_target=getattr(parsed, 'target', None),
+                sub_tools=getattr(parsed, 'tools', None),
+                sub_format=getattr(parsed, 'format', None),
+                sub_output=getattr(parsed, 'output', None),
+                sub_verbose=getattr(parsed, 'verbose', False),
+                sub_quiet=getattr(parsed, 'quiet', False),
+                sub_dry_run=getattr(parsed, 'dry_run', False)
             )
 
             # 验证参数组合
