@@ -305,16 +305,33 @@ class CLIArgumentParser:
             help='模拟运行，不执行实际的分析操作'
         )
 
-        # deep子命令（占位符）
+        # deep子命令
         deep_parser = analyze_subparsers.add_parser(
             'deep',
-            help='执行深度分析（开发中）',
+            help='执行深度分析',
             description='使用大语言模型进行深度代码分析'
         )
 
         deep_parser.add_argument(
             'target',
             help='目标文件或目录路径'
+        )
+
+        deep_parser.add_argument(
+            '--output', '-o',
+            help='对话历史导出文件路径'
+        )
+
+        deep_parser.add_argument(
+            '--verbose', '-v',
+            action='store_true',
+            help='显示详细输出信息'
+        )
+
+        deep_parser.add_argument(
+            '--quiet', '-q',
+            action='store_true',
+            help='静默模式，最小化输出'
         )
 
         # fix子命令（占位符）
