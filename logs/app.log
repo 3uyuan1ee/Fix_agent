@@ -5335,3 +5335,337 @@
 2025-10-18 01:24:22 | INFO | logger | Execution engine cleaned up
 2025-10-18 01:24:22 | INFO | logger | Cleaning up execution engine
 2025-10-18 01:24:22 | INFO | logger | Execution engine cleaned up
+2025-10-18 01:34:43 | ERROR | logger | 文件不存在: /nonexistent/file.py
+2025-10-18 01:34:43 | ERROR | logger | 行号超出范围: 999
+2025-10-18 01:34:43 | INFO | logger | 成功应用修复: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpt4x2axny/test.py:2
+2025-10-18 01:34:43 | INFO | logger | 创建备份: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpp8ytl4d4/test.py -> /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpp8ytl4d4/backups/test_20251018_013443.py
+2025-10-18 01:34:43 | INFO | logger | 创建备份: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmptup3weqj/test.py -> /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmptup3weqj/backups/test_20251018_013443.py
+2025-10-18 01:34:43 | INFO | logger | 恢复备份: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmptup3weqj/backups/test_20251018_013443.py -> /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmptup3weqj/test.py
+2025-10-18 01:34:43 | INFO | logger | TaskPlanner initialized
+2025-10-18 01:34:43 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-18 01:34:43 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:34:43 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:34:43 | INFO | logger | RequestRouter initialized
+2025-10-18 01:34:43 | INFO | logger | InputParser initialized
+2025-10-18 01:34:43 | INFO | logger | ParameterValidator initialized
+2025-10-18 01:34:43 | INFO | logger | ResponseFormatter initialized
+2025-10-18 01:34:43 | INFO | logger | UserInteractionHandler initialized
+2025-10-18 01:34:43 | INFO | logger | AgentOrchestrator initialized
+2025-10-18 01:34:43 | INFO | logger | TaskPlanner initialized
+2025-10-18 01:34:43 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-18 01:34:43 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:34:43 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:34:43 | INFO | logger | RequestRouter initialized
+2025-10-18 01:34:43 | INFO | logger | InputParser initialized
+2025-10-18 01:34:43 | INFO | logger | ParameterValidator initialized
+2025-10-18 01:34:43 | INFO | logger | ResponseFormatter initialized
+2025-10-18 01:34:43 | INFO | logger | UserInteractionHandler initialized
+2025-10-18 01:34:43 | INFO | logger | AgentOrchestrator initialized
+2025-10-18 01:34:43 | INFO | logger | TaskPlanner initialized
+2025-10-18 01:34:43 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-18 01:34:43 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:34:43 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:34:43 | INFO | logger | Cleaning up execution engine
+2025-10-18 01:34:43 | INFO | logger | Execution engine cleaned up
+2025-10-18 01:34:43 | INFO | logger | Cleaning up execution engine
+2025-10-18 01:34:43 | INFO | logger | Execution engine cleaned up
+2025-10-18 01:34:43 | INFO | logger | RequestRouter initialized
+2025-10-18 01:34:43 | INFO | logger | InputParser initialized
+2025-10-18 01:34:43 | INFO | logger | ParameterValidator initialized
+2025-10-18 01:34:43 | INFO | logger | ResponseFormatter initialized
+2025-10-18 01:34:43 | INFO | logger | UserInteractionHandler initialized
+2025-10-18 01:34:43 | INFO | logger | AgentOrchestrator initialized
+2025-10-18 01:34:43 | INFO | logger | TaskPlanner initialized
+2025-10-18 01:34:43 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-18 01:34:43 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:34:43 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:34:43 | INFO | logger | RequestRouter initialized
+2025-10-18 01:34:43 | INFO | logger | InputParser initialized
+2025-10-18 01:34:43 | INFO | logger | ParameterValidator initialized
+2025-10-18 01:34:43 | INFO | logger | ResponseFormatter initialized
+2025-10-18 01:34:43 | INFO | logger | UserInteractionHandler initialized
+2025-10-18 01:34:43 | INFO | logger | AgentOrchestrator initialized
+2025-10-18 01:34:43 | INFO | logger | TaskPlanner initialized
+2025-10-18 01:34:43 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-18 01:34:43 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:34:43 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:34:43 | INFO | logger | RequestRouter initialized
+2025-10-18 01:34:43 | INFO | logger | InputParser initialized
+2025-10-18 01:34:43 | INFO | logger | ParameterValidator initialized
+2025-10-18 01:34:43 | INFO | logger | ResponseFormatter initialized
+2025-10-18 01:34:43 | INFO | logger | UserInteractionHandler initialized
+2025-10-18 01:34:43 | INFO | logger | AgentOrchestrator initialized
+2025-10-18 01:34:43 | INFO | logger | TaskPlanner initialized
+2025-10-18 01:34:43 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-18 01:34:43 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:34:43 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:34:43 | INFO | logger | RequestRouter initialized
+2025-10-18 01:34:43 | INFO | logger | InputParser initialized
+2025-10-18 01:34:43 | INFO | logger | ParameterValidator initialized
+2025-10-18 01:34:43 | INFO | logger | ResponseFormatter initialized
+2025-10-18 01:34:43 | INFO | logger | UserInteractionHandler initialized
+2025-10-18 01:34:43 | INFO | logger | AgentOrchestrator initialized
+2025-10-18 01:34:43 | INFO | logger | TaskPlanner initialized
+2025-10-18 01:34:43 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-18 01:34:43 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:34:43 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:34:43 | INFO | logger | RequestRouter initialized
+2025-10-18 01:34:43 | INFO | logger | InputParser initialized
+2025-10-18 01:34:43 | INFO | logger | ParameterValidator initialized
+2025-10-18 01:34:43 | INFO | logger | ResponseFormatter initialized
+2025-10-18 01:34:43 | INFO | logger | UserInteractionHandler initialized
+2025-10-18 01:34:43 | INFO | logger | AgentOrchestrator initialized
+2025-10-18 01:34:43 | INFO | logger | TaskPlanner initialized
+2025-10-18 01:34:43 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-18 01:34:43 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:34:43 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:34:43 | INFO | logger | RequestRouter initialized
+2025-10-18 01:34:43 | INFO | logger | InputParser initialized
+2025-10-18 01:34:43 | INFO | logger | ParameterValidator initialized
+2025-10-18 01:34:43 | INFO | logger | ResponseFormatter initialized
+2025-10-18 01:34:43 | INFO | logger | UserInteractionHandler initialized
+2025-10-18 01:34:43 | INFO | logger | AgentOrchestrator initialized
+2025-10-18 01:34:43 | INFO | logger | TaskPlanner initialized
+2025-10-18 01:34:43 | INFO | logger | Cleaning up execution engine
+2025-10-18 01:34:43 | INFO | logger | Execution engine cleaned up
+2025-10-18 01:34:43 | INFO | logger | Cleaning up execution engine
+2025-10-18 01:34:43 | INFO | logger | Execution engine cleaned up
+2025-10-18 01:34:43 | INFO | logger | Cleaning up execution engine
+2025-10-18 01:34:43 | INFO | logger | Execution engine cleaned up
+2025-10-18 01:34:43 | INFO | logger | Cleaning up execution engine
+2025-10-18 01:34:43 | INFO | logger | Execution engine cleaned up
+2025-10-18 01:34:43 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-18 01:34:43 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:34:43 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:34:43 | INFO | logger | RequestRouter initialized
+2025-10-18 01:34:43 | INFO | logger | InputParser initialized
+2025-10-18 01:34:43 | INFO | logger | ParameterValidator initialized
+2025-10-18 01:34:43 | INFO | logger | ResponseFormatter initialized
+2025-10-18 01:34:43 | INFO | logger | UserInteractionHandler initialized
+2025-10-18 01:34:43 | INFO | logger | AgentOrchestrator initialized
+2025-10-18 01:34:43 | INFO | logger | TaskPlanner initialized
+2025-10-18 01:34:43 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-18 01:34:43 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:34:43 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:34:43 | INFO | logger | RequestRouter initialized
+2025-10-18 01:34:43 | INFO | logger | InputParser initialized
+2025-10-18 01:34:43 | INFO | logger | ParameterValidator initialized
+2025-10-18 01:34:43 | INFO | logger | ResponseFormatter initialized
+2025-10-18 01:34:43 | INFO | logger | UserInteractionHandler initialized
+2025-10-18 01:34:43 | INFO | logger | AgentOrchestrator initialized
+2025-10-18 01:34:43 | INFO | logger | TaskPlanner initialized
+2025-10-18 01:34:43 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-18 01:34:43 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:34:43 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:34:43 | INFO | logger | RequestRouter initialized
+2025-10-18 01:34:43 | INFO | logger | InputParser initialized
+2025-10-18 01:34:43 | INFO | logger | ParameterValidator initialized
+2025-10-18 01:34:43 | INFO | logger | ResponseFormatter initialized
+2025-10-18 01:34:43 | INFO | logger | UserInteractionHandler initialized
+2025-10-18 01:34:43 | INFO | logger | AgentOrchestrator initialized
+2025-10-18 01:34:43 | INFO | logger | Cleaning up execution engine
+2025-10-18 01:34:43 | INFO | logger | Execution engine cleaned up
+2025-10-18 01:34:43 | INFO | logger | Cleaning up execution engine
+2025-10-18 01:34:43 | INFO | logger | Execution engine cleaned up
+2025-10-18 01:34:43 | INFO | logger | Cleaning up execution engine
+2025-10-18 01:34:43 | INFO | logger | Execution engine cleaned up
+2025-10-18 01:34:43 | ERROR | logger | 分析修复执行失败: 修复失败
+2025-10-18 01:34:43 | INFO | logger | Cleaning up execution engine
+2025-10-18 01:34:43 | INFO | logger | Execution engine cleaned up
+2025-10-18 01:34:43 | INFO | logger | Cleaning up execution engine
+2025-10-18 01:34:43 | INFO | logger | Execution engine cleaned up
+2025-10-18 01:35:14 | ERROR | logger | 文件不存在: /nonexistent/file.py
+2025-10-18 01:35:14 | ERROR | logger | 行号超出范围: 999
+2025-10-18 01:35:14 | INFO | logger | 成功应用修复: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpoacf_1em/test.py:2
+2025-10-18 01:35:14 | INFO | logger | 创建备份: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpennfh9p0/test.py -> /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpennfh9p0/backups/test_20251018_013514.py
+2025-10-18 01:35:14 | INFO | logger | 创建备份: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpz1soiu7n/test.py -> /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpz1soiu7n/backups/test_20251018_013514.py
+2025-10-18 01:35:14 | INFO | logger | 恢复备份: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpz1soiu7n/backups/test_20251018_013514.py -> /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpz1soiu7n/test.py
+2025-10-18 01:35:14 | INFO | logger | TaskPlanner initialized
+2025-10-18 01:35:14 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-18 01:35:14 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:35:14 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:35:14 | INFO | logger | RequestRouter initialized
+2025-10-18 01:35:14 | INFO | logger | InputParser initialized
+2025-10-18 01:35:14 | INFO | logger | ParameterValidator initialized
+2025-10-18 01:35:14 | INFO | logger | ResponseFormatter initialized
+2025-10-18 01:35:14 | INFO | logger | UserInteractionHandler initialized
+2025-10-18 01:35:14 | INFO | logger | AgentOrchestrator initialized
+2025-10-18 01:35:14 | INFO | logger | TaskPlanner initialized
+2025-10-18 01:35:14 | INFO | logger | Cleaning up execution engine
+2025-10-18 01:35:14 | INFO | logger | Execution engine cleaned up
+2025-10-18 01:35:14 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-18 01:35:14 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:35:14 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:35:14 | INFO | logger | RequestRouter initialized
+2025-10-18 01:35:14 | INFO | logger | InputParser initialized
+2025-10-18 01:35:14 | INFO | logger | ParameterValidator initialized
+2025-10-18 01:35:14 | INFO | logger | ResponseFormatter initialized
+2025-10-18 01:35:14 | INFO | logger | UserInteractionHandler initialized
+2025-10-18 01:35:14 | INFO | logger | AgentOrchestrator initialized
+2025-10-18 01:35:14 | INFO | logger | TaskPlanner initialized
+2025-10-18 01:35:14 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-18 01:35:14 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:35:14 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:35:14 | INFO | logger | RequestRouter initialized
+2025-10-18 01:35:14 | INFO | logger | InputParser initialized
+2025-10-18 01:35:14 | INFO | logger | ParameterValidator initialized
+2025-10-18 01:35:14 | INFO | logger | ResponseFormatter initialized
+2025-10-18 01:35:14 | INFO | logger | UserInteractionHandler initialized
+2025-10-18 01:35:14 | INFO | logger | AgentOrchestrator initialized
+2025-10-18 01:35:14 | INFO | logger | Cleaning up execution engine
+2025-10-18 01:35:14 | INFO | logger | Execution engine cleaned up
+2025-10-18 01:35:14 | INFO | logger | TaskPlanner initialized
+2025-10-18 01:35:14 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-18 01:35:14 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:35:14 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:35:14 | INFO | logger | RequestRouter initialized
+2025-10-18 01:35:14 | INFO | logger | InputParser initialized
+2025-10-18 01:35:14 | INFO | logger | ParameterValidator initialized
+2025-10-18 01:35:14 | INFO | logger | ResponseFormatter initialized
+2025-10-18 01:35:14 | INFO | logger | UserInteractionHandler initialized
+2025-10-18 01:35:14 | INFO | logger | AgentOrchestrator initialized
+2025-10-18 01:35:14 | INFO | logger | TaskPlanner initialized
+2025-10-18 01:35:14 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-18 01:35:14 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:35:14 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:35:14 | INFO | logger | RequestRouter initialized
+2025-10-18 01:35:14 | INFO | logger | InputParser initialized
+2025-10-18 01:35:14 | INFO | logger | ParameterValidator initialized
+2025-10-18 01:35:14 | INFO | logger | ResponseFormatter initialized
+2025-10-18 01:35:14 | INFO | logger | UserInteractionHandler initialized
+2025-10-18 01:35:14 | INFO | logger | AgentOrchestrator initialized
+2025-10-18 01:35:14 | INFO | logger | Cleaning up execution engine
+2025-10-18 01:35:14 | INFO | logger | Execution engine cleaned up
+2025-10-18 01:35:14 | INFO | logger | TaskPlanner initialized
+2025-10-18 01:35:14 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-18 01:35:14 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:35:14 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:35:14 | INFO | logger | RequestRouter initialized
+2025-10-18 01:35:14 | INFO | logger | InputParser initialized
+2025-10-18 01:35:14 | INFO | logger | ParameterValidator initialized
+2025-10-18 01:35:14 | INFO | logger | ResponseFormatter initialized
+2025-10-18 01:35:14 | INFO | logger | UserInteractionHandler initialized
+2025-10-18 01:35:14 | INFO | logger | AgentOrchestrator initialized
+2025-10-18 01:35:14 | INFO | logger | TaskPlanner initialized
+2025-10-18 01:35:14 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-18 01:35:14 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:35:14 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:35:14 | INFO | logger | RequestRouter initialized
+2025-10-18 01:35:14 | INFO | logger | InputParser initialized
+2025-10-18 01:35:14 | INFO | logger | ParameterValidator initialized
+2025-10-18 01:35:14 | INFO | logger | ResponseFormatter initialized
+2025-10-18 01:35:14 | INFO | logger | UserInteractionHandler initialized
+2025-10-18 01:35:14 | INFO | logger | AgentOrchestrator initialized
+2025-10-18 01:35:14 | INFO | logger | TaskPlanner initialized
+2025-10-18 01:35:14 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-18 01:35:14 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:35:14 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:35:14 | INFO | logger | RequestRouter initialized
+2025-10-18 01:35:14 | INFO | logger | InputParser initialized
+2025-10-18 01:35:14 | INFO | logger | ParameterValidator initialized
+2025-10-18 01:35:14 | INFO | logger | ResponseFormatter initialized
+2025-10-18 01:35:14 | INFO | logger | UserInteractionHandler initialized
+2025-10-18 01:35:14 | INFO | logger | AgentOrchestrator initialized
+2025-10-18 01:35:14 | INFO | logger | TaskPlanner initialized
+2025-10-18 01:35:14 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-18 01:35:14 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:35:14 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:35:14 | INFO | logger | RequestRouter initialized
+2025-10-18 01:35:14 | INFO | logger | InputParser initialized
+2025-10-18 01:35:14 | INFO | logger | ParameterValidator initialized
+2025-10-18 01:35:14 | INFO | logger | ResponseFormatter initialized
+2025-10-18 01:35:14 | INFO | logger | UserInteractionHandler initialized
+2025-10-18 01:35:14 | INFO | logger | AgentOrchestrator initialized
+2025-10-18 01:35:14 | INFO | logger | TaskPlanner initialized
+2025-10-18 01:35:14 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-18 01:35:14 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:35:14 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:35:14 | INFO | logger | RequestRouter initialized
+2025-10-18 01:35:14 | INFO | logger | InputParser initialized
+2025-10-18 01:35:14 | INFO | logger | ParameterValidator initialized
+2025-10-18 01:35:14 | INFO | logger | ResponseFormatter initialized
+2025-10-18 01:35:14 | INFO | logger | UserInteractionHandler initialized
+2025-10-18 01:35:14 | INFO | logger | AgentOrchestrator initialized
+2025-10-18 01:35:14 | INFO | logger | TaskPlanner initialized
+2025-10-18 01:35:14 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-18 01:35:14 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:35:14 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:35:14 | INFO | logger | RequestRouter initialized
+2025-10-18 01:35:14 | INFO | logger | InputParser initialized
+2025-10-18 01:35:14 | INFO | logger | ParameterValidator initialized
+2025-10-18 01:35:14 | INFO | logger | ResponseFormatter initialized
+2025-10-18 01:35:14 | INFO | logger | UserInteractionHandler initialized
+2025-10-18 01:35:14 | INFO | logger | AgentOrchestrator initialized
+2025-10-18 01:35:14 | INFO | logger | Cleaning up execution engine
+2025-10-18 01:35:14 | INFO | logger | Execution engine cleaned up
+2025-10-18 01:35:14 | INFO | logger | Cleaning up execution engine
+2025-10-18 01:35:14 | INFO | logger | Execution engine cleaned up
+2025-10-18 01:35:14 | INFO | logger | Cleaning up execution engine
+2025-10-18 01:35:14 | INFO | logger | Execution engine cleaned up
+2025-10-18 01:35:14 | INFO | logger | Cleaning up execution engine
+2025-10-18 01:35:14 | INFO | logger | Execution engine cleaned up
+2025-10-18 01:35:14 | INFO | logger | Cleaning up execution engine
+2025-10-18 01:35:14 | INFO | logger | Execution engine cleaned up
+2025-10-18 01:35:14 | INFO | logger | Cleaning up execution engine
+2025-10-18 01:35:14 | INFO | logger | Execution engine cleaned up
+2025-10-18 01:35:14 | ERROR | logger | 分析修复执行失败: 修复失败
+2025-10-18 01:35:14 | INFO | logger | Cleaning up execution engine
+2025-10-18 01:35:14 | INFO | logger | Execution engine cleaned up
+2025-10-18 01:35:14 | INFO | logger | Cleaning up execution engine
+2025-10-18 01:35:14 | INFO | logger | Execution engine cleaned up
+2025-10-18 01:35:29 | INFO | logger | 创建备份: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp6gd39y4t/test.py -> /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp6gd39y4t/backups/test_20251018_013529.py
+2025-10-18 01:35:29 | INFO | logger | 成功应用修复: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp6gd39y4t/test.py:2
+2025-10-18 01:35:29 | INFO | logger | 恢复备份: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp6gd39y4t/backups/test_20251018_013529.py -> /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp6gd39y4t/test.py
+2025-10-18 01:35:29 | INFO | logger | TaskPlanner initialized
+2025-10-18 01:35:29 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-18 01:35:29 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:35:29 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:35:29 | INFO | logger | RequestRouter initialized
+2025-10-18 01:35:29 | INFO | logger | InputParser initialized
+2025-10-18 01:35:29 | INFO | logger | ParameterValidator initialized
+2025-10-18 01:35:29 | INFO | logger | ResponseFormatter initialized
+2025-10-18 01:35:29 | INFO | logger | UserInteractionHandler initialized
+2025-10-18 01:35:29 | INFO | logger | AgentOrchestrator initialized
+2025-10-18 01:35:29 | INFO | logger | Created session session_183ee1a1a2de for user fix_analysis_user
+2025-10-18 01:35:29 | INFO | logger | Closed session session_183ee1a1a2de
+2025-10-18 01:35:29 | INFO | logger | Created session session_83f3b5f7e711 for user fix_analysis_user
+2025-10-18 01:35:29 | INFO | logger | 创建备份: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/aidetector_fix_demo_bdox7523/main.py -> .fix_backups/main_20251018_013529.py
+2025-10-18 01:35:29 | INFO | logger | 成功应用修复: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/aidetector_fix_demo_bdox7523/main.py:8
+2025-10-18 01:35:29 | INFO | logger | 成功应用修复: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/aidetector_fix_demo_bdox7523/main.py:13
+2025-10-18 01:35:29 | INFO | logger | 创建备份: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/aidetector_fix_demo_bdox7523/config/settings.py -> .fix_backups/settings_20251018_013529.py
+2025-10-18 01:35:29 | INFO | logger | 成功应用修复: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/aidetector_fix_demo_bdox7523/config/settings.py:6
+2025-10-18 01:35:29 | INFO | logger | 成功应用修复: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/aidetector_fix_demo_bdox7523/config/settings.py:9
+2025-10-18 01:35:29 | INFO | logger | Closed session session_83f3b5f7e711
+2025-10-18 01:35:29 | INFO | logger | TaskPlanner initialized
+2025-10-18 01:35:29 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-18 01:35:29 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:35:29 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:35:29 | INFO | logger | RequestRouter initialized
+2025-10-18 01:35:29 | INFO | logger | InputParser initialized
+2025-10-18 01:35:29 | INFO | logger | ParameterValidator initialized
+2025-10-18 01:35:29 | INFO | logger | ResponseFormatter initialized
+2025-10-18 01:35:29 | INFO | logger | UserInteractionHandler initialized
+2025-10-18 01:35:29 | INFO | logger | AgentOrchestrator initialized
+2025-10-18 01:35:29 | INFO | logger | TaskPlanner initialized
+2025-10-18 01:35:29 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-18 01:35:29 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:35:29 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:35:29 | INFO | logger | RequestRouter initialized
+2025-10-18 01:35:29 | INFO | logger | InputParser initialized
+2025-10-18 01:35:29 | INFO | logger | ParameterValidator initialized
+2025-10-18 01:35:29 | INFO | logger | ResponseFormatter initialized
+2025-10-18 01:35:29 | INFO | logger | UserInteractionHandler initialized
+2025-10-18 01:35:29 | INFO | logger | AgentOrchestrator initialized
+2025-10-18 01:35:29 | INFO | logger | Cleaning up execution engine
+2025-10-18 01:35:29 | INFO | logger | Execution engine cleaned up
+2025-10-18 01:35:29 | INFO | logger | TaskPlanner initialized
+2025-10-18 01:35:29 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-18 01:35:29 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:35:29 | INFO | logger | ModeRecognizer initialized
+2025-10-18 01:35:29 | INFO | logger | RequestRouter initialized
+2025-10-18 01:35:29 | INFO | logger | InputParser initialized
+2025-10-18 01:35:29 | INFO | logger | ParameterValidator initialized
+2025-10-18 01:35:29 | INFO | logger | ResponseFormatter initialized
+2025-10-18 01:35:29 | INFO | logger | UserInteractionHandler initialized
+2025-10-18 01:35:29 | INFO | logger | AgentOrchestrator initialized
+2025-10-18 01:35:29 | ERROR | logger | 恢复备份失败: [Errno 2] No such file or directory: '/nonexistent/backup'
