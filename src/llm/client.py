@@ -12,6 +12,7 @@ from .base import LLMProvider, LLMConfig, LLMRequest, LLMResponse, Message, Mess
 from .exceptions import LLMError, LLMTimeoutError, LLMRateLimitError, LLMAuthenticationError, LLMQuotaExceededError
 from .openai_provider import OpenAIProvider
 from .anthropic_provider import AnthropicProvider
+from .zhipu_provider import ZhipuProvider
 from .config import LLMConfigManager
 from ..utils.logger import get_logger
 
@@ -67,19 +68,33 @@ class LLMClient:
 
     def _init_providers(self):
         """初始化所有可用的提供者"""
+        # 初始化智谱AI
+        try:
+            zhipu_config = self.config_manager.get_config("zhipu")
+            if zhipu_config:
+                self.providers["zhipu"] = ZhipuProvider(zhipu_config)
+                self.stats["provider_usage"]["zhipu"] = 0
+                self.logger.info("ZhipuAI provider initialized successfully")
+        except Exception as e:
+            self.logger.warning(f"Failed to initialize ZhipuAI provider: {e}")
+
         try:
             # 初始化OpenAI
             openai_config = self.config_manager.get_config("openai")
-            self.providers["openai"] = OpenAIProvider(openai_config)
-            self.stats["provider_usage"]["openai"] = 0
+            if openai_config:
+                self.providers["openai"] = OpenAIProvider(openai_config)
+                self.stats["provider_usage"]["openai"] = 0
+                self.logger.info("OpenAI provider initialized successfully")
         except Exception as e:
             self.logger.warning(f"Failed to initialize OpenAI provider: {e}")
 
         try:
             # 初始化Anthropic
             anthropic_config = self.config_manager.get_config("anthropic")
-            self.providers["anthropic"] = AnthropicProvider(anthropic_config)
-            self.stats["provider_usage"]["anthropic"] = 0
+            if anthropic_config:
+                self.providers["anthropic"] = AnthropicProvider(anthropic_config)
+                self.stats["provider_usage"]["anthropic"] = 0
+                self.logger.info("Anthropic provider initialized successfully")
         except Exception as e:
             self.logger.warning(f"Failed to initialize Anthropic provider: {e}")
 

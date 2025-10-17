@@ -5669,3 +5669,17 @@
 2025-10-18 01:35:29 | INFO | logger | UserInteractionHandler initialized
 2025-10-18 01:35:29 | INFO | logger | AgentOrchestrator initialized
 2025-10-18 01:35:29 | ERROR | logger | 恢复备份失败: [Errno 2] No such file or directory: '/nonexistent/backup'
+2025-10-18 01:51:21 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-18 01:54:44 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-18 01:55:39 | INFO | logger | Loaded ZhipuAI config from environment
+2025-10-18 01:55:39 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-18 01:55:39 | WARNING | logger | Failed to initialize OpenAI provider: 'NoneType' object has no attribute 'validate'
+2025-10-18 01:55:39 | WARNING | logger | Failed to initialize Anthropic provider: 'NoneType' object has no attribute 'validate'
+2025-10-18 01:56:23 | INFO | logger | Loaded ZhipuAI config from environment
+2025-10-18 01:56:23 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-18 01:56:23 | INFO | logger | ZhipuAI provider initialized successfully
+2025-10-18 01:56:46 | INFO | logger | Loaded ZhipuAI config from environment
+2025-10-18 01:56:46 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-18 01:56:46 | INFO | logger | Loaded ZhipuAI config from environment
+2025-10-18 01:56:46 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-18 01:56:46 | INFO | logger | ZhipuAI provider initialized successfully

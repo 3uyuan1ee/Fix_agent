@@ -24,10 +24,16 @@ cache:
 
 # LLM配置
 llm:
-  default_provider: "openai"  # openai, anthropic, custom
+  default_provider: "zhipu"  # zhipu, openai, anthropic, custom
   max_tokens: 4096
   temperature: 0.1
   timeout: 30
+
+  # 智谱AI配置
+  zhipu:
+    api_key: "${ZHIPU_API_KEY}"
+    model: "glm-4.5"
+    base_url: "https://open.bigmodel.cn/api/paas/v4/"
 
   # OpenAI配置
   openai:

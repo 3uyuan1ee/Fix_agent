@@ -109,6 +109,23 @@ class LLMConfigManager:
             except Exception as e:
                 self.logger.error(f"Failed to load Anthropic config from environment: {e}")
 
+        # ZhipuAI配置
+        if "ZHIPU_API_KEY" in os.environ:
+            zhipu_config = LLMConfig(
+                provider="zhipu",
+                model=os.environ.get("ZHIPU_MODEL", "glm-4.5"),
+                api_key=os.environ["ZHIPU_API_KEY"],
+                api_base=os.environ.get("ZHIPU_API_BASE", "https://open.bigmodel.cn/api/paas/v4/"),
+                max_tokens=int(os.environ.get("ZHIPU_MAX_TOKENS", "4000")),
+                temperature=float(os.environ.get("ZHIPU_TEMPERATURE", "0.7"))
+            )
+            try:
+                zhipu_config.validate()
+                self.configs["zhipu"] = zhipu_config
+                self.logger.info("Loaded ZhipuAI config from environment")
+            except Exception as e:
+                self.logger.error(f"Failed to load ZhipuAI config from environment: {e}")
+
         # 自定义提供者配置
         custom_providers = os.environ.get("LLM_PROVIDERS", "").split(",")
         for provider in custom_providers:
@@ -174,6 +191,20 @@ class LLMConfigManager:
                 self.logger.info("Created default Anthropic config")
             except Exception as e:
                 self.logger.error(f"Failed to create default Anthropic config: {e}")
+
+        if "ZHIPU_API_KEY" in os.environ:
+            zhipu_config = LLMConfig(
+                provider="zhipu",
+                model="glm-4.5",
+                api_key=os.environ["ZHIPU_API_KEY"],
+                api_base="https://open.bigmodel.cn/api/paas/v4/"
+            )
+            try:
+                zhipu_config.validate()
+                self.configs["zhipu"] = zhipu_config
+                self.logger.info("Created default ZhipuAI config")
+            except Exception as e:
+                self.logger.error(f"Failed to create default ZhipuAI config: {e}")
 
     def get_config(self, provider: str) -> Optional[LLMConfig]:
         """
@@ -316,6 +347,18 @@ class LLMConfigManager:
                 "claude-2.1",
                 "claude-2.0",
                 "claude-instant-1.2"
+            ],
+            "zhipu": [
+                "glm-4.5",
+                "glm-4.5-air",
+                "glm-4",
+                "glm-4-air",
+                "glm-4-airx",
+                "glm-4-flash",
+                "glm-4v",
+                "glm-3-turbo",
+                "embedding-2",
+                "embedding-3"
             ]
         }
         return models.get(provider.lower(), [])
@@ -347,8 +390,8 @@ class LLMConfigManager:
         Returns:
             默认提供者名称
         """
-        # 优先级：openai > anthropic > 第一个可用的
-        preferred_order = ["openai", "anthropic"]
+        # 优先级：zhipu > openai > anthropic > 第一个可用的
+        preferred_order = ["zhipu", "openai", "anthropic"]
         for provider in preferred_order:
             if provider in self.configs:
                 return provider

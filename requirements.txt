@@ -1,7 +1,8 @@
-# AI Agent框架
-langchain>=0.1.0
-langchain-openai>=0.0.5
-langchain-anthropic>=0.0.3
+# AI集成（自定义实现）
+# 注：项目使用自定义LLM客户端，而非LangChain框架
+
+# 智谱AI大模型
+zai-sdk>=0.0.3.3
 
 # Web框架
 flask>=2.3.0
