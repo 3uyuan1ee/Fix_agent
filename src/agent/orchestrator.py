@@ -5,7 +5,7 @@ Agent编排器模块
 
 import uuid
 import time
-from typing import Dict, List, Any, Optional, Callable
+from typing import Dict, List, Any, Optional, Callable, Union
 from dataclasses import dataclass, field
 from enum import Enum
 from datetime import datetime
@@ -15,6 +15,7 @@ from ..utils.config import get_config_manager
 from .planner import TaskPlanner, UserRequest, ExecutionPlan, AnalysisMode
 from .execution_engine import ExecutionEngine, ExecutionResult
 from .mode_router import ModeRecognizer, RequestRouter, RouteRequest, RouteResult
+from .user_interaction import UserInteractionHandler, InputType, OutputFormat
 
 
 class SessionState(Enum):
@@ -159,6 +160,9 @@ class AgentOrchestrator:
         self.mode_recognizer = ModeRecognizer(config_manager)
         self.request_router = RequestRouter(config_manager, self.task_planner, self.execution_engine)
 
+        # 初始化用户交互处理器
+        self.user_interaction_handler = UserInteractionHandler(config_manager)
+
         # 会话存储
         self.sessions: Dict[str, Session] = {}
         self.user_sessions: Dict[str, List[str]] = {}  # user_id -> [session_ids]
@@ -244,7 +248,7 @@ class AgentOrchestrator:
 
     def process_user_input(self, session_id: str, user_input: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
-        处理用户输入（使用模式路由）
+        处理用户输入（集成用户交互处理）
 
         Args:
             session_id: 会话ID
@@ -263,6 +267,49 @@ class AgentOrchestrator:
             }
 
         try:
+            # 首先使用用户交互处理器处理输入
+            interaction_result = self.user_interaction_handler.process_user_input(user_input)
+
+            # 检查是否是退出命令
+            if interaction_result.get("input_type") == InputType.EXIT.value:
+                session.add_message(MessageRole.USER, user_input)
+                session.add_message(MessageRole.ASSISTANT, "正在退出会话...")
+                self.close_session(session_id, "user_initiated")
+                return {
+                    "success": True,
+                    "session_id": session_id,
+                    "action": "exit",
+                    "message": "会话已退出"
+                }
+
+            # 检查是否是帮助命令
+            if interaction_result.get("input_type") == InputType.HELP.value:
+                session.add_message(MessageRole.USER, user_input)
+                help_message = interaction_result.get("message", "帮助信息")
+                session.add_message(MessageRole.ASSISTANT, help_message)
+                return {
+                    "success": True,
+                    "session_id": session_id,
+                    "action": "help",
+                    "response": help_message
+                }
+
+            # 检查是否是系统命令
+            if interaction_result.get("input_type") == InputType.COMMAND.value:
+                command = interaction_result.get("command")
+                if command in ["mode", "format", "status", "clear"]:
+                    session.add_message(MessageRole.USER, user_input)
+                    response_message = interaction_result.get("message", "命令执行完成")
+                    session.add_message(MessageRole.ASSISTANT, response_message)
+                    return {
+                        "success": True,
+                        "session_id": session_id,
+                        "action": "command",
+                        "command": command,
+                        "response": response_message,
+                        **{k: v for k, v in interaction_result.items() if k in ["mode", "format"]}
+                    }
+
             # 检查会话状态
             if not self._can_process_input(session.state):
                 return {
@@ -278,6 +325,9 @@ class AgentOrchestrator:
                     "error": "Session message limit exceeded",
                     "error_type": "MessageLimitExceededError"
                 }
+
+            # 添加用户消息到会话
+            session.add_message(MessageRole.USER, user_input)
 
             # 创建路由请求
             route_request = RouteRequest(
@@ -341,6 +391,10 @@ class AgentOrchestrator:
                     "error": route_result.error,
                     "error_type": route_result.error_type
                 })
+
+            # 添加交互处理的结果信息
+            if interaction_result.get("warnings"):
+                result["warnings"] = interaction_result["warnings"]
 
             return result
 
@@ -703,6 +757,87 @@ class AgentOrchestrator:
     def get_mode_description(self, mode: str) -> str:
         """获取模式描述"""
         return self.request_router.get_mode_description(mode)
+
+    def check_user_interruption(self) -> bool:
+        """
+        检查用户是否中断了操作
+
+        Returns:
+            是否被中断
+        """
+        return self.user_interaction_handler.check_interruption()
+
+    def format_response(self, data: Any, format_type: Union[str, OutputFormat] = None) -> str:
+        """
+        格式化响应输出
+
+        Args:
+            data: 要格式化的数据
+            format_type: 输出格式
+
+        Returns:
+            格式化后的字符串
+        """
+        return self.user_interaction_handler.format_response(data, format_type)
+
+    def handle_confirmation(self, session_id: str, user_response: str) -> Dict[str, Any]:
+        """
+        处理用户确认输入
+
+        Args:
+            session_id: 会话ID
+            user_response: 用户响应
+
+        Returns:
+            处理结果
+        """
+        try:
+            session = self.get_session(session_id)
+            if not session:
+                return {
+                    "success": False,
+                    "error": f"Session {session_id} not found",
+                    "error_type": "SessionNotFoundError"
+                }
+
+            # 添加用户确认消息
+            session.add_message(MessageRole.USER, user_response)
+
+            # 使用交互处理器处理确认
+            interaction_result = self.user_interaction_handler.process_user_input(user_response)
+
+            if interaction_result.get("input_type") == InputType.CONFIRMATION.value:
+                response = interaction_result.get("response", False)
+                response_text = "已确认" if response else "已取消"
+
+                session.add_message(
+                    MessageRole.ASSISTANT,
+                    response_text,
+                    {"confirmation_response": response}
+                )
+
+                return {
+                    "success": True,
+                    "session_id": session_id,
+                    "confirmed": response,
+                    "response": response_text
+                }
+            else:
+                return {
+                    "success": False,
+                    "session_id": session_id,
+                    "error": "无效的确认输入",
+                    "error_type": "InvalidConfirmationError"
+                }
+
+        except Exception as e:
+            self.logger.error(f"处理确认失败: {e}")
+            return {
+                "success": False,
+                "session_id": session_id,
+                "error": str(e),
+                "error_type": type(e).__name__
+            }
 
     def execute_plan_directly(self, session_id: str) -> Dict[str, Any]:
         """
