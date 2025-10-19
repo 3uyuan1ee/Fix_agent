@@ -60,7 +60,20 @@ AIDefectDetector/
 │   └── static/          # 静态资源
 ├── tests/                # 测试代码
 ├── config/               # 配置文件
-├── docs/                 # 文档
+├── docs/                 # 项目文档
+│   ├── README.md        # 项目主文档
+│   ├── QUICKSTART.md    # 快速开始指南
+│   ├── INSTALL.md       # 安装指南
+│   ├── OVERVIEW.md      # 项目概览
+│   ├── DEMO_GUIDE.md    # 演示指南
+│   └── LICENSE          # 许可证
+├── scripts/              # 安装和脚本文件
+│   ├── install.sh       # Linux/macOS安装脚本
+│   ├── install.bat      # Windows安装脚本
+│   ├── aidefect         # 全局可执行脚本
+│   ├── setup.py         # Python包配置
+│   └── pyproject.toml   # 现代Python包配置
+├── demos/                # 功能演示脚本
 └── main.py              # 程序入口
 ```
 

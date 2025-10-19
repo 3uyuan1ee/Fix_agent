@@ -183,8 +183,9 @@ show_usage() {
     echo -e "  ${BLUE}$HOME/.aidefect/config.yaml${NC}"
     echo
     echo -e "${GREEN}📚 更多信息：${NC}"
-    echo -e "  ${BLUE}查看 QUICKSTART.md${NC}  - 快速开始指南"
-    echo -e "  ${BLUE}查看 README.md${NC}      - 完整文档"
+    echo -e "  ${BLUE}查看 docs/QUICKSTART.md${NC}  - 快速开始指南"
+    echo -e "  ${BLUE}查看 docs/README.md${NC}      - 完整文档"
+    echo -e "  ${BLUE}查看 docs/INSTALL.md${NC}      - 安装指南"
     echo
     echo -e "${YELLOW}💡 提示：${NC}"
     echo -e "  如需卸载，请运行: ${BLUE}pip uninstall aidefect${NC}"
