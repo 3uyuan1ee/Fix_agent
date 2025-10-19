@@ -1,0 +1,314 @@
+{% extends "base.html" %}
+
+{% block title %}AIDefectDetector - 首页{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- 欢迎区域 -->
+    <div class="col-12 mb-4">
+        <div class="jumbotron bg-primary text-white p-5 rounded">
+            <h1 class="display-4">
+                <i class="fas fa-robot me-3"></i>
+                AIDefectDetector
+            </h1>
+            <p class="lead">基于AI Agent的软件项目缺陷自主检测与修复系统</p>
+            <hr class="my-4">
+            <p>使用人工智能技术，自动发现代码中的缺陷并提供修复建议，支持静态分析、深度分析和智能修复三种模式。</p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 三种模式介绍 -->
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-tachometer-alt me-2"></i>
+                    静态分析
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">
+                    使用传统静态分析工具（AST、Pylint、Flake8、Bandit）快速扫描代码，发现语法错误、代码风格问题和安全漏洞。
+                </p>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success me-2"></i>快速执行</li>
+                    <li><i class="fas fa-check text-success me-2"></i>全面覆盖</li>
+                    <li><i class="fas fa-check text-success me-2"></i>标准检查</li>
+                </ul>
+            </div>
+            <div class="card-footer">
+                <button class="btn btn-info w-100" onclick="startStaticAnalysis()">
+                    <i class="fas fa-play me-2"></i>开始静态分析
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-brain me-2"></i>
+                    深度分析
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">
+                    利用大语言模型（LLM）进行深度代码分析，发现复杂的逻辑问题、性能瓶颈和架构设计缺陷。
+                </p>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success me-2"></i>智能理解</li>
+                    <li><i class="fas fa-check text-success me-2"></i>深度洞察</li>
+                    <li><i class="fas fa-check text-success me-2"></i>上下文分析</li>
+                </ul>
+            </div>
+            <div class="card-footer">
+                <button class="btn btn-warning w-100" onclick="startDeepAnalysis()">
+                    <i class="fas fa-play me-2"></i>开始深度分析
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-tools me-2"></i>
+                    分析修复
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">
+                    结合静态分析和AI智能，自动生成修复代码并提供详细的修复建议，支持一键应用修复方案。
+                </p>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success me-2"></i>自动修复</li>
+                    <li><i class="fas fa-check text-success me-2"></i>代码备份</li>
+                    <li><i class="fas fa-check text-success me-2"></i>差异对比</li>
+                </ul>
+            </div>
+            <div class="card-footer">
+                <button class="btn btn-success w-100" onclick="startFixAnalysis()">
+                    <i class="fas fa-play me-2"></i>开始分析修复
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 快速开始区域 -->
+    <div class="col-md-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-rocket me-2"></i>
+                    快速开始
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="quickStartForm">
+                    <div class="mb-3">
+                        <label for="projectPath" class="form-label">项目路径</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="projectPath"
+                                   placeholder="输入要分析的Python项目路径，例如: /path/to/your/project">
+                            <button class="btn btn-outline-secondary" type="button" onclick="browseProject()">
+                                <i class="fas fa-folder-open me-1"></i>浏览
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="analysisMode" class="form-label">分析模式</label>
+                        <select class="form-select" id="analysisMode">
+                            <option value="static">静态分析</option>
+                            <option value="deep">深度分析</option>
+                            <option value="fix">分析修复</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="includeTests" checked>
+                            <label class="form-check-label" for="includeTests">
+                                包含测试文件
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-2"></i>开始分析
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 系统状态 -->
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    系统状态
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>API状态</span>
+                    <span class="badge bg-success">正常</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>LLM连接</span>
+                    <span class="badge bg-success">已连接</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>缓存系统</span>
+                    <span class="badge bg-success">运行中</span>
+                </div>
+                <hr>
+                <div class="text-center">
+                    <small class="text-muted">
+                        <i class="fas fa-code-branch me-1"></i>
+                        版本 1.0.0
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 最近分析记录 -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    最近分析记录
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-inbox fa-3x mb-3"></i>
+                    <p>暂无分析记录</p>
+                    <small>完成分析后，历史记录将显示在这里</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 页面加载完成后执行
+document.addEventListener('DOMContentLoaded', function() {
+    // 检查系统状态
+    checkSystemStatus();
+});
+
+// 快速开始表单提交
+document.getElementById('quickStartForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const projectPath = document.getElementById('projectPath').value;
+    const analysisMode = document.getElementById('analysisMode').value;
+    const includeTests = document.getElementById('includeTests').checked;
+
+    if (!projectPath) {
+        showAlert('请输入项目路径', 'warning');
+        return;
+    }
+
+    startAnalysis(projectPath, analysisMode, includeTests);
+});
+
+// 开始静态分析
+function startStaticAnalysis() {
+    const projectPath = prompt('请输入项目路径:');
+    if (projectPath) {
+        startAnalysis(projectPath, 'static', false);
+    }
+}
+
+// 开始深度分析
+function startDeepAnalysis() {
+    const projectPath = prompt('请输入项目路径:');
+    if (projectPath) {
+        startAnalysis(projectPath, 'deep', false);
+    }
+}
+
+// 开始分析修复
+function startFixAnalysis() {
+    const projectPath = prompt('请输入项目路径:');
+    if (projectPath) {
+        startAnalysis(projectPath, 'fix', false);
+    }
+}
+
+// 执行分析
+function startAnalysis(projectPath, mode, includeTests) {
+    showAlert(`正在对项目 "${projectPath}" 进行${getModeText(mode)}...`, 'info');
+
+    // TODO: 实际的分析逻辑
+    setTimeout(() => {
+        showAlert('分析功能正在开发中，敬请期待！', 'info');
+    }, 1000);
+}
+
+// 浏览项目目录
+function browseProject() {
+    showAlert('文件浏览功能正在开发中', 'info');
+}
+
+// 检查系统状态
+function checkSystemStatus() {
+    fetch('/health')
+        .then(response => response.json())
+        .then(data => {
+            console.log('系统状态:', data);
+        })
+        .catch(error => {
+            console.error('检查系统状态失败:', error);
+        });
+}
+
+// 获取模式文本
+function getModeText(mode) {
+    const modeMap = {
+        'static': '静态分析',
+        'deep': '深度分析',
+        'fix': '分析修复'
+    };
+    return modeMap[mode] || mode;
+}
+
+// 显示提示信息
+function showAlert(message, type = 'info') {
+    // 创建提示框
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    // 插入到页面顶部
+    const container = document.querySelector('.container-fluid');
+    container.insertBefore(alertDiv, container.firstChild);
+
+    // 3秒后自动消失
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 3000);
+}
+</script>
+{% endblock %}

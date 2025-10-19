@@ -5683,3 +5683,35 @@
 2025-10-18 01:56:46 | INFO | logger | Loaded ZhipuAI config from environment
 2025-10-18 01:56:46 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
 2025-10-18 01:56:46 | INFO | logger | ZhipuAI provider initialized successfully
+2025-10-19 15:39:32 | INFO | logger | Web应用配置完成 - Debug: False
+2025-10-19 15:39:32 | INFO | logger | 基础路由注册完成
+2025-10-19 15:39:32 | INFO | logger | 错误处理器注册完成
+2025-10-19 15:39:32 | INFO | logger | Flask应用创建完成
+2025-10-19 15:39:36 | INFO | logger | Web应用配置完成 - Debug: False
+2025-10-19 15:39:36 | INFO | logger | 基础路由注册完成
+2025-10-19 15:39:36 | INFO | logger | 错误处理器注册完成
+2025-10-19 15:39:36 | INFO | logger | Flask应用创建完成
+2025-10-19 15:39:40 | INFO | logger | Web应用配置完成 - Debug: False
+2025-10-19 15:39:40 | INFO | logger | 基础路由注册完成
+2025-10-19 15:39:40 | INFO | logger | 错误处理器注册完成
+2025-10-19 15:39:40 | INFO | logger | Flask应用创建完成
+2025-10-19 15:39:40 | ERROR | logger | 渲染首页失败: index.html
+2025-10-19 15:39:40 | INFO | logger | Web应用配置完成 - Debug: False
+2025-10-19 15:39:40 | INFO | logger | 基础路由注册完成
+2025-10-19 15:39:40 | INFO | logger | 错误处理器注册完成
+2025-10-19 15:39:40 | INFO | logger | Flask应用创建完成
+2025-10-19 15:39:40 | INFO | logger | Web应用配置完成 - Debug: False
+2025-10-19 15:39:40 | INFO | logger | 基础路由注册完成
+2025-10-19 15:39:40 | INFO | logger | 错误处理器注册完成
+2025-10-19 15:39:40 | INFO | logger | Flask应用创建完成
+2025-10-19 15:40:16 | INFO | logger | Web应用配置完成 - Debug: False
+2025-10-19 15:40:16 | INFO | logger | 基础路由注册完成
+2025-10-19 15:40:16 | INFO | logger | 错误处理器注册完成
+2025-10-19 15:40:16 | INFO | logger | Flask应用创建完成
+2025-10-19 15:40:48 | INFO | logger | Web应用配置完成 - Debug: False
+2025-10-19 15:40:48 | INFO | logger | 基础路由注册完成
+2025-10-19 15:40:48 | INFO | logger | 错误处理器注册完成
+2025-10-19 15:40:48 | INFO | logger | Flask应用创建完成
+2025-10-19 15:40:48 | INFO | logger | 启动Web应用 - http://127.0.0.1:5000
+2025-10-19 15:40:54 | ERROR | logger | 渲染首页失败: index.html
+2025-10-19 15:40:54 | ERROR | logger | 内部服务器错误: 500 Internal Server Error: The server encountered an internal error and was unable to complete your request. Either the server is overloaded or there is an error in the application.
