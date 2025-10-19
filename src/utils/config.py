@@ -25,10 +25,37 @@ class ConfigManager:
         Args:
             config_dir: 配置文件目录
         """
-        self.config_dir = Path(config_dir)
+        self.config_dir = self._find_project_root() / Path(config_dir)
         self.default_config = None
         self.user_config = None
         self._config = None
+
+    def _find_project_root(self) -> Path:
+        """
+        查找项目根目录
+
+        Returns:
+            项目根目录路径
+        """
+        # 从当前文件开始向上查找项目根目录
+        current_path = Path(__file__).parent
+
+        # 查找包含 config/default.yaml 的目录
+        while current_path.parent != current_path:
+            potential_root = current_path.parent
+            if (potential_root / "config" / "default.yaml").exists():
+                return potential_root
+            current_path = potential_root
+
+        # 如果没找到，尝试从当前工作目录查找
+        current_dir = Path.cwd()
+        while current_dir.parent != current_dir:
+            if (current_dir / "config" / "default.yaml").exists():
+                return current_dir
+            current_dir = current_dir.parent
+
+        # 最后的备选方案：假设当前目录就是项目根目录
+        return Path.cwd()
 
     def load_config(self) -> Dict[str, Any]:
         """

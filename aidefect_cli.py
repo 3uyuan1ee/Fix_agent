@@ -13,12 +13,12 @@ project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
 # 导入并执行主函数
-from main import main as cli_main
+from main import main as main_func
 
 def main():
     """主入口函数"""
     import sys
-    sys.exit(cli_main())
+    sys.exit(main_func())
 
 if __name__ == "__main__":
     main()
