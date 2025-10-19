@@ -71,7 +71,52 @@ AIDefectDetector/
 - Python 3.8+
 - 推荐使用虚拟环境
 
-### 安装步骤
+### ⚡ 一键安装（推荐）
+
+#### Linux/macOS
+```bash
+# 克隆项目
+git clone <repository-url>
+cd AIDefectDetector
+
+# 一键安装到全局
+./install.sh
+```
+
+#### Windows
+```batch
+# 克隆项目
+git clone <repository-url>
+cd AIDefectDetector
+
+# 一键安装到全局
+install.bat
+```
+
+### 🚀 使用全局命令
+
+安装完成后，可以在任何目录下使用：
+
+```bash
+# 查看帮助
+aidefect --help
+
+# 静态分析（快速，不消耗API额度）
+aidefect analyze static ./your-project
+
+# 深度分析（智能，需要API密钥）
+aidefect analyze deep ./your-project
+
+# 分析修复（提供修复建议）
+aidefect analyze fix ./your-project
+
+# 启动Web界面
+aidefect-web
+```
+
+### 🔧 手动安装
+
+如果自动安装失败，可以手动安装：
 
 1. **克隆项目**
 ```bash
@@ -92,7 +137,12 @@ source .venv/bin/activate  # Linux/Mac
 pip install -r requirements.txt
 ```
 
-4. **配置API密钥**
+4. **安装到全局**
+```bash
+pip install -e .
+```
+
+5. **配置API密钥**
 ```bash
 # 复制配置模板
 cp config/user_config.example.yaml config/user_config.yaml
@@ -105,22 +155,21 @@ cp config/user_config.example.yaml config/user_config.yaml
 
 #### 命令行模式
 ```bash
-# 查看帮助信息
+# 全局命令（推荐）
+aidefect
+aidefect --help
+
+# 或传统方式
+python main.py
 python main.py --help
-
-# 静态分析（快速，不消耗API额度）
-python main.py analyze static ./src
-
-# 深度分析（智能，需要API密钥）
-python main.py analyze deep ./src
-
-# 分析修复（提供修复建议）
-python main.py analyze fix ./src
 ```
 
 #### Web界面模式
 ```bash
-# 启动Web服务
+# 全局命令（推荐）
+aidefect-web
+
+# 或传统方式
 python main.py web
 
 # 访问界面

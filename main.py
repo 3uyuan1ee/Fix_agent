@@ -33,8 +33,8 @@ def show_usage():
     """)
 
 
-def main():
-    """主入口函数"""
+def cli_main():
+    """CLI模式主入口函数"""
     print("AIDefectDetector - 基于AI Agent的软件项目缺陷自主检测与修复系统")
     print("=" * 70)
 
@@ -82,9 +82,23 @@ def main():
             return 1
 
 
-if __name__ == "__main__":
+def web_main_wrapper():
+    """Web模式主入口函数（用于setup.py entry point）"""
     try:
-        exit_code = main()
+        return web_main()
+    except ImportError as e:
+        print(f"错误: 缺少Flask依赖 - {e}")
+        print("请安装依赖: pip install flask")
+        return 1
+    except Exception as e:
+        print(f"启动Web界面失败: {e}")
+        return 1
+
+
+def main():
+    """主入口函数"""
+    try:
+        exit_code = cli_main()
         sys.exit(exit_code)
     except KeyboardInterrupt:
         print("\n程序被用户中断")
@@ -92,3 +106,7 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"程序异常退出: {e}")
         sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
