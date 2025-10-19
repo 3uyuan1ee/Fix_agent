@@ -4,6 +4,7 @@
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background-color: #f8f9fa;
+    line-height: 1.6;
 }
 
 /* 导航栏样式 */
@@ -20,6 +21,474 @@ body {
 .navbar-nav .nav-link:hover {
     background-color: rgba(255, 255, 255, 0.1);
     border-radius: 0.375rem;
+}
+
+/* 英雄区域样式 */
+.hero-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+}
+
+.hero-content {
+    position: relative;
+    z-index: 1;
+}
+
+.hero-stats {
+    margin-top: 2rem;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 0.5rem;
+    backdrop-filter: blur(5px);
+}
+
+.stat-number {
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+}
+
+.version-badge {
+    backdrop-filter: blur(5px);
+}
+
+/* 步骤卡片样式 */
+.step-card {
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+    background: white;
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.step-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+}
+
+.step-number {
+    width: 60px;
+    height: 60px;
+    font-weight: 700;
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+}
+
+.step-title {
+    font-weight: 600;
+    color: #333;
+    margin-top: 1rem;
+}
+
+.step-text {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+/* 模式卡片样式 */
+.mode-card {
+    transition: all 0.3s ease;
+    border-radius: 1rem;
+    overflow: hidden;
+}
+
+.mode-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.15);
+}
+
+.mode-icon {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.features-list {
+    border-top: 1px solid #f1f3f4;
+    padding-top: 1rem;
+    margin-top: 1rem;
+}
+
+.feature-item {
+    font-size: 0.9rem;
+    color: #495057;
+}
+
+.suitable-for .badge {
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.mode-select-btn {
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.mode-select-btn:hover {
+    transform: translateY(-1px);
+}
+
+/* 上传区域样式 */
+.upload-area {
+    transition: all 0.3s ease;
+    cursor: pointer;
+    background: #f8f9fa;
+}
+
+.upload-area:hover {
+    background: #e9ecef;
+    border-color: #6c757d !important;
+}
+
+.upload-area.dragover {
+    background: #e7f3ff;
+    border-color: #0066cc !important;
+}
+
+/* 输入区域样式 */
+.input-section {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+/* 卡片样式 */
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.card-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    font-weight: 600;
+}
+
+/* 按钮样式 */
+.btn {
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border-radius: 0.5rem;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+.btn-lg {
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+}
+
+/* 渐变背景类 */
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* 悬停效果类 */
+.hover-lift {
+    transition: all 0.3s ease;
+}
+
+.hover-lift:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.15);
+}
+
+/* 动画效果 */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.6s ease-out;
+}
+
+/* 加载动画 */
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* 提示框样式 */
+.alert {
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 500;
+}
+
+.alert-dismissible .btn-close {
+    padding: 0.75rem 1rem;
+}
+
+/* 页脚样式 */
+footer {
+    margin-top: auto;
+    border-top: 1px solid #dee2e6;
+}
+
+/* 表单样式 */
+.form-control, .form-select {
+    border-radius: 0.5rem;
+    border: 1px solid #ced4da;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.input-group-text {
+    border-radius: 0.5rem 0 0 0.5rem;
+}
+
+/* 徽章样式 */
+.badge {
+    font-weight: 500;
+    font-size: 0.75rem;
+    border-radius: 0.375rem;
+}
+
+/* 图标样式 */
+.fas {
+    vertical-align: middle;
+}
+
+/* 状态指示器 */
+.status-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+}
+
+.status-indicator.online {
+    background-color: #198754;
+}
+
+.status-indicator.offline {
+    background-color: #dc3545;
+}
+
+.status-indicator.warning {
+    background-color: #ffc107;
+}
+
+/* 响应式设计 */
+@media (max-width: 991.98px) {
+    .hero-section {
+        padding: 3rem 1.5rem !important;
+    }
+
+    .hero-stats {
+        justify-content: center;
+    }
+
+    .stat-item {
+        flex: 0 0 45%;
+        margin-bottom: 1rem;
+    }
+
+    .display-4 {
+        font-size: 2.5rem !important;
+    }
+
+    .mode-card .card-body {
+        padding: 1.5rem;
+    }
+
+    .hero-content {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .hero-actions {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .hero-section {
+        padding: 2rem 1rem !important;
+    }
+
+    .display-4 {
+        font-size: 2rem !important;
+    }
+
+    .lead {
+        font-size: 1.1rem !important;
+    }
+
+    .stat-item {
+        flex: 0 0 100%;
+        margin-bottom: 0.75rem;
+    }
+
+    .step-card {
+        margin-bottom: 1rem;
+        padding: 1rem;
+    }
+
+    .step-number {
+        width: 50px;
+        height: 50px;
+    }
+
+    .step-number h3 {
+        font-size: 1.25rem !important;
+    }
+
+    .mode-card {
+        margin-bottom: 1.5rem;
+    }
+
+    .btn-group .btn {
+        font-size: 0.875rem;
+        padding: 0.5rem 1rem;
+    }
+
+    .upload-area {
+        padding: 2rem 1rem !important;
+    }
+
+    .upload-area i {
+        font-size: 2rem !important;
+    }
+
+    .hero-actions .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    .d-md-flex.justify-content-md-start {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .container-fluid {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .card-body {
+        padding: 1rem;
+    }
+
+    .display-4 {
+        font-size: 1.75rem !important;
+    }
+
+    .fs-5 {
+        font-size: 1rem !important;
+    }
+
+    .form-control, .form-select {
+        font-size: 0.875rem;
+    }
+
+    .btn-lg {
+        padding: 0.625rem 1.5rem;
+        font-size: 1rem;
+    }
+
+    .mode-icon i {
+        font-size: 1.5rem !important;
+    }
+
+    .step-title {
+        font-size: 1rem;
+    }
+
+    .step-text {
+        font-size: 0.85rem;
+    }
+}
+
+/* 大屏幕优化 */
+@media (min-width: 1400px) {
+    .container-fluid {
+        max-width: 1320px;
+    }
+
+    .hero-section {
+        padding: 5rem !important;
+    }
+
+    .display-4 {
+        font-size: 3.5rem !important;
+    }
+
+    .lead {
+        font-size: 1.5rem !important;
+    }
+
+    .mode-card {
+        min-height: 450px;
+    }
+}
+
+/* 打印样式 */
+@media print {
+    .navbar, .btn, footer {
+        display: none !important;
+    }
+
+    .hero-section {
+        background: none !important;
+        color: #000 !important;
+    }
+
+    .card {
+        border: 1px solid #dee2e6 !important;
+        box-shadow: none !important;
+        break-inside: avoid;
+    }
+
+    .mode-card {
+        break-inside: avoid;
+        margin-bottom: 1rem;
+    }
 }
 
 /* 卡片样式 */

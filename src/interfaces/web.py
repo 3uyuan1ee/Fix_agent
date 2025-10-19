@@ -38,11 +38,14 @@ class AIDefectDetectorWeb:
 
     def _create_app(self):
         """创建Flask应用实例"""
+        # 获取项目根目录
+        project_root = Path(__file__).parent.parent.parent
+
         # 创建Flask应用
         self.app = Flask(
             __name__,
-            static_folder="web/static",
-            template_folder="web/templates"
+            static_folder=str(project_root / "web" / "static"),
+            template_folder=str(project_root / "web" / "templates")
         )
 
         # 配置应用
@@ -105,6 +108,103 @@ class AIDefectDetectorWeb:
                 'version': '1.0.0',
                 'modes': ['static', 'deep', 'fix']
             })
+
+        @self.app.route('/api/upload', methods=['POST'])
+        def upload_project():
+            """项目文件上传API"""
+            try:
+                if 'file' not in request.files:
+                    return jsonify({'error': '没有选择文件'}), 400
+
+                file = request.files['file']
+                if file.filename == '':
+                    return jsonify({'error': '没有选择文件'}), 400
+
+                # 验证文件类型
+                allowed_extensions = {'.zip', '.tar', '.gz'}
+                file_ext = os.path.splitext(file.filename)[1].lower()
+                if file_ext not in allowed_extensions:
+                    return jsonify({'error': '不支持的文件类型'}), 400
+
+                # 验证文件大小
+                file.seek(0, os.SEEK_END)
+                file_size = file.tell()
+                file.seek(0)
+
+                max_size = self.app.config.get('MAX_CONTENT_LENGTH', 50 * 1024 * 1024)
+                if file_size > max_size:
+                    return jsonify({'error': '文件太大'}), 400
+
+                # 保存文件
+                import uuid
+                upload_folder = self.app.config['UPLOAD_FOLDER']
+                file_id = str(uuid.uuid4())
+                filename = f"{file_id}_{file.filename}"
+                filepath = os.path.join(upload_folder, filename)
+
+                file.save(filepath)
+
+                self.logger.info(f"文件上传成功: {file.filename} -> {filepath}")
+
+                return jsonify({
+                    'success': True,
+                    'file_id': file_id,
+                    'filename': file.filename,
+                    'size': file_size,
+                    'path': filepath
+                })
+
+            except Exception as e:
+                self.logger.error(f"文件上传失败: {e}")
+                return jsonify({'error': f'上传失败: {str(e)}'}), 500
+
+        @self.app.route('/api/validate-path', methods=['POST'])
+        def validate_path():
+            """路径验证API"""
+            try:
+                data = request.get_json()
+                path = data.get('path', '').strip()
+
+                if not path:
+                    return jsonify({'valid': False, 'error': '路径不能为空'})
+
+                # 安全检查：防止路径遍历攻击
+                if '..' in path or path.startswith('/'):
+                    return jsonify({'valid': False, 'error': '无效的路径格式'})
+
+                # 检查路径是否存在
+                import os
+                if not os.path.exists(path):
+                    return jsonify({'valid': False, 'error': '路径不存在'})
+
+                if not os.path.isdir(path):
+                    return jsonify({'valid': False, 'error': '路径不是目录'})
+
+                # 检查是否包含代码文件
+                code_extensions = {'.py', '.js', '.ts', '.java', '.cpp', '.c', '.h', '.hpp'}
+                has_code_files = False
+                file_count = 0
+
+                for root, dirs, files in os.walk(path):
+                    for file in files:
+                        if any(file.lower().endswith(ext) for ext in code_extensions):
+                            has_code_files = True
+                            file_count += 1
+                        if file_count > 100:  # 限制扫描文件数量
+                            break
+
+                if not has_code_files:
+                    return jsonify({'valid': False, 'error': '目录中未发现代码文件'})
+
+                return jsonify({
+                    'valid': True,
+                    'message': f'发现 {file_count} 个代码文件',
+                    'file_count': file_count
+                })
+
+            except Exception as e:
+                self.logger.error(f"路径验证失败: {e}")
+                return jsonify({'valid': False, 'error': '验证失败'})
 
         self.logger.info("基础路由注册完成")
 
