@@ -33,8 +33,8 @@ def show_usage():
     """)
 
 
-def cli_main():
-    """CLI模式主入口函数"""
+def main():
+    """主入口函数"""
     print("AIDefectDetector - 基于AI Agent的软件项目缺陷自主检测与修复系统")
     print("=" * 70)
 
@@ -56,13 +56,6 @@ def cli_main():
                 return 1
             except Exception as e:
                 print(f"启动Web界面失败: {e}")
-                return 1
-
-        elif arg == "cli":
-            try:
-                return cli_main()
-            except Exception as e:
-                print(f"启动CLI失败: {e}")
                 return 1
 
         else:
@@ -95,10 +88,9 @@ def web_main_wrapper():
         return 1
 
 
-def main():
-    """主入口函数"""
+if __name__ == "__main__":
     try:
-        exit_code = cli_main()
+        exit_code = main()
         sys.exit(exit_code)
     except KeyboardInterrupt:
         print("\n程序被用户中断")
@@ -106,7 +98,3 @@ def main():
     except Exception as e:
         print(f"程序异常退出: {e}")
         sys.exit(1)
-
-
-if __name__ == "__main__":
-    main()

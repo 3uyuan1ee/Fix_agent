@@ -8270,3 +8270,18 @@
 2025-10-19 17:24:51 | INFO | logger | 错误处理器注册完成
 2025-10-19 17:24:51 | INFO | logger | Flask应用创建完成
 2025-10-19 17:24:51 | INFO | logger | 启动Web应用 - http://127.0.0.1:5000
+2025-10-19 17:34:23 | INFO | logger | Web应用配置完成 - Debug: False
+2025-10-19 17:34:23 | INFO | logger | 基础路由注册完成
+2025-10-19 17:34:23 | INFO | logger | 错误处理器注册完成
+2025-10-19 17:34:23 | INFO | logger | Flask应用创建完成
+2025-10-19 17:34:23 | INFO | logger | 启动Web应用 - http://127.0.0.1:5000
+2025-10-19 17:37:35 | INFO | logger | Web应用配置完成 - Debug: False
+2025-10-19 17:37:35 | INFO | logger | 基础路由注册完成
+2025-10-19 17:37:35 | INFO | logger | 错误处理器注册完成
+2025-10-19 17:37:35 | INFO | logger | Flask应用创建完成
+2025-10-19 17:37:35 | INFO | logger | 启动Web应用 - http://127.0.0.1:5000
+2025-10-19 17:44:59 | INFO | logger | Web应用配置完成 - Debug: False
+2025-10-19 17:44:59 | INFO | logger | 基础路由注册完成
+2025-10-19 17:44:59 | INFO | logger | 错误处理器注册完成
+2025-10-19 17:44:59 | INFO | logger | Flask应用创建完成
+2025-10-19 17:44:59 | INFO | logger | 启动Web应用 - http://127.0.0.1:5000

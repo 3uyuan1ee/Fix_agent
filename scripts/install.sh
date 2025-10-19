@@ -104,6 +104,9 @@ install_package() {
 
     if [ $? -eq 0 ]; then
         print_success "AIDefectDetector安装成功！"
+
+        # 创建全局符号链接
+        create_global_symlinks
     else
         print_error "安装失败，尝试使用可执行脚本方式..."
 
@@ -120,6 +123,51 @@ install_package() {
             print_info "请运行: sudo cp $SCRIPT_DIR/aidefect /usr/local/bin/aidefect"
             print_info "然后: sudo chmod +x /usr/local/bin/aidefect"
         fi
+    fi
+}
+
+# 创建全局符号链接
+create_global_symlinks() {
+    print_info "创建全局命令链接..."
+
+    VENV_BIN="$VENV_DIR/bin"
+    LOCAL_BIN="/usr/local/bin"
+
+    if [ ! -d "$LOCAL_BIN" ]; then
+        print_warning "$LOCAL_BIN 目录不存在，尝试创建..."
+        sudo mkdir -p "$LOCAL_BIN" 2>/dev/null || {
+            print_warning "无法创建 $LOCAL_BIN，将在用户目录创建链接"
+            LOCAL_BIN="$HOME/.local/bin"
+            mkdir -p "$LOCAL_BIN"
+        }
+    fi
+
+    # 检查是否有写入权限
+    if [ -w "$LOCAL_BIN" ]; then
+        # 创建 aidefect 链接
+        if [ -f "$VENV_BIN/aidefect" ]; then
+            ln -sf "$VENV_BIN/aidefect" "$LOCAL_BIN/aidefect"
+            print_success "aidefect 全局链接创建成功"
+        fi
+
+        # 创建 aidefect-web 链接
+        if [ -f "$VENV_BIN/aidefect-web" ]; then
+            ln -sf "$VENV_BIN/aidefect-web" "$LOCAL_BIN/aidefect-web"
+            print_success "aidefect-web 全局链接创建成功"
+        fi
+
+        # 提示添加到 PATH
+        if [[ ":$PATH:" != *":$LOCAL_BIN:"* ]]; then
+            print_info "请将 $LOCAL_BIN 添加到您的 PATH 环境变量中"
+            print_info "可以运行以下命令："
+            print_info "  echo 'export PATH=\$PATH:$LOCAL_BIN' >> ~/.zshrc"
+            print_info "  source ~/.zshrc"
+        fi
+    else
+        print_warning "需要管理员权限创建全局链接"
+        print_info "请运行以下命令创建链接："
+        print_info "  sudo ln -sf $VENV_BIN/aidefect $LOCAL_BIN/aidefect"
+        print_info "  sudo ln -sf $VENV_BIN/aidefect-web $LOCAL_BIN/aidefect-web"
     fi
 }
 
