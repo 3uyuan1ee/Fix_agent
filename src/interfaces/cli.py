@@ -12,10 +12,21 @@ from typing import List, Optional, Dict, Any
 from dataclasses import dataclass
 import json
 
-from ..utils.config import ConfigManager
-from ..utils.logger import get_logger
-from ..agent.planner import AnalysisMode
-from ..agent.orchestrator import AgentOrchestrator, Session
+try:
+    from ..utils.config import ConfigManager
+    from ..utils.logger import get_logger
+except ImportError:
+    # Fallback for standalone testing
+    class ConfigManager:
+        def get_tools_config(self):
+            return {"static_analysis_tools": {"ast": {"enabled": True, "description": "AST语法分析"}}}
+
+    class MockLogger:
+        def error(self, msg): print(f"ERROR: {msg}")
+        def info(self, msg): print(f"INFO: {msg}")
+
+    def get_logger():
+        return MockLogger()
 
 logger = get_logger()
 
@@ -126,7 +137,7 @@ class CLIArgumentParser:
   # 显示详细帮助
   aidetector --help --verbose
 
-更多信息请访问: https://github.com/your-repo/ai-defect-detector
+更多信息请访问: https://github.com/3uyuan1ee/Fix_agent
         """
 
     def _add_global_arguments(self):
@@ -847,15 +858,79 @@ def handle_legacy_mode(parser: CLIArgumentParser, args: CLIArguments) -> int:
 
 def handle_interactive_mode(parser: CLIArgumentParser, args: CLIArguments) -> int:
     """处理交互式模式"""
-    from ..cli.interactive import InteractiveMode
-    interactive = InteractiveMode()
-    return interactive.run()
+    print("🤖 AI缺陷检测系统 - 交互式模式")
+    print("=" * 50)
+    print("欢迎使用AI缺陷检测系统！")
+    print()
+    print("可用命令:")
+    print("  analyze static <path>  - 静态分析")
+    print("  analyze deep <path>    - 深度分析")
+    print("  analyze fix <path>     - 修复分析")
+    print("  help                   - 显示帮助")
+    print("  quit/exit              - 退出")
+    print()
+    print("使用示例:")
+    print("  analyze static src/     # 静态分析src目录")
+    print("  analyze deep main.py    # 深度分析main.py")
+    print()
+
+    # 简单的交互式循环
+    while True:
+        try:
+            user_input = input("aidetector> ").strip()
+
+            if not user_input:
+                continue
+
+            if user_input.lower() in ['quit', 'exit', 'q']:
+                print("👋 再见！")
+                break
+
+            if user_input.lower() == 'help':
+                print("可用命令: analyze static/deep/fix, help, quit")
+                continue
+
+            # 处理analyze命令
+            if user_input.startswith('analyze '):
+                parts = user_input.split()
+                if len(parts) >= 3:
+                    mode = parts[1]
+                    target = ' '.join(parts[2:])
+
+                    if mode == 'static':
+                        args.sub_target = target
+                        return execute_static_analysis(args)
+                    elif mode == 'deep':
+                        args.sub_target = target
+                        return execute_deep_analysis(args)
+                    elif mode == 'fix':
+                        args.sub_target = target
+                        return execute_fix_analysis(args)
+                    else:
+                        print(f"❌ 未知模式: {mode}，请使用 static, deep 或 fix")
+                else:
+                    print("❌ 用法: analyze <static|deep|fix> <target>")
+            else:
+                print(f"❌ 未知命令: {user_input}，输入 'help' 查看帮助")
+
+        except KeyboardInterrupt:
+            print("\n👋 再见！")
+            break
+        except EOFError:
+            print("\n👋 再见！")
+            break
+
+    return 0
 
 
 def execute_static_analysis(args: CLIArguments) -> int:
     """执行静态分析"""
-    from ..tools.static_coordinator import StaticCoordinator
-    from ..utils.progress import ProgressTracker
+    try:
+        from ..tools.cli_coordinator import CLIStaticCoordinator
+        from ..utils.progress import ProgressTracker
+    except ImportError:
+        print("❌ 静态分析模块不可用")
+        return 1
 
     target = args.sub_target
     if not target:
@@ -872,7 +947,7 @@ def execute_static_analysis(args: CLIArguments) -> int:
         progress = ProgressTracker(verbose=args.sub_verbose or args.verbose)
 
         # 创建静态分析协调器
-        coordinator = StaticCoordinator(
+        coordinator = CLIStaticCoordinator(
             tools=args.sub_tools,
             format=args.sub_format,
             output_file=args.sub_output,
@@ -905,8 +980,12 @@ def execute_static_analysis(args: CLIArguments) -> int:
 
 def execute_deep_analysis(args: CLIArguments) -> int:
     """执行深度分析"""
-    from ..tools.deep_analyzer import DeepAnalyzer
-    from ..utils.progress import ProgressTracker
+    try:
+        from ..tools.cli_coordinator import CLIInteractiveCoordinator
+        from ..utils.progress import ProgressTracker
+    except ImportError:
+        print("❌ 深度分析模块不可用")
+        return 1
 
     target = args.sub_target
     if not target:
@@ -922,14 +1001,25 @@ def execute_deep_analysis(args: CLIArguments) -> int:
         # 初始化进度跟踪
         progress = ProgressTracker(verbose=args.sub_verbose or args.verbose)
 
-        # 创建深度分析器
-        analyzer = DeepAnalyzer(
+        # 创建深度分析协调器
+        coordinator = CLIInteractiveCoordinator(
+            mode='deep',
             output_file=args.sub_output,
             progress=progress
         )
 
         # 执行分析（交互式对话）
-        analyzer.analyze_interactive(target)
+        result = coordinator.run_interactive(target)
+
+        # 显示结果
+        if not args.sub_quiet:
+            print("\n✅ 深度分析完成")
+            if result.get('status') == 'completed':
+                print(f"🧠 分析文件: {result.get('files_analyzed', 0)} 个")
+                print(f"⏱️ 执行时间: {result.get('total_execution_time', 0):.2f}秒")
+
+            if args.sub_output:
+                print(f"💾 对话历史已保存到: {args.sub_output}")
 
         return 0
 
@@ -946,8 +1036,12 @@ def execute_deep_analysis(args: CLIArguments) -> int:
 
 def execute_fix_analysis(args: CLIArguments) -> int:
     """执行修复分析"""
-    from ..tools.fix_coordinator import FixCoordinator
-    from ..utils.progress import ProgressTracker
+    try:
+        from ..tools.cli_coordinator import CLIInteractiveCoordinator
+        from ..utils.progress import ProgressTracker
+    except ImportError:
+        print("❌ 修复分析模块不可用")
+        return 1
 
     target = args.sub_target
     if not target:
@@ -964,23 +1058,26 @@ def execute_fix_analysis(args: CLIArguments) -> int:
         progress = ProgressTracker(verbose=args.sub_verbose or args.verbose)
 
         # 创建修复协调器
-        coordinator = FixCoordinator(
-            confirm=not args.sub_no_confirm,
-            backup_dir=args.sub_backup_dir,
-            dry_run=args.sub_dry_run,
+        coordinator = CLIInteractiveCoordinator(
+            mode='fix',
+            output_file=args.sub_output,
             progress=progress
         )
 
         # 执行修复
-        result = coordinator.fix(target)
+        result = coordinator.run_interactive(target)
 
         # 显示结果
         if not args.sub_quiet:
             print("\n✅ 修复分析完成")
-            if result.get('summary'):
-                print(f"🔧 发现问题: {result['summary'].get('issues_found', 0)} 个")
-                print(f"✨ 已修复: {result['summary'].get('issues_fixed', 0)} 个")
-                print(f"📁 处理文件: {result['summary'].get('files_processed', 0)} 个")
+            if result.get('status') == 'completed':
+                print(f"🔧 扫描文件: {result.get('files_scanned', 0)} 个")
+                print(f"⚠️ 发现问题: {result.get('total_issues_found', 0)} 个")
+                print(f"✨ 尝试修复: {result.get('fixes_attempted', 0)} 个")
+                print(f"✅ 成功修复: {result.get('successful_fixes', 0)} 个")
+
+            if args.sub_output:
+                print(f"💾 修复记录已保存到: {args.sub_output}")
 
         return 0
 

@@ -11,8 +11,8 @@ from pathlib import Path
 # 添加src目录到Python路径
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-from src.interfaces.cli import main as cli_main
-from src.interfaces.web import main as web_main
+from interfaces.cli import main as cli_main
+from interfaces.web import main as web_main
 
 
 def show_usage():
