@@ -758,6 +758,7 @@ def main():
     try:
         args = parser.parse_args()
 
+        # 处理全局选项
         if args.version:
             parser.print_version()
             return 0
@@ -767,12 +768,228 @@ def main():
         elif args.help:
             parser.print_help()
             return 0
-        else:
-            print("CLI模式正在开发中，请使用Web模式：python main.py web")
-            return 0
+
+        # 处理analyze子命令
+        if args.command == 'analyze':
+            return handle_analyze_command(parser, args)
+
+        # 处理传统模式参数
+        if args.mode:
+            return handle_legacy_mode(parser, args)
+
+        # 默认交互式模式
+        return handle_interactive_mode(parser, args)
 
     except SystemExit:
         raise
     except Exception as e:
         logger.error(f"CLI执行失败: {e}")
+        return 1
+
+
+def handle_analyze_command(parser: CLIArgumentParser, args: CLIArguments) -> int:
+    """处理analyze子命令"""
+    if not args.analyze_command:
+        parser.parser.error("请指定分析模式: static, deep, fix")
+        return 1
+
+    if args.analyze_command == 'static':
+        return execute_static_analysis(args)
+    elif args.analyze_command == 'deep':
+        return execute_deep_analysis(args)
+    elif args.analyze_command == 'fix':
+        return execute_fix_analysis(args)
+    else:
+        parser.parser.error(f"未知的分析模式: {args.analyze_command}")
+        return 1
+
+
+def handle_legacy_mode(parser: CLIArgumentParser, args: CLIArguments) -> int:
+    """处理传统模式参数"""
+    target = args.target or args.sub_target
+    if not target:
+        parser.parser.error("请指定目标文件或目录路径")
+        return 1
+
+    if args.mode == 'static':
+        static_args = CLIArguments(
+            sub_target=target,
+            sub_tools=args.static_tools or args.sub_tools,
+            sub_format=args.format or args.sub_format,
+            sub_output=args.output or args.sub_output,
+            sub_verbose=args.verbose or args.sub_verbose,
+            sub_quiet=args.quiet or args.sub_quiet,
+            sub_dry_run=args.dry_run or args.sub_dry_run
+        )
+        return execute_static_analysis(static_args)
+    elif args.mode == 'deep':
+        deep_args = CLIArguments(
+            sub_target=target,
+            sub_output=args.output or args.sub_output,
+            sub_verbose=args.verbose or args.sub_verbose,
+            sub_quiet=args.quiet or args.sub_quiet
+        )
+        return execute_deep_analysis(deep_args)
+    elif args.mode == 'fix':
+        fix_args = CLIArguments(
+            sub_target=target,
+            sub_no_confirm=args.sub_no_confirm or not args.fix_confirm,
+            sub_backup_dir=args.sub_backup_dir,
+            sub_verbose=args.verbose or args.sub_verbose,
+            sub_quiet=args.quiet or args.sub_quiet,
+            sub_dry_run=args.dry_run or args.sub_dry_run
+        )
+        return execute_fix_analysis(fix_args)
+    else:
+        parser.parser.error(f"未知的模式: {args.mode}")
+        return 1
+
+
+def handle_interactive_mode(parser: CLIArgumentParser, args: CLIArguments) -> int:
+    """处理交互式模式"""
+    from ..cli.interactive import InteractiveMode
+    interactive = InteractiveMode()
+    return interactive.run()
+
+
+def execute_static_analysis(args: CLIArguments) -> int:
+    """执行静态分析"""
+    from ..tools.static_coordinator import StaticCoordinator
+    from ..utils.progress import ProgressTracker
+
+    target = args.sub_target
+    if not target:
+        print("❌ 错误: 未指定目标文件或目录")
+        return 1
+
+    try:
+        # 显示开始信息
+        if not args.sub_quiet:
+            print(f"🔍 开始静态分析: {target}")
+            print("=" * 60)
+
+        # 初始化进度跟踪
+        progress = ProgressTracker(verbose=args.sub_verbose or args.verbose)
+
+        # 创建静态分析协调器
+        coordinator = StaticCoordinator(
+            tools=args.sub_tools,
+            format=args.sub_format,
+            output_file=args.sub_output,
+            dry_run=args.sub_dry_run,
+            progress=progress
+        )
+
+        # 执行分析
+        result = coordinator.analyze(target)
+
+        # 显示结果
+        if not args.sub_quiet:
+            print("\n✅ 静态分析完成")
+            if result.get('summary'):
+                print(f"📊 发现问题: {result['summary'].get('total_issues', 0)} 个")
+                print(f"📁 分析文件: {result['summary'].get('files_analyzed', 0)} 个")
+
+            if args.sub_output:
+                print(f"💾 结果已保存到: {args.sub_output}")
+
+        return 0
+
+    except Exception as e:
+        print(f"❌ 静态分析失败: {e}")
+        if args.verbose:
+            import traceback
+            traceback.print_exc()
+        return 1
+
+
+def execute_deep_analysis(args: CLIArguments) -> int:
+    """执行深度分析"""
+    from ..tools.deep_analyzer import DeepAnalyzer
+    from ..utils.progress import ProgressTracker
+
+    target = args.sub_target
+    if not target:
+        print("❌ 错误: 未指定目标文件或目录")
+        return 1
+
+    try:
+        # 显示开始信息
+        if not args.sub_quiet:
+            print(f"🧠 开始深度分析: {target}")
+            print("=" * 60)
+
+        # 初始化进度跟踪
+        progress = ProgressTracker(verbose=args.sub_verbose or args.verbose)
+
+        # 创建深度分析器
+        analyzer = DeepAnalyzer(
+            output_file=args.sub_output,
+            progress=progress
+        )
+
+        # 执行分析（交互式对话）
+        analyzer.analyze_interactive(target)
+
+        return 0
+
+    except KeyboardInterrupt:
+        print("\n⏹️ 分析被用户中断")
+        return 0
+    except Exception as e:
+        print(f"❌ 深度分析失败: {e}")
+        if args.verbose:
+            import traceback
+            traceback.print_exc()
+        return 1
+
+
+def execute_fix_analysis(args: CLIArguments) -> int:
+    """执行修复分析"""
+    from ..tools.fix_coordinator import FixCoordinator
+    from ..utils.progress import ProgressTracker
+
+    target = args.sub_target
+    if not target:
+        print("❌ 错误: 未指定目标文件或目录")
+        return 1
+
+    try:
+        # 显示开始信息
+        if not args.sub_quiet:
+            print(f"🔧 开始分析修复: {target}")
+            print("=" * 60)
+
+        # 初始化进度跟踪
+        progress = ProgressTracker(verbose=args.sub_verbose or args.verbose)
+
+        # 创建修复协调器
+        coordinator = FixCoordinator(
+            confirm=not args.sub_no_confirm,
+            backup_dir=args.sub_backup_dir,
+            dry_run=args.sub_dry_run,
+            progress=progress
+        )
+
+        # 执行修复
+        result = coordinator.fix(target)
+
+        # 显示结果
+        if not args.sub_quiet:
+            print("\n✅ 修复分析完成")
+            if result.get('summary'):
+                print(f"🔧 发现问题: {result['summary'].get('issues_found', 0)} 个")
+                print(f"✨ 已修复: {result['summary'].get('issues_fixed', 0)} 个")
+                print(f"📁 处理文件: {result['summary'].get('files_processed', 0)} 个")
+
+        return 0
+
+    except KeyboardInterrupt:
+        print("\n⏹️ 修复过程被用户中断")
+        return 0
+    except Exception as e:
+        print(f"❌ 修复分析失败: {e}")
+        if args.verbose:
+            import traceback
+            traceback.print_exc()
         return 1
