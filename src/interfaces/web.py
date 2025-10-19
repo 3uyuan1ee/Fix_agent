@@ -215,6 +215,223 @@ class AIDefectDetectorWeb:
                 self.logger.error(f"渲染结果页面失败: {e}")
                 return "<h1>AIDefectDetector</h1><p>结果页面正在开发中...</p>", 200
 
+        @self.app.route('/fix')
+        def fix():
+            """修复页面路由"""
+            try:
+                return render_template('fix.html')
+            except Exception as e:
+                self.logger.error(f"渲染修复页面失败: {e}")
+                return "<h1>AIDefectDetector</h1><p>修复页面正在开发中...</p>", 200
+
+        @self.app.route('/api/fix/data', methods=['GET'])
+        def get_fix_data():
+            """获取修复数据API"""
+            try:
+                task_id = request.args.get('task_id')
+                issue_id = request.args.get('issue_id')
+
+                if not task_id or not issue_id:
+                    return jsonify({'error': '缺少必要的参数'}), 400
+
+                # 验证参数格式
+                import uuid
+                try:
+                    uuid.UUID(task_id)
+                    int(issue_id)
+                except ValueError:
+                    return jsonify({'error': '参数格式无效'}), 400
+
+                # 这里应该从数据库或文件中读取实际的修复数据
+                # 目前返回模拟数据
+                mock_fix_data = self._generate_mock_fix_data(task_id, issue_id)
+
+                return jsonify({
+                    'success': True,
+                    'fix_data': mock_fix_data
+                })
+
+            except Exception as e:
+                self.logger.error(f"获取修复数据失败: {e}")
+                return jsonify({'error': '获取修复数据失败'}), 500
+
+        @self.app.route('/api/fix/execute', methods=['POST'])
+        def execute_fix():
+            """执行修复操作API"""
+            try:
+                data = request.get_json()
+                task_id = data.get('task_id')
+                issue_id = data.get('issue_id')
+
+                if not task_id or not issue_id:
+                    return jsonify({'error': '缺少必要的参数'}), 400
+
+                # 验证参数格式
+                import uuid
+                try:
+                    uuid.UUID(task_id)
+                    int(issue_id)
+                except ValueError:
+                    return jsonify({'error': '参数格式无效'}), 400
+
+                # 生成修复操作ID
+                import uuid
+                fix_id = str(uuid.uuid4())
+
+                self.logger.info(f"开始执行修复操作: {fix_id} - 任务: {task_id}, 问题: {issue_id}")
+
+                # 这里应该启动后台修复任务
+                # 目前返回成功响应，实际修复在前端模拟
+                return jsonify({
+                    'success': True,
+                    'fix_id': fix_id,
+                    'task_id': task_id,
+                    'issue_id': issue_id,
+                    'status': 'started',
+                    'message': '修复操作已启动'
+                })
+
+            except Exception as e:
+                self.logger.error(f"执行修复操作失败: {e}")
+                return jsonify({'error': f'执行修复失败: {str(e)}'}), 500
+
+        @self.app.route('/api/fix/status/<fix_id>')
+        def get_fix_status(fix_id):
+            """获取修复状态API"""
+            try:
+                # 验证fix_id格式
+                import uuid
+                try:
+                    uuid.UUID(fix_id)
+                except ValueError:
+                    return jsonify({'error': '无效的修复ID'}), 400
+
+                # 这里应该查询实际的修复状态
+                # 目前返回模拟状态
+                import random
+
+                # 模拟不同的修复状态
+                statuses = ['running', 'completed', 'failed']
+                weights = [0.2, 0.7, 0.1]  # 20%运行中，70%完成，10%失败
+
+                status = random.choices(statuses, weights=weights)[0]
+
+                response_data = {
+                    'fix_id': fix_id,
+                    'status': status,
+                    'progress': random.randint(0, 100) if status == 'running' else 100
+                }
+
+                if status == 'completed':
+                    response_data.update({
+                        'completed_at': self._get_current_time(),
+                        'result': {
+                            'success': True,
+                            'message': '修复成功完成',
+                            'modified_files': 1,
+                            'backup_created': True
+                        }
+                    })
+                elif status == 'failed':
+                    response_data.update({
+                        'failed_at': self._get_current_time(),
+                        'error': '修复过程中发生错误',
+                        'error_code': 'FIX_ERROR_001'
+                    })
+
+                return jsonify(response_data)
+
+            except Exception as e:
+                self.logger.error(f"获取修复状态失败: {e}")
+                return jsonify({'error': '获取状态失败'}), 500
+
+        @self.app.route('/api/fix/details/<task_id>/<issue_id>')
+        def get_fix_details(task_id, issue_id):
+            """获取修复详情API"""
+            try:
+                # 验证参数格式
+                import uuid
+                try:
+                    uuid.UUID(task_id)
+                    int(issue_id)
+                except ValueError:
+                    return jsonify({'error': '参数格式无效'}), 400
+
+                # 这里应该获取实际的修复详情
+                # 目前返回模拟详情
+                mock_details = self._generate_mock_fix_details(task_id, issue_id)
+
+                return jsonify({
+                    'success': True,
+                    'details': mock_details
+                })
+
+            except Exception as e:
+                self.logger.error(f"获取修复详情失败: {e}")
+                return jsonify({'error': '获取详情失败'}), 500
+
+        @self.app.route('/api/fix/export/<task_id>/<issue_id>')
+        def export_fix_data(task_id, issue_id):
+            """导出修复数据API"""
+            try:
+                # 验证参数格式
+                import uuid
+                try:
+                    uuid.UUID(task_id)
+                    int(issue_id)
+                except ValueError:
+                    return jsonify({'error': '参数格式无效'}), 400
+
+                # 获取导出格式
+                export_format = request.args.get('format', 'json').lower()
+
+                if export_format not in ['json', 'txt', 'diff']:
+                    return jsonify({'error': '不支持的导出格式'}), 400
+
+                # 这里应该获取实际的修复数据
+                mock_fix_data = self._generate_mock_fix_data(task_id, issue_id)
+                mock_details = self._generate_mock_fix_details(task_id, issue_id)
+
+                export_data = {
+                    'task_id': task_id,
+                    'issue_id': issue_id,
+                    'export_time': self._get_current_time(),
+                    'fix_data': mock_fix_data,
+                    'fix_details': mock_details
+                }
+
+                if export_format == 'json':
+                    return jsonify({
+                        'success': True,
+                        'format': 'json',
+                        'data': export_data,
+                        'filename': f'fix_data_{task_id}_{issue_id}.json'
+                    })
+
+                elif export_format == 'txt':
+                    # 生成文本格式的数据
+                    text_content = self._generate_text_export(export_data)
+                    return jsonify({
+                        'success': True,
+                        'format': 'txt',
+                        'data': text_content,
+                        'filename': f'fix_data_{task_id}_{issue_id}.txt'
+                    })
+
+                elif export_format == 'diff':
+                    # 生成差异格式的数据
+                    diff_content = self._generate_diff_export(mock_fix_data)
+                    return jsonify({
+                        'success': True,
+                        'format': 'diff',
+                        'data': diff_content,
+                        'filename': f'fix_diff_{task_id}_{issue_id}.diff'
+                    })
+
+            except Exception as e:
+                self.logger.error(f"导出修复数据失败: {e}")
+                return jsonify({'error': '导出失败'}), 500
+
         @self.app.route('/api/analysis/start', methods=['POST'])
         def start_analysis():
             """启动分析任务API"""
@@ -668,6 +885,220 @@ class AIDefectDetectorWeb:
         """获取当前时间字符串"""
         from datetime import datetime
         return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    def _generate_mock_fix_data(self, task_id, issue_id):
+        """生成模拟修复数据"""
+        import random
+
+        # 定义示例文件路径
+        file_paths = [
+            'src/auth/user_manager.py',
+            'src/utils/validators.py',
+            'src/api/routes.py',
+            'src/services/data_processor.py',
+            'src/models/user.py'
+        ]
+
+        # 定义示例问题描述
+        issue_descriptions = [
+            '检测到硬编码密码，存在安全风险',
+            'SQL查询未使用参数化，可能导致SQL注入',
+            '文件操作未正确关闭，可能导致资源泄露',
+            '异常处理不完整，可能导致程序崩溃',
+            '输入验证不充分，存在安全隐患'
+        ]
+
+        # 定义原始代码和修复后代码的模板
+        code_templates = [
+            {
+                'original': 'def authenticate(username, password):\n    # 直接比较密码\n    if password == "admin123":\n        return True\n    return False',
+                'fixed': 'def authenticate(username, password):\n    # 使用安全的密码验证\n    import hashlib\n    hashed_password = hashlib.sha256(password.encode()).hexdigest()\n    stored_hash = get_stored_password_hash(username)\n    return hashed_password == stored_hash'
+            },
+            {
+                'original': 'def get_user(user_id):\n    # 直接拼接SQL查询\n    query = f"SELECT * FROM users WHERE id = {user_id}"\n    return db.execute(query)',
+                'fixed': 'def get_user(user_id):\n    # 使用参数化查询\n    query = "SELECT * FROM users WHERE id = %s"\n    return db.execute(query, (user_id,))'
+            },
+            {
+                'original': 'def read_config(filename):\n    # 文件操作\n    f = open(filename, \'r\')\n    content = f.read()\n    return content',
+                'fixed': 'def read_config(filename):\n    # 使用with语句确保文件正确关闭\n    with open(filename, \'r\') as f:\n        content = f.read()\n    return content'
+            }
+        ]
+
+        # 随机选择模板
+        template = random.choice(code_templates)
+        file_path = random.choice(file_paths)
+        issue_description = random.choice(issue_descriptions)
+
+        return {
+            'file_path': file_path,
+            'issue_description': issue_description,
+            'issue_id': int(issue_id),
+            'original_code': template['original'],
+            'fixed_code': template['fixed'],
+            'fix_type': 'security_improvement',
+            'confidence': random.randint(80, 95),
+            'estimated_time': f"{random.randint(5, 30)}秒",
+            'complexity': random.choice(['simple', 'medium', 'complex']),
+            'risk_level': random.choice(['low', 'medium', 'high'])
+        }
+
+    def _generate_mock_fix_details(self, task_id, issue_id):
+        """生成模拟修复详情"""
+        import random
+
+        return {
+            'task_id': task_id,
+            'issue_id': issue_id,
+            'fix_id': str(random.randint(10000, 99999)),
+            'steps': [
+                {
+                    'step_number': 1,
+                    'step_name': '备份原文件',
+                    'step_description': '创建文件备份，防止数据丢失',
+                    'step_status': 'completed',
+                    'step_time': '0.5秒',
+                    'step_details': '备份文件保存位置: /tmp/backup_*.py'
+                },
+                {
+                    'step_number': 2,
+                    'step_name': '分析修复方案',
+                    'step_description': '验证修复方案的可行性',
+                    'step_status': 'completed',
+                    'step_time': '1.2秒',
+                    'step_details': '修复方案通过语法检查和逻辑验证'
+                },
+                {
+                    'step_number': 3,
+                    'step_name': '应用修复',
+                    'step_description': '将修复应用到原文件',
+                    'step_status': 'completed',
+                    'step_time': '2.1秒',
+                    'step_details': '成功应用修复，修改了3行代码'
+                },
+                {
+                    'step_number': 4,
+                    'step_name': '验证修复结果',
+                    'step_description': '检查修复后的代码正确性',
+                    'step_status': 'completed',
+                    'step_time': '1.5秒',
+                    'step_details': '代码语法正确，逻辑验证通过'
+                },
+                {
+                    'step_number': 5,
+                    'step_name': '清理临时文件',
+                    'step_description': '清理过程中产生的临时文件',
+                    'step_status': 'completed',
+                    'step_time': '0.3秒',
+                    'step_details': '清理完成，释放临时存储空间'
+                }
+            ],
+            'fix_summary': {
+                'total_steps': 5,
+                'completed_steps': 5,
+                'total_time': '5.6秒',
+                'lines_modified': random.randint(1, 10),
+                'complexity': 'medium',
+                'success_rate': '100%'
+            },
+            'fix_metadata': {
+                'fix_author': 'AIDefectDetector',
+                'fix_version': '1.0.0',
+                'fix_timestamp': self._get_current_time(),
+                'fix_environment': 'development',
+                'backup_created': True,
+                'rollback_available': True
+            }
+        }
+
+    def _generate_text_export(self, export_data):
+        """生成文本格式的导出数据"""
+        fix_data = export_data['fix_data']
+        fix_details = export_data['fix_details']
+
+        text_content = f"""
+AIDefectDetector 修复数据导出报告
+=====================================
+
+基本信息:
+- 任务ID: {export_data['task_id']}
+- 问题ID: {export_data['issue_id']}
+- 导出时间: {export_data['export_time']}
+- 文件路径: {fix_data['file_path']}
+
+问题描述:
+{fix_data['issue_description']}
+
+修复类型: {fix_data['fix_type']}
+置信度: {fix_data['confidence']}%
+预计修复时间: {fix_data['estimated_time']}
+复杂度: {fix_data['complexity']}
+风险级别: {fix_data['risk_level']}
+
+原始代码:
+{fix_data['original_code']}
+
+修复后代码:
+{fix_data['fixed_code']}
+
+执行步骤:
+"""
+        for step in fix_details['steps']:
+            text_content += f"""
+{step['step_number']}. {step['step_name']} ({step['step_status']})
+   描述: {step['step_description']}
+   耗时: {step['step_time']}
+   详情: {step['step_details']}
+"""
+
+        text_content += f"""
+
+修复摘要:
+- 总步骤数: {fix_details['fix_summary']['total_steps']}
+- 完成步骤数: {fix_details['fix_summary']['completed_steps']}
+- 总耗时: {fix_details['fix_summary']['total_time']}
+- 修改行数: {fix_details['fix_summary']['lines_modified']}
+- 成功率: {fix_details['fix_summary']['success_rate']}
+
+元数据:
+- 修复作者: {fix_details['fix_metadata']['fix_author']}
+- 修复版本: {fix_details['fix_metadata']['fix_version']}
+- 时间戳: {fix_details['fix_metadata']['fix_timestamp']}
+- 环境: {fix_details['fix_metadata']['fix_environment']}
+- 备份已创建: {fix_details['fix_metadata']['backup_created']}
+- 回滚可用: {fix_details['fix_metadata']['rollback_available']}
+
+报告由 AIDefectDetector 自动生成
+项目地址: https://github.com/your-repo/ai-defect-detector
+        """.strip()
+
+        return text_content
+
+    def _generate_diff_export(self, fix_data):
+        """生成差异格式的导出数据"""
+        original_lines = fix_data['original_code'].split('\n')
+        fixed_lines = fix_data['fixed_code'].split('\n')
+
+        diff_content = f"""--- a/{fix_data['file_path']}
++++ b/{fix_data['file_path']}
+@@ -1,{len(original_lines)} +1,{len(fixed_lines)} @@
+"""
+
+        # 简单的行差异对比
+        max_lines = max(len(original_lines), len(fixed_lines))
+        for i in range(max_lines):
+            original_line = original_lines[i] if i < len(original_lines) else ""
+            fixed_line = fixed_lines[i] if i < len(fixed_lines) else ""
+
+            if original_line == fixed_line:
+                diff_content += f" {original_line}\n"
+            elif original_line and not fixed_line:
+                diff_content += f"-{original_line}\n"
+            elif not original_line and fixed_line:
+                diff_content += f"+{fixed_line}\n"
+            else:
+                diff_content += f"-{original_line}\n+{fixed_line}\n"
+
+        return diff_content
 
     def run(self, host=None, port=None, debug=None):
         """运行Web应用"""
