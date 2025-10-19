@@ -142,8 +142,9 @@ echo 📁 配置文件：
 echo   %USERPROFILE%\.aidefect\config.yaml
 echo.
 echo 📚 更多信息：
-echo   查看 QUICKSTART.md  - 快速开始指南
-echo   查看 README.md      - 完整文档
+echo   查看 docs/QUICKSTART.md  - 快速开始指南
+echo   查看 docs/README.md      - 完整文档
+echo   查看 docs/INSTALL.md      - 安装指南
 echo.
 echo 💡 提示：
 echo   如需卸载，请运行: pip uninstall aidefect
