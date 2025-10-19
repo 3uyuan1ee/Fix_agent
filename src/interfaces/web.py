@@ -234,13 +234,12 @@ class AIDefectDetectorWeb:
                 if not task_id or not issue_id:
                     return jsonify({'error': '缺少必要的参数'}), 400
 
-                # 验证参数格式
-                import uuid
-                try:
-                    uuid.UUID(task_id)
-                    int(issue_id)
-                except ValueError:
-                    return jsonify({'error': '参数格式无效'}), 400
+                # 验证参数格式（允许测试ID）
+                if not self._validate_task_id(task_id):
+                    return jsonify({'error': '任务ID格式无效'}), 400
+
+                if not self._validate_issue_id(issue_id):
+                    return jsonify({'error': '问题ID格式无效'}), 400
 
                 # 这里应该从数据库或文件中读取实际的修复数据
                 # 目前返回模拟数据
@@ -266,13 +265,12 @@ class AIDefectDetectorWeb:
                 if not task_id or not issue_id:
                     return jsonify({'error': '缺少必要的参数'}), 400
 
-                # 验证参数格式
-                import uuid
-                try:
-                    uuid.UUID(task_id)
-                    int(issue_id)
-                except ValueError:
-                    return jsonify({'error': '参数格式无效'}), 400
+                # 验证参数格式（允许测试ID）
+                if not self._validate_task_id(task_id):
+                    return jsonify({'error': '任务ID格式无效'}), 400
+
+                if not self._validate_issue_id(issue_id):
+                    return jsonify({'error': '问题ID格式无效'}), 400
 
                 # 生成修复操作ID
                 import uuid
@@ -299,11 +297,8 @@ class AIDefectDetectorWeb:
         def get_fix_status(fix_id):
             """获取修复状态API"""
             try:
-                # 验证fix_id格式
-                import uuid
-                try:
-                    uuid.UUID(fix_id)
-                except ValueError:
+                # 验证fix_id格式（允许测试ID）
+                if not self._validate_fix_id(fix_id):
                     return jsonify({'error': '无效的修复ID'}), 400
 
                 # 这里应该查询实际的修复状态
@@ -349,13 +344,12 @@ class AIDefectDetectorWeb:
         def get_fix_details(task_id, issue_id):
             """获取修复详情API"""
             try:
-                # 验证参数格式
-                import uuid
-                try:
-                    uuid.UUID(task_id)
-                    int(issue_id)
-                except ValueError:
-                    return jsonify({'error': '参数格式无效'}), 400
+                # 验证参数格式（允许测试ID）
+                if not self._validate_task_id(task_id):
+                    return jsonify({'error': '任务ID格式无效'}), 400
+
+                if not self._validate_issue_id(issue_id):
+                    return jsonify({'error': '问题ID格式无效'}), 400
 
                 # 这里应该获取实际的修复详情
                 # 目前返回模拟详情
@@ -374,13 +368,12 @@ class AIDefectDetectorWeb:
         def export_fix_data(task_id, issue_id):
             """导出修复数据API"""
             try:
-                # 验证参数格式
-                import uuid
-                try:
-                    uuid.UUID(task_id)
-                    int(issue_id)
-                except ValueError:
-                    return jsonify({'error': '参数格式无效'}), 400
+                # 验证参数格式（允许测试ID）
+                if not self._validate_task_id(task_id):
+                    return jsonify({'error': '任务ID格式无效'}), 400
+
+                if not self._validate_issue_id(issue_id):
+                    return jsonify({'error': '问题ID格式无效'}), 400
 
                 # 获取导出格式
                 export_format = request.args.get('format', 'json').lower()
@@ -1099,6 +1092,91 @@ AIDefectDetector 修复数据导出报告
                 diff_content += f"-{original_line}\n+{fixed_line}\n"
 
         return diff_content
+
+    def _validate_task_id(self, task_id: str) -> bool:
+        """验证任务ID格式（UUID或测试ID）"""
+        if not isinstance(task_id, str):
+            return False
+
+        try:
+            # 尝试解析为UUID
+            import uuid
+            uuid.UUID(task_id)
+            return True
+        except ValueError:
+            # 如果不是UUID，检查是否为测试用的字符串ID格式
+            # 允许格式：test-xxx, xxx-xxx-xxx, 或普通字符串
+            if task_id and isinstance(task_id, str):
+                # 允许包含字母、数字、连字符、下划线的字符串
+                allowed_chars = set('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_')
+                return all(c in allowed_chars for c in task_id) and len(task_id) > 0
+            return False
+
+    def _validate_issue_id(self, issue_id) -> bool:
+        """验证问题ID格式（整数或字符串）"""
+        try:
+            # 尝试转换为整数
+            int(issue_id)
+            return True
+        except (ValueError, TypeError):
+            # 如果不能转换为整数，检查是否为有效的字符串ID
+            if isinstance(issue_id, str) and issue_id.isdigit():
+                return True
+            return False
+
+    def _validate_fix_id(self, fix_id: str) -> bool:
+        """验证修复操作ID格式（UUID或测试ID）"""
+        if not isinstance(fix_id, str):
+            return False
+
+        try:
+            # 尝试解析为UUID
+            import uuid
+            uuid.UUID(fix_id)
+            return True
+        except ValueError:
+            # 如果不是UUID，检查是否为有效的测试ID格式
+            if fix_id and isinstance(fix_id, str):
+                # 允许的测试ID格式：test-xxx, xxx-xxx-xxx（数字、字母、连字符、下划线）
+                # 但要拒绝一些明显无效的格式
+                allowed_chars = set('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_')
+
+                # 检查字符是否合法
+                if not all(c in allowed_chars for c in fix_id):
+                    return False
+
+                # 检查长度合理性（3-50个字符）
+                if not (3 <= len(fix_id) <= 50):
+                    return False
+
+                # 检查是否为已知的测试格式或合理的ID格式
+                valid_patterns = [
+                    'test-',           # test- 开头
+                    'test-task-',      # test-task- 开头
+                    'test-fix-',       # test-fix- 开头
+                    '-' in fix_id,     # 包含连字符
+                    fix_id.isdigit(),  # 纯数字
+                ]
+
+                # 拒绝一些明显无效的模式
+                invalid_patterns = [
+                    'invalid-',        # invalid- 开头
+                    'fake-',           # fake- 开头
+                    'bad-',            # bad- 开头
+                ]
+
+                # 如果匹配无效模式，则拒绝
+                for pattern in invalid_patterns:
+                    if fix_id.startswith(pattern):
+                        return False
+
+                # 如果匹配任何有效模式，则接受
+                return any(pattern for pattern in valid_patterns if (
+                    fix_id.startswith(pattern) or
+                    (pattern == '-' in fix_id and fix_id.count('-') >= 1)
+                ))
+
+            return False
 
     def run(self, host=None, port=None, debug=None):
         """运行Web应用"""

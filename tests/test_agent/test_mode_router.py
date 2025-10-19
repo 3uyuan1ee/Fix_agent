@@ -11,7 +11,7 @@ from typing import Dict, Any, Optional
 # 导入被测试的模块
 from src.agent.mode_router import (
     ModeRecognizer, RequestRouter, RouteRequest, RouteResult,
-    AnalysisMode, MessageRole, RouteStrategy
+    AnalysisMode
 )
 from src.agent.orchestrator import Session, SessionState, MessageRole as OrchestratorMessageRole
 from src.agent.planner import UserRequest, Task, ExecutionPlan
@@ -231,9 +231,9 @@ class TestRequestRouter:
         # 验证结果
         assert isinstance(result, RouteResult)
         assert result.success is True
-        assert result.strategy == RouteStrategy.DIRECT
-        assert result.response == "静态分析完成"
-        assert result.execution_plan_id == "plan_001"
+        assert result.execution_method == "direct"
+        assert result.response_message == "静态分析完成"
+        assert result.execution_plan.plan_id == "plan_001"
 
         # 验证调用
         self.mock_task_planner.create_execution_plan.assert_called_once()
