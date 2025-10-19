@@ -8,7 +8,10 @@ from pathlib import Path
 
 # 读取README文件
 this_directory = Path(__file__).parent
-long_description = (this_directory / "README.md").read_text(encoding='utf-8')
+long_description = (this_directory / "docs" / "README.md").read_text(encoding='utf-8')
+
+# 项目根目录
+project_root = this_directory
 
 # 读取requirements文件
 requirements = []
@@ -27,6 +30,7 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/your-repo/AIDefectDetector",
     packages=find_packages(),
+    py_modules=["aidefect_cli", "aidefect_web"],
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
@@ -59,8 +63,8 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "aidefect=main:main",
-            "aidefect-web=main:web_main_wrapper",
+            "aidefect=aidefect_cli:main",
+            "aidefect-web=aidefect_web:main",
         ],
     },
     include_package_data=True,

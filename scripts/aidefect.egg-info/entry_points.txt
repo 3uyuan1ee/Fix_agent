@@ -1,0 +1,3 @@
+[console_scripts]
+aidefect = main:main
+aidefect-web = main:web_main_wrapper
