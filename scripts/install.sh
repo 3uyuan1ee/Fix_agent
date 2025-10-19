@@ -197,8 +197,8 @@ main() {
     echo "开始安装AIDefectDetector..."
     echo
 
-    # 进入脚本所在目录
-    cd "$(dirname "${BASH_SOURCE[0]}")"
+    # 进入项目根目录（scripts目录的上一级）
+    cd "$(dirname "$(dirname "${BASH_SOURCE[0]}")")"
 
     # 执行安装步骤
     check_python

@@ -8,6 +8,9 @@ echo 🚀 AIDefectDetector 全局安装脚本
 echo ====================================
 echo.
 
+:: 切换到项目根目录
+cd /d "%~dp0\.."
+
 :: 检查Python版本
 echo [INFO] 检查Python环境...
 
