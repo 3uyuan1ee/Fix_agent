@@ -6,8 +6,8 @@ build-backend = "setuptools.build_meta"
 name = "aidefect"
 version = "1.0.0"
 description = "基于AI Agent的软件项目缺陷自主检测与修复系统"
-readme = "README.md"
-license = {file = "LICENSE"}
+readme = "docs/README.md"
+license = {file = "docs/LICENSE"}
 authors = [
     {name = "AIDefectDetector Team", email = "contact@aidefect.com"},
 ]
@@ -74,8 +74,8 @@ Repository = "https://github.com/your-repo/AIDefectDetector.git"
 Changelog = "https://github.com/your-repo/AIDefectDetector/CHANGELOG.md"
 
 [project.scripts]
-aidefect = "main:main"
-aidefect-web = "main:web_main_wrapper"
+aidefect = "aidefect_cli:main"
+aidefect-web = "aidefect_web:main"
 
 [tool.setuptools]
 packages = ["src"]
