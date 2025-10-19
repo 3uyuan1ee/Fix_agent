@@ -749,3 +749,30 @@ class CLIHelper:
             str: 格式化的错误消息
         """
         return f"❌ {error_type}: {details}"
+
+
+def main():
+    """CLI主入口函数"""
+    parser = CLIArgumentParser()
+
+    try:
+        args = parser.parse_args()
+
+        if args.version:
+            parser.print_version()
+            return 0
+        elif args.list_tools:
+            parser.list_tools()
+            return 0
+        elif args.help:
+            parser.print_help()
+            return 0
+        else:
+            print("CLI模式正在开发中，请使用Web模式：python main.py web")
+            return 0
+
+    except SystemExit:
+        raise
+    except Exception as e:
+        logger.error(f"CLI执行失败: {e}")
+        return 1
