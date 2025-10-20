@@ -1652,20 +1652,47 @@ def execute_deep_analysis(args: CLIArguments) -> int:
     try:
         from src.tools.cli_coordinator import CLIInteractiveCoordinator
         from src.utils.progress import ProgressTracker
-    except ImportError:
-        print("❌ 深度分析模块不可用")
+    except ImportError as e:
+        print(f"❌ 深度分析模块不可用: {e}")
+        print("💡 请确保已安装所有必需的依赖包")
         return 1
 
+    # 验证目标路径
     target = args.sub_target
     if not target:
         print("❌ 错误: 未指定目标文件或目录")
+        print("💡 使用示例: aidefect analyze deep <file_or_directory>")
         return 1
+
+    # 验证路径存在性
+    from pathlib import Path
+    target_path = Path(target)
+    if not target_path.exists():
+        print(f"❌ 错误: 目标路径不存在: {target}")
+        print("💡 请检查文件路径是否正确")
+        return 1
+
+    # 检查路径类型
+    if target_path.is_file() and target_path.suffix != '.py':
+        print(f"⚠️ 警告: {target} 不是Python文件，深度分析可能效果有限")
+        response = input("是否继续? (y/n): ").strip().lower()
+        if response not in ['y', 'yes']:
+            print("❌ 取消深度分析")
+            return 1
 
     try:
         # 显示开始信息
         if not args.sub_quiet:
             print(f"🧠 开始深度分析: {target}")
             print("=" * 60)
+
+            # 显示分析配置信息
+            print(f"📁 目标路径: {target_path.resolve()}")
+            print(f"📊 输出格式: {'详细' if args.sub_verbose else '简洁'}")
+            if args.sub_output:
+                print(f"💾 输出文件: {Path(args.sub_output).resolve()}")
+            print(f"🔧 交互模式: 启用")
+            print()
 
         # 初始化进度跟踪
         progress = ProgressTracker(verbose=args.sub_verbose or args.verbose)
@@ -1677,29 +1704,78 @@ def execute_deep_analysis(args: CLIArguments) -> int:
             progress=progress
         )
 
+        # 显示启动提示
+        if not args.sub_quiet:
+            print("🤖 AI深度分析助手已就绪")
+            print("💡 提示: 输入 'help' 查看可用命令")
+            print("💡 提示: 输入 'quit' 或 'exit' 退出分析")
+            print()
+
         # 执行分析（交互式对话）
         result = coordinator.run_interactive(target)
 
-        # 显示结果
-        if not args.sub_quiet:
-            print("\n✅ 深度分析完成")
-            if result.get('status') == 'completed':
-                print(f"🧠 分析文件: {result.get('files_analyzed', 0)} 个")
-                print(f"⏱️ 执行时间: {result.get('total_execution_time', 0):.2f}秒")
+        # 处理分析结果
+        if result.get('error'):
+            print(f"❌ 深度分析失败: {result['error']}")
+            return 1
 
-            if args.sub_output:
-                print(f"💾 对话历史已保存到: {args.sub_output}")
+        # 显示完成信息
+        if not args.sub_quiet:
+            print("\n✅ 深度分析会话结束")
+
+            if result.get('status') == 'completed':
+                print(f"📊 会话统计:")
+                print(f"  🧠 分析文件: {result.get('files_analyzed', 0)} 个")
+                print(f"  💬 对话轮次: {len(result.get('conversation_history', []))} 轮")
+                print(f"  ⏱️ 会话时长: {result.get('total_execution_time', 0):.2f}秒")
+
+                # 分析总结
+                conversation_history = result.get('conversation_history', [])
+                file_analyses = [entry for entry in conversation_history if entry.get('type') == 'file_analysis']
+                if file_analyses:
+                    successful_analyses = len([entry for entry in file_analyses if entry.get('result', {}).get('success', False)])
+                    print(f"  ✅ 成功分析: {successful_analyses}/{len(file_analyses)} 文件")
+
+            # 自动生成输出文件（如果未指定）
+            if not args.sub_output and result.get('conversation_history'):
+                try:
+                    import datetime
+                    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                    default_output = f"deep_analysis_conversation_{timestamp}.json"
+                    default_output_path = Path(default_output).resolve()
+
+                    coordinator._save_deep_analysis_result(result, default_output)
+                    print(f"💾 对话历史已自动保存到: {default_output_path}")
+                except Exception as e:
+                    print(f"⚠️ 自动保存对话历史失败: {e}")
+
+            elif args.sub_output:
+                output_path = Path(args.sub_output).resolve()
+                print(f"💾 对话历史已保存到: {output_path}")
 
         return 0
 
     except KeyboardInterrupt:
-        print("\n⏹️ 分析被用户中断")
+        print("\n⏹️ 深度分析被用户中断")
+        print("💡 已保存的对话历史不会丢失")
         return 0
     except Exception as e:
         print(f"❌ 深度分析失败: {e}")
-        if args.verbose:
+
+        if args.verbose or args.sub_verbose:
+            print("📋 详细错误信息:")
             import traceback
             traceback.print_exc()
+        else:
+            print("💡 使用 --verbose 参数可查看详细错误信息")
+
+        # 提供故障排除建议
+        print("\n🔧 故障排除建议:")
+        print("  1. 检查目标文件路径是否正确")
+        print("  2. 确保网络连接正常（需要访问LLM API）")
+        print("  3. 检查API密钥配置是否正确")
+        print("  4. 尝试使用 --verbose 参数获取更多信息")
+
         return 1
 
 
