@@ -74,10 +74,9 @@ class CLIArguments:
     sub_output: Optional[str] = None  # 子命令中的output参数
     sub_verbose: bool = False  # 子命令中的verbose参数
     sub_quiet: bool = False  # 子命令中的quiet参数
-    sub_dry_run: bool = False  # 子命令中的dry_run参数
+    sub_dry_run: bool = False  # 子命令中的dry-run参数
     sub_no_confirm: bool = False  # fix子命令中的no-confirm参数
     sub_backup_dir: Optional[str] = None  # fix子命令中的backup-dir参数
-
 
 
 class CLIArgumentParser:
@@ -926,11 +925,12 @@ def handle_interactive_mode(parser: CLIArgumentParser, args: CLIArguments) -> in
 def execute_static_analysis(args: CLIArguments) -> int:
     """执行静态分析"""
     try:
-        from ..tools.cli_coordinator import CLIStaticCoordinator
+        from ..tools.static_coordinator import StaticAnalysisCoordinator
         from ..utils.progress import ProgressTracker
-    except ImportError:
-        print("❌ 静态分析模块不可用")
-        return 1
+    except ImportError as e:
+        print(f"❌ 静态分析模块不可用: {e}")
+        # 使用简化的静态分析实现
+        return execute_simple_static_analysis(args)
 
     target = args.sub_target
     if not target:
@@ -947,26 +947,38 @@ def execute_static_analysis(args: CLIArguments) -> int:
         progress = ProgressTracker(verbose=args.sub_verbose or args.verbose)
 
         # 创建静态分析协调器
-        coordinator = CLIStaticCoordinator(
-            tools=args.sub_tools,
-            format=args.sub_format,
-            output_file=args.sub_output,
-            dry_run=args.sub_dry_run,
-            progress=progress
-        )
+        coordinator = StaticAnalysisCoordinator()
+
+        # 设置指定的工具
+        if args.sub_tools:
+            coordinator.set_enabled_tools(args.sub_tools)
 
         # 执行分析
-        result = coordinator.analyze(target)
+        if Path(target).is_file():
+            result = coordinator.analyze_file(target)
+            results = [result]
+        else:
+            # 分析目录中的所有Python文件
+            from pathlib import Path
+            python_files = [str(f) for f in Path(target).rglob("*.py")]
+            results = coordinator.analyze_files(python_files)
 
         # 显示结果
         if not args.sub_quiet:
             print("\n✅ 静态分析完成")
-            if result.get('summary'):
-                print(f"📊 发现问题: {result['summary'].get('total_issues', 0)} 个")
-                print(f"📁 分析文件: {result['summary'].get('files_analyzed', 0)} 个")
+            total_issues = sum(len(result.issues) for result in results)
+            print(f"📊 发现问题: {total_issues} 个")
+            print(f"📁 分析文件: {len(results)} 个")
 
-            if args.sub_output:
-                print(f"💾 结果已保存到: {args.sub_output}")
+        # 保存结果
+        if args.sub_output:
+            try:
+                _save_static_analysis_results(results, args.sub_output, args.sub_format or 'simple')
+                if not args.sub_quiet:
+                    print(f"💾 结果已保存到: {args.sub_output}")
+            except Exception as e:
+                if not args.sub_quiet:
+                    print(f"❌ 保存结果失败: {e}")
 
         return 0
 
@@ -975,6 +987,263 @@ def execute_static_analysis(args: CLIArguments) -> int:
         if args.verbose:
             import traceback
             traceback.print_exc()
+        return 1
+
+
+def _save_static_analysis_results(results, output_file: str, format_type: str):
+    """保存静态分析结果"""
+    from pathlib import Path
+    import json
+
+    try:
+        output_path = Path(output_file)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # 统计总结果
+        total_issues = sum(len(result.issues) for result in results)
+        total_files = len(results)
+        total_time = sum(result.execution_time for result in results)
+
+        if output_file.endswith('.json'):
+            # JSON格式
+            report_data = {
+                'target': 'analysis',
+                'files_analyzed': total_files,
+                'total_issues': total_issues,
+                'format': format_type,
+                'execution_time': total_time,
+                'files': []
+            }
+
+            for result in results:
+                file_data = {
+                    'file_path': result.file_path,
+                    'issues_count': len(result.issues),
+                    'execution_time': result.execution_time,
+                    'summary': result.summary,
+                    'issues': [issue.to_dict() for issue in result.issues]
+                }
+                report_data['files'].append(file_data)
+
+            with open(output_path, 'w', encoding='utf-8') as f:
+                json.dump(report_data, f, indent=2, ensure_ascii=False)
+
+        elif output_file.endswith('.md'):
+            # Markdown格式
+            with open(output_path, 'w', encoding='utf-8') as f:
+                f.write("# 静态分析报告\n\n")
+                f.write(f"**分析文件数**: {total_files}\n")
+                f.write(f"**发现问题数**: {total_issues}\n")
+                f.write(f"**执行时间**: {total_time:.2f}秒\n\n")
+
+                if results:
+                    f.write("## 分析结果详情\n\n")
+                    for result in results:
+                        f.write(f"### {Path(result.file_path).name}\n\n")
+                        f.write(f"- **问题数**: {len(result.issues)}\n")
+                        f.write(f"- **执行时间**: {result.execution_time:.2f}秒\n")
+                        if result.issues:
+                            f.write("- **问题列表**:\n")
+                            for issue in result.issues[:10]:  # 只显示前10个
+                                f.write(f"  - 第{issue.line}行 [{issue.severity.value}]: {issue.message}\n")
+                            if len(result.issues) > 10:
+                                f.write(f"  - ... 还有 {len(result.issues) - 10} 个问题\n")
+                        f.write("\n")
+
+        else:
+            # 简单文本格式
+            with open(output_path, 'w', encoding='utf-8') as f:
+                f.write("静态分析报告\n")
+                f.write("=" * 50 + "\n")
+                f.write(f"分析文件数: {total_files}\n")
+                f.write(f"发现问题数: {total_issues}\n")
+                f.write(f"执行时间: {total_time:.2f}秒\n\n")
+
+                if results:
+                    f.write("文件详情:\n")
+                    f.write("-" * 30 + "\n")
+                    for result in results:
+                        f.write(f"文件: {result.file_path}\n")
+                        f.write(f"问题数: {len(result.issues)}\n")
+                        f.write(f"执行时间: {result.execution_time:.2f}秒\n")
+                        f.write("-" * 30 + "\n")
+
+    except Exception as e:
+        print(f"❌ 保存结果失败: {e}")
+        return 1
+
+
+def execute_simple_static_analysis(args: CLIArguments) -> int:
+    """执行简化的静态分析（后备方案）"""
+    target = args.sub_target
+    if not target:
+        print("❌ 错误: 未指定目标文件或目录")
+        return 1
+
+    try:
+        # 显示开始信息
+        if not args.sub_quiet:
+            print(f"🔍 开始静态分析: {target}")
+            print("=" * 60)
+
+        # 模拟进度显示
+        if not args.sub_quiet:
+            print("⏳ 正在扫描文件...")
+
+        # 分析文件
+        from pathlib import Path
+        target_path = Path(target)
+        files_found = []
+        total_issues = 0
+
+        if target_path.is_file() and target_path.suffix == '.py':
+            files_found.append(str(target_path))
+        elif target_path.is_dir():
+            for py_file in target_path.rglob("*.py"):
+                files_found.append(str(py_file))
+
+        if not files_found:
+            print(f"⚠️ 在 {target} 中未找到Python文件")
+            return 0
+
+        # 分析每个文件
+        results = []
+        for i, file_path in enumerate(files_found, 1):
+            if not args.sub_quiet:
+                print(f"🔍 [{i}/{len(files_found)}] 分析: {Path(file_path).name}")
+
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    lines = content.split('\n')
+
+                # 简单的问题检测
+                issues = []
+
+                # 检查是否有print语句
+                if 'print(' in content:
+                    for line_num, line in enumerate(lines, 1):
+                        if 'print(' in line and not line.strip().startswith('#'):
+                            issues.append({
+                                'line': line_num,
+                                'tool': 'style',
+                                'severity': 'info',
+                                'message': '建议使用日志而不是print语句'
+                            })
+
+                total_issues += len(issues)
+                results.append({
+                    'file_path': file_path,
+                    'lines_count': len(lines),
+                    'issues_count': len(issues),
+                    'issues': issues
+                })
+
+            except Exception as e:
+                if args.verbose:
+                    print(f"  ❌ 分析失败: {e}")
+
+        # 生成报告
+        if not args.sub_quiet:
+            print(f"\n✅ 静态分析完成")
+            print(f"📁 分析文件: {len(files_found)} 个")
+            print(f"🔍 发现问题: {total_issues} 个")
+
+        # 保存结果
+        if args.sub_output:
+            try:
+                _save_simple_static_analysis_results(results, args.sub_output, args.sub_format or 'simple')
+                if not args.sub_quiet:
+                    print(f"💾 结果已保存到: {args.sub_output}")
+            except Exception as e:
+                if not args.sub_quiet:
+                    print(f"❌ 保存结果失败: {e}")
+
+        return 0
+
+    except Exception as e:
+        print(f"❌ 静态分析失败: {e}")
+        if args.verbose:
+            import traceback
+            traceback.print_exc()
+        return 1
+
+
+def _save_simple_static_analysis_results(results, output_file: str, format_type: str):
+    """保存简化静态分析结果"""
+    from pathlib import Path
+    import json
+
+    try:
+        output_path = Path(output_file)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # 统计总结果
+        total_issues = sum(result['issues_count'] for result in results)
+        total_files = len(results)
+
+        if output_file.endswith('.json'):
+            # JSON格式
+            report_data = {
+                'target': 'analysis',
+                'files_analyzed': total_files,
+                'total_issues': total_issues,
+                'format': format_type,
+                'files': []
+            }
+
+            for result in results:
+                file_data = {
+                    'file_path': result['file_path'],
+                    'issues_count': result['issues_count'],
+                    'lines_count': result['lines_count'],
+                    'issues': result['issues']
+                }
+                report_data['files'].append(file_data)
+
+            with open(output_path, 'w', encoding='utf-8') as f:
+                json.dump(report_data, f, indent=2, ensure_ascii=False)
+
+        elif output_file.endswith('.md'):
+            # Markdown格式
+            with open(output_path, 'w', encoding='utf-8') as f:
+                f.write("# 静态分析报告\n\n")
+                f.write(f"**分析文件数**: {total_files}\n")
+                f.write(f"**发现问题数**: {total_issues}\n\n")
+
+                if results:
+                    f.write("## 分析结果详情\n\n")
+                    for result in results:
+                        f.write(f"### {Path(result['file_path']).name}\n\n")
+                        f.write(f"- **问题数**: {result['issues_count']}\n")
+                        f.write(f"- **行数**: {result['lines_count']}\n")
+                        if result['issues']:
+                            f.write("- **问题列表**:\n")
+                            for issue in result['issues'][:10]:  # 只显示前10个
+                                f.write(f"  - 第{issue['line']}行 [{issue['severity']}]: {issue['message']}\n")
+                            if len(result['issues']) > 10:
+                                f.write(f"  - ... 还有 {len(result['issues']) - 10} 个问题\n")
+                        f.write("\n")
+
+        else:
+            # 简单文本格式
+            with open(output_path, 'w', encoding='utf-8') as f:
+                f.write("静态分析报告\n")
+                f.write("=" * 50 + "\n")
+                f.write(f"分析文件数: {total_files}\n")
+                f.write(f"发现问题数: {total_issues}\n\n")
+
+                if results:
+                    f.write("文件详情:\n")
+                    f.write("-" * 30 + "\n")
+                    for result in results:
+                        f.write(f"文件: {result['file_path']}\n")
+                        f.write(f"问题数: {result['issues_count']}\n")
+                        f.write(f"行数: {result['lines_count']}\n")
+                        f.write("-" * 30 + "\n")
+
+    except Exception as e:
+        print(f"❌ 保存结果失败: {e}")
         return 1
 
 
