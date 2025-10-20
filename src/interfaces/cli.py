@@ -1337,11 +1337,13 @@ def execute_static_analysis(args: CLIArguments) -> int:
             # 在交互式模式中自动生成默认报告文件
             try:
                 import datetime
+                from pathlib import Path
                 timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
                 default_output = f"static_analysis_report_{timestamp}.json"
+                default_output_path = Path(default_output).resolve()
                 _save_static_analysis_results(results, default_output, 'json')
                 if not args.sub_quiet:
-                    print(f"\n💾 详细报告已自动保存到: {default_output}")
+                    print(f"\n💾 详细报告已自动保存到: {default_output_path}")
                     print(f"📄 报告中包含所有问题的详细信息、位置描述和修复建议")
             except Exception as e:
                 if not args.sub_quiet:
@@ -1545,11 +1547,13 @@ def execute_simple_static_analysis(args: CLIArguments) -> int:
             # 在交互式模式中自动生成默认报告文件
             try:
                 import datetime
+                from pathlib import Path
                 timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
                 default_output = f"static_analysis_report_{timestamp}.json"
+                default_output_path = Path(default_output).resolve()
                 _save_simple_static_analysis_results(results, default_output, 'json')
                 if not args.sub_quiet:
-                    print(f"\n💾 详细报告已自动保存到: {default_output}")
+                    print(f"\n💾 详细报告已自动保存到: {default_output_path}")
                     print(f"📄 报告中包含所有问题的详细信息、位置描述和修复建议")
             except Exception as e:
                 if not args.sub_quiet:
