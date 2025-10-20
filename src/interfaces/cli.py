@@ -925,8 +925,8 @@ def handle_interactive_mode(parser: CLIArgumentParser, args: CLIArguments) -> in
 def execute_static_analysis(args: CLIArguments) -> int:
     """执行静态分析"""
     try:
-        from ..tools.static_coordinator import StaticAnalysisCoordinator
-        from ..utils.progress import ProgressTracker
+        from src.tools.static_coordinator import StaticAnalysisCoordinator
+        from src.utils.progress import ProgressTracker
     except ImportError as e:
         print(f"❌ 静态分析模块不可用: {e}")
         # 使用简化的静态分析实现
@@ -954,12 +954,12 @@ def execute_static_analysis(args: CLIArguments) -> int:
             coordinator.set_enabled_tools(args.sub_tools)
 
         # 执行分析
+        from pathlib import Path
         if Path(target).is_file():
             result = coordinator.analyze_file(target)
             results = [result]
         else:
             # 分析目录中的所有Python文件
-            from pathlib import Path
             python_files = [str(f) for f in Path(target).rglob("*.py")]
             results = coordinator.analyze_files(python_files)
 
@@ -1250,8 +1250,8 @@ def _save_simple_static_analysis_results(results, output_file: str, format_type:
 def execute_deep_analysis(args: CLIArguments) -> int:
     """执行深度分析"""
     try:
-        from ..tools.cli_coordinator import CLIInteractiveCoordinator
-        from ..utils.progress import ProgressTracker
+        from src.tools.cli_coordinator import CLIInteractiveCoordinator
+        from src.utils.progress import ProgressTracker
     except ImportError:
         print("❌ 深度分析模块不可用")
         return 1
@@ -1306,8 +1306,8 @@ def execute_deep_analysis(args: CLIArguments) -> int:
 def execute_fix_analysis(args: CLIArguments) -> int:
     """执行修复分析"""
     try:
-        from ..tools.cli_coordinator import CLIInteractiveCoordinator
-        from ..utils.progress import ProgressTracker
+        from src.tools.cli_coordinator import CLIInteractiveCoordinator
+        from src.utils.progress import ProgressTracker
     except ImportError:
         print("❌ 修复分析模块不可用")
         return 1

@@ -8285,3 +8285,51 @@
 2025-10-19 17:44:59 | INFO | logger | 错误处理器注册完成
 2025-10-19 17:44:59 | INFO | logger | Flask应用创建完成
 2025-10-19 17:44:59 | INFO | logger | 启动Web应用 - http://127.0.0.1:5000
+2025-10-20 15:51:20 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-20 15:51:20 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-20 15:51:20 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-20 15:51:20 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-20 15:51:20 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-20 15:51:20 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-20 15:51:20 | INFO | logger | Cleaning up execution engine
+2025-10-20 15:51:20 | INFO | logger | Execution engine cleaned up
+2025-10-20 15:51:59 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-20 15:51:59 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-20 15:51:59 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-20 15:51:59 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-20 15:51:59 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-20 15:51:59 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-20 15:51:59 | INFO | logger | Starting static analysis for file: simple_demo.py
+2025-10-20 15:51:59 | INFO | logger | Executing 4 tasks
+2025-10-20 15:51:59 | INFO | logger | Executing task ast_simple_demo.py with tool ast_analysis
+2025-10-20 15:51:59 | INFO | logger | Executing task pylint_simple_demo.py with tool pylint_analysis
+2025-10-20 15:51:59 | INFO | logger | Executing task flake8_simple_demo.py with tool flake8_analysis
+2025-10-20 15:51:59 | INFO | logger | Executing task bandit_simple_demo.py with tool bandit_analysis
+2025-10-20 15:51:59 | INFO | logger | Task ast_simple_demo.py completed successfully in 0.01s
+2025-10-20 15:51:59 | INFO | logger | Task flake8_simple_demo.py completed successfully in 0.11s
+2025-10-20 15:51:59 | INFO | logger | Task bandit_simple_demo.py completed successfully in 0.14s
+2025-10-20 15:52:00 | INFO | logger | Task pylint_simple_demo.py completed successfully in 0.44s
+2025-10-20 15:52:00 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-20 15:52:00 | INFO | logger | Static analysis completed for simple_demo.py: 23 issues in 0.45s
+2025-10-20 15:52:00 | INFO | logger | Cleaning up execution engine
+2025-10-20 15:52:00 | INFO | logger | Execution engine cleaned up
+2025-10-20 15:54:37 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-20 15:54:37 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-20 15:54:37 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-20 15:54:37 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-20 15:54:37 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-20 15:54:37 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-20 15:54:37 | INFO | logger | Starting static analysis for file: simple_demo.py
+2025-10-20 15:54:37 | INFO | logger | Executing 4 tasks
+2025-10-20 15:54:37 | INFO | logger | Executing task ast_simple_demo.py with tool ast_analysis
+2025-10-20 15:54:37 | INFO | logger | Executing task pylint_simple_demo.py with tool pylint_analysis
+2025-10-20 15:54:37 | INFO | logger | Executing task flake8_simple_demo.py with tool flake8_analysis
+2025-10-20 15:54:37 | INFO | logger | Executing task bandit_simple_demo.py with tool bandit_analysis
+2025-10-20 15:54:37 | INFO | logger | Task ast_simple_demo.py completed successfully in 0.00s
+2025-10-20 15:54:37 | INFO | logger | Task flake8_simple_demo.py completed successfully in 0.10s
+2025-10-20 15:54:37 | INFO | logger | Task bandit_simple_demo.py completed successfully in 0.12s
+2025-10-20 15:54:37 | INFO | logger | Task pylint_simple_demo.py completed successfully in 0.43s
+2025-10-20 15:54:37 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-20 15:54:37 | INFO | logger | Static analysis completed for simple_demo.py: 23 issues in 0.43s
+2025-10-20 15:54:37 | INFO | logger | Cleaning up execution engine
+2025-10-20 15:54:37 | INFO | logger | Execution engine cleaned up
