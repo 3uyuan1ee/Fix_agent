@@ -127,6 +127,38 @@ security:
   max_backups: 10
   require_confirmation: true
 
+# 深度分析配置
+deep_analysis:
+  default_model: "glm-4.5"  # 默认使用的LLM模型
+  temperature: 0.3  # AI响应创造性控制 (0.0-1.0)
+  max_tokens: 4000  # 最大生成token数
+  max_file_size: 102400  # 最大文件大小 (100KB)
+  analysis_timeout: 300  # 分析超时时间 (秒)
+
+  # 支持的分析类型
+  analysis_types:
+    - "comprehensive"  # 综合分析
+    - "security"      # 安全分析
+    - "performance"   # 性能分析
+    - "architecture"  # 架构分析
+    - "code_review"   # 代码审查
+    - "refactoring"   # 重构建议
+
+  # 交互配置
+  interaction:
+    max_context_length: 15  # 最大上下文对话轮数
+    enable_suggestions: true  # 启用智能建议
+    auto_save_history: true  # 自动保存对话历史
+    export_formats: ["json", "markdown", "txt"]  # 支持的导出格式
+
+  # 缓存配置
+  cache:
+    enabled: true  # 启用缓存
+    ttl: 300  # 缓存有效期 (秒)
+    max_size: 100  # 最大缓存项数
+    persistent_cache: true  # 启用持久化缓存
+    cache_file: ".aidefect_deep_cache.json"  # 缓存文件路径
+
 # 性能配置
 performance:
   max_concurrent_files: 5
