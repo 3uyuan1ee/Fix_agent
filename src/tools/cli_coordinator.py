@@ -7,7 +7,7 @@ CLI分析协调器
 import json
 import sys
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union
 from dataclasses import dataclass
 
 from ..utils.logger import get_logger
@@ -464,7 +464,8 @@ class CLIInteractiveCoordinator:
     """CLI交互式分析协调器"""
 
     def __init__(self, mode: str = 'deep', output_file: Optional[str] = None,
-                 progress: Optional[ProgressTracker] = None, max_context_length: int = 15):
+                 progress: Optional[ProgressTracker] = None, max_context_length: int = 15,
+                 enable_performance_monitoring: bool = True, enable_caching: bool = True):
         """
         初始化CLI交互式协调器
 
@@ -473,6 +474,8 @@ class CLIInteractiveCoordinator:
             output_file: 输出文件路径
             progress: 进度跟踪器
             max_context_length: 最大上下文长度
+            enable_performance_monitoring: 是否启用性能监控
+            enable_caching: 是否启用缓存功能
         """
         self.mode = mode
         self.output_file = output_file
@@ -480,6 +483,153 @@ class CLIInteractiveCoordinator:
         self.logger = get_logger()
         self.max_context_length = max_context_length
         self.conversation_context = None
+
+        # 性能监控
+        self.enable_performance_monitoring = enable_performance_monitoring
+        self.enable_caching = enable_caching
+
+        # 性能统计
+        self.performance_stats = {
+            'total_analysis_time': 0.0,
+            'total_cache_hits': 0,
+            'total_cache_misses': 0,
+            'analysis_count': 0,
+            'avg_response_time': 0.0,
+            'slow_requests': []
+        }
+
+        # 缓存系统
+        self.analysis_cache = {}
+        self.cache_ttl = 300  # 5分钟缓存时间
+
+        # 性能优化配置
+        self.optimization_config = {
+            'context_length_limit': 8000,  # 上下文长度限制（字符数）
+            'enable_batch_processing': True,
+            'parallel_file_analysis': False,  # 暂时禁用并行分析以避免复杂性
+            'smart_context_trimming': True,
+            'response_timeout': 60  # 响应超时（秒）
+        }
+
+        # 深度分析配置选项
+        self.analysis_config = {
+            'model_selection': 'auto',  # 模型选择: auto, glm-4.5, glm-4.6, gpt-4, claude-3
+            'analysis_depth': 'standard',  # 分析深度: basic, standard, detailed, comprehensive
+            'custom_prompt_template': None,  # 自定义提示词模板
+            'temperature': 0.3,  # AI响应创造性 (0.0-1.0)
+            'max_tokens': 4000,  # 最大生成token数
+            'enable_structured_output': True,  # 启用结构化输出
+            'focus_areas': [],  # 重点关注领域: ['security', 'performance', 'architecture', 'code_quality']
+            'exclude_patterns': [],  # 排除文件模式
+            'include_patterns': [],  # 包含文件模式
+            'language_style': 'professional',  # 语言风格: casual, professional, technical
+            'output_format': 'comprehensive'  # 输出格式: concise, standard, comprehensive
+        }
+
+        # 错误处理和恢复配置
+        self.error_handling_config = {
+            'max_retry_attempts': 3,  # 最大重试次数
+            'retry_delay': 2,  # 重试延迟（秒）
+            'enable_fallback_mode': True,  # 启用降级模式
+            'offline_mode_available': True,  # 离线模式可用
+            'error_recovery_strategies': {
+                'network_error': 'retry_with_backoff',  # 网络错误重试策略
+                'api_error': 'fallback_model',  # API错误降级策略
+                'timeout_error': 'increase_timeout',  # 超时错误处理策略
+                'rate_limit_error': 'exponential_backoff'  # 限流错误处理策略
+            }
+        }
+
+        # 错误统计和日志
+        self.error_stats = {
+            'total_errors': 0,
+            'network_errors': 0,
+            'api_errors': 0,
+            'timeout_errors': 0,
+            'file_errors': 0,
+            'successful_recoveries': 0,
+            'failed_recoveries': 0,
+            'recent_errors': []  # 保存最近10个错误
+        }
+
+        # 静态分析集成配置
+        self.static_analysis_integration = {
+            'auto_load_reports': True,  # 自动加载静态分析报告
+            'report_search_paths': ['.', 'static_analysis_report_*.json'],  # 报告搜索路径
+            'max_report_age_days': 7,  # 最大报告年龄（天）
+            'priority_threshold': 5,  # 优先级阈值（低于此值的问题优先处理）
+            'report_cache': {},  # 静态分析报告缓存
+            'integrated_reports': []  # 已集成的报告列表
+        }
+
+        # 高级深度分析缓存机制 (T026-010)
+        self.advanced_cache_config = {
+            'enable_persistent_cache': True,  # 启用持久化缓存
+            'cache_file_path': '.aidefect_deep_analysis_cache.json',  # 缓存文件路径
+            'max_cache_size_mb': 50,  # 最大缓存大小（MB）
+            'smart_cache_key_generation': True,  # 智能缓存键生成
+            'cache_validation_enabled': True,  # 启用缓存验证
+            'cache_compression': True,  # 启用缓存压缩
+            'semantic_cache_enabled': True,  # 启用语义缓存
+            'cache_hierarchy': {
+                'L1_memory': {'size_limit': 20, 'ttl': 300},      # 内存缓存: 20项, 5分钟
+                'L2_disk': {'size_limit': 100, 'ttl': 86400},     # 磁盘缓存: 100项, 24小时
+                'L3_semantic': {'size_limit': 50, 'ttl': 3600}    # 语义缓存: 50项, 1小时
+            }
+        }
+
+        # 智能缓存统计
+        self.cache_stats = {
+            'L1_memory_hits': 0,
+            'L1_memory_misses': 0,
+            'L2_disk_hits': 0,
+            'L2_disk_misses': 0,
+            'L3_semantic_hits': 0,
+            'L3_semantic_misses': 0,
+            'cache_evictions': 0,
+            'cache_compressions': 0,
+            'semantic_matches': 0,
+            'total_cache_writes': 0,
+            'cache_size_bytes': 0,
+            'average_cache retrieval_time': 0.0
+        }
+
+        # 常见问题和答案缓存（智能问答缓存）
+        self.common_qa_cache = {
+            'common_issues': [
+                "高复杂度函数",
+                "代码重复",
+                "安全漏洞",
+                "性能问题",
+                "代码风格",
+                "架构问题",
+                "错误处理",
+                "内存泄漏"
+            ],
+            'qa_pairs': {}  # 缓存常见问答对
+        }
+
+        # 语义相似度缓存
+        self.semantic_cache = {
+            'enabled': True,
+            'similarity_threshold': 0.85,  # 相似度阈值
+            'max_text_length': 1000,  # 最大文本长度
+            'cache_entries': {}  # 语义缓存条目
+        }
+
+        # 缓存失效和更新策略
+        self.cache_invalidation_config = {
+            'auto_invalidate_on_file_change': True,  # 文件更改时自动失效
+            'dependency_tracking': True,  # 依赖关系跟踪
+            'cascade_invalidation': True,  # 级联失效
+            'smart_invalidation': True,  # 智能失效策略
+            'invalidation_triggers': {
+                'file_modified': True,
+                'dependency_changed': True,
+                'config_updated': True,
+                'manual_refresh': True
+            }
+        }
 
     def run_interactive(self, target: str) -> Dict[str, Any]:
         """运行交互式分析"""
@@ -508,10 +658,25 @@ class CLIInteractiveCoordinator:
             # 初始化对话上下文管理器
             self.conversation_context = ConversationContext(target, self.max_context_length)
 
+            # 加载静态分析报告
+            static_reports = self._load_static_analysis_reports(target)
+            if static_reports:
+                print(f"📂 发现 {len(static_reports)} 个静态分析报告")
+                print(f"📊 最近报告: {static_reports[0].get('age_days', 0)} 天前")
+                print()
+
             analyzer = DeepAnalyzer()
 
             # 显示会话信息
             self._show_enhanced_session_info(self.conversation_context, analyzer)
+
+            # 显示静态分析集成状态
+            if static_reports:
+                print(f"🔗 静态分析集成: 已启用")
+                print(f"📋 可用报告文件: {len([r for r in static_reports if any(f.get('file_path', '').endswith(Path(f).name) for f in r.get('files', []))])}")
+                print(f"💡 AI将基于静态分析结果提供深度建议")
+                print()
+
             print()
 
             # 交互式对话循环
@@ -557,7 +722,37 @@ class CLIInteractiveCoordinator:
 
                     # 处理总结命令
                     elif user_input.lower() == 'summary':
-                        self._show_analysis_summary(analysis_context)
+                        session_stats = self.conversation_context.get_session_stats()
+                        self._show_analysis_summary(self.conversation_context.analysis_context)
+                        continue
+
+                    # 处理性能统计命令
+                    elif user_input.lower() in ['stats', 'performance', '性能']:
+                        self._show_performance_stats()
+                        continue
+
+                    # 处理错误统计命令
+                    elif user_input.lower() in ['errors', 'error', '错误', 'error_stats']:
+                        self._show_error_statistics()
+                        continue
+
+                    # 处理配置命令
+                    elif user_input.lower().startswith('config '):
+                        config_parts = user_input[7:].strip().split(' ', 1)
+                        if len(config_parts) == 2:
+                            config_key, config_value = config_parts
+                            self._configure_analysis_settings(config_key, config_value)
+                        elif len(config_parts) == 1:
+                            if config_parts[0].lower() in ['show', 'current', 'list']:
+                                self._show_current_config()
+                            elif config_parts[0].lower() in ['help', 'options', 'available']:
+                                self._show_available_configs()
+                            elif config_parts[0].lower() in ['reset', 'default', 'defaults']:
+                                self._reset_config_to_defaults()
+                            else:
+                                print("❌ 配置命令格式错误，使用 'config help' 查看帮助")
+                        else:
+                            print("❌ 配置命令格式错误，使用 'config help' 查看帮助")
                         continue
 
                     # 处理导出命令
@@ -590,10 +785,11 @@ class CLIInteractiveCoordinator:
                 'mode': 'deep',
                 'target': target,
                 'status': 'completed',
-                'conversation_history': conversation_history,
-                'analysis_context': analysis_context,
-                'files_analyzed': len(analysis_context['previous_results']),
-                'total_execution_time': sum(r.get('execution_time', 0) for r in analysis_context['previous_results'])
+                'conversation_history': self.conversation_context.conversation_history,
+                'analysis_context': self.conversation_context.analysis_context,
+                'files_analyzed': len(self.conversation_context.analysis_context['previous_results']),
+                'total_execution_time': sum(r.get('execution_time', 0) for r in self.conversation_context.analysis_context['previous_results']),
+                'performance_stats': self.performance_stats
             }
 
             # 保存结果到文件
@@ -749,6 +945,12 @@ class CLIInteractiveCoordinator:
         print("  analyze <file_path>     - 分析指定文件")
         print("  type <analysis_type>    - 设置分析类型")
         print("  summary                 - 显示分析总结")
+        print("  stats/performance/性能 - 显示性能统计")
+        print("  errors/error/错误      - 显示错误统计")
+        print("  config <选项> <值>      - 配置分析参数")
+        print("  config show             - 显示当前配置")
+        print("  config help             - 显示配置选项")
+        print("  config reset            - 重置为默认配置")
         print("  export <filename>       - 导出对话历史")
         print("  quit/exit/q             - 退出分析")
         print("\n分析类型:")
@@ -758,9 +960,36 @@ class CLIInteractiveCoordinator:
         print("  architecture            - 架构分析")
         print("  code_review             - 代码审查")
         print("  refactoring             - 重构建议")
+        print("\n配置选项:")
+        print("  config model <模型>     - 选择AI模型 (auto,glm-4.5,glm-4.6,gpt-4,claude-3)")
+        print("  config depth <级别>     - 设置分析深度 (basic,standard,detailed,comprehensive)")
+        print("  config temperature <值> - 设置创造性参数 (0.0-1.0)")
+        print("  config max_tokens <数字> - 设置最大生成token数")
+        print("  config style <风格>     - 设置语言风格 (casual,professional,technical)")
+        print("  config format <格式>    - 设置输出格式 (concise,standard,comprehensive)")
+        print("  config focus_areas <领域> - 设置关注领域 (security,performance,architecture)")
+        print("\n高级功能:")
+        print("  🚀 智能缓存系统         - 自动缓存分析结果")
+        print("  📊 性能监控             - 实时跟踪响应时间")
+        print("  🔍 上下文优化           - 智能修剪对话上下文")
+        print("  ⏱️ 超时保护             - 防止长时间等待")
+        print("  ⚙️ 灵活配置             - 多样化分析参数配置")
+        print("  🛡️ 错误处理             - 自动重试和降级模式")
+        print("  📈 错误统计             - 详细错误分析和建议")
+        print("  🔄 降级模式             - 网络异常时的离线分析")
+        print("\n错误处理:")
+        print("  自动重试机制           - 网络异常时自动重试")
+        print("  智能降级模式           - AI服务不可用时使用静态分析")
+        print("  详细错误建议           - 针对不同错误类型提供解决方案")
+        print("  错误统计报告           - 跟踪和分析错误模式")
         print("\n示例:")
         print("  analyze src/main.py")
         print("  type security")
+        print("  config model glm-4.6")
+        print("  config depth comprehensive")
+        print("  config temperature 0.7")
+        print("  stats                   # 查看性能统计")
+        print("  errors                  # 查看错误统计")
         print("  export conversation.json")
         print()
 
@@ -769,6 +998,7 @@ class CLIInteractiveCoordinator:
         from pathlib import Path
         import asyncio
         import time
+        import hashlib
 
         try:
             # 检查文件是否存在
@@ -788,6 +1018,33 @@ class CLIInteractiveCoordinator:
                 )
                 return None
 
+            # 性能优化：检查缓存
+            cache_key = self._generate_cache_key(str(full_path), self.conversation_context.analysis_context['analysis_type'])
+            cached_result = self._get_cached_result(cache_key)
+
+            if cached_result:
+                print(f"\n⚡ 使用缓存结果")
+                print(f"📄 文件: {full_path.name}")
+                print(f"🔄 缓存时间: {cached_result.get('cached_at', '未知')}")
+
+                # 更新性能统计
+                self.performance_stats['total_cache_hits'] += 1
+
+                # 添加到上下文管理器
+                self.conversation_context.add_analysis_result(
+                    str(full_path),
+                    self.conversation_context.analysis_context['analysis_type'],
+                    cached_result['result'],
+                    0.01  # 缓存响应时间
+                )
+
+                print(f"✅ 缓存分析完成")
+                return cached_result['result']
+
+            # 性能监控：开始计时
+            analysis_start_time = time.time()
+            self.performance_stats['analysis_count'] += 1
+
             # 显示文件信息
             file_name = full_path.name
             file_size = self._format_file_size(full_path.stat().st_size)
@@ -800,55 +1057,173 @@ class CLIInteractiveCoordinator:
             # 显示上下文信息
             context_summary = self.conversation_context.get_context_summary()
             print(f"💭 上下文: {context_summary}")
+
+            # 显示静态分析摘要（如果有）
+            self._show_static_analysis_summary(str(full_path))
+
             print("-" * 50)
 
             # 显示分析进度
             self._show_analyzing_animation("AI正在深度分析代码结构")
 
-            start_time = time.time()
+            # 性能优化：创建优化的分析请求
+            optimized_context = self._optimize_context_for_analysis()
 
-            # 创建分析请求（包含上下文）
-            request = DeepAnalysisRequest(
-                file_path=str(full_path),
-                analysis_type=self.conversation_context.analysis_context['analysis_type'],
-                context=self.conversation_context.analysis_context
-            )
+            # 集成静态分析结果
+            integrated_context = self._integrate_static_analysis_into_context(str(full_path), optimized_context)
 
-            # 执行异步分析
-            result = asyncio.run(analyzer.analyze_file(request))
+            # 应用配置参数到请求
+            request_params = {
+                'file_path': str(full_path),
+                'analysis_type': self.conversation_context.analysis_context['analysis_type'],
+                'context': integrated_context
+            }
 
-            execution_time = time.time() - start_time
+            # 添加配置参数到上下文
+            request_params['context']['analysis_config'] = self.analysis_config.copy()
+
+            # 如果设置了关注领域，添加到请求中
+            if self.analysis_config['focus_areas']:
+                request_params['focus_areas'] = self.analysis_config['focus_areas']
+
+            # 根据分析深度调整请求
+            if self.analysis_config['analysis_depth'] == 'basic':
+                request_params['max_tokens'] = min(self.analysis_config['max_tokens'], 2000)
+            elif self.analysis_config['analysis_depth'] == 'detailed':
+                request_params['max_tokens'] = max(self.analysis_config['max_tokens'], 6000)
+            elif self.analysis_config['analysis_depth'] == 'comprehensive':
+                request_params['max_tokens'] = max(self.analysis_config['max_tokens'], 8000)
+
+            # 设置其他参数
+            request_params['temperature'] = self.analysis_config['temperature']
+            request_params['enable_structured_output'] = self.analysis_config['enable_structured_output']
+            request_params['language_style'] = self.analysis_config['language_style']
+            request_params['output_format'] = self.analysis_config['output_format']
+
+            request = DeepAnalysisRequest(**request_params)
+
+            # 执行异步分析（带重试和错误处理）
+            result = None
+            execution_time = 0
+            attempt = 1
+
+            while attempt <= self.error_handling_config['max_retry_attempts']:
+                try:
+                    # 调整超时时间（如果是重试且有超时错误）
+                    current_timeout = self.optimization_config['response_timeout']
+                    if attempt > 1:
+                        current_timeout *= 1.5  # 每次重试增加50%超时时间
+
+                    result = asyncio.run(
+                        asyncio.wait_for(
+                            analyzer.analyze_file(request),
+                            timeout=current_timeout
+                        )
+                    )
+
+                    execution_time = time.time() - analysis_start_time
+                    break  # 成功则跳出重试循环
+
+                except asyncio.TimeoutError as e:
+                    execution_time = time.time() - analysis_start_time
+                    retry_decision = self._handle_analysis_error(e, str(full_path), attempt)
+
+                    if retry_decision == 'retry_with_increased_timeout':
+                        # 增加超时时间继续重试
+                        attempt += 1
+                        continue
+                    elif retry_decision == 'retry':
+                        # 标准重试
+                        attempt += 1
+                        continue
+                    else:
+                        # 降级模式或失败处理
+                        if isinstance(retry_decision, dict):
+                            result = retry_decision
+                            execution_time = time.time() - analysis_start_time
+                        break
+
+                except Exception as e:
+                    execution_time = time.time() - analysis_start_time
+                    retry_decision = self._handle_analysis_error(e, str(full_path), attempt)
+
+                    if retry_decision == 'retry':
+                        attempt += 1
+                        continue
+                    else:
+                        # 降级模式或失败处理
+                        if isinstance(retry_decision, dict):
+                            result = retry_decision
+                            execution_time = time.time() - analysis_start_time
+                        break
+
+            # 如果没有任何结果，返回None
+            if result is None:
+                return None
 
             # 显示分析结果横幅
             self._show_analysis_result_banner(result.success, file_name)
 
             if result.success:
-                print(f"\n🎉 分析成功完成！")
+                # 检查是否为降级模式
+                if hasattr(result, 'fallback_mode'):
+                    fallback_mode = getattr(result, 'fallback_mode', '')
+                    if fallback_mode:
+                        print(f"\n🔄 使用了降级分析模式: {fallback_mode}")
+                        self.error_stats['successful_recoveries'] += 1
+                else:
+                    print(f"\n🎉 分析成功完成！")
+
                 print(f"⏱️ 执行时间: {execution_time:.2f}秒")
+
+                # 性能监控：更新统计信息
+                self._update_performance_stats(execution_time, True)
 
                 if hasattr(result, 'model_used') and result.model_used:
                     print(f"🤖 使用模型: {result.model_used}")
 
-                print(f"📊 分析类型: {self.conversation_context.analysis_context['analysis_type']}")
+                # 显示分析类型和状态
+                if hasattr(result, 'analysis_type'):
+                    analysis_type = result.analysis_type
+                else:
+                    analysis_type = self.conversation_context.analysis_context['analysis_type']
+
+                print(f"📊 分析类型: {analysis_type}")
+                print(f"🚀 缓存状态: {self._get_cache_status()}")
                 print("-" * 50)
 
-                # 显示分析结果摘要
-                if result.structured_analysis and result.structured_analysis.get('structured'):
-                    self._show_enhanced_structured_result(result.structured_analysis)
+                # 根据结果类型显示不同的内容
+                if hasattr(result, 'fallback_mode'):
+                    if result.fallback_mode == 'static_analysis':
+                        self._show_static_analysis_fallback_result(result)
+                    elif result.fallback_mode == 'basic_info':
+                        self._show_basic_file_info_result(result)
                 else:
-                    # 显示文本结果的摘要
-                    self._show_text_result_preview(result.content)
+                    # 正常分析结果
+                    if hasattr(result, 'structured_analysis') and result.structured_analysis and result.structured_analysis.get('structured'):
+                        self._show_enhanced_structured_result(result.structured_analysis)
+                    else:
+                        # 显示文本结果的摘要
+                        content = getattr(result, 'content', '')
+                        if content:
+                            self._show_text_result_preview(content)
+
+                # 只有非降级模式才缓存结果
+                if not hasattr(result, 'fallback_mode'):
+                    self._cache_result(cache_key, result.to_dict())
 
                 # 添加到上下文管理器
                 self.conversation_context.add_analysis_result(
                     str(full_path),
-                    self.conversation_context.analysis_context['analysis_type'],
+                    analysis_type,
                     result.to_dict(),
                     execution_time
                 )
 
                 print(f"\n💡 提示: 使用 'summary' 查看会话总结")
                 print(f"💡 提示: 使用 'export <filename>' 导出对话历史")
+                print(f"💡 提示: 使用 'stats' 查看性能统计")
+                print(f"💡 提示: 使用 'errors' 查看错误统计")
 
                 return result.to_dict()
             else:
@@ -856,6 +1231,9 @@ class CLIInteractiveCoordinator:
                 error_msg = getattr(result, 'error', '未知错误')
                 print(f"🔴 错误信息: {error_msg}")
                 print(f"⏱️ 耗时: {execution_time:.2f}秒")
+
+                # 性能监控：更新统计信息
+                self._update_performance_stats(execution_time, False)
 
                 # 记录失败的分析到上下文
                 self.conversation_context.add_analysis_result(
@@ -869,6 +1247,7 @@ class CLIInteractiveCoordinator:
                 print(f"  • 检查文件是否为有效的Python代码")
                 print(f"  • 确认网络连接正常")
                 print(f"  • 尝试更换分析类型")
+                print(f"  • 使用 'errors' 查看详细错误信息")
 
                 return None
 
@@ -890,6 +1269,915 @@ class CLIInteractiveCoordinator:
             print(f"  • 检查系统资源是否充足")
 
             return None
+
+    def _generate_cache_key(self, file_path: str, analysis_type: str) -> str:
+        """生成缓存键"""
+        import hashlib
+        import os
+
+        # 使用文件路径、分析类型和修改时间生成缓存键
+        try:
+            mtime = os.path.getmtime(file_path)
+            cache_data = f"{file_path}:{analysis_type}:{mtime}"
+            return hashlib.md5(cache_data.encode()).hexdigest()
+        except OSError:
+            # 如果文件不存在或无法获取修改时间，使用简单缓存键
+            cache_data = f"{file_path}:{analysis_type}"
+            return hashlib.md5(cache_data.encode()).hexdigest()
+
+    def _get_cached_result(self, cache_key: str) -> Optional[dict]:
+        """获取缓存结果"""
+        if not self.enable_caching:
+            return None
+
+        cache_entry = self.analysis_cache.get(cache_key)
+        if not cache_entry:
+            return None
+
+        # 检查缓存是否过期
+        import time
+        current_time = time.time()
+        if current_time - cache_entry['timestamp'] > self.cache_ttl:
+            del self.analysis_cache[cache_key]
+            return None
+
+        self.performance_stats['total_cache_hits'] += 1
+        return cache_entry
+
+    def _cache_result(self, cache_key: str, result: dict):
+        """缓存分析结果"""
+        if not self.enable_caching:
+            return
+
+        import time
+        cache_entry = {
+            'result': result,
+            'timestamp': time.time(),
+            'cached_at': self._get_current_time(),
+            'cache_key': cache_key
+        }
+
+        self.analysis_cache[cache_key] = cache_entry
+
+        # 清理过期缓存
+        self._cleanup_expired_cache()
+
+        # 限制缓存大小
+        if len(self.analysis_cache) > 100:  # 最多缓存100个结果
+            # 删除最旧的缓存项
+            oldest_key = min(self.analysis_cache.keys(),
+                           key=lambda k: self.analysis_cache[k]['timestamp'])
+            del self.analysis_cache[oldest_key]
+
+    def _cleanup_expired_cache(self):
+        """清理过期缓存"""
+        import time
+        current_time = time.time()
+        expired_keys = []
+
+        for cache_key, cache_entry in self.analysis_cache.items():
+            if current_time - cache_entry['timestamp'] > self.cache_ttl:
+                expired_keys.append(cache_key)
+
+        for key in expired_keys:
+            del self.analysis_cache[key]
+
+    def _optimize_context_for_analysis(self) -> dict:
+        """优化分析上下文"""
+        if not self.conversation_context:
+            return {}
+
+        # 获取原始上下文
+        original_context = self.conversation_context.analysis_context.copy()
+
+        # 智能上下文修剪
+        if self.optimization_config['smart_context_trimming']:
+            context_str = str(original_context)
+            if len(context_str) > self.optimization_config['context_length_limit']:
+                # 保留重要信息，删除冗余内容
+                optimized_context = {
+                    'target': original_context.get('target', ''),
+                    'analysis_type': original_context.get('analysis_type', 'comprehensive'),
+                    'current_file': original_context.get('current_file', ''),
+                    'previous_results': original_context.get('previous_results', [])[-3:],  # 只保留最近3个结果
+                    'preferences': original_context.get('preferences', {}),
+                    'session_stats': {
+                        'total_analyses': original_context.get('session_stats', {}).get('total_analyses', 0),
+                        'successful_analyses': original_context.get('session_stats', {}).get('successful_analyses', 0),
+                        'most_used_analysis_type': self.conversation_context.get_session_stats().get('most_used_analysis_type', 'comprehensive')
+                    }
+                }
+                return optimized_context
+
+        return original_context
+
+    def _update_performance_stats(self, execution_time: float, success: bool):
+        """更新性能统计"""
+        if not self.enable_performance_monitoring:
+            return
+
+        self.performance_stats['total_analysis_time'] += execution_time
+        self.performance_stats['total_cache_misses'] += 1
+
+        # 更新平均响应时间
+        if self.performance_stats['analysis_count'] > 0:
+            self.performance_stats['avg_response_time'] = (
+                self.performance_stats['total_analysis_time'] / self.performance_stats['analysis_count']
+            )
+
+        # 记录慢请求
+        if execution_time > 30:  # 超过30秒的请求
+            slow_request = {
+                'timestamp': self._get_current_time(),
+                'execution_time': execution_time,
+                'success': success
+            }
+            self.performance_stats['slow_requests'].append(slow_request)
+
+            # 只保留最近10个慢请求记录
+            if len(self.performance_stats['slow_requests']) > 10:
+                self.performance_stats['slow_requests'] = self.performance_stats['slow_requests'][-10:]
+
+    def _get_cache_status(self) -> str:
+        """获取缓存状态信息"""
+        if not self.enable_caching:
+            return "已禁用"
+
+        cache_hits = self.performance_stats['total_cache_hits']
+        cache_misses = self.performance_stats['total_cache_misses']
+        total_requests = cache_hits + cache_misses
+
+        if total_requests == 0:
+            return f"缓存: {len(self.analysis_cache)} 项"
+
+        hit_rate = (cache_hits / total_requests) * 100
+        return f"缓存: {len(self.analysis_cache)} 项, 命中率: {hit_rate:.1f}%"
+
+    def _show_performance_stats(self):
+        """显示性能统计信息"""
+        if not self.enable_performance_monitoring:
+            print("❌ 性能监控已禁用")
+            return
+
+        print("\n📊 性能统计报告")
+        print("=" * 50)
+
+        stats = self.performance_stats
+        print(f"🔍 总分析次数: {stats['analysis_count']}")
+        print(f"⏱️ 总分析时间: {stats['total_analysis_time']:.2f}秒")
+        print(f"📈 平均响应时间: {stats['avg_response_time']:.2f}秒")
+
+        if stats['total_cache_hits'] + stats['total_cache_misses'] > 0:
+            total_requests = stats['total_cache_hits'] + stats['total_cache_misses']
+            hit_rate = (stats['total_cache_hits'] / total_requests) * 100
+            print(f"🚀 缓存命中率: {hit_rate:.1f}% ({stats['total_cache_hits']}/{total_requests})")
+
+        print(f"💾 缓存大小: {len(self.analysis_cache)} 项")
+
+        # 慢请求分析
+        if stats['slow_requests']:
+            print(f"\n⚠️ 慢请求记录 ({len(stats['slow_requests'])} 个):")
+            for i, req in enumerate(stats['slow_requests'][-5:], 1):  # 显示最近5个
+                print(f"  {i}. {req['timestamp']} - {req['execution_time']:.1f}秒 {'✅' if req['success'] else '❌'}")
+
+        # 优化建议
+        print(f"\n💡 性能优化建议:")
+        if stats['avg_response_time'] > 20:
+            print(f"  • 平均响应时间较长，建议启用缓存功能")
+        if stats.get('total_cache_hits', 0) + stats.get('total_cache_misses', 0) > 0:
+            hit_rate = stats['total_cache_hits'] / (stats['total_cache_hits'] + stats['total_cache_misses']) * 100
+            if hit_rate < 30:
+                print(f"  • 缓存命中率较低，建议分析相似文件以提高缓存效率")
+        if len(stats['slow_requests']) > 3:
+            print(f"  • 慢请求较多，建议检查网络连接或使用较小的文件")
+
+        print()
+
+    def _configure_analysis_settings(self, config_key: str, config_value: str) -> bool:
+        """配置分析设置"""
+        try:
+            config_key = config_key.strip()
+            config_value = config_value.strip()
+
+            if config_key in ['model', 'model_selection']:
+                valid_models = ['auto', 'glm-4.5', 'glm-4.6', 'gpt-4', 'claude-3']
+                if config_value.lower() in valid_models:
+                    self.analysis_config['model_selection'] = config_value.lower()
+                    print(f"✅ 模型已设置为: {config_value}")
+                    return True
+                else:
+                    print(f"❌ 不支持的模型: {config_value}")
+                    print(f"支持的模型: {', '.join(valid_models)}")
+                    return False
+
+            elif config_key in ['depth', 'analysis_depth']:
+                valid_depths = ['basic', 'standard', 'detailed', 'comprehensive']
+                if config_value.lower() in valid_depths:
+                    self.analysis_config['analysis_depth'] = config_value.lower()
+                    print(f"✅ 分析深度已设置为: {config_value}")
+                    return True
+                else:
+                    print(f"❌ 不支持的深度级别: {config_value}")
+                    print(f"支持的深度: {', '.join(valid_depths)}")
+                    return False
+
+            elif config_key == 'temperature':
+                try:
+                    temp = float(config_value)
+                    if 0.0 <= temp <= 1.0:
+                        self.analysis_config['temperature'] = temp
+                        print(f"✅ 创造性参数已设置为: {temp}")
+                        return True
+                    else:
+                        print(f"❌ 温度值必须在0.0-1.0之间")
+                        return False
+                except ValueError:
+                    print(f"❌ 无效的温度值: {config_value}")
+                    return False
+
+            elif config_key == 'max_tokens':
+                try:
+                    tokens = int(config_value)
+                    if tokens > 0:
+                        self.analysis_config['max_tokens'] = tokens
+                        print(f"✅ 最大token数已设置为: {tokens}")
+                        return True
+                    else:
+                        print(f"❌ token数必须大于0")
+                        return False
+                except ValueError:
+                    print(f"❌ 无效的token数: {config_value}")
+                    return False
+
+            elif config_key in ['style', 'language_style']:
+                valid_styles = ['casual', 'professional', 'technical']
+                if config_value.lower() in valid_styles:
+                    self.analysis_config['language_style'] = config_value.lower()
+                    print(f"✅ 语言风格已设置为: {config_value}")
+                    return True
+                else:
+                    print(f"❌ 不支持的语言风格: {config_value}")
+                    print(f"支持的风格: {', '.join(valid_styles)}")
+                    return False
+
+            elif config_key in ['format', 'output_format']:
+                valid_formats = ['concise', 'standard', 'comprehensive']
+                if config_value.lower() in valid_formats:
+                    self.analysis_config['output_format'] = config_value.lower()
+                    print(f"✅ 输出格式已设置为: {config_value}")
+                    return True
+                else:
+                    print(f"❌ 不支持的输出格式: {config_value}")
+                    print(f"支持的格式: {', '.join(valid_formats)}")
+                    return False
+
+            elif config_key == 'structured_output':
+                if config_value.lower() in ['true', 'on', 'enable', '1']:
+                    self.analysis_config['enable_structured_output'] = True
+                    print(f"✅ 结构化输出已启用")
+                    return True
+                elif config_value.lower() in ['false', 'off', 'disable', '0']:
+                    self.analysis_config['enable_structured_output'] = False
+                    print(f"✅ 结构化输出已禁用")
+                    return True
+                else:
+                    print(f"❌ 无效的值: {config_value} (使用 true/false)")
+                    return False
+
+            elif config_key == 'focus_areas':
+                areas = [area.strip() for area in config_value.split(',')]
+                valid_areas = ['security', 'performance', 'architecture', 'code_quality', 'best_practices', 'testing']
+                valid_area_list = []
+                for area in areas:
+                    if area.lower() in valid_areas:
+                        valid_area_list.append(area.lower())
+                    else:
+                        print(f"⚠️ 跳过无效的关注领域: {area}")
+
+                if valid_area_list:
+                    self.analysis_config['focus_areas'] = valid_area_list
+                    print(f"✅ 关注领域已设置为: {', '.join(valid_area_list)}")
+                    return True
+                else:
+                    print(f"❌ 没有有效的关注领域")
+                    print(f"支持的领域: {', '.join(valid_areas)}")
+                    return False
+
+            else:
+                print(f"❌ 不支持的配置项: {config_key}")
+                self._show_available_configs()
+                return False
+
+        except Exception as e:
+            print(f"❌ 配置设置失败: {e}")
+            return False
+
+    def _show_current_config(self):
+        """显示当前配置"""
+        print("\n⚙️ 当前分析配置")
+        print("=" * 50)
+
+        print(f"🤖 AI模型: {self.analysis_config['model_selection']}")
+        print(f"🔍 分析深度: {self.analysis_config['analysis_depth']}")
+        print(f"🎨 创造性参数: {self.analysis_config['temperature']}")
+        print(f"📝 最大tokens: {self.analysis_config['max_tokens']}")
+        print(f"🏗️ 结构化输出: {'启用' if self.analysis_config['enable_structured_output'] else '禁用'}")
+        print(f"💬 语言风格: {self.analysis_config['language_style']}")
+        print(f"📋 输出格式: {self.analysis_config['output_format']}")
+
+        if self.analysis_config['focus_areas']:
+            print(f"🎯 关注领域: {', '.join(self.analysis_config['focus_areas'])}")
+        else:
+            print(f"🎯 关注领域: 全部")
+
+        if self.analysis_config['custom_prompt_template']:
+            print(f"📄 自定义提示词: 已设置")
+        else:
+            print(f"📄 自定义提示词: 未设置")
+
+        print()
+
+    def _show_available_configs(self):
+        """显示可用的配置选项"""
+        print("\n⚙️ 可用配置选项")
+        print("=" * 50)
+        print("配置格式: config <选项> <值>")
+        print()
+        print("模型选择:")
+        print("  config model auto|glm-4.5|glm-4.6|gpt-4|claude-3")
+        print()
+        print("分析深度:")
+        print("  config depth basic|standard|detailed|comprehensive")
+        print()
+        print("响应参数:")
+        print("  config temperature <0.0-1.0>")
+        print("  config max_tokens <数字>")
+        print("  config structured_output true|false")
+        print()
+        print("输出格式:")
+        print("  config style casual|professional|technical")
+        print("  config format concise|standard|comprehensive")
+        print()
+        print("关注领域:")
+        print("  config focus_areas security,performance,architecture")
+        print()
+        print("示例:")
+        print("  config model glm-4.6")
+        print("  config depth comprehensive")
+        print("  config temperature 0.7")
+        print("  config focus_areas security,performance")
+        print()
+
+    def _reset_config_to_defaults(self):
+        """重置配置为默认值"""
+        self.analysis_config = {
+            'model_selection': 'auto',
+            'analysis_depth': 'standard',
+            'custom_prompt_template': None,
+            'temperature': 0.3,
+            'max_tokens': 4000,
+            'enable_structured_output': True,
+            'focus_areas': [],
+            'exclude_patterns': [],
+            'include_patterns': [],
+            'language_style': 'professional',
+            'output_format': 'comprehensive'
+        }
+        print("✅ 配置已重置为默认值")
+
+    def _handle_analysis_error(self, error: Exception, file_path: str, attempt: int = 1) -> Optional[dict]:
+        """处理分析错误并尝试恢复"""
+        import time
+        import traceback
+        from datetime import datetime
+
+        # 记录错误信息
+        error_info = {
+            'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            'file_path': file_path,
+            'attempt': attempt,
+            'error_type': type(error).__name__,
+            'error_message': str(error),
+            'traceback': traceback.format_exc()
+        }
+
+        # 更新错误统计
+        self._update_error_stats(error_info)
+
+        # 判断错误类型并采取相应策略
+        error_type = self._classify_error(error)
+        recovery_strategy = self.error_handling_config['error_recovery_strategies'].get(error_type)
+
+        print(f"\n⚠️ 分析出现错误 (第{attempt}次尝试)")
+        print(f"🔴 错误类型: {error_type}")
+        print(f"📝 错误信息: {str(error)}")
+
+        # 根据错误类型提供解决建议
+        suggestions = self._get_error_suggestions(error_type, error)
+        if suggestions:
+            print("💡 建议解决方案:")
+            for i, suggestion in enumerate(suggestions, 1):
+                print(f"  {i}. {suggestion}")
+
+        # 检查是否应该重试
+        if attempt < self.error_handling_config['max_retry_attempts']:
+            if recovery_strategy == 'retry_with_backoff':
+                delay = self.error_handling_config['retry_delay'] * (2 ** (attempt - 1))
+                print(f"🔄 {delay}秒后自动重试...")
+                time.sleep(delay)
+                return 'retry'
+            elif recovery_strategy == 'exponential_backoff':
+                delay = min(self.error_handling_config['retry_delay'] * (2 ** (attempt - 1)), 30)
+                print(f"🔄 {delay}秒后自动重试...")
+                time.sleep(delay)
+                return 'retry'
+            elif recovery_strategy == 'increase_timeout':
+                print("🔄 增加超时时间后重试...")
+                return 'retry_with_increased_timeout'
+
+        # 如果达到最大重试次数或错误不可重试，返回None
+        print(f"❌ 已达到最大重试次数({self.error_handling_config['max_retry_attempts']})或错误不可重试")
+
+        # 尝试降级模式
+        if self.error_handling_config['enable_fallback_mode']:
+            return self._try_fallback_analysis(file_path, error_info)
+
+        return None
+
+    def _classify_error(self, error: Exception) -> str:
+        """分类错误类型"""
+        error_msg = str(error).lower()
+        error_type_name = type(error).__name__.lower()
+
+        # 网络相关错误
+        if any(keyword in error_msg for keyword in ['connection', 'network', 'timeout', 'unreachable', 'dns']):
+            return 'network_error'
+
+        # API相关错误
+        if any(keyword in error_msg for keyword in ['api', 'authentication', 'authorization', 'quota', 'limit']):
+            return 'api_error'
+
+        # 超时错误
+        if any(keyword in error_msg for keyword in ['timeout', 'timed out']) or 'timeout' in error_type_name:
+            return 'timeout_error'
+
+        # 限流错误
+        if any(keyword in error_msg for keyword in ['rate limit', 'too many requests', 'quota exceeded']):
+            return 'rate_limit_error'
+
+        # 文件相关错误
+        if any(keyword in error_msg for keyword in ['file', 'not found', 'permission', 'access']) or 'file' in error_type_name:
+            return 'file_error'
+
+        # 其他错误
+        return 'unknown_error'
+
+    def _get_error_suggestions(self, error_type: str, error: Exception) -> list:
+        """根据错误类型提供解决建议"""
+        suggestions = []
+
+        if error_type == 'network_error':
+            suggestions = [
+                "检查网络连接是否正常",
+                "尝试切换到其他网络环境",
+                "检查防火墙设置是否阻止了连接",
+                "稍后重试，可能是临时网络问题"
+            ]
+        elif error_type == 'api_error':
+            suggestions = [
+                "检查API密钥是否正确配置",
+                "确认API配额是否充足",
+                "尝试切换到其他AI模型",
+                "检查认证信息是否过期"
+            ]
+        elif error_type == 'timeout_error':
+            suggestions = [
+                "尝试分析较小的文件",
+                "增加超时时间设置",
+                "检查网络延迟是否过高",
+                "简化分析参数"
+            ]
+        elif error_type == 'rate_limit_error':
+            suggestions = [
+                "等待一段时间后重试",
+                "降低请求频率",
+                "尝试使用其他AI模型",
+                "升级API配额"
+            ]
+        elif error_type == 'file_error':
+            suggestions = [
+                "检查文件路径是否正确",
+                "确认文件权限是否可读",
+                "检查文件是否为有效的Python代码",
+                "尝试分析其他文件"
+            ]
+        else:
+            suggestions = [
+                "查看详细错误日志",
+                "尝试重启应用程序",
+                "联系技术支持",
+                "检查系统资源是否充足"
+            ]
+
+        return suggestions
+
+    def _update_error_stats(self, error_info: dict):
+        """更新错误统计"""
+        self.error_stats['total_errors'] += 1
+
+        error_type = error_info['error_type'].lower()
+        if 'network' in error_type or 'connection' in error_type:
+            self.error_stats['network_errors'] += 1
+        elif 'api' in error_type or 'auth' in error_type:
+            self.error_stats['api_errors'] += 1
+        elif 'timeout' in error_type:
+            self.error_stats['timeout_errors'] += 1
+        elif 'file' in error_type:
+            self.error_stats['file_errors'] += 1
+
+        # 保存最近的错误信息
+        self.error_stats['recent_errors'].append(error_info)
+        if len(self.error_stats['recent_errors']) > 10:
+            self.error_stats['recent_errors'] = self.error_stats['recent_errors'][-10:]
+
+    def _try_fallback_analysis(self, file_path: str, error_info: dict) -> Optional[dict]:
+        """尝试降级分析模式"""
+        print("\n🔄 尝试降级分析模式...")
+
+        try:
+            # 如果有静态分析结果，提供基本的静态分析
+            if self.error_handling_config['offline_mode_available']:
+                print("📊 启用离线静态分析模式")
+                return self._perform_static_analysis_fallback(file_path)
+
+            # 提供基本的文件信息分析
+            print("📋 提供基本文件信息分析")
+            return self._perform_basic_file_analysis(file_path)
+
+        except Exception as fallback_error:
+            print(f"❌ 降级模式也失败: {fallback_error}")
+            self.error_stats['failed_recoveries'] += 1
+            return None
+
+    def _perform_static_analysis_fallback(self, file_path: str) -> dict:
+        """执行静态分析降级模式"""
+        try:
+            from .static_coordinator import StaticAnalysisCoordinator
+            from pathlib import Path
+
+            # 使用静态分析工具
+            coordinator = StaticAnalysisCoordinator()
+            result = coordinator.analyze_file(file_path)
+
+            return {
+                'success': True,
+                'fallback_mode': 'static_analysis',
+                'file_path': file_path,
+                'analysis_type': 'static_fallback',
+                'issues': [issue.to_dict() for issue in result.issues] if result.issues else [],
+                'execution_time': result.execution_time if hasattr(result, 'execution_time') else 0,
+                'message': f"使用了静态分析降级模式，发现 {len(result.issues) if result.issues else 0} 个问题"
+            }
+
+        except Exception as e:
+            return {
+                'success': False,
+                'fallback_mode': 'static_analysis',
+                'error': str(e),
+                'message': "静态分析降级模式也失败"
+            }
+
+    def _perform_basic_file_analysis(self, file_path: str) -> dict:
+        """执行基本文件信息分析"""
+        try:
+            from pathlib import Path
+            import os
+
+            file_path_obj = Path(file_path)
+            if not file_path_obj.exists():
+                return {
+                    'success': False,
+                    'fallback_mode': 'basic_info',
+                    'error': 'File not found',
+                    'message': "文件不存在"
+                }
+
+            # 获取基本文件信息
+            stat = file_path_obj.stat()
+            file_size = stat.st_size
+
+            # 读取文件内容进行基本分析
+            try:
+                with open(file_path_obj, 'r', encoding='utf-8') as f:
+                    content = f.read()
+            except UnicodeDecodeError:
+                # 如果UTF-8解码失败，尝试其他编码
+                try:
+                    with open(file_path_obj, 'r', encoding='gbk') as f:
+                        content = f.read()
+                except:
+                    content = ""
+
+            line_count = len(content.splitlines()) if content else 0
+            char_count = len(content) if content else 0
+
+            # 基本的代码结构分析
+            import_count = content.count('import ')
+            class_count = content.count('class ')
+            function_count = content.count('def ')
+
+            return {
+                'success': True,
+                'fallback_mode': 'basic_info',
+                'file_path': str(file_path_obj),
+                'analysis_type': 'basic_fallback',
+                'basic_stats': {
+                    'file_size': file_size,
+                    'line_count': line_count,
+                    'character_count': char_count,
+                    'import_count': import_count,
+                    'class_count': class_count,
+                    'function_count': function_count
+                },
+                'message': f"基本文件信息: {line_count} 行, {class_count} 个类, {function_count} 个函数"
+            }
+
+        except Exception as e:
+            return {
+                'success': False,
+                'fallback_mode': 'basic_info',
+                'error': str(e),
+                'message': "基本文件信息分析失败"
+            }
+
+    def _show_error_statistics(self):
+        """显示错误统计信息"""
+        print("\n🚨 错误统计报告")
+        print("=" * 50)
+
+        stats = self.error_stats
+        print(f"📊 总错误数: {stats['total_errors']}")
+        print(f"🌐 网络错误: {stats['network_errors']}")
+        print(f"🔌 API错误: {stats['api_errors']}")
+        print(f"⏱️ 超时错误: {stats['timeout_errors']}")
+        print(f"📁 文件错误: {stats['file_errors']}")
+        print(f"✅ 成功恢复: {stats['successful_recoveries']}")
+        print(f"❌ 恢复失败: {stats['failed_recoveries']}")
+
+        if stats['total_errors'] > 0:
+            recovery_rate = (stats['successful_recoveries'] / stats['total_errors']) * 100
+            print(f"📈 恢复成功率: {recovery_rate:.1f}%")
+
+        # 显示最近的错误
+        if stats['recent_errors']:
+            print(f"\n📋 最近错误记录:")
+            for i, error in enumerate(stats['recent_errors'][-3:], 1):
+                print(f"  {i}. {error['timestamp']} - {error['error_type']}: {error['file_path']}")
+
+        print()
+
+    def _show_static_analysis_fallback_result(self, result: dict):
+        """显示静态分析降级结果"""
+        print(f"\n📊 静态分析结果 (降级模式)")
+        print("-" * 50)
+
+        if hasattr(result, 'message'):
+            print(f"💬 {result.message}")
+
+        if hasattr(result, 'issues') and result.issues:
+            print(f"\n🔍 发现问题 ({len(result.issues)}个):")
+
+            # 按严重程度分组
+            severity_groups = {}
+            for issue in result.issues:
+                severity = issue.get('severity', 'info')
+                if severity not in severity_groups:
+                    severity_groups[severity] = []
+                severity_groups[severity].append(issue)
+
+            for severity in ['error', 'warning', 'info']:
+                if severity in severity_groups:
+                    emoji = {'error': '🔴', 'warning': '🟡', 'info': '🔵'}[severity]
+                    print(f"\n{emoji} {severity.upper()}级别问题 ({len(severity_groups[severity])}个):")
+
+                    for i, issue in enumerate(severity_groups[severity][:5], 1):
+                        message = issue.get('message', 'No message')
+                        line = issue.get('line', 'N/A')
+                        tool = issue.get('tool', 'Unknown')
+                        print(f"  {i}. 第{line}行 [{tool}]: {message}")
+
+                    if len(severity_groups[severity]) > 5:
+                        print(f"     ... 还有 {len(severity_groups[severity]) - 5} 个{severity}级别问题")
+
+        print(f"\n💡 这是静态分析结果，可能不如AI分析详细。")
+        print(f"💡 网络恢复后可重新分析获得更深入的结果。")
+        print()
+
+    def _show_basic_file_info_result(self, result: dict):
+        """显示基本文件信息结果"""
+        print(f"\n📋 基本文件信息 (降级模式)")
+        print("-" * 50)
+
+        if hasattr(result, 'message'):
+            print(f"💬 {result.message}")
+
+        if hasattr(result, 'basic_stats'):
+            stats = result.basic_stats
+            print(f"\n📊 文件统计:")
+            print(f"  📁 文件大小: {self._format_file_size(stats.get('file_size', 0))}")
+            print(f"  📝 代码行数: {stats.get('line_count', 0)}")
+            print(f"  🔤 字符数量: {stats.get('character_count', 0)}")
+            print(f"  📦 导入语句: {stats.get('import_count', 0)}")
+            print(f"  🏗️ 类定义: {stats.get('class_count', 0)}")
+            print(f"  ⚙️ 函数定义: {stats.get('function_count', 0)}")
+
+            # 基本分析建议
+            if stats.get('function_count', 0) > 20:
+                print(f"\n💡 建议: 函数数量较多({stats.get('function_count', 0)})，建议考虑模块化重构")
+            if stats.get('class_count', 0) > 10:
+                print(f"💡 建议: 类数量较多({stats.get('class_count', 0)})，建议检查单一职责原则")
+            if stats.get('import_count', 0) > 15:
+                print(f"💡 建议: 导入语句较多({stats.get('import_count', 0)})，可能存在依赖耦合")
+
+        print(f"\n💡 这是基本文件信息，仅提供代码结构统计。")
+        print(f"💡 网络恢复后可重新分析获得深入的代码质量分析。")
+        print()
+
+    def _load_static_analysis_reports(self, target_path: str) -> list:
+        """加载静态分析报告"""
+        import glob
+        import os
+        from datetime import datetime
+        from pathlib import Path
+
+        if not self.static_analysis_integration['auto_load_reports']:
+            return []
+
+        reports = []
+        current_time = datetime.now()
+
+        # 搜索静态分析报告
+        for pattern in self.static_analysis_integration['report_search_paths']:
+            search_path = Path(target_path) / pattern if not os.path.isabs(pattern) else Path(pattern)
+
+            if '*' in pattern:
+                # 通配符搜索
+                matching_files = list(Path(search_path.parent).glob(search_path.name))
+            else:
+                # 直接路径
+                if search_path.exists():
+                    matching_files = [search_path]
+                else:
+                    matching_files = []
+
+            for report_file in matching_files:
+                try:
+                    # 检查文件年龄
+                    file_mtime = datetime.fromtimestamp(report_file.stat().st_mtime)
+                    age_days = (current_time - file_mtime).days
+
+                    if age_days <= self.static_analysis_integration['max_report_age_days']:
+                        # 读取报告内容
+                        with open(report_file, 'r', encoding='utf-8') as f:
+                            report_data = json.load(f)
+
+                        # 验证报告格式
+                        if self._is_valid_static_report(report_data):
+                            report_data['file_path'] = str(report_file)
+                            report_data['age_days'] = age_days
+                            reports.append(report_data)
+
+                            # 缓存报告
+                            self.static_analysis_integration['report_cache'][str(report_file)] = report_data
+
+                except Exception as e:
+                    self.logger.warning(f"Failed to load static report {report_file}: {e}")
+
+        # 按年龄排序（最新的在前）
+        reports.sort(key=lambda x: x.get('age_days', float('inf')))
+
+        self.static_analysis_integration['integrated_reports'] = reports
+        return reports
+
+    def _is_valid_static_report(self, report_data: dict) -> bool:
+        """验证是否为有效的静态分析报告"""
+        required_fields = ['target', 'files_analyzed', 'total_issues', 'files']
+
+        if not all(field in report_data for field in required_fields):
+            return False
+
+        # 检查文件结构
+        if 'files' in report_data and isinstance(report_data['files'], list):
+            for file_info in report_data['files']:
+                if not isinstance(file_info, dict):
+                    return False
+                if 'file_path' not in file_info:
+                    return False
+
+        return True
+
+    def _get_static_analysis_for_file(self, file_path: str) -> Optional[dict]:
+        """获取指定文件的静态分析结果"""
+        target_path = Path(file_path)
+
+        # 从已加载的报告中查找
+        for report in self.static_analysis_integration['integrated_reports']:
+            for file_info in report.get('files', []):
+                report_file_path = Path(file_info.get('file_path', ''))
+
+                # 检查是否为同一文件（相对路径或绝对路径匹配）
+                if (report_file_path.name == target_path.name or
+                    str(report_file_path) == str(target_path.resolve())):
+
+                    # 返回匹配的文件信息
+                    file_result = file_info.copy()
+                    file_result['report_metadata'] = {
+                        'report_target': report.get('target'),
+                        'report_age_days': report.get('age_days', 0),
+                        'total_issues_in_report': report.get('total_issues', 0)
+                    }
+                    return file_result
+
+        return None
+
+    def _integrate_static_analysis_into_context(self, file_path: str, context: dict) -> dict:
+        """将静态分析结果集成到分析上下文中"""
+        static_result = self._get_static_analysis_for_file(file_path)
+
+        if not static_result:
+            return context
+
+        # 创建集成的上下文
+        integrated_context = context.copy()
+
+        # 添加静态分析信息到上下文
+        if 'static_analysis' not in integrated_context:
+            integrated_context['static_analysis'] = {}
+
+        integrated_context['static_analysis'][file_path] = {
+            'issues_count': static_result.get('issues_count', 0),
+            'execution_time': static_result.get('execution_time', 0),
+            'issues_summary': static_result.get('summary', {}),
+            'total_issues_in_report': static_result['report_metadata']['total_issues_in_report']
+        }
+
+        # 添加问题列表（如果有）
+        if 'issues' in static_result:
+            # 过滤高优先级问题
+            all_issues = static_result['issues']
+            high_priority_issues = []
+
+            for issue in all_issues:
+                severity = issue.get('severity', 'info')
+                if severity in ['error', 'warning']:
+                    high_priority_issues.append(issue)
+
+            # 只保留前10个高优先级问题
+            integrated_context['static_analysis'][file_path]['high_priority_issues'] = high_priority_issues[:10]
+
+        return integrated_context
+
+    def _show_static_analysis_summary(self, file_path: str):
+        """显示静态分析摘要"""
+        static_result = self._get_static_analysis_for_file(file_path)
+
+        if not static_result:
+            return
+
+        print(f"\n📊 静态分析摘要")
+        print("-" * 40)
+
+        issues_count = static_result.get('issues_count', 0)
+        execution_time = static_result.get('execution_time', 0)
+        total_report_issues = static_result['report_metadata']['total_issues_in_report']
+
+        print(f"📁 文件: {Path(file_path).name}")
+        print(f"🔍 发现问题: {issues_count} 个")
+        print(f"⏱️ 分析耗时: {execution_time:.2f}秒")
+        print(f"📋 报告总问题: {total_report_issues} 个")
+
+        # 显示问题严重程度分布
+        if 'summary' in static_result and 'severity_distribution' in static_result['summary']:
+            severity_dist = static_result['summary']['severity_distribution']
+            if severity_dist:
+                print(f"\n📈 问题严重程度:")
+                for severity, count in severity_dist.items():
+                    emoji = {'error': '🔴', 'warning': '🟡', 'info': '🔵'}.get(severity, '⚪')
+                    print(f"  {emoji} {severity}: {count} 个")
+
+        # 显示前几个高优先级问题
+        if 'high_priority_issues' in static_result.get('static_analysis', {}).get(file_path, {}):
+            high_issues = static_result['static_analysis'][file_path]['high_priority_issues']
+            if high_issues:
+                print(f"\n⚠️  高优先级问题:")
+                for i, issue in enumerate(high_issues[:5], 1):
+                    line = issue.get('line', 'N/A')
+                    message = issue.get('message', 'No message')
+                    tool = issue.get('tool', 'Unknown')
+                    print(f"  {i}. 第{line}行 [{tool}]: {message}")
+
+        print(f"\n💡 AI将基于这些静态分析结果提供深度建议")
+        print()
 
     def _analyze_file_interactive(self, analyzer, file_path: str, context: dict, history: list) -> dict:
         """交互式文件分析"""
@@ -2186,3 +3474,599 @@ class CLIInteractiveCoordinator:
                         f.write(f"- **错误**: {fix_record['error_message']}\n")
 
                     f.write("\n")
+
+    # ===== T026-010: 高级深度分析缓存机制 =====
+
+    def initialize_advanced_cache(self):
+        """初始化高级缓存系统"""
+        try:
+            # 加载持久化缓存
+            if self.advanced_cache_config['enable_persistent_cache']:
+                self._load_persistent_cache()
+
+            # 初始化缓存层次结构
+            self._initialize_cache_hierarchy()
+
+            # 预热常见问题缓存
+            self._preload_common_qa_cache()
+
+            self.logger.info("高级缓存系统初始化完成")
+
+        except Exception as e:
+            self.logger.error(f"高级缓存系统初始化失败: {e}")
+
+    def _load_persistent_cache(self):
+        """加载持久化缓存"""
+        import os
+        import json
+        from pathlib import Path
+
+        cache_file = Path(self.advanced_cache_config['cache_file_path'])
+
+        if cache_file.exists():
+            try:
+                with open(cache_file, 'r', encoding='utf-8') as f:
+                    cache_data = json.load(f)
+
+                # 恢复缓存数据
+                self.analysis_cache.update(cache_data.get('analysis_cache', {}))
+                self.semantic_cache['cache_entries'].update(cache_data.get('semantic_cache', {}))
+                self.common_qa_cache['qa_pairs'].update(cache_data.get('qa_cache', {}))
+
+                # 更新缓存统计
+                self.cache_stats['cache_size_bytes'] = cache_data.get('cache_size_bytes', 0)
+
+                self.logger.info(f"加载持久化缓存: {len(self.analysis_cache)} 项")
+
+            except Exception as e:
+                self.logger.warning(f"加载持久化缓存失败: {e}")
+
+    def _save_persistent_cache(self):
+        """保存持久化缓存"""
+        if not self.advanced_cache_config['enable_persistent_cache']:
+            return
+
+        try:
+            import json
+            from pathlib import Path
+
+            cache_file = Path(self.advanced_cache_config['cache_file_path'])
+            cache_file.parent.mkdir(parents=True, exist_ok=True)
+
+            cache_data = {
+                'analysis_cache': self.analysis_cache,
+                'semantic_cache': self.semantic_cache['cache_entries'],
+                'qa_cache': self.common_qa_cache['qa_pairs'],
+                'cache_size_bytes': self.cache_stats['cache_size_bytes'],
+                'saved_at': self._get_current_time(),
+                'version': '1.0'
+            }
+
+            with open(cache_file, 'w', encoding='utf-8') as f:
+                json.dump(cache_data, f, indent=2, ensure_ascii=False)
+
+            self.logger.debug("持久化缓存已保存")
+
+        except Exception as e:
+            self.logger.warning(f"保存持久化缓存失败: {e}")
+
+    def _initialize_cache_hierarchy(self):
+        """初始化缓存层次结构"""
+        # L1 内存缓存 (已在 __init__ 中初始化为 self.analysis_cache)
+
+        # L2 磁盘缓存
+        self.disk_cache_path = '.aidefect_l2_cache'
+
+        # L3 语义缓存
+        self.semantic_similarity_cache = {}
+
+        # 清理过期的持久化缓存
+        self._cleanup_expired_persistent_cache()
+
+    def _preload_common_qa_cache(self):
+        """预加载常见问答缓存"""
+        # 预定义一些常见的问答对
+        common_qa = {
+            "高复杂度函数": {
+                "question": "如何处理高复杂度函数？",
+                "answer": "高复杂度函数应该进行重构，考虑以下策略：\n1. 将大函数拆分为多个小函数\n2. 使用设计模式简化逻辑\n3. 提取公共逻辑到独立方法\n4. 考虑使用策略模式或状态模式",
+                "category": "重构建议",
+                "priority": "high"
+            },
+            "代码重复": {
+                "question": "如何消除代码重复？",
+                "answer": "消除代码重复的方法：\n1. 提取公共函数或方法\n2. 使用继承和多态\n3. 创建工具类或辅助函数\n4. 使用模板方法模式\n5. 考虑使用装饰器",
+                "category": "重构建议",
+                "priority": "medium"
+            },
+            "安全漏洞": {
+                "question": "如何修复常见安全漏洞？",
+                "answer": "常见安全漏洞修复方法：\n1. SQL注入：使用参数化查询\n2. XSS攻击：输入验证和输出编码\n3. CSRF：使用令牌验证\n4. 权限问题：实施最小权限原则\n5. 敏感数据：加密存储和传输",
+                "category": "安全修复",
+                "priority": "critical"
+            },
+            "性能问题": {
+                "question": "如何优化代码性能？",
+                "answer": "代码性能优化策略：\n1. 减少不必要的计算和I/O操作\n2. 使用缓存机制\n3. 优化算法和数据结构\n4. 异步处理长时间操作\n5. 减少内存分配和垃圾回收\n6. 使用性能分析工具定位瓶颈",
+                "category": "性能优化",
+                "priority": "high"
+            }
+        }
+
+        self.common_qa_cache['qa_pairs'] = common_qa
+
+    def get_smart_cache_result(self, file_path: str, analysis_type: str, user_context: str = "") -> Optional[dict]:
+        """智能缓存获取 - 支持多级缓存和语义匹配"""
+        import time
+        start_time = time.time()
+
+        # L1: 内存缓存查找
+        l1_result = self._get_l1_cache_result(file_path, analysis_type)
+        if l1_result:
+            self.cache_stats['L1_memory_hits'] += 1
+            self._update_cache_retrieval_time(time.time() - start_time)
+            return l1_result
+
+        self.cache_stats['L1_memory_misses'] += 1
+
+        # L2: 磁盘缓存查找
+        l2_result = self._get_l2_cache_result(file_path, analysis_type)
+        if l2_result:
+            self.cache_stats['L2_disk_hits'] += 1
+            # 提升到L1缓存
+            self._cache_result(file_path, analysis_type, l2_result)
+            self._update_cache_retrieval_time(time.time() - start_time)
+            return l2_result
+
+        self.cache_stats['L2_disk_misses'] += 1
+
+        # L3: 语义缓存查找
+        if self.advanced_cache_config['semantic_cache_enabled'] and user_context:
+            l3_result = self._get_semantic_cache_result(file_path, user_context)
+            if l3_result:
+                self.cache_stats['L3_semantic_hits'] += 1
+                self.cache_stats['semantic_matches'] += 1
+                self._update_cache_retrieval_time(time.time() - start_time)
+                return l3_result
+
+        self.cache_stats['L3_semantic_misses'] += 1
+        self._update_cache_retrieval_time(time.time() - start_time)
+        return None
+
+    def _get_l1_cache_result(self, file_path: str, analysis_type: str) -> Optional[dict]:
+        """获取L1内存缓存结果"""
+        cache_key = self._generate_smart_cache_key(file_path, analysis_type)
+        return self._get_cached_result(cache_key)
+
+    def _get_l2_cache_result(self, file_path: str, analysis_type: str) -> Optional[dict]:
+        """获取L2磁盘缓存结果"""
+        import os
+        import json
+        from pathlib import Path
+
+        try:
+            cache_key = self._generate_smart_cache_key(file_path, analysis_type)
+            cache_file = Path(self.disk_cache_path) / f"{cache_key}.json"
+
+            if cache_file.exists():
+                # 检查文件修改时间
+                file_mtime = cache_file.stat().st_mtime
+                import time
+                if time.time() - file_mtime <= self.advanced_cache_config['cache_hierarchy']['L2_disk']['ttl']:
+
+                    with open(cache_file, 'r', encoding='utf-8') as f:
+                        cache_data = json.load(f)
+
+                    return cache_data.get('result')
+                else:
+                    # 删除过期缓存
+                    cache_file.unlink()
+
+        except Exception as e:
+            self.logger.warning(f"L2缓存读取失败: {e}")
+
+        return None
+
+    def _get_semantic_cache_result(self, file_path: str, user_context: str) -> Optional[dict]:
+        """获取语义缓存结果"""
+        if not self.semantic_cache['enabled']:
+            return None
+
+        try:
+            # 计算用户输入的语义指纹
+            context_fingerprint = self._generate_semantic_fingerprint(user_context)
+
+            # 在语义缓存中查找相似条目
+            for cached_fingerprint, cached_data in self.semantic_cache['cache_entries'].items():
+                similarity = self._calculate_semantic_similarity(context_fingerprint, cached_fingerprint)
+
+                if similarity >= self.semantic_cache['similarity_threshold']:
+                    return cached_data['result']
+
+        except Exception as e:
+            self.logger.warning(f"语义缓存查找失败: {e}")
+
+        return None
+
+    def cache_smart_result(self, file_path: str, analysis_type: str, result: dict, user_context: str = ""):
+        """智能缓存存储 - 多级缓存策略"""
+        import time
+
+        # 生成智能缓存键
+        cache_key = self._generate_smart_cache_key(file_path, analysis_type)
+
+        # L1: 内存缓存
+        self._cache_result(cache_key, result)
+
+        # L2: 磁盘缓存（异步）
+        if len(str(result)) < 1024 * 1024:  # 小于1MB的结果才存磁盘
+            self._cache_to_l2_disk(cache_key, result)
+
+        # L3: 语义缓存
+        if self.advanced_cache_config['semantic_cache_enabled'] and user_context:
+            self._cache_to_semantic(user_context, result)
+
+        # 更新统计
+        self.cache_stats['total_cache_writes'] += 1
+        self.cache_stats['cache_size_bytes'] += len(str(result))
+
+        # 定期保存持久化缓存
+        if self.cache_stats['total_cache_writes'] % 10 == 0:
+            self._save_persistent_cache()
+
+    def _generate_smart_cache_key(self, file_path: str, analysis_type: str) -> str:
+        """生成智能缓存键"""
+        import hashlib
+        import os
+
+        # 基础信息
+        key_components = [
+            file_path,
+            analysis_type,
+            str(self.analysis_config.get('analysis_depth', 'standard')),
+            str(self.analysis_config.get('model_selection', 'auto'))
+        ]
+
+        # 文件修改时间（如果启用智能失效）
+        if self.cache_invalidation_config['auto_invalidate_on_file_change']:
+            try:
+                mtime = os.path.getmtime(file_path)
+                key_components.append(str(mtime))
+            except OSError:
+                pass
+
+        # 分析配置哈希
+        config_hash = hashlib.md5(str(sorted(self.analysis_config.items())).encode()).hexdigest()[:8]
+        key_components.append(config_hash)
+
+        # 生成最终缓存键
+        cache_data = ":".join(key_components)
+        return hashlib.md5(cache_data.encode()).hexdigest()
+
+    def _cache_to_l2_disk(self, cache_key: str, result: dict):
+        """缓存到L2磁盘"""
+        import json
+        import os
+        import time
+        from pathlib import Path
+
+        try:
+            cache_dir = Path(self.disk_cache_path)
+            cache_dir.mkdir(exist_ok=True)
+
+            cache_file = cache_dir / f"{cache_key}.json"
+
+            cache_data = {
+                'result': result,
+                'timestamp': time.time(),
+                'cache_key': cache_key,
+                'analysis_config': self.analysis_config
+            }
+
+            with open(cache_file, 'w', encoding='utf-8') as f:
+                json.dump(cache_data, f, indent=2, ensure_ascii=False)
+
+            # 检查缓存大小限制
+            self._enforce_disk_cache_size_limit()
+
+        except Exception as e:
+            self.logger.warning(f"L2磁盘缓存写入失败: {e}")
+
+    def _cache_to_semantic(self, user_context: str, result: dict):
+        """缓存到语义缓存"""
+        try:
+            import time
+
+            # 生成语义指纹
+            context_fingerprint = self._generate_semantic_fingerprint(user_context)
+
+            # 存储到语义缓存
+            cache_entry = {
+                'result': result,
+                'user_context': user_context[:self.semantic_cache['max_text_length']],
+                'timestamp': time.time(),
+                'access_count': 1
+            }
+
+            self.semantic_cache['cache_entries'][context_fingerprint] = cache_entry
+
+            # 限制语义缓存大小
+            max_size = self.advanced_cache_config['cache_hierarchy']['L3_semantic']['size_limit']
+            if len(self.semantic_cache['cache_entries']) > max_size:
+                # 删除最旧的条目
+                oldest_fingerprint = min(
+                    self.semantic_cache['cache_entries'].keys(),
+                    key=lambda k: self.semantic_cache['cache_entries'][k]['timestamp']
+                )
+                del self.semantic_cache['cache_entries'][oldest_fingerprint]
+                self.cache_stats['cache_evictions'] += 1
+
+        except Exception as e:
+            self.logger.warning(f"语义缓存写入失败: {e}")
+
+    def _generate_semantic_fingerprint(self, text: str) -> str:
+        """生成语义指纹"""
+        import hashlib
+
+        # 文本预处理
+        processed_text = text.lower().strip()
+
+        # 提取关键词
+        keywords = []
+        for issue in self.common_qa_cache['common_issues']:
+            if issue in processed_text:
+                keywords.append(issue)
+
+        # 如果没有匹配的关键词，使用文本哈希
+        if not keywords:
+            return hashlib.md5(processed_text.encode()).hexdigest()[:16]
+
+        # 生成基于关键词的指纹
+        keyword_fingerprint = ":".join(sorted(keywords))
+        return hashlib.md5(keyword_fingerprint.encode()).hexdigest()[:16]
+
+    def _calculate_semantic_similarity(self, fingerprint1: str, fingerprint2: str) -> float:
+        """计算语义相似度"""
+        if fingerprint1 == fingerprint2:
+            return 1.0
+
+        # 简单的相似度计算（可以后续升级为更复杂的算法）
+        common_chars = set(fingerprint1) & set(fingerprint2)
+        total_chars = set(fingerprint1) | set(fingerprint2)
+
+        if not total_chars:
+            return 0.0
+
+        return len(common_chars) / len(total_chars)
+
+    def _enforce_disk_cache_size_limit(self):
+        """强制执行磁盘缓存大小限制"""
+        try:
+            import os
+            from pathlib import Path
+
+            cache_dir = Path(self.disk_cache_path)
+            if not cache_dir.exists():
+                return
+
+            # 计算当前缓存大小
+            total_size = sum(f.stat().st_size for f in cache_dir.rglob('*.json') if f.is_file())
+            max_size_bytes = self.advanced_cache_config['max_cache_size_mb'] * 1024 * 1024
+
+            if total_size > max_size_bytes:
+                # 删除最旧的缓存文件
+                cache_files = list(cache_dir.glob('*.json'))
+                cache_files.sort(key=lambda f: f.stat().st_mtime)
+
+                for cache_file in cache_files:
+                    try:
+                        cache_file.unlink()
+                        total_size -= cache_file.stat().st_size
+                        self.cache_stats['cache_evictions'] += 1
+
+                        if total_size <= max_size_bytes * 0.8:  # 删除到80%容量
+                            break
+                    except OSError:
+                        continue
+
+        except Exception as e:
+            self.logger.warning(f"磁盘缓存大小限制执行失败: {e}")
+
+    def _cleanup_expired_persistent_cache(self):
+        """清理过期的持久化缓存"""
+        import time
+        from pathlib import Path
+
+        try:
+            cache_dir = Path(self.disk_cache_path)
+            if not cache_dir.exists():
+                return
+
+            current_time = time.time()
+            l2_ttl = self.advanced_cache_config['cache_hierarchy']['L2_disk']['ttl']
+
+            for cache_file in cache_dir.glob('*.json'):
+                try:
+                    file_mtime = cache_file.stat().st_mtime
+                    if current_time - file_mtime > l2_ttl:
+                        cache_file.unlink()
+                        self.cache_stats['cache_evictions'] += 1
+                except OSError:
+                    continue
+
+        except Exception as e:
+            self.logger.warning(f"清理过期缓存失败: {e}")
+
+    def _update_cache_retrieval_time(self, retrieval_time: float):
+        """更新缓存检索时间统计"""
+        current_avg = self.cache_stats['average_cache_retrieval_time']
+        count = self.cache_stats['L1_memory_hits'] + self.cache_stats['L2_disk_hits'] + self.cache_stats['L3_semantic_hits']
+
+        if count > 0:
+            self.cache_stats['average_cache_retrieval_time'] = (current_avg * (count - 1) + retrieval_time) / count
+
+    def get_common_qa_suggestion(self, user_input: str) -> Optional[dict]:
+        """获取常见问答建议"""
+        user_lower = user_input.lower()
+
+        # 查找匹配的常见问题
+        for issue in self.common_qa_cache['common_issues']:
+            if issue in user_lower:
+                qa_pair = self.common_qa_cache['qa_pairs'].get(issue)
+                if qa_pair:
+                    return {
+                        'question': qa_pair['question'],
+                        'answer': qa_pair['answer'],
+                        'category': qa_pair['category'],
+                        'priority': qa_pair['priority'],
+                        'match_type': 'exact'
+                    }
+
+        return None
+
+    def invalidate_cache_for_file(self, file_path: str):
+        """为特定文件失效缓存"""
+        import os
+
+        try:
+            # 失效内存缓存
+            cache_keys_to_remove = []
+            for cache_key, cache_entry in self.analysis_cache.items():
+                # 简单的文件路径匹配检查
+                if file_path in str(cache_entry.get('result', {})):
+                    cache_keys_to_remove.append(cache_key)
+
+            for cache_key in cache_keys_to_remove:
+                del self.analysis_cache[cache_key]
+
+            # 失效磁盘缓存
+            from pathlib import Path
+            import json
+            cache_dir = Path(self.disk_cache_path)
+            if cache_dir.exists():
+                for cache_file in cache_dir.glob('*.json'):
+                    try:
+                        with open(cache_file, 'r', encoding='utf-8') as f:
+                            cache_data = json.load(f)
+
+                        if file_path in str(cache_data.get('result', {})):
+                            cache_file.unlink()
+                    except:
+                        continue
+
+            self.logger.info(f"已为文件 {file_path} 失效缓存")
+
+        except Exception as e:
+            self.logger.warning(f"缓存失效失败: {e}")
+
+    def get_comprehensive_cache_stats(self) -> dict:
+        """获取综合缓存统计信息"""
+        total_requests = (
+            self.cache_stats['L1_memory_hits'] + self.cache_stats['L1_memory_misses'] +
+            self.cache_stats['L2_disk_hits'] + self.cache_stats['L2_disk_misses'] +
+            self.cache_stats['L3_semantic_hits'] + self.cache_stats['L3_semantic_misses']
+        )
+
+        l1_hit_rate = 0.0
+        if self.cache_stats['L1_memory_hits'] + self.cache_stats['L1_memory_misses'] > 0:
+            l1_hit_rate = self.cache_stats['L1_memory_hits'] / (self.cache_stats['L1_memory_hits'] + self.cache_stats['L1_memory_misses']) * 100
+
+        l2_hit_rate = 0.0
+        if self.cache_stats['L2_disk_hits'] + self.cache_stats['L2_disk_misses'] > 0:
+            l2_hit_rate = self.cache_stats['L2_disk_hits'] / (self.cache_stats['L2_disk_hits'] + self.cache_stats['L2_disk_misses']) * 100
+
+        l3_hit_rate = 0.0
+        if self.cache_stats['L3_semantic_hits'] + self.cache_stats['L3_semantic_misses'] > 0:
+            l3_hit_rate = self.cache_stats['L3_semantic_hits'] / (self.cache_stats['L3_semantic_hits'] + self.cache_stats['L3_semantic_misses']) * 100
+
+        overall_hit_rate = 0.0
+        if total_requests > 0:
+            overall_hit_rate = (self.cache_stats['L1_memory_hits'] + self.cache_stats['L2_disk_hits'] + self.cache_stats['L3_semantic_hits']) / total_requests * 100
+
+        from pathlib import Path
+        l2_items = len(list(Path(self.disk_cache_path).glob('*.json'))) if Path(self.disk_cache_path).exists() else 0
+
+        return {
+            'cache_hierarchy_performance': {
+                'L1_memory': {
+                    'hits': self.cache_stats['L1_memory_hits'],
+                    'misses': self.cache_stats['L1_memory_misses'],
+                    'hit_rate_percent': round(l1_hit_rate, 2),
+                    'current_items': len(self.analysis_cache)
+                },
+                'L2_disk': {
+                    'hits': self.cache_stats['L2_disk_hits'],
+                    'misses': self.cache_stats['L2_disk_misses'],
+                    'hit_rate_percent': round(l2_hit_rate, 2),
+                    'current_items': l2_items
+                },
+                'L3_semantic': {
+                    'hits': self.cache_stats['L3_semantic_hits'],
+                    'misses': self.cache_stats['L3_semantic_misses'],
+                    'hit_rate_percent': round(l3_hit_rate, 2),
+                    'semantic_matches': self.cache_stats['semantic_matches'],
+                    'current_items': len(self.semantic_cache['cache_entries'])
+                }
+            },
+            'overall_stats': {
+                'total_requests': total_requests,
+                'overall_hit_rate_percent': round(overall_hit_rate, 2),
+                'total_cache_writes': self.cache_stats['total_cache_writes'],
+                'cache_evictions': self.cache_stats['cache_evictions'],
+                'cache_size_mb': round(self.cache_stats['cache_size_bytes'] / (1024 * 1024), 2),
+                'average_retrieval_time_ms': round(self.cache_stats['average_cache_retrieval_time'] * 1000, 2)
+            },
+            'qa_cache_stats': {
+                'common_issues_count': len(self.common_qa_cache['common_issues']),
+                'qa_pairs_count': len(self.common_qa_cache['qa_pairs']),
+                'enabled_features': {
+                    'persistent_cache': self.advanced_cache_config['enable_persistent_cache'],
+                    'semantic_cache': self.advanced_cache_config['semantic_cache_enabled'],
+                    'smart_cache_keys': self.advanced_cache_config['smart_cache_key_generation'],
+                    'cache_validation': self.advanced_cache_config['cache_validation_enabled']
+                }
+            }
+        }
+
+    def show_advanced_cache_status(self):
+        """显示高级缓存状态"""
+        stats = self.get_comprehensive_cache_stats()
+
+        print("\n🗄️ 高级缓存系统状态")
+        print("=" * 50)
+
+        # 总体统计
+        overall = stats['overall_stats']
+        print(f"📊 总体统计:")
+        print(f"  总请求数: {overall['total_requests']}")
+        print(f"  总命中率: {overall['overall_hit_rate_percent']}%")
+        print(f"  缓存写入: {overall['total_cache_writes']}")
+        print(f"  缓存大小: {overall['cache_size_mb']} MB")
+        print(f"  平均检索时间: {overall['average_retrieval_time_ms']} ms")
+
+        # 层次性能
+        hierarchy = stats['cache_hierarchy_performance']
+        print(f"\n🏗️ 缓存层次性能:")
+
+        print(f"  L1 内存缓存:")
+        print(f"    命中率: {hierarchy['L1_memory']['hit_rate_percent']}%")
+        print(f"    当前项: {hierarchy['L1_memory']['current_items']}")
+
+        print(f"  L2 磁盘缓存:")
+        print(f"    命中率: {hierarchy['L2_disk']['hit_rate_percent']}%")
+        print(f"    当前项: {hierarchy['L2_disk']['current_items']}")
+
+        print(f"  L3 语义缓存:")
+        print(f"    命中率: {hierarchy['L3_semantic']['hit_rate_percent']}%")
+        print(f"    语义匹配: {hierarchy['L3_semantic']['semantic_matches']}")
+        print(f"    当前项: {hierarchy['L3_semantic']['current_items']}")
+
+        # 启用的功能
+        features = stats['qa_cache_stats']['enabled_features']
+        print(f"\n⚙️ 启用功能:")
+        for feature, enabled in features.items():
+            status = "✅" if enabled else "❌"
+            feature_name = feature.replace('_', ' ').title()
+            print(f"  {status} {feature_name}")
+
+        print()
