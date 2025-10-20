@@ -77,6 +77,11 @@ class CLIArguments:
     sub_dry_run: bool = False  # 子命令中的dry-run参数
     sub_no_confirm: bool = False  # fix子命令中的no-confirm参数
     sub_backup_dir: Optional[str] = None  # fix子命令中的backup-dir参数
+    help_command: Optional[str] = None  # help子命令的command参数
+    web_host: Optional[str] = None  # web子命令的host参数
+    web_port: Optional[int] = None  # web子命令的port参数
+    web_debug: bool = False  # web子命令的debug参数
+    web_no_browser: bool = False  # web子命令的no-browser参数
 
 
 class CLIArgumentParser:
@@ -101,10 +106,13 @@ class CLIArgumentParser:
         self.subparsers = self.parser.add_subparsers(
             dest='command',
             help='可用命令',
-            metavar='{analyze,version,help}'
+            metavar='{analyze,web,version,help}'
         )
 
         self._add_analyze_subcommand()
+        self._add_web_subcommand()
+        self._add_version_subcommand()
+        self._add_help_subcommand()
         self._add_global_arguments()
         self._add_analysis_arguments()
         self._add_output_arguments()
@@ -387,6 +395,62 @@ class CLIArgumentParser:
             help='模拟运行，只显示修复建议不实际应用'
         )
 
+    def _add_web_subcommand(self):
+        """添加web子命令"""
+        web_parser = self.subparsers.add_parser(
+            'web',
+            help='启动Web界面',
+            description='启动Web交互界面，通过浏览器使用系统功能'
+        )
+
+        web_parser.add_argument(
+            '--host',
+            default='localhost',
+            help='服务器主机地址 (默认: localhost)'
+        )
+
+        web_parser.add_argument(
+            '--port',
+            type=int,
+            default=5000,
+            help='服务器端口号 (默认: 5000)'
+        )
+
+        web_parser.add_argument(
+            '--debug',
+            action='store_true',
+            help='启用调试模式'
+        )
+
+        web_parser.add_argument(
+            '--no-browser',
+            action='store_true',
+            help='不自动打开浏览器'
+        )
+
+    def _add_version_subcommand(self):
+        """添加version子命令"""
+        version_parser = self.subparsers.add_parser(
+            'version',
+            help='显示版本信息',
+            description='显示系统版本信息和构建详情'
+        )
+
+    def _add_help_subcommand(self):
+        """添加help子命令"""
+        help_parser = self.subparsers.add_parser(
+            'help',
+            help='显示帮助信息',
+            description='显示系统帮助信息或特定子命令的帮助'
+        )
+
+        help_parser.add_argument(
+            'command',
+            nargs='?',
+            choices=['analyze', 'web', 'version'],
+            help='获取特定命令的帮助信息'
+        )
+
     def _add_advanced_arguments(self):
         """添加高级参数"""
         advanced_group = self.parser.add_argument_group('高级选项')
@@ -452,7 +516,12 @@ class CLIArgumentParser:
                 sub_quiet=getattr(parsed, 'quiet', False),
                 sub_dry_run=getattr(parsed, 'dry_run', False),
                 sub_no_confirm=getattr(parsed, 'no_confirm', False),
-                sub_backup_dir=getattr(parsed, 'backup_dir', None)
+                sub_backup_dir=getattr(parsed, 'backup_dir', None),
+                help_command=getattr(parsed, 'command', None),
+                web_host=getattr(parsed, 'host', None),
+                web_port=getattr(parsed, 'port', None),
+                web_debug=getattr(parsed, 'debug', False),
+                web_no_browser=getattr(parsed, 'no_browser', False)
             )
 
             # 验证参数组合
@@ -779,9 +848,16 @@ def main():
             parser.print_help()
             return 0
 
-        # 处理analyze子命令
+        # 处理子命令
         if args.command == 'analyze':
             return handle_analyze_command(parser, args)
+        elif args.command == 'web':
+            return handle_web_command(parser, args)
+        elif args.command == 'version':
+            parser.print_version()
+            return 0
+        elif args.command == 'help':
+            return handle_help_command(parser, args)
 
         # 处理传统模式参数
         if args.mode:
@@ -812,6 +888,95 @@ def handle_analyze_command(parser: CLIArgumentParser, args: CLIArguments) -> int
     else:
         parser.parser.error(f"未知的分析模式: {args.analyze_command}")
         return 1
+
+
+def handle_web_command(parser: CLIArgumentParser, args: CLIArguments) -> int:
+    """处理web子命令"""
+    try:
+        # 尝试导入Web模块
+        from src.interfaces.web import main as web_main
+    except ImportError:
+        print("❌ Web界面模块不可用")
+        print("请安装Flask: pip install flask")
+        return 1
+
+    # 构建Web应用的参数
+    import sys
+    sys.argv = ['web']
+
+    # 从parse_args获取web相关参数
+    parsed = parser.parser.parse_args()
+
+    if hasattr(parsed, 'host'):
+        sys.argv.extend(['--host', parsed.host])
+    if hasattr(parsed, 'port') and parsed.port != 5000:
+        sys.argv.extend(['--port', str(parsed.port)])
+    if hasattr(parsed, 'debug') and parsed.debug:
+        sys.argv.append('--debug')
+    if hasattr(parsed, 'no_browser') and parsed.no_browser:
+        sys.argv.append('--no-browser')
+
+    try:
+        print("🌐 启动Web界面...")
+        return web_main()
+    except Exception as e:
+        print(f"❌ 启动Web界面失败: {e}")
+        return 1
+
+
+def handle_help_command(parser: CLIArgumentParser, args: CLIArguments) -> int:
+    """处理help子命令"""
+    # 从CLIArguments获取help子命令的参数
+    # help子命令的command参数存储在sub_target中
+    help_command = getattr(args, 'sub_target', None)
+
+    if help_command:
+        # 显示特定命令的帮助
+        if help_command == 'analyze':
+            print("\nanalyze 命令详解:")
+            print("=" * 50)
+            print("执行代码分析，支持静态分析、深度分析和修复分析")
+            print()
+            print("子命令:")
+            print("  static   - 静态分析，使用传统工具检查代码质量")
+            print("  deep     - 深度分析，使用LLM理解代码逻辑")
+            print("  fix      - 分析修复，提供问题修复建议")
+            print()
+            print("使用示例:")
+            print("  aidetector analyze static src/")
+            print("  aidetector analyze deep main.py")
+            print("  aidetector analyze fix utils/")
+            print()
+            print("详细选项请使用: aidetector analyze <subcommand> --help")
+
+        elif help_command == 'web':
+            print("\nweb 命令详解:")
+            print("=" * 50)
+            print("启动Web交互界面，通过浏览器使用系统功能")
+            print()
+            print("选项:")
+            print("  --host HOST      服务器主机地址 (默认: localhost)")
+            print("  --port PORT      服务器端口号 (默认: 5000)")
+            print("  --debug          启用调试模式")
+            print("  --no-browser     不自动打开浏览器")
+            print()
+            print("使用示例:")
+            print("  aidetector web")
+            print("  aidetector web --host 0.0.0.0 --port 8080")
+            print("  aidetector web --debug")
+
+        elif help_command == 'version':
+            print("\nversion 命令详解:")
+            print("=" * 50)
+            print("显示系统版本信息和构建详情")
+            print()
+            print("使用示例:")
+            print("  aidetector version")
+    else:
+        # 显示总体帮助
+        parser.print_help()
+
+    return 0
 
 
 def handle_legacy_mode(parser: CLIArgumentParser, args: CLIArguments) -> int:
@@ -959,8 +1124,11 @@ def execute_static_analysis(args: CLIArguments) -> int:
             result = coordinator.analyze_file(target)
             results = [result]
         else:
-            # 分析目录中的所有Python文件
-            python_files = [str(f) for f in Path(target).rglob("*.py")]
+            # 分析目录中的所有Python文件，并过滤掉虚拟环境等目录
+            python_files = _filter_python_files(Path(target))
+            if args.sub_verbose or args.verbose:
+                print(f"📁 找到 {len(python_files)} 个Python文件")
+
             results = coordinator.analyze_files(python_files)
 
         # 显示结果
@@ -970,12 +1138,17 @@ def execute_static_analysis(args: CLIArguments) -> int:
             print(f"📊 发现问题: {total_issues} 个")
             print(f"📁 分析文件: {len(results)} 个")
 
+            # 详细的问题类型统计
+            if total_issues > 0:
+                _display_issue_summary(results, args.sub_verbose or args.verbose)
+
         # 保存结果
         if args.sub_output:
             try:
                 _save_static_analysis_results(results, args.sub_output, args.sub_format or 'simple')
                 if not args.sub_quiet:
-                    print(f"💾 结果已保存到: {args.sub_output}")
+                    print(f"\n💾 详细报告已保存到: {args.sub_output}")
+                    print(f"📄 报告中包含所有问题的详细信息、位置描述和修复建议")
             except Exception as e:
                 if not args.sub_quiet:
                     print(f"❌ 保存结果失败: {e}")
@@ -1149,12 +1322,28 @@ def execute_simple_static_analysis(args: CLIArguments) -> int:
             print(f"📁 分析文件: {len(files_found)} 个")
             print(f"🔍 发现问题: {total_issues} 个")
 
+            # 显示简化的统计信息
+            if total_issues > 0:
+                print(f"\n📋 问题分布:")
+                print(f"  • Print语句: {sum(1 for r in results for issue in r.get('issues', []) if 'print' in issue.get('message', '').lower())} 个")
+                print(f"  • 其他问题: {total_issues - sum(1 for r in results for issue in r.get('issues', []) if 'print' in issue.get('message', '').lower())} 个")
+
+                # 显示问题最多的文件
+                file_counts = [(r['file_path'], r['issues_count']) for r in results if r['issues_count'] > 0]
+                if file_counts:
+                    file_counts.sort(key=lambda x: x[1], reverse=True)
+                    print(f"\n📁 问题最多的文件:")
+                    for file_path, count in file_counts[:3]:
+                        file_name = Path(file_path).name
+                        print(f"  • {file_name}: {count} 个问题")
+
         # 保存结果
         if args.sub_output:
             try:
                 _save_simple_static_analysis_results(results, args.sub_output, args.sub_format or 'simple')
                 if not args.sub_quiet:
-                    print(f"💾 结果已保存到: {args.sub_output}")
+                    print(f"\n💾 详细报告已保存到: {args.sub_output}")
+                    print(f"📄 报告中包含所有问题的详细信息、位置描述和修复建议")
             except Exception as e:
                 if not args.sub_quiet:
                     print(f"❌ 保存结果失败: {e}")
@@ -1301,6 +1490,185 @@ def execute_deep_analysis(args: CLIArguments) -> int:
             import traceback
             traceback.print_exc()
         return 1
+
+
+def _display_issue_summary(results, verbose: bool = False):
+    """
+    显示详细的问题统计和摘要信息
+
+    Args:
+        results: 静态分析结果列表
+        verbose: 是否显示详细信息
+    """
+    from collections import defaultdict, Counter
+
+    # 统计问题类型
+    severity_counter = Counter()
+    tool_counter = Counter()
+    issue_type_counter = Counter()
+    file_issue_counts = []
+
+    all_issues = []
+    for result in results:
+        file_issues = len(result.issues)
+        if file_issues > 0:
+            file_issue_counts.append((result.file_path, file_issues))
+
+        for issue in result.issues:
+            # 处理不同类型的issue对象
+            severity_val = getattr(issue.severity, 'value', str(issue.severity)) if hasattr(issue, 'severity') else 'unknown'
+            issue_type_val = getattr(issue.issue_type, 'value', str(issue.issue_type)) if hasattr(issue, 'issue_type') else 'unknown'
+            tool_name = getattr(issue, 'tool_name', 'unknown')
+
+            severity_counter[severity_val] += 1
+            tool_counter[tool_name] += 1
+            issue_type_counter[issue_type_val] += 1
+            all_issues.append(issue)
+
+    if not all_issues:
+        print("✨ 未发现代码问题")
+        return
+
+    print("\n📋 问题统计摘要:")
+    print("=" * 50)
+
+    # 按严重程度统计
+    print("\n🎯 按严重程度分布:")
+    for severity in ['error', 'warning', 'info']:
+        count = severity_counter.get(severity, 0)
+        if count > 0:
+            emoji = {'error': '🔴', 'warning': '🟡', 'info': '🔵'}[severity]
+            print(f"  {emoji} {severity.capitalize()}: {count} 个")
+
+    # 按工具统计
+    print("\n🔧 按分析工具分布:")
+    for tool, count in tool_counter.most_common():
+        print(f"  • {tool}: {count} 个问题")
+
+    # 按问题类型统计
+    print("\n📊 按问题类型分布:")
+    for issue_type, count in issue_type_counter.most_common(10):  # 只显示前10种
+        print(f"  • {issue_type}: {count} 个")
+
+    # 显示问题最多的文件
+    if file_issue_counts:
+        print("\n📁 问题最多的文件:")
+        file_issue_counts.sort(key=lambda x: x[1], reverse=True)
+        for file_path, count in file_issue_counts[:5]:  # 只显示前5个
+            file_name = Path(file_path).name
+            print(f"  • {file_name}: {count} 个问题")
+
+    # 显示具体问题（在详细模式下）
+    if verbose and len(all_issues) <= 20:  # 问题较少时显示详情
+        print("\n🔍 问题详情:")
+        print("-" * 50)
+        for i, issue in enumerate(all_issues[:10], 1):  # 只显示前10个
+            file_name = Path(getattr(issue, 'file_path', 'unknown')).name
+            # 安全获取severity值
+            severity_val = getattr(issue.severity, 'value', str(issue.severity)) if hasattr(issue, 'severity') else 'unknown'
+            severity_emoji = {'error': '🔴', 'warning': '🟡', 'info': '🔵'}.get(severity_val, '⚪')
+            line_num = getattr(issue, 'line', '?')
+            print(f"{i:2d}. {severity_emoji} [{severity_val.upper()}] {file_name}:{line_num}")
+
+            # 安全获取工具和类型信息
+            tool_name = getattr(issue, 'tool_name', 'unknown')
+            issue_type_val = getattr(issue.issue_type, 'value', str(issue.issue_type)) if hasattr(issue, 'issue_type') else 'unknown'
+            message = getattr(issue, 'message', '无描述')
+
+            print(f"     工具: {tool_name} | 类型: {issue_type_val}")
+            print(f"     描述: {message}")
+            print()
+
+        if len(all_issues) > 10:
+            print(f"     ... 还有 {len(all_issues) - 10} 个问题（详见报告文件）")
+
+    elif not verbose:
+        print(f"\n💡 使用 --verbose 参数可查看具体问题详情")
+        print(f"📄 完整问题列表请查看保存的报告文件")
+
+
+def _filter_python_files(target_path: Path) -> List[str]:
+    """
+    过滤Python文件，排除虚拟环境、构建目录等无关文件
+
+    Args:
+        target_path: 目标目录路径
+
+    Returns:
+        List[str]: 过滤后的Python文件路径列表
+    """
+    # 定义需要排除的目录和文件模式
+    exclude_patterns = [
+        # 虚拟环境目录
+        '.venv', 'venv', 'env', '.env', 'virtualenv',
+        # 构建和输出目录
+        '__pycache__', 'build', 'dist', '.pytest_cache', '.tox',
+        # 版本控制目录
+        '.git', '.svn', '.hg',
+        # IDE和编辑器目录
+        '.idea', '.vscode', '.eclipse', '*.swp', '*.swo',
+        # 临时文件目录
+        'tmp', 'temp', '.tmp',
+        # 依赖目录
+        'node_modules', '.npm', '.pip',
+        # 系统文件
+        '.DS_Store', 'Thumbs.db',
+        # 其他不需要分析的目录
+        'migrations', 'static', 'media', 'docs', '_build', 'site'
+    ]
+
+    # 定义需要排除的文件模式
+    exclude_file_patterns = [
+        '*_pb2.py',  # Protocol Buffer生成的文件
+        '*_pb2_grpc.py',  # gRPC生成的文件
+        'manage.py',  # Django管理脚本（通常不需要分析）
+        'settings.py',  # 配置文件
+        'wsgi.py',  # WSGI配置
+        'asgi.py',  # ASGI配置
+    ]
+
+    filtered_files = []
+
+    # 如果是文件，直接检查
+    if target_path.is_file() and target_path.suffix == '.py':
+        file_path_str = str(target_path)
+        file_name = target_path.name
+
+        # 检查文件是否应该被排除
+        should_exclude = False
+        import fnmatch
+        for pattern in exclude_file_patterns:
+            if fnmatch.fnmatch(file_name, pattern):
+                should_exclude = True
+                break
+
+        if not should_exclude:
+            filtered_files.append(file_path_str)
+        return filtered_files
+
+    # 如果是目录，递归查找Python文件
+    for py_file in target_path.rglob("*.py"):
+        file_path_str = str(py_file)
+
+        # 检查路径中是否包含排除的目录
+        should_exclude = False
+        for pattern in exclude_patterns:
+            if pattern in py_file.parts:
+                should_exclude = True
+                break
+
+        # 检查文件名是否匹配排除模式
+        if not should_exclude:
+            import fnmatch
+            for pattern in exclude_file_patterns:
+                if fnmatch.fnmatch(py_file.name, pattern):
+                    should_exclude = True
+                    break
+
+        if not should_exclude:
+            filtered_files.append(file_path_str)
+
+    return filtered_files
 
 
 def execute_fix_analysis(args: CLIArguments) -> int:
