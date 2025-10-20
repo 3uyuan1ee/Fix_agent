@@ -32,21 +32,34 @@ def show_usage():
 更多信息请访问: https://github.com/your-repo/AIDefectDetector
     """)
 
+def show_cli_help():
+    """显示CLI帮助信息"""
+    try:
+        # 直接调用CLI帮助系统
+        from interfaces.cli import CLIArgumentParser
+        parser = CLIArgumentParser()
+        parser.print_help()
+    except Exception as e:
+        print(f"获取CLI帮助失败: {e}")
+        show_usage()
+
 
 def main():
     """主入口函数"""
-    print("AIDefectDetector - 基于AI Agent的软件项目缺陷自主检测与修复系统")
-    print("=" * 70)
 
     # 处理命令行参数
     if len(sys.argv) > 1:
         arg = sys.argv[1].lower()
 
         if arg in ["help", "-h", "--help"]:
-            show_usage()
+            print("AIDefectDetector - 基于AI Agent的软件项目缺陷自主检测与修复系统")
+            print("=" * 70)
+            show_cli_help()
             return 0
 
         elif arg == "web":
+            print("AIDefectDetector - 基于AI Agent的软件项目缺陷自主检测与修复系统")
+            print("=" * 70)
             try:
                 print("正在启动Web界面...")
                 return web_main()
@@ -58,13 +71,43 @@ def main():
                 print(f"启动Web界面失败: {e}")
                 return 1
 
+        elif arg == "analyze":
+            # 直接调用CLI系统处理analyze命令
+            print("AIDefectDetector - 基于AI Agent的软件项目缺陷自主检测与修复系统")
+            print("=" * 70)
+            try:
+                return cli_main()
+            except KeyboardInterrupt:
+                print("\n用户中断操作")
+                return 0
+            except Exception as e:
+                print(f"启动失败: {e}")
+                return 1
+
+        elif arg.startswith("-"):
+            # 其他选项参数，也交给CLI系统处理
+            print("AIDefectDetector - 基于AI Agent的软件项目缺陷自主检测与修复系统")
+            print("=" * 70)
+            try:
+                return cli_main()
+            except KeyboardInterrupt:
+                print("\n用户中断操作")
+                return 0
+            except Exception as e:
+                print(f"启动失败: {e}")
+                return 1
+
         else:
+            print("AIDefectDetector - 基于AI Agent的软件项目缺陷自主检测与修复系统")
+            print("=" * 70)
             print(f"错误: 未知参数 '{arg}'")
             show_usage()
             return 1
 
     else:
         # 默认启动CLI模式
+        print("AIDefectDetector - 基于AI Agent的软件项目缺陷自主检测与修复系统")
+        print("=" * 70)
         try:
             return cli_main()
         except KeyboardInterrupt:
