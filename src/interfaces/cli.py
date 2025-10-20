@@ -517,7 +517,7 @@ class CLIArgumentParser:
                 sub_dry_run=getattr(parsed, 'dry_run', False),
                 sub_no_confirm=getattr(parsed, 'no_confirm', False),
                 sub_backup_dir=getattr(parsed, 'backup_dir', None),
-                help_command=getattr(parsed, 'command', None),
+                help_command=getattr(parsed, 'command', None) if hasattr(parsed, 'command') else None,
                 web_host=getattr(parsed, 'host', None),
                 web_port=getattr(parsed, 'port', None),
                 web_debug=getattr(parsed, 'debug', False),
@@ -1050,8 +1050,14 @@ def handle_interactive_mode(parser: CLIArgumentParser, args: CLIArguments) -> in
                 print("👋 再见！")
                 break
 
-            if user_input.lower() == 'help':
-                print("可用命令: analyze static/deep/fix, help, quit")
+            if user_input.lower().startswith('help'):
+                # 处理 help 或 help <topic> 命令
+                parts = user_input.split()
+                if len(parts) == 1:
+                    _show_interactive_help()
+                else:
+                    topic = parts[1].lower()
+                    _show_interactive_topic_help(topic)
                 continue
 
             # 处理analyze命令
@@ -1085,6 +1091,181 @@ def handle_interactive_mode(parser: CLIArgumentParser, args: CLIArguments) -> in
             break
 
     return 0
+
+
+def _show_interactive_help():
+    """显示交互式模式的详细帮助信息"""
+    print("\n📋 AI缺陷检测系统 - 交互式模式帮助")
+    print("=" * 60)
+
+    print("\n🎯 基本命令:")
+    print("  analyze static <path>     - 静态分析")
+    print("    使用传统工具（Pylint、Flake8等）检查代码质量")
+    print("    示例: analyze static src/ 或 analyze static main.py")
+    print()
+
+    print("  analyze deep <path>       - 深度分析")
+    print("    使用大语言模型理解代码逻辑和架构")
+    print("    示例: analyze deep main.py 或 analyze deep utils/")
+    print()
+
+    print("  analyze fix <path>        - 分析修复")
+    print("    检测问题并提供修复建议，支持自动应用修复")
+    print("    示例: analyze fix src/ 或 analyze fix main.py")
+    print()
+
+    print("  help [topic]              - 显示帮助信息")
+    print("    支持的主题: modes, tools, formats, examples")
+    print("    示例: help modes 或 help tools")
+    print()
+
+    print("  quit/exit/q               - 退出系统")
+    print()
+
+    print("📁 路径说明:")
+    print("  <path> 可以是文件或目录路径")
+    print("  文件示例: main.py, src/utils.py")
+    print("  目录示例: src/, ./src/, /path/to/project")
+    print()
+
+    print("⚙️ 工作流程:")
+    print("  1. 选择分析模式（static/deep/fix）")
+    print("  2. 指定要分析的目标路径")
+    print("  3. 等待分析完成")
+    print("  4. 查看结果和详细报告")
+    print()
+
+    print("💡 小贴士:")
+    print("  • 静态分析速度快，无API成本")
+    print("  • 深度分析能发现复杂逻辑问题")
+    print("  • 修复模式会提供具体的修复方案")
+    print("  • 所有分析结果都会自动保存报告文件")
+    print()
+
+    print("🔧 更多选项:")
+    print("  如需更多控制选项，请使用命令行模式:")
+    print("    aidetector --help")
+    print("    aidetector --mode static --target src/ --format json")
+    print("    aidetector analyze static src/ --verbose")
+    print()
+
+
+def _show_interactive_topic_help(topic: str):
+    """显示特定主题的帮助信息"""
+    if topic == 'modes':
+        print("\n🔍 分析模式详解")
+        print("=" * 40)
+        print("""
+📊 静态分析 (Static Analysis):
+  • 使用传统静态分析工具 (Pylint, Flake8, Bandit等)
+  • 快速、准确、无API调用成本
+  • 适用于常规代码质量检查和安全扫描
+  • 能发现: 代码风格错误、潜在bug、安全问题
+
+🧠 深度分析 (Deep Analysis):
+  • 使用大语言模型进行代码理解
+  • 能够发现复杂逻辑问题和架构缺陷
+  • 提供代码改进建议和重构方案
+  • 适用于关键业务逻辑和复杂算法分析
+
+🔧 修复分析 (Fix Analysis):
+  • 结合静态分析和LLM生成修复建议
+  • 提供具体的问题修复方案和代码示例
+  • 支持自动应用修复（需用户确认）
+  • 适用于需要快速修复常见代码问题
+
+💡 选择建议:
+  • 日常开发检查 → 静态分析
+  • 代码审查重构 → 深度分析
+  • 快速修复问题 → 修复分析
+        """)
+
+    elif topic == 'tools':
+        print("\n🛠️ 分析工具说明")
+        print("=" * 40)
+        print("""
+静态分析工具:
+  • AST     - Python语法树分析，检查语法结构
+  • Pylint  - 代码质量检查，发现潜在问题和编码规范
+  • Flake8  - 代码风格检查，PEP8规范检查
+  • Bandit  - 安全漏洞检查，发现常见安全问题
+
+LLM模型:
+  • GPT-4   - 强大的代码理解和分析能力
+  • Claude-3 - 高质量的代码审查和建议
+  • 其他模型 - 根据配置文件支持更多模型
+
+输出格式:
+  • simple   - 简洁格式，只显示关键信息
+  • detailed - 详细格式，包含完整分析过程
+  • json     - 结构化数据，便于程序处理
+  • table    - 表格格式，便于阅读比较
+  • markdown - 文档格式，支持发布到文档系统
+        """)
+
+    elif topic == 'formats':
+        print("\n📄 输出格式说明")
+        print("=" * 40)
+        print("""
+Simple 格式:
+  • 只显示关键问题和统计信息
+  • 适用于快速查看结果概要
+  • 输出简洁，信息密度高
+
+Detailed 格式:
+  • 显示完整的分析过程和详细结果
+  • 包含上下文信息和修复建议
+  • 适用于深入分析问题
+
+JSON 格式:
+  • 结构化数据，便于程序处理
+  • 支持与其他工具集成
+  • 包含完整的问题元数据
+
+Table 格式:
+  • 以表格形式显示问题清单
+  • 便于阅读和比较
+  • 适合生成报告
+
+Markdown 格式:
+  • 生成文档友好的报告
+  • 支持直接发布到文档系统
+  • 适合项目文档和README
+        """)
+
+    elif topic == 'examples':
+        print("\n💡 使用示例")
+        print("=" * 40)
+        print("""
+基础用法:
+  analyze static src/           # 分析src目录
+  analyze static main.py        # 分析单个文件
+  analyze deep utils/           # 深度分析utils目录
+  analyze fix src/              # 修复分析src目录
+
+路径格式:
+  • 相对路径: src/, ./utils/, main.py
+  • 绝对路径: /home/user/project/src/
+  • 通配符: 不支持，需要指定具体路径
+
+工作流程:
+  1. 选择合适的分析模式
+  2. 提供正确的文件/目录路径
+  3. 等待分析完成
+  4. 查看控制台输出
+  5. 检查详细报告文件
+
+常见场景:
+  • 日常开发 → analyze static src/
+  • 代码提交前 → analyze static .
+  • 重构前 → analyze deep main.py
+  • 快速修复 → analyze fix src/
+        """)
+
+    else:
+        print(f"\n❌ 未知帮助主题: {topic}")
+        print("可用主题: modes, tools, formats, examples")
+        print("使用 'help' 查看基本帮助信息")
 
 
 def execute_static_analysis(args: CLIArguments) -> int:
