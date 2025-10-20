@@ -156,7 +156,9 @@ class LLMConfigManager:
     def _load_from_global_config(self) -> None:
         """从全局配置加载"""
         try:
-            llm_config = self.config_manager.get_section('llm', {})
+            llm_config = self.config_manager.get_section('llm')
+            if not llm_config:
+                llm_config = {}
             if "providers" in llm_config:
                 self._parse_config_file_data({"providers": llm_config["providers"]})
                 self.logger.info("Loaded LLM config from global config")
