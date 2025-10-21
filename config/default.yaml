@@ -32,7 +32,7 @@ llm:
   # 智谱AI配置
   zhipu:
     api_key: "${ZHIPU_API_KEY}"
-    model: "glm-4.5"
+    model: "glm-4.5-air"
     base_url: "https://open.bigmodel.cn/api/paas/v4/"
 
   # OpenAI配置
@@ -129,7 +129,7 @@ security:
 
 # 深度分析配置
 deep_analysis:
-  default_model: "glm-4.5"  # 默认使用的LLM模型
+  default_model: "glm-4.5-air"  # 默认使用的LLM模型
   temperature: 0.3  # AI响应创造性控制 (0.0-1.0)
   max_tokens: 4000  # 最大生成token数
   max_file_size: 102400  # 最大文件大小 (100KB)

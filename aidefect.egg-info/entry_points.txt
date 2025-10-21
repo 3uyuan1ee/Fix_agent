@@ -1,3 +1,3 @@
 [console_scripts]
-aidefect = aidefect_cli:main
-aidefect-web = aidefect_web:main
+aidefect = tools.aidefect_cli:main
+aidefect-web = tools.aidefect_web:main

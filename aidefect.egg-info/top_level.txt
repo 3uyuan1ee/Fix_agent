@@ -1,3 +1,2 @@
-aidefect_cli
-aidefect_web
 src
+tools

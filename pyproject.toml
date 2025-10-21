@@ -74,11 +74,11 @@ Repository = "https://github.com/your-repo/AIDefectDetector.git"
 Changelog = "https://github.com/your-repo/AIDefectDetector/CHANGELOG.md"
 
 [project.scripts]
-aidefect = "aidefect_cli:main"
-aidefect-web = "aidefect_web:main"
+aidefect = "tools.aidefect_cli:main"
+aidefect-web = "tools.aidefect_web:main"
 
 [tool.setuptools]
-packages = ["src"]
+packages = ["src", "tools"]
 
 [tool.setuptools.package-data]
 "*" = ["*.yaml", "*.yml", "*.txt", "*.md"]

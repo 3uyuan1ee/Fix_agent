@@ -13,6 +13,7 @@ import json
 from ..utils.logger import get_logger
 from ..utils.config import get_config_manager
 from ..llm.client import LLMClient
+from ..llm.base import Message, MessageRole
 from ..prompts.manager import PromptManager
 
 
@@ -224,6 +225,11 @@ class DeepAnalyzer:
                 self.logger.error(f"File does not exist: {file_path}")
                 return None
 
+            # 检查是否为目录
+            if file_path.is_dir():
+                self.logger.error(f"Path is a directory, not a file: {file_path}")
+                return None
+
             # 检查文件大小
             if file_path.stat().st_size > self.max_file_size:
                 self.logger.warning(f"File too large ({file_path.stat().st_size} bytes), truncating to {self.max_file_size} bytes")
@@ -246,7 +252,7 @@ class DeepAnalyzer:
             self.logger.error(f"Failed to read file {file_path}: {e}")
             return None
 
-    def _construct_prompt(self, file_content: str, request: DeepAnalysisRequest) -> List[Dict[str, str]]:
+    def _construct_prompt(self, file_content: str, request: DeepAnalysisRequest) -> List[Message]:
         """
         构造分析prompt
 
@@ -255,7 +261,7 @@ class DeepAnalyzer:
             request: 深度分析请求
 
         Returns:
-            消息列表
+            Message对象列表
         """
         try:
             # 获取系统提示
@@ -295,8 +301,8 @@ class DeepAnalyzer:
                 user_message = self._get_fallback_prompt(file_content, request)
 
             messages = [
-                {"role": "system", "content": system_message},
-                {"role": "user", "content": user_message}
+                Message(role=MessageRole.SYSTEM, content=system_message),
+                Message(role=MessageRole.USER, content=user_message)
             ]
 
             return messages

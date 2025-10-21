@@ -1,12 +1,8 @@
-aidefect_cli.py
-aidefect_web.py
 pyproject.toml
-setup.py
 aidefect.egg-info/PKG-INFO
 aidefect.egg-info/SOURCES.txt
 aidefect.egg-info/dependency_links.txt
 aidefect.egg-info/entry_points.txt
-aidefect.egg-info/not-zip-safe
 aidefect.egg-info/requires.txt
 aidefect.egg-info/top_level.txt
 docs/LICENSE
@@ -27,3 +23,7 @@ tests/test_t029_web_interface.py
 tests/test_t030_web_results.py
 tests/test_t031_fix_interface.py
 tests/test_web_app.py
+tools/__init__.py
+tools/aidefect_cli.py
+tools/aidefect_web.py
+tools/setup.py
