@@ -6,6 +6,24 @@
 echo "🚀 AIDefectDetector API配置向导"
 echo "=================================="
 
+# 加载配置文件
+load_configurations() {
+    # 优先加载.env文件
+    if [ -f ".env" ]; then
+        echo "🔄 加载 .env 文件..."
+        set -a  # 自动导出变量
+        source .env
+        set +a
+    fi
+
+    # 加载 ~/.bashrc 中的环境变量（仅提取API相关）
+    if [ -f "$HOME/.bashrc" ]; then
+        echo "🔄 检查 ~/.bashrc 中的API配置..."
+        # 提取API相关变量并设置
+        eval $(grep -E '^export (ZHIPU|OPENAI|ANTHROPIC)_API_KEY=' "$HOME/.bashrc" | sed 's/^export //')
+    fi
+}
+
 # 检查是否已有API密钥环境变量
 check_existing_keys() {
     echo "📋 检查现有API密钥..."
@@ -240,6 +258,7 @@ main_menu() {
 
         case $choice in
             1)
+                load_configurations
                 check_existing_keys
                 ;;
             2)
@@ -294,6 +313,10 @@ show_usage() {
 
 # 主程序
 main() {
+    # 首先加载现有配置
+    load_configurations
+
+    # 然后检查配置状态
     check_existing_keys
 
     if [ "$ZHIPU_CONFIGURED" = false ] && [ "$OPENAI_CONFIGURED" = false ] && [ "$ANTHROPIC_CONFIGURED" = false ]; then
