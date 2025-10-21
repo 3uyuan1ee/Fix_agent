@@ -1,0 +1,315 @@
+{
+  "target": "analysis",
+  "files_analyzed": 1,
+  "total_issues": 23,
+  "format": "simple",
+  "execution_time": 0.4356088638305664,
+  "files": [
+    {
+      "file_path": "simple_demo.py",
+      "issues_count": 23,
+      "execution_time": 0.4356088638305664,
+      "summary": {
+        "file_path": "simple_demo.py",
+        "total_issues": 23,
+        "severity_distribution": {
+          "warning": 10,
+          "error": 10,
+          "info": 3
+        },
+        "tool_distribution": {
+          "ast": 1,
+          "flake8": 11,
+          "pylint": 11
+        },
+        "issue_types": {
+          "complexity": 1,
+          "style": 6,
+          "fatal": 4,
+          "warning": 9,
+          "convention": 2,
+          "refactor": 1
+        },
+        "execution_time": 0.4356088638305664
+      },
+      "issues": [
+        {
+          "tool_name": "ast",
+          "file_path": "simple_demo.py",
+          "line": 106,
+          "column": 0,
+          "message": "Function 'main' has high cyclomatic complexity: 11",
+          "severity": "warning",
+          "issue_type": "complexity",
+          "code": "HIGH_COMPLEXITY",
+          "confidence": "",
+          "source_code": ""
+        },
+        {
+          "tool_name": "flake8",
+          "file_path": "simple_demo.py",
+          "line": 10,
+          "column": 1,
+          "message": "expected 2 blank lines, found 1",
+          "severity": "error",
+          "issue_type": "style",
+          "code": "E302",
+          "confidence": "",
+          "source_code": ""
+        },
+        {
+          "tool_name": "flake8",
+          "file_path": "simple_demo.py",
+          "line": 30,
+          "column": 89,
+          "message": "line too long (109 > 88 characters)",
+          "severity": "error",
+          "issue_type": "style",
+          "code": "E501",
+          "confidence": "",
+          "source_code": ""
+        },
+        {
+          "tool_name": "flake8",
+          "file_path": "simple_demo.py",
+          "line": 32,
+          "column": 15,
+          "message": "f-string is missing placeholders",
+          "severity": "error",
+          "issue_type": "fatal",
+          "code": "F541",
+          "confidence": "",
+          "source_code": ""
+        },
+        {
+          "tool_name": "flake8",
+          "file_path": "simple_demo.py",
+          "line": 48,
+          "column": 1,
+          "message": "expected 2 blank lines, found 1",
+          "severity": "error",
+          "issue_type": "style",
+          "code": "E302",
+          "confidence": "",
+          "source_code": ""
+        },
+        {
+          "tool_name": "flake8",
+          "file_path": "simple_demo.py",
+          "line": 77,
+          "column": 1,
+          "message": "expected 2 blank lines, found 1",
+          "severity": "error",
+          "issue_type": "style",
+          "code": "E302",
+          "confidence": "",
+          "source_code": ""
+        },
+        {
+          "tool_name": "flake8",
+          "file_path": "simple_demo.py",
+          "line": 98,
+          "column": 15,
+          "message": "f-string is missing placeholders",
+          "severity": "error",
+          "issue_type": "fatal",
+          "code": "F541",
+          "confidence": "",
+          "source_code": ""
+        },
+        {
+          "tool_name": "flake8",
+          "file_path": "simple_demo.py",
+          "line": 99,
+          "column": 15,
+          "message": "f-string is missing placeholders",
+          "severity": "error",
+          "issue_type": "fatal",
+          "code": "F541",
+          "confidence": "",
+          "source_code": ""
+        },
+        {
+          "tool_name": "flake8",
+          "file_path": "simple_demo.py",
+          "line": 102,
+          "column": 11,
+          "message": "f-string is missing placeholders",
+          "severity": "error",
+          "issue_type": "fatal",
+          "code": "F541",
+          "confidence": "",
+          "source_code": ""
+        },
+        {
+          "tool_name": "flake8",
+          "file_path": "simple_demo.py",
+          "line": 106,
+          "column": 1,
+          "message": "expected 2 blank lines, found 1",
+          "severity": "error",
+          "issue_type": "style",
+          "code": "E302",
+          "confidence": "",
+          "source_code": ""
+        },
+        {
+          "tool_name": "flake8",
+          "file_path": "simple_demo.py",
+          "line": 162,
+          "column": 1,
+          "message": "expected 2 blank lines after class or function definition, found 1",
+          "severity": "error",
+          "issue_type": "style",
+          "code": "E305",
+          "confidence": "",
+          "source_code": ""
+        },
+        {
+          "tool_name": "flake8",
+          "file_path": "simple_demo.py",
+          "line": 163,
+          "column": 17,
+          "message": "no newline at end of file",
+          "severity": "warning",
+          "issue_type": "warning",
+          "code": "W292",
+          "confidence": "",
+          "source_code": ""
+        },
+        {
+          "tool_name": "pylint",
+          "file_path": "simple_demo.py",
+          "line": 30,
+          "column": 0,
+          "message": "Line too long (109/100)",
+          "severity": "info",
+          "issue_type": "convention",
+          "code": "C0301",
+          "confidence": "HIGH",
+          "source_code": ""
+        },
+        {
+          "tool_name": "pylint",
+          "file_path": "simple_demo.py",
+          "line": 163,
+          "column": 0,
+          "message": "Final newline missing",
+          "severity": "info",
+          "issue_type": "convention",
+          "code": "C0304",
+          "confidence": "HIGH",
+          "source_code": ""
+        },
+        {
+          "tool_name": "pylint",
+          "file_path": "simple_demo.py",
+          "line": 44,
+          "column": 11,
+          "message": "Catching too general exception Exception",
+          "severity": "warning",
+          "issue_type": "warning",
+          "code": "W0718",
+          "confidence": "HIGH",
+          "source_code": ""
+        },
+        {
+          "tool_name": "pylint",
+          "file_path": "simple_demo.py",
+          "line": 17,
+          "column": 13,
+          "message": "Using open without explicitly specifying an encoding",
+          "severity": "warning",
+          "issue_type": "warning",
+          "code": "W1514",
+          "confidence": "HIGH",
+          "source_code": ""
+        },
+        {
+          "tool_name": "pylint",
+          "file_path": "simple_demo.py",
+          "line": 32,
+          "column": 14,
+          "message": "Using an f-string that does not have any interpolated variables",
+          "severity": "warning",
+          "issue_type": "warning",
+          "code": "W1309",
+          "confidence": "HIGH",
+          "source_code": ""
+        },
+        {
+          "tool_name": "pylint",
+          "file_path": "simple_demo.py",
+          "line": 98,
+          "column": 14,
+          "message": "Using an f-string that does not have any interpolated variables",
+          "severity": "warning",
+          "issue_type": "warning",
+          "code": "W1309",
+          "confidence": "HIGH",
+          "source_code": ""
+        },
+        {
+          "tool_name": "pylint",
+          "file_path": "simple_demo.py",
+          "line": 99,
+          "column": 14,
+          "message": "Using an f-string that does not have any interpolated variables",
+          "severity": "warning",
+          "issue_type": "warning",
+          "code": "W1309",
+          "confidence": "HIGH",
+          "source_code": ""
+        },
+        {
+          "tool_name": "pylint",
+          "file_path": "simple_demo.py",
+          "line": 102,
+          "column": 10,
+          "message": "Using an f-string that does not have any interpolated variables",
+          "severity": "warning",
+          "issue_type": "warning",
+          "code": "W1309",
+          "confidence": "HIGH",
+          "source_code": ""
+        },
+        {
+          "tool_name": "pylint",
+          "file_path": "simple_demo.py",
+          "line": 122,
+          "column": 8,
+          "message": "Using open without explicitly specifying an encoding",
+          "severity": "warning",
+          "issue_type": "warning",
+          "code": "W1514",
+          "confidence": "HIGH",
+          "source_code": ""
+        },
+        {
+          "tool_name": "pylint",
+          "file_path": "simple_demo.py",
+          "line": 158,
+          "column": 11,
+          "message": "Catching too general exception Exception",
+          "severity": "warning",
+          "issue_type": "warning",
+          "code": "W0718",
+          "confidence": "HIGH",
+          "source_code": ""
+        },
+        {
+          "tool_name": "pylint",
+          "file_path": "simple_demo.py",
+          "line": 163,
+          "column": 4,
+          "message": "Consider using 'sys.exit' instead",
+          "severity": "info",
+          "issue_type": "refactor",
+          "code": "R1722",
+          "confidence": "HIGH",
+          "source_code": ""
+        }
+      ]
+    }
+  ]
+}

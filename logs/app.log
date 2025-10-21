@@ -10911,3 +10911,1300 @@
 2025-10-20 17:04:14 | INFO | logger | Execution engine cleaned up
 2025-10-20 21:56:08 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
 2025-10-20 21:56:08 | ERROR | logger | Deep analysis failed: No LLM providers available
+2025-10-20 22:34:34 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-20 22:34:34 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-20 22:34:34 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-20 22:34:34 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-20 22:34:34 | WARNING | logger | Failed to load LLM config from global config: get_section() takes 2 positional arguments but 3 were given
+2025-10-20 22:35:46 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-20 22:35:46 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-20 22:35:46 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-20 22:35:46 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-20 22:35:46 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-20 22:35:46 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-20 22:35:46 | INFO | logger | Starting deep analysis for test_analysis_sample.py (type: comprehensive)
+2025-10-20 22:35:46 | INFO | logger | Deep analysis completed for test_analysis_sample.py in 0.00s
+2025-10-20 22:36:26 | WARNING | logger | Failed to initialize ZhipuAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-20 22:36:26 | WARNING | logger | Failed to initialize OpenAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-20 22:36:26 | WARNING | logger | Failed to initialize Anthropic provider: 'MockConfig' object has no attribute 'validate'
+2025-10-20 22:36:26 | WARNING | logger | Failed to initialize ZhipuAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-20 22:36:26 | WARNING | logger | Failed to initialize OpenAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-20 22:36:26 | WARNING | logger | Failed to initialize Anthropic provider: 'MockConfig' object has no attribute 'validate'
+2025-10-20 22:36:26 | WARNING | logger | Failed to initialize ZhipuAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-20 22:36:26 | WARNING | logger | Failed to initialize OpenAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-20 22:36:26 | WARNING | logger | Failed to initialize Anthropic provider: 'MockConfig' object has no attribute 'validate'
+2025-10-20 22:36:26 | WARNING | logger | Failed to initialize ZhipuAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-20 22:36:26 | WARNING | logger | Failed to initialize OpenAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-20 22:36:26 | WARNING | logger | Failed to initialize Anthropic provider: 'MockConfig' object has no attribute 'validate'
+2025-10-20 22:36:59 | WARNING | logger | Failed to initialize ZhipuAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-20 22:36:59 | WARNING | logger | Failed to initialize OpenAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-20 22:36:59 | WARNING | logger | Failed to initialize Anthropic provider: 'MockConfig' object has no attribute 'validate'
+2025-10-20 22:36:59 | WARNING | logger | Failed to initialize ZhipuAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-20 22:36:59 | WARNING | logger | Failed to initialize OpenAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-20 22:36:59 | WARNING | logger | Failed to initialize Anthropic provider: 'MockConfig' object has no attribute 'validate'
+2025-10-20 22:36:59 | WARNING | logger | Failed to initialize ZhipuAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-20 22:36:59 | WARNING | logger | Failed to initialize OpenAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-20 22:36:59 | WARNING | logger | Failed to initialize Anthropic provider: 'MockConfig' object has no attribute 'validate'
+2025-10-20 22:36:59 | WARNING | logger | Failed to initialize ZhipuAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-20 22:36:59 | WARNING | logger | Failed to initialize OpenAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-20 22:36:59 | WARNING | logger | Failed to initialize Anthropic provider: 'MockConfig' object has no attribute 'validate'
+2025-10-20 22:38:06 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-20 22:38:06 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-20 22:38:06 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-20 22:38:06 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-20 22:48:13 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-20 22:48:13 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-20 22:48:13 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-20 22:48:13 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-20 22:49:14 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-20 22:52:28 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-20 22:52:28 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-20 22:52:28 | INFO | logger | Cache cleared
+2025-10-20 22:52:28 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-20 22:52:31 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-20 22:52:32 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-20 22:52:32 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-20 22:52:32 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-20 22:52:32 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-20 22:54:30 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-20 22:54:30 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-20 22:54:30 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-20 22:54:30 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-20 22:54:30 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-20 22:54:30 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-20 22:54:30 | INFO | logger | Cleaning up execution engine
+2025-10-20 22:54:30 | INFO | logger | Execution engine cleaned up
+2025-10-20 22:54:30 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-20 22:54:30 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-20 22:54:30 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-20 22:54:30 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-20 22:54:30 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-20 22:54:30 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-20 22:54:30 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpel1_6m7k/python_test.py
+2025-10-20 22:54:30 | INFO | logger | Executing 4 tasks
+2025-10-20 22:54:30 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpel1_6m7k/python_test.py with tool ast_analysis
+2025-10-20 22:54:30 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpel1_6m7k/python_test.py with tool pylint_analysis
+2025-10-20 22:54:30 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpel1_6m7k/python_test.py with tool flake8_analysis
+2025-10-20 22:54:30 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpel1_6m7k/python_test.py with tool bandit_analysis
+2025-10-20 22:54:30 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpel1_6m7k/python_test.py completed successfully in 0.00s
+2025-10-20 22:54:30 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpel1_6m7k/python_test.py completed successfully in 0.10s
+2025-10-20 22:54:30 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpel1_6m7k/python_test.py completed successfully in 0.13s
+2025-10-20 22:54:31 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpel1_6m7k/python_test.py completed successfully in 0.37s
+2025-10-20 22:54:31 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-20 22:54:31 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpel1_6m7k/python_test.py: 11 issues in 0.37s
+2025-10-20 22:54:31 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpel1_6m7k/javascript_test.js
+2025-10-20 22:54:31 | INFO | logger | Executing 4 tasks
+2025-10-20 22:54:31 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpel1_6m7k/javascript_test.js with tool ast_analysis
+2025-10-20 22:54:31 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpel1_6m7k/javascript_test.js with tool pylint_analysis
+2025-10-20 22:54:31 | ERROR | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpel1_6m7k/javascript_test.js failed: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpel1_6m7k/javascript_test.js
+2025-10-20 22:54:31 | ERROR | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpel1_6m7k/javascript_test.js failed: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpel1_6m7k/javascript_test.js
+2025-10-20 22:54:31 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpel1_6m7k/javascript_test.js with tool flake8_analysis
+2025-10-20 22:54:31 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpel1_6m7k/javascript_test.js with tool bandit_analysis
+2025-10-20 22:54:31 | ERROR | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpel1_6m7k/javascript_test.js failed: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpel1_6m7k/javascript_test.js
+2025-10-20 22:54:31 | ERROR | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpel1_6m7k/javascript_test.js failed: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpel1_6m7k/javascript_test.js
+2025-10-20 22:54:31 | INFO | logger | Completed 4 tasks with 0 successes
+2025-10-20 22:54:31 | WARNING | logger | Tool ast failed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpel1_6m7k/javascript_test.js: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpel1_6m7k/javascript_test.js
+2025-10-20 22:54:31 | WARNING | logger | Tool pylint failed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpel1_6m7k/javascript_test.js: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpel1_6m7k/javascript_test.js
+2025-10-20 22:54:31 | WARNING | logger | Tool flake8 failed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpel1_6m7k/javascript_test.js: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpel1_6m7k/javascript_test.js
+2025-10-20 22:54:31 | WARNING | logger | Tool bandit failed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpel1_6m7k/javascript_test.js: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpel1_6m7k/javascript_test.js
+2025-10-20 22:54:31 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpel1_6m7k/javascript_test.js: 0 issues in 0.00s
+2025-10-20 22:54:31 | INFO | logger | Cleaning up execution engine
+2025-10-20 22:54:31 | INFO | logger | Execution engine cleaned up
+2025-10-20 22:54:31 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-20 22:55:11 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-20 22:55:11 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-20 22:55:11 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-20 22:55:11 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-20 22:55:11 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-20 22:55:11 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-20 22:55:11 | INFO | logger | Cleaning up execution engine
+2025-10-20 22:55:11 | INFO | logger | Execution engine cleaned up
+2025-10-20 22:55:11 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-20 22:55:11 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-20 22:55:11 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-20 22:55:11 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-20 22:55:11 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-20 22:55:11 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-20 22:55:11 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpufj4shvv/python_test.py
+2025-10-20 22:55:11 | INFO | logger | Executing 4 tasks
+2025-10-20 22:55:11 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpufj4shvv/python_test.py with tool ast_analysis
+2025-10-20 22:55:11 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpufj4shvv/python_test.py with tool pylint_analysis
+2025-10-20 22:55:11 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpufj4shvv/python_test.py with tool flake8_analysis
+2025-10-20 22:55:11 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpufj4shvv/python_test.py with tool bandit_analysis
+2025-10-20 22:55:11 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpufj4shvv/python_test.py completed successfully in 0.00s
+2025-10-20 22:55:11 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpufj4shvv/python_test.py completed successfully in 0.11s
+2025-10-20 22:55:11 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpufj4shvv/python_test.py completed successfully in 0.13s
+2025-10-20 22:55:12 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpufj4shvv/python_test.py completed successfully in 0.37s
+2025-10-20 22:55:12 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-20 22:55:12 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpufj4shvv/python_test.py: 11 issues in 0.37s
+2025-10-20 22:55:12 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpufj4shvv/javascript_test.js
+2025-10-20 22:55:12 | INFO | logger | Executing 4 tasks
+2025-10-20 22:55:12 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpufj4shvv/javascript_test.js with tool ast_analysis
+2025-10-20 22:55:12 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpufj4shvv/javascript_test.js with tool pylint_analysis
+2025-10-20 22:55:12 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpufj4shvv/javascript_test.js with tool flake8_analysis
+2025-10-20 22:55:12 | ERROR | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpufj4shvv/javascript_test.js failed: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpufj4shvv/javascript_test.js
+2025-10-20 22:55:12 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpufj4shvv/javascript_test.js with tool bandit_analysis
+2025-10-20 22:55:12 | ERROR | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpufj4shvv/javascript_test.js failed: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpufj4shvv/javascript_test.js
+2025-10-20 22:55:12 | ERROR | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpufj4shvv/javascript_test.js failed: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpufj4shvv/javascript_test.js
+2025-10-20 22:55:12 | ERROR | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpufj4shvv/javascript_test.js failed: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpufj4shvv/javascript_test.js
+2025-10-20 22:55:12 | INFO | logger | Completed 4 tasks with 0 successes
+2025-10-20 22:55:12 | WARNING | logger | Tool ast failed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpufj4shvv/javascript_test.js: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpufj4shvv/javascript_test.js
+2025-10-20 22:55:12 | WARNING | logger | Tool pylint failed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpufj4shvv/javascript_test.js: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpufj4shvv/javascript_test.js
+2025-10-20 22:55:12 | WARNING | logger | Tool flake8 failed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpufj4shvv/javascript_test.js: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpufj4shvv/javascript_test.js
+2025-10-20 22:55:12 | WARNING | logger | Tool bandit failed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpufj4shvv/javascript_test.js: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpufj4shvv/javascript_test.js
+2025-10-20 22:55:12 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpufj4shvv/javascript_test.js: 0 issues in 0.00s
+2025-10-20 22:55:12 | INFO | logger | Cleaning up execution engine
+2025-10-20 22:55:12 | INFO | logger | Execution engine cleaned up
+2025-10-20 22:55:12 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-20 22:55:56 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-20 22:55:56 | INFO | logger | Starting deep analysis for nonexistent_file.py (type: comprehensive)
+2025-10-20 22:55:56 | ERROR | logger | File does not exist: nonexistent_file.py
+2025-10-20 22:55:56 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-20 22:55:56 | INFO | logger | Starting deep analysis for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpakf7ym7c/large_file.py (type: comprehensive)
+2025-10-20 22:55:56 | WARNING | logger | File too large (830 bytes), truncating to 10 bytes
+2025-10-20 22:55:56 | WARNING | logger | Truncated content for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpakf7ym7c/large_file.py
+2025-10-20 22:55:57 | ERROR | logger | Deep analysis failed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpakf7ym7c/large_file.py: object MagicMock can't be used in 'await' expression
+2025-10-20 22:55:57 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-20 22:55:57 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-20 22:55:57 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-20 22:55:57 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-20 22:55:57 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-20 22:55:57 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-20 22:55:57 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-20 22:55:57 | INFO | logger | Starting static analysis for file: nonexistent_file.py
+2025-10-20 22:55:57 | INFO | logger | Executing 4 tasks
+2025-10-20 22:55:57 | INFO | logger | Executing task ast_nonexistent_file.py with tool ast_analysis
+2025-10-20 22:55:57 | INFO | logger | Executing task pylint_nonexistent_file.py with tool pylint_analysis
+2025-10-20 22:55:57 | ERROR | logger | Task ast_nonexistent_file.py failed: File does not exist: nonexistent_file.py
+2025-10-20 22:55:57 | INFO | logger | Executing task flake8_nonexistent_file.py with tool flake8_analysis
+2025-10-20 22:55:57 | ERROR | logger | Task pylint_nonexistent_file.py failed: File does not exist: nonexistent_file.py
+2025-10-20 22:55:57 | INFO | logger | Executing task bandit_nonexistent_file.py with tool bandit_analysis
+2025-10-20 22:55:57 | ERROR | logger | Task flake8_nonexistent_file.py failed: File does not exist: nonexistent_file.py
+2025-10-20 22:55:57 | ERROR | logger | Task bandit_nonexistent_file.py failed: File does not exist: nonexistent_file.py
+2025-10-20 22:55:57 | INFO | logger | Completed 4 tasks with 0 successes
+2025-10-20 22:55:57 | WARNING | logger | Tool ast failed for nonexistent_file.py: File does not exist: nonexistent_file.py
+2025-10-20 22:55:57 | WARNING | logger | Tool pylint failed for nonexistent_file.py: File does not exist: nonexistent_file.py
+2025-10-20 22:55:57 | WARNING | logger | Tool flake8 failed for nonexistent_file.py: File does not exist: nonexistent_file.py
+2025-10-20 22:55:57 | WARNING | logger | Tool bandit failed for nonexistent_file.py: File does not exist: nonexistent_file.py
+2025-10-20 22:55:57 | INFO | logger | Static analysis completed for nonexistent_file.py: 0 issues in 0.00s
+2025-10-20 22:55:57 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprb9o9ayg/invalid_syntax.py
+2025-10-20 22:55:57 | INFO | logger | Executing 4 tasks
+2025-10-20 22:55:57 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprb9o9ayg/invalid_syntax.py with tool ast_analysis
+2025-10-20 22:55:57 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprb9o9ayg/invalid_syntax.py with tool pylint_analysis
+2025-10-20 22:55:57 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprb9o9ayg/invalid_syntax.py with tool flake8_analysis
+2025-10-20 22:55:57 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprb9o9ayg/invalid_syntax.py with tool bandit_analysis
+2025-10-20 22:55:57 | WARNING | logger | AST syntax error /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprb9o9ayg/invalid_syntax.py: Syntax error: invalid syntax (line 3)
+2025-10-20 22:55:57 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprb9o9ayg/invalid_syntax.py completed successfully in 0.00s
+2025-10-20 22:55:57 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprb9o9ayg/invalid_syntax.py completed successfully in 0.09s
+2025-10-20 22:55:57 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprb9o9ayg/invalid_syntax.py completed successfully in 0.11s
+2025-10-20 22:55:57 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprb9o9ayg/invalid_syntax.py completed successfully in 0.27s
+2025-10-20 22:55:57 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-20 22:55:57 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprb9o9ayg/invalid_syntax.py: 3 issues in 0.27s
+2025-10-20 22:55:57 | INFO | logger | Cleaning up execution engine
+2025-10-20 22:55:57 | INFO | logger | Execution engine cleaned up
+2025-10-20 22:56:33 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-20 22:56:33 | INFO | logger | Starting deep analysis for nonexistent_file.py (type: comprehensive)
+2025-10-20 22:56:33 | ERROR | logger | File does not exist: nonexistent_file.py
+2025-10-20 22:56:33 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-20 22:56:33 | INFO | logger | Starting deep analysis for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpvehsk1_o/large_file.py (type: comprehensive)
+2025-10-20 22:56:33 | WARNING | logger | File too large (830 bytes), truncating to 10 bytes
+2025-10-20 22:56:33 | WARNING | logger | Truncated content for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpvehsk1_o/large_file.py
+2025-10-20 22:56:33 | ERROR | logger | Deep analysis failed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpvehsk1_o/large_file.py: object MagicMock can't be used in 'await' expression
+2025-10-20 22:56:33 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-20 22:56:33 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-20 22:56:33 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-20 22:56:33 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-20 22:56:33 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-20 22:56:33 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-20 22:56:33 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-20 22:56:33 | INFO | logger | Starting static analysis for file: nonexistent_file.py
+2025-10-20 22:56:33 | INFO | logger | Executing 4 tasks
+2025-10-20 22:56:33 | INFO | logger | Executing task ast_nonexistent_file.py with tool ast_analysis
+2025-10-20 22:56:33 | INFO | logger | Executing task pylint_nonexistent_file.py with tool pylint_analysis
+2025-10-20 22:56:33 | ERROR | logger | Task pylint_nonexistent_file.py failed: File does not exist: nonexistent_file.py
+2025-10-20 22:56:33 | INFO | logger | Executing task flake8_nonexistent_file.py with tool flake8_analysis
+2025-10-20 22:56:33 | ERROR | logger | Task ast_nonexistent_file.py failed: File does not exist: nonexistent_file.py
+2025-10-20 22:56:33 | INFO | logger | Executing task bandit_nonexistent_file.py with tool bandit_analysis
+2025-10-20 22:56:33 | ERROR | logger | Task flake8_nonexistent_file.py failed: File does not exist: nonexistent_file.py
+2025-10-20 22:56:33 | ERROR | logger | Task bandit_nonexistent_file.py failed: File does not exist: nonexistent_file.py
+2025-10-20 22:56:33 | INFO | logger | Completed 4 tasks with 0 successes
+2025-10-20 22:56:33 | WARNING | logger | Tool pylint failed for nonexistent_file.py: File does not exist: nonexistent_file.py
+2025-10-20 22:56:33 | WARNING | logger | Tool ast failed for nonexistent_file.py: File does not exist: nonexistent_file.py
+2025-10-20 22:56:33 | WARNING | logger | Tool flake8 failed for nonexistent_file.py: File does not exist: nonexistent_file.py
+2025-10-20 22:56:33 | WARNING | logger | Tool bandit failed for nonexistent_file.py: File does not exist: nonexistent_file.py
+2025-10-20 22:56:33 | INFO | logger | Static analysis completed for nonexistent_file.py: 0 issues in 0.00s
+2025-10-20 22:56:33 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpkznyrqb7/invalid_syntax.py
+2025-10-20 22:56:33 | INFO | logger | Executing 4 tasks
+2025-10-20 22:56:33 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpkznyrqb7/invalid_syntax.py with tool ast_analysis
+2025-10-20 22:56:33 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpkznyrqb7/invalid_syntax.py with tool pylint_analysis
+2025-10-20 22:56:33 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpkznyrqb7/invalid_syntax.py with tool flake8_analysis
+2025-10-20 22:56:33 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpkznyrqb7/invalid_syntax.py with tool bandit_analysis
+2025-10-20 22:56:33 | WARNING | logger | AST syntax error /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpkznyrqb7/invalid_syntax.py: Syntax error: invalid syntax (line 3)
+2025-10-20 22:56:33 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpkznyrqb7/invalid_syntax.py completed successfully in 0.00s
+2025-10-20 22:56:33 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpkznyrqb7/invalid_syntax.py completed successfully in 0.10s
+2025-10-20 22:56:33 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpkznyrqb7/invalid_syntax.py completed successfully in 0.13s
+2025-10-20 22:56:33 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpkznyrqb7/invalid_syntax.py completed successfully in 0.29s
+2025-10-20 22:56:33 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-20 22:56:33 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpkznyrqb7/invalid_syntax.py: 3 issues in 0.29s
+2025-10-20 22:56:33 | INFO | logger | Cleaning up execution engine
+2025-10-20 22:56:33 | INFO | logger | Execution engine cleaned up
+2025-10-21 15:53:02 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 15:53:02 | INFO | logger | Memory cache backend initialized, max_size: 100
+2025-10-21 15:53:02 | WARNING | logger | Failed to initialize redis cache backend, falling back to memory: redis package is required for Redis cache backend
+2025-10-21 15:54:20 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 15:54:20 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 15:54:20 | INFO | logger | Cache cleared
+2025-10-21 15:54:20 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 15:54:22 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 15:54:22 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 15:54:22 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 15:54:22 | INFO | logger | Cache cleared
+2025-10-21 15:54:22 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 15:54:24 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:01:19 | INFO | logger | API Request - LLM | /analyze | success | 0.23s
+2025-10-21 16:01:19 | INFO | logger | API Request - Static Analysis | /pylint | success | 0.09s
+2025-10-21 16:01:19 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:01:21 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-21 16:01:21 | INFO | logger | Cleaning up execution engine
+2025-10-21 16:01:21 | INFO | logger | Execution engine cleaned up
+2025-10-21 16:01:22 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:01:22 | INFO | logger | Performance test log 0
+2025-10-21 16:01:22 | INFO | logger | Performance test log 1
+2025-10-21 16:01:22 | INFO | logger | Performance test log 2
+2025-10-21 16:01:22 | INFO | logger | Performance test log 3
+2025-10-21 16:01:22 | INFO | logger | Performance test log 4
+2025-10-21 16:01:22 | INFO | logger | Performance test log 5
+2025-10-21 16:01:22 | INFO | logger | Performance test log 6
+2025-10-21 16:01:22 | INFO | logger | Performance test log 7
+2025-10-21 16:01:22 | INFO | logger | Performance test log 8
+2025-10-21 16:01:22 | INFO | logger | Performance test log 9
+2025-10-21 16:01:22 | INFO | logger | Performance test log 10
+2025-10-21 16:01:22 | INFO | logger | Performance test log 11
+2025-10-21 16:01:22 | INFO | logger | Performance test log 12
+2025-10-21 16:01:22 | INFO | logger | Performance test log 13
+2025-10-21 16:01:22 | INFO | logger | Performance test log 14
+2025-10-21 16:01:22 | INFO | logger | Performance test log 15
+2025-10-21 16:01:22 | INFO | logger | Performance test log 16
+2025-10-21 16:01:22 | INFO | logger | Performance test log 17
+2025-10-21 16:01:22 | INFO | logger | Performance test log 18
+2025-10-21 16:01:22 | INFO | logger | Performance test log 19
+2025-10-21 16:01:22 | INFO | logger | Performance test log 20
+2025-10-21 16:01:22 | INFO | logger | Performance test log 21
+2025-10-21 16:01:22 | INFO | logger | Performance test log 22
+2025-10-21 16:01:22 | INFO | logger | Performance test log 23
+2025-10-21 16:01:22 | INFO | logger | Performance test log 24
+2025-10-21 16:01:22 | INFO | logger | Performance test log 25
+2025-10-21 16:01:22 | INFO | logger | Performance test log 26
+2025-10-21 16:01:22 | INFO | logger | Performance test log 27
+2025-10-21 16:01:22 | INFO | logger | Performance test log 28
+2025-10-21 16:01:22 | INFO | logger | Performance test log 29
+2025-10-21 16:01:22 | INFO | logger | Performance test log 30
+2025-10-21 16:01:22 | INFO | logger | Performance test log 31
+2025-10-21 16:01:22 | INFO | logger | Performance test log 32
+2025-10-21 16:01:22 | INFO | logger | Performance test log 33
+2025-10-21 16:01:22 | INFO | logger | Performance test log 34
+2025-10-21 16:01:22 | INFO | logger | Performance test log 35
+2025-10-21 16:01:22 | INFO | logger | Performance test log 36
+2025-10-21 16:01:22 | INFO | logger | Performance test log 37
+2025-10-21 16:01:22 | INFO | logger | Performance test log 38
+2025-10-21 16:01:22 | INFO | logger | Performance test log 39
+2025-10-21 16:01:22 | INFO | logger | Performance test log 40
+2025-10-21 16:01:22 | INFO | logger | Performance test log 41
+2025-10-21 16:01:22 | INFO | logger | Performance test log 42
+2025-10-21 16:01:22 | INFO | logger | Performance test log 43
+2025-10-21 16:01:22 | INFO | logger | Performance test log 44
+2025-10-21 16:01:22 | INFO | logger | Performance test log 45
+2025-10-21 16:01:22 | INFO | logger | Performance test log 46
+2025-10-21 16:01:22 | INFO | logger | Performance test log 47
+2025-10-21 16:01:22 | INFO | logger | Performance test log 48
+2025-10-21 16:01:22 | INFO | logger | Performance test log 49
+2025-10-21 16:03:21 | INFO | logger | API Request - LLM | /analyze | success | 0.23s
+2025-10-21 16:03:21 | INFO | logger | API Request - Static Analysis | /pylint | success | 0.09s
+2025-10-21 16:03:21 | INFO | logger | Performance test log 0
+2025-10-21 16:03:21 | WARNING | logger | Warning message 0
+2025-10-21 16:03:21 | INFO | logger | Performance test log 1
+2025-10-21 16:03:21 | INFO | logger | Performance test log 2
+2025-10-21 16:03:21 | INFO | logger | Performance test log 3
+2025-10-21 16:03:21 | INFO | logger | Performance test log 4
+2025-10-21 16:03:21 | INFO | logger | Performance test log 5
+2025-10-21 16:03:21 | INFO | logger | Performance test log 6
+2025-10-21 16:03:21 | INFO | logger | Performance test log 7
+2025-10-21 16:03:21 | INFO | logger | Performance test log 8
+2025-10-21 16:03:21 | INFO | logger | Performance test log 9
+2025-10-21 16:03:21 | INFO | logger | Performance test log 10
+2025-10-21 16:03:21 | WARNING | logger | Warning message 10
+2025-10-21 16:03:21 | INFO | logger | Performance test log 11
+2025-10-21 16:03:21 | INFO | logger | Performance test log 12
+2025-10-21 16:03:21 | INFO | logger | Performance test log 13
+2025-10-21 16:03:21 | INFO | logger | Performance test log 14
+2025-10-21 16:03:21 | INFO | logger | Performance test log 15
+2025-10-21 16:03:21 | INFO | logger | Performance test log 16
+2025-10-21 16:03:21 | INFO | logger | Performance test log 17
+2025-10-21 16:03:21 | INFO | logger | Performance test log 18
+2025-10-21 16:03:21 | INFO | logger | Performance test log 19
+2025-10-21 16:03:21 | INFO | logger | Performance test log 20
+2025-10-21 16:03:21 | WARNING | logger | Warning message 20
+2025-10-21 16:03:21 | INFO | logger | Performance test log 21
+2025-10-21 16:03:21 | INFO | logger | Performance test log 22
+2025-10-21 16:03:21 | INFO | logger | Performance test log 23
+2025-10-21 16:03:21 | INFO | logger | Performance test log 24
+2025-10-21 16:03:21 | INFO | logger | Performance test log 25
+2025-10-21 16:03:21 | INFO | logger | Performance test log 26
+2025-10-21 16:03:21 | INFO | logger | Performance test log 27
+2025-10-21 16:03:21 | INFO | logger | Performance test log 28
+2025-10-21 16:03:21 | INFO | logger | Performance test log 29
+2025-10-21 16:03:21 | INFO | logger | Performance test log 30
+2025-10-21 16:03:21 | WARNING | logger | Warning message 30
+2025-10-21 16:03:21 | INFO | logger | Performance test log 31
+2025-10-21 16:03:21 | INFO | logger | Performance test log 32
+2025-10-21 16:03:21 | INFO | logger | Performance test log 33
+2025-10-21 16:03:21 | INFO | logger | Performance test log 34
+2025-10-21 16:03:21 | INFO | logger | Performance test log 35
+2025-10-21 16:03:21 | INFO | logger | Performance test log 36
+2025-10-21 16:03:21 | INFO | logger | Performance test log 37
+2025-10-21 16:03:21 | INFO | logger | Performance test log 38
+2025-10-21 16:03:21 | INFO | logger | Performance test log 39
+2025-10-21 16:03:21 | INFO | logger | Performance test log 40
+2025-10-21 16:03:21 | WARNING | logger | Warning message 40
+2025-10-21 16:03:21 | INFO | logger | Performance test log 41
+2025-10-21 16:03:21 | INFO | logger | Performance test log 42
+2025-10-21 16:03:21 | INFO | logger | Performance test log 43
+2025-10-21 16:03:21 | INFO | logger | Performance test log 44
+2025-10-21 16:03:21 | INFO | logger | Performance test log 45
+2025-10-21 16:03:21 | INFO | logger | Performance test log 46
+2025-10-21 16:03:21 | INFO | logger | Performance test log 47
+2025-10-21 16:03:21 | INFO | logger | Performance test log 48
+2025-10-21 16:03:21 | INFO | logger | Performance test log 49
+2025-10-21 16:03:21 | INFO | logger | Performance test log 50
+2025-10-21 16:03:21 | WARNING | logger | Warning message 50
+2025-10-21 16:03:21 | INFO | logger | Performance test log 51
+2025-10-21 16:03:21 | INFO | logger | Performance test log 52
+2025-10-21 16:03:21 | INFO | logger | Performance test log 53
+2025-10-21 16:03:21 | INFO | logger | Performance test log 54
+2025-10-21 16:03:21 | INFO | logger | Performance test log 55
+2025-10-21 16:03:21 | INFO | logger | Performance test log 56
+2025-10-21 16:03:21 | INFO | logger | Performance test log 57
+2025-10-21 16:03:21 | INFO | logger | Performance test log 58
+2025-10-21 16:03:21 | INFO | logger | Performance test log 59
+2025-10-21 16:03:21 | INFO | logger | Performance test log 60
+2025-10-21 16:03:21 | WARNING | logger | Warning message 60
+2025-10-21 16:03:21 | INFO | logger | Performance test log 61
+2025-10-21 16:03:21 | INFO | logger | Performance test log 62
+2025-10-21 16:03:21 | INFO | logger | Performance test log 63
+2025-10-21 16:03:21 | INFO | logger | Performance test log 64
+2025-10-21 16:03:21 | INFO | logger | Performance test log 65
+2025-10-21 16:03:21 | INFO | logger | Performance test log 66
+2025-10-21 16:03:21 | INFO | logger | Performance test log 67
+2025-10-21 16:03:21 | INFO | logger | Performance test log 68
+2025-10-21 16:03:21 | INFO | logger | Performance test log 69
+2025-10-21 16:03:21 | INFO | logger | Performance test log 70
+2025-10-21 16:03:21 | WARNING | logger | Warning message 70
+2025-10-21 16:03:21 | INFO | logger | Performance test log 71
+2025-10-21 16:03:21 | INFO | logger | Performance test log 72
+2025-10-21 16:03:21 | INFO | logger | Performance test log 73
+2025-10-21 16:03:21 | INFO | logger | Performance test log 74
+2025-10-21 16:03:21 | INFO | logger | Performance test log 75
+2025-10-21 16:03:21 | INFO | logger | Performance test log 76
+2025-10-21 16:03:21 | INFO | logger | Performance test log 77
+2025-10-21 16:03:21 | INFO | logger | Performance test log 78
+2025-10-21 16:03:21 | INFO | logger | Performance test log 79
+2025-10-21 16:03:21 | INFO | logger | Performance test log 80
+2025-10-21 16:03:21 | WARNING | logger | Warning message 80
+2025-10-21 16:03:21 | INFO | logger | Performance test log 81
+2025-10-21 16:03:21 | INFO | logger | Performance test log 82
+2025-10-21 16:03:21 | INFO | logger | Performance test log 83
+2025-10-21 16:03:21 | INFO | logger | Performance test log 84
+2025-10-21 16:03:21 | INFO | logger | Performance test log 85
+2025-10-21 16:03:21 | INFO | logger | Performance test log 86
+2025-10-21 16:03:21 | INFO | logger | Performance test log 87
+2025-10-21 16:03:21 | INFO | logger | Performance test log 88
+2025-10-21 16:03:21 | INFO | logger | Performance test log 89
+2025-10-21 16:03:21 | INFO | logger | Performance test log 90
+2025-10-21 16:03:21 | WARNING | logger | Warning message 90
+2025-10-21 16:03:21 | INFO | logger | Performance test log 91
+2025-10-21 16:03:21 | INFO | logger | Performance test log 92
+2025-10-21 16:03:21 | INFO | logger | Performance test log 93
+2025-10-21 16:03:21 | INFO | logger | Performance test log 94
+2025-10-21 16:03:21 | INFO | logger | Performance test log 95
+2025-10-21 16:03:21 | INFO | logger | Performance test log 96
+2025-10-21 16:03:21 | INFO | logger | Performance test log 97
+2025-10-21 16:03:21 | INFO | logger | Performance test log 98
+2025-10-21 16:03:21 | INFO | logger | Performance test log 99
+2025-10-21 16:03:21 | INFO | logger | Processing item 0
+2025-10-21 16:03:21 | INFO | logger | Processing item 1
+2025-10-21 16:03:21 | INFO | logger | Processing item 2
+2025-10-21 16:03:21 | INFO | logger | Processing item 3
+2025-10-21 16:03:21 | INFO | logger | Processing item 4
+2025-10-21 16:03:21 | INFO | logger | Processing item 5
+2025-10-21 16:03:21 | INFO | logger | Processing item 6
+2025-10-21 16:03:21 | INFO | logger | Processing item 7
+2025-10-21 16:03:21 | INFO | logger | Processing item 8
+2025-10-21 16:03:21 | INFO | logger | Processing item 9
+2025-10-21 16:03:21 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:03:21 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:03:21 | INFO | logger | Performance log 0
+2025-10-21 16:03:21 | INFO | logger | Performance log 1
+2025-10-21 16:03:21 | INFO | logger | Performance log 2
+2025-10-21 16:03:21 | INFO | logger | Performance log 3
+2025-10-21 16:03:21 | INFO | logger | Performance log 4
+2025-10-21 16:03:21 | INFO | logger | Performance log 5
+2025-10-21 16:03:21 | INFO | logger | Performance log 6
+2025-10-21 16:03:21 | INFO | logger | Performance log 7
+2025-10-21 16:03:21 | INFO | logger | Performance log 8
+2025-10-21 16:03:21 | INFO | logger | Performance log 9
+2025-10-21 16:03:21 | INFO | logger | Performance log 10
+2025-10-21 16:03:21 | INFO | logger | Performance log 11
+2025-10-21 16:03:21 | INFO | logger | Performance log 12
+2025-10-21 16:03:21 | INFO | logger | Performance log 13
+2025-10-21 16:03:21 | INFO | logger | Performance log 14
+2025-10-21 16:03:21 | INFO | logger | Performance log 15
+2025-10-21 16:03:21 | INFO | logger | Performance log 16
+2025-10-21 16:03:21 | INFO | logger | Performance log 17
+2025-10-21 16:03:21 | INFO | logger | Performance log 18
+2025-10-21 16:03:21 | INFO | logger | Performance log 19
+2025-10-21 16:03:21 | INFO | logger | Performance log 20
+2025-10-21 16:03:21 | INFO | logger | Performance log 21
+2025-10-21 16:03:21 | INFO | logger | Performance log 22
+2025-10-21 16:03:21 | INFO | logger | Performance log 23
+2025-10-21 16:03:21 | INFO | logger | Performance log 24
+2025-10-21 16:03:21 | INFO | logger | Performance log 25
+2025-10-21 16:03:21 | INFO | logger | Performance log 26
+2025-10-21 16:03:21 | INFO | logger | Performance log 27
+2025-10-21 16:03:21 | INFO | logger | Performance log 28
+2025-10-21 16:03:21 | INFO | logger | Performance log 29
+2025-10-21 16:04:07 | INFO | logger | API Request - LLM | /analyze | success | 0.23s
+2025-10-21 16:04:07 | INFO | logger | API Request - Static Analysis | /pylint | success | 0.09s
+2025-10-21 16:04:07 | INFO | logger | Performance test log 0
+2025-10-21 16:04:07 | WARNING | logger | Warning message 0
+2025-10-21 16:04:07 | INFO | logger | Performance test log 1
+2025-10-21 16:04:07 | INFO | logger | Performance test log 2
+2025-10-21 16:04:07 | INFO | logger | Performance test log 3
+2025-10-21 16:04:07 | INFO | logger | Performance test log 4
+2025-10-21 16:04:07 | INFO | logger | Performance test log 5
+2025-10-21 16:04:07 | INFO | logger | Performance test log 6
+2025-10-21 16:04:07 | INFO | logger | Performance test log 7
+2025-10-21 16:04:07 | INFO | logger | Performance test log 8
+2025-10-21 16:04:07 | INFO | logger | Performance test log 9
+2025-10-21 16:04:07 | INFO | logger | Performance test log 10
+2025-10-21 16:04:07 | WARNING | logger | Warning message 10
+2025-10-21 16:04:07 | INFO | logger | Performance test log 11
+2025-10-21 16:04:07 | INFO | logger | Performance test log 12
+2025-10-21 16:04:07 | INFO | logger | Performance test log 13
+2025-10-21 16:04:07 | INFO | logger | Performance test log 14
+2025-10-21 16:04:07 | INFO | logger | Performance test log 15
+2025-10-21 16:04:07 | INFO | logger | Performance test log 16
+2025-10-21 16:04:07 | INFO | logger | Performance test log 17
+2025-10-21 16:04:07 | INFO | logger | Performance test log 18
+2025-10-21 16:04:07 | INFO | logger | Performance test log 19
+2025-10-21 16:04:07 | INFO | logger | Performance test log 20
+2025-10-21 16:04:07 | WARNING | logger | Warning message 20
+2025-10-21 16:04:07 | INFO | logger | Performance test log 21
+2025-10-21 16:04:07 | INFO | logger | Performance test log 22
+2025-10-21 16:04:07 | INFO | logger | Performance test log 23
+2025-10-21 16:04:07 | INFO | logger | Performance test log 24
+2025-10-21 16:04:07 | INFO | logger | Performance test log 25
+2025-10-21 16:04:07 | INFO | logger | Performance test log 26
+2025-10-21 16:04:07 | INFO | logger | Performance test log 27
+2025-10-21 16:04:07 | INFO | logger | Performance test log 28
+2025-10-21 16:04:07 | INFO | logger | Performance test log 29
+2025-10-21 16:04:07 | INFO | logger | Performance test log 30
+2025-10-21 16:04:07 | WARNING | logger | Warning message 30
+2025-10-21 16:04:07 | INFO | logger | Performance test log 31
+2025-10-21 16:04:07 | INFO | logger | Performance test log 32
+2025-10-21 16:04:07 | INFO | logger | Performance test log 33
+2025-10-21 16:04:07 | INFO | logger | Performance test log 34
+2025-10-21 16:04:07 | INFO | logger | Performance test log 35
+2025-10-21 16:04:07 | INFO | logger | Performance test log 36
+2025-10-21 16:04:07 | INFO | logger | Performance test log 37
+2025-10-21 16:04:07 | INFO | logger | Performance test log 38
+2025-10-21 16:04:07 | INFO | logger | Performance test log 39
+2025-10-21 16:04:07 | INFO | logger | Performance test log 40
+2025-10-21 16:04:07 | WARNING | logger | Warning message 40
+2025-10-21 16:04:07 | INFO | logger | Performance test log 41
+2025-10-21 16:04:07 | INFO | logger | Performance test log 42
+2025-10-21 16:04:07 | INFO | logger | Performance test log 43
+2025-10-21 16:04:07 | INFO | logger | Performance test log 44
+2025-10-21 16:04:07 | INFO | logger | Performance test log 45
+2025-10-21 16:04:07 | INFO | logger | Performance test log 46
+2025-10-21 16:04:07 | INFO | logger | Performance test log 47
+2025-10-21 16:04:07 | INFO | logger | Performance test log 48
+2025-10-21 16:04:07 | INFO | logger | Performance test log 49
+2025-10-21 16:04:07 | INFO | logger | Performance test log 50
+2025-10-21 16:04:07 | WARNING | logger | Warning message 50
+2025-10-21 16:04:07 | INFO | logger | Performance test log 51
+2025-10-21 16:04:07 | INFO | logger | Performance test log 52
+2025-10-21 16:04:07 | INFO | logger | Performance test log 53
+2025-10-21 16:04:07 | INFO | logger | Performance test log 54
+2025-10-21 16:04:07 | INFO | logger | Performance test log 55
+2025-10-21 16:04:07 | INFO | logger | Performance test log 56
+2025-10-21 16:04:07 | INFO | logger | Performance test log 57
+2025-10-21 16:04:07 | INFO | logger | Performance test log 58
+2025-10-21 16:04:07 | INFO | logger | Performance test log 59
+2025-10-21 16:04:07 | INFO | logger | Performance test log 60
+2025-10-21 16:04:07 | WARNING | logger | Warning message 60
+2025-10-21 16:04:07 | INFO | logger | Performance test log 61
+2025-10-21 16:04:07 | INFO | logger | Performance test log 62
+2025-10-21 16:04:07 | INFO | logger | Performance test log 63
+2025-10-21 16:04:07 | INFO | logger | Performance test log 64
+2025-10-21 16:04:07 | INFO | logger | Performance test log 65
+2025-10-21 16:04:07 | INFO | logger | Performance test log 66
+2025-10-21 16:04:07 | INFO | logger | Performance test log 67
+2025-10-21 16:04:07 | INFO | logger | Performance test log 68
+2025-10-21 16:04:07 | INFO | logger | Performance test log 69
+2025-10-21 16:04:07 | INFO | logger | Performance test log 70
+2025-10-21 16:04:07 | WARNING | logger | Warning message 70
+2025-10-21 16:04:07 | INFO | logger | Performance test log 71
+2025-10-21 16:04:07 | INFO | logger | Performance test log 72
+2025-10-21 16:04:07 | INFO | logger | Performance test log 73
+2025-10-21 16:04:07 | INFO | logger | Performance test log 74
+2025-10-21 16:04:07 | INFO | logger | Performance test log 75
+2025-10-21 16:04:07 | INFO | logger | Performance test log 76
+2025-10-21 16:04:07 | INFO | logger | Performance test log 77
+2025-10-21 16:04:07 | INFO | logger | Performance test log 78
+2025-10-21 16:04:07 | INFO | logger | Performance test log 79
+2025-10-21 16:04:07 | INFO | logger | Performance test log 80
+2025-10-21 16:04:07 | WARNING | logger | Warning message 80
+2025-10-21 16:04:07 | INFO | logger | Performance test log 81
+2025-10-21 16:04:07 | INFO | logger | Performance test log 82
+2025-10-21 16:04:07 | INFO | logger | Performance test log 83
+2025-10-21 16:04:07 | INFO | logger | Performance test log 84
+2025-10-21 16:04:07 | INFO | logger | Performance test log 85
+2025-10-21 16:04:07 | INFO | logger | Performance test log 86
+2025-10-21 16:04:07 | INFO | logger | Performance test log 87
+2025-10-21 16:04:07 | INFO | logger | Performance test log 88
+2025-10-21 16:04:07 | INFO | logger | Performance test log 89
+2025-10-21 16:04:07 | INFO | logger | Performance test log 90
+2025-10-21 16:04:07 | WARNING | logger | Warning message 90
+2025-10-21 16:04:07 | INFO | logger | Performance test log 91
+2025-10-21 16:04:07 | INFO | logger | Performance test log 92
+2025-10-21 16:04:07 | INFO | logger | Performance test log 93
+2025-10-21 16:04:07 | INFO | logger | Performance test log 94
+2025-10-21 16:04:07 | INFO | logger | Performance test log 95
+2025-10-21 16:04:07 | INFO | logger | Performance test log 96
+2025-10-21 16:04:07 | INFO | logger | Performance test log 97
+2025-10-21 16:04:07 | INFO | logger | Performance test log 98
+2025-10-21 16:04:07 | INFO | logger | Performance test log 99
+2025-10-21 16:04:07 | INFO | logger | Processing item 0
+2025-10-21 16:04:07 | INFO | logger | Processing item 1
+2025-10-21 16:04:07 | INFO | logger | Processing item 2
+2025-10-21 16:04:07 | INFO | logger | Processing item 3
+2025-10-21 16:04:07 | INFO | logger | Processing item 4
+2025-10-21 16:04:07 | INFO | logger | Processing item 5
+2025-10-21 16:04:07 | INFO | logger | Processing item 6
+2025-10-21 16:04:07 | INFO | logger | Processing item 7
+2025-10-21 16:04:07 | INFO | logger | Processing item 8
+2025-10-21 16:04:07 | INFO | logger | Processing item 9
+2025-10-21 16:04:07 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:04:07 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:04:07 | INFO | logger | Performance log 0
+2025-10-21 16:04:07 | INFO | logger | Performance log 1
+2025-10-21 16:04:07 | INFO | logger | Performance log 2
+2025-10-21 16:04:07 | INFO | logger | Performance log 3
+2025-10-21 16:04:07 | INFO | logger | Performance log 4
+2025-10-21 16:04:07 | INFO | logger | Performance log 5
+2025-10-21 16:04:07 | INFO | logger | Performance log 6
+2025-10-21 16:04:07 | INFO | logger | Performance log 7
+2025-10-21 16:04:07 | INFO | logger | Performance log 8
+2025-10-21 16:04:07 | INFO | logger | Performance log 9
+2025-10-21 16:04:07 | INFO | logger | Performance log 10
+2025-10-21 16:04:07 | INFO | logger | Performance log 11
+2025-10-21 16:04:07 | INFO | logger | Performance log 12
+2025-10-21 16:04:07 | INFO | logger | Performance log 13
+2025-10-21 16:04:07 | INFO | logger | Performance log 14
+2025-10-21 16:04:07 | INFO | logger | Performance log 15
+2025-10-21 16:04:07 | INFO | logger | Performance log 16
+2025-10-21 16:04:07 | INFO | logger | Performance log 17
+2025-10-21 16:04:07 | INFO | logger | Performance log 18
+2025-10-21 16:04:07 | INFO | logger | Performance log 19
+2025-10-21 16:04:07 | INFO | logger | Performance log 20
+2025-10-21 16:04:07 | INFO | logger | Performance log 21
+2025-10-21 16:04:07 | INFO | logger | Performance log 22
+2025-10-21 16:04:07 | INFO | logger | Performance log 23
+2025-10-21 16:04:07 | INFO | logger | Performance log 24
+2025-10-21 16:04:07 | INFO | logger | Performance log 25
+2025-10-21 16:04:07 | INFO | logger | Performance log 26
+2025-10-21 16:04:07 | INFO | logger | Performance log 27
+2025-10-21 16:04:07 | INFO | logger | Performance log 28
+2025-10-21 16:04:07 | INFO | logger | Performance log 29
+2025-10-21 16:14:39 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:14:39 | INFO | logger | Memory cache backend initialized, max_size: 100
+2025-10-21 16:14:39 | WARNING | logger | Failed to initialize redis cache backend, falling back to memory: redis package is required for Redis cache backend
+2025-10-21 16:14:39 | WARNING | logger | Failed to initialize ZhipuAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:14:39 | WARNING | logger | Failed to initialize OpenAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:14:39 | WARNING | logger | Failed to initialize Anthropic provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:14:39 | WARNING | logger | Failed to initialize ZhipuAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:14:39 | WARNING | logger | Failed to initialize OpenAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:14:39 | WARNING | logger | Failed to initialize Anthropic provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:14:39 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-21 16:14:39 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-21 16:14:39 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-21 16:14:39 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-21 16:18:25 | WARNING | logger | Failed to initialize ZhipuAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:18:25 | WARNING | logger | Failed to initialize OpenAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:18:25 | WARNING | logger | Failed to initialize Anthropic provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:18:25 | WARNING | logger | Failed to initialize ZhipuAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:18:25 | WARNING | logger | Failed to initialize OpenAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:18:25 | WARNING | logger | Failed to initialize Anthropic provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:18:25 | WARNING | logger | Failed to initialize ZhipuAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:18:25 | WARNING | logger | Failed to initialize OpenAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:18:25 | WARNING | logger | Failed to initialize Anthropic provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:18:25 | WARNING | logger | Failed to initialize ZhipuAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:18:25 | WARNING | logger | Failed to initialize OpenAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:18:25 | WARNING | logger | Failed to initialize Anthropic provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:18:25 | WARNING | logger | Failed to initialize ZhipuAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:18:25 | WARNING | logger | Failed to initialize OpenAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:18:25 | WARNING | logger | Failed to initialize Anthropic provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:18:49 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-21 16:18:49 | ERROR | logger | Failed to read file test_file_reading.py: 'str' object has no attribute 'exists'
+2025-10-21 16:18:49 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-21 16:18:49 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-21 16:18:49 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-21 16:18:49 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-21 16:18:49 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-21 16:18:49 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-21 16:18:49 | INFO | logger | Cleaning up execution engine
+2025-10-21 16:18:49 | INFO | logger | Execution engine cleaned up
+2025-10-21 16:18:49 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-21 16:18:49 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-21 16:18:49 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-21 16:18:49 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-21 16:18:49 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-21 16:18:49 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-21 16:18:49 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprs0i3d93/python_test.py
+2025-10-21 16:18:49 | INFO | logger | Executing 4 tasks
+2025-10-21 16:18:49 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprs0i3d93/python_test.py with tool ast_analysis
+2025-10-21 16:18:49 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprs0i3d93/python_test.py with tool pylint_analysis
+2025-10-21 16:18:49 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprs0i3d93/python_test.py with tool flake8_analysis
+2025-10-21 16:18:49 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprs0i3d93/python_test.py with tool bandit_analysis
+2025-10-21 16:18:49 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprs0i3d93/python_test.py completed successfully in 0.00s
+2025-10-21 16:18:50 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprs0i3d93/python_test.py completed successfully in 0.10s
+2025-10-21 16:18:50 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprs0i3d93/python_test.py completed successfully in 0.12s
+2025-10-21 16:18:50 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprs0i3d93/python_test.py completed successfully in 0.38s
+2025-10-21 16:18:50 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-21 16:18:50 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprs0i3d93/python_test.py: 11 issues in 0.38s
+2025-10-21 16:18:50 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprs0i3d93/javascript_test.js
+2025-10-21 16:18:50 | INFO | logger | Executing 4 tasks
+2025-10-21 16:18:50 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprs0i3d93/javascript_test.js with tool ast_analysis
+2025-10-21 16:18:50 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprs0i3d93/javascript_test.js with tool pylint_analysis
+2025-10-21 16:18:50 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprs0i3d93/javascript_test.js with tool flake8_analysis
+2025-10-21 16:18:50 | ERROR | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprs0i3d93/javascript_test.js failed: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprs0i3d93/javascript_test.js
+2025-10-21 16:18:50 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprs0i3d93/javascript_test.js with tool bandit_analysis
+2025-10-21 16:18:50 | ERROR | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprs0i3d93/javascript_test.js failed: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprs0i3d93/javascript_test.js
+2025-10-21 16:18:50 | ERROR | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprs0i3d93/javascript_test.js failed: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprs0i3d93/javascript_test.js
+2025-10-21 16:18:50 | ERROR | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprs0i3d93/javascript_test.js failed: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprs0i3d93/javascript_test.js
+2025-10-21 16:18:50 | INFO | logger | Completed 4 tasks with 0 successes
+2025-10-21 16:18:50 | WARNING | logger | Tool ast failed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprs0i3d93/javascript_test.js: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprs0i3d93/javascript_test.js
+2025-10-21 16:18:50 | WARNING | logger | Tool pylint failed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprs0i3d93/javascript_test.js: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprs0i3d93/javascript_test.js
+2025-10-21 16:18:50 | WARNING | logger | Tool flake8 failed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprs0i3d93/javascript_test.js: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprs0i3d93/javascript_test.js
+2025-10-21 16:18:50 | WARNING | logger | Tool bandit failed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprs0i3d93/javascript_test.js: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprs0i3d93/javascript_test.js
+2025-10-21 16:18:50 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmprs0i3d93/javascript_test.js: 0 issues in 0.00s
+2025-10-21 16:18:50 | INFO | logger | Cleaning up execution engine
+2025-10-21 16:18:50 | INFO | logger | Execution engine cleaned up
+2025-10-21 16:18:50 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:20:23 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-21 16:20:23 | ERROR | logger | Failed to read file test_file_reading.py: 'str' object has no attribute 'exists'
+2025-10-21 16:22:10 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-21 16:22:10 | INFO | logger | Starting deep analysis for nonexistent_file.py (type: comprehensive)
+2025-10-21 16:22:10 | ERROR | logger | File does not exist: nonexistent_file.py
+2025-10-21 16:22:10 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-21 16:22:10 | INFO | logger | Starting deep analysis for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphvbq7a4l/large_file.py (type: comprehensive)
+2025-10-21 16:22:10 | WARNING | logger | File too large (830 bytes), truncating to 10 bytes
+2025-10-21 16:22:10 | WARNING | logger | Truncated content for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphvbq7a4l/large_file.py
+2025-10-21 16:22:10 | ERROR | logger | Deep analysis failed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmphvbq7a4l/large_file.py: object MagicMock can't be used in 'await' expression
+2025-10-21 16:22:10 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:22:10 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-21 16:22:10 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-21 16:22:10 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-21 16:22:10 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-21 16:22:10 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-21 16:22:10 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-21 16:22:10 | INFO | logger | Starting static analysis for file: nonexistent_file.py
+2025-10-21 16:22:10 | INFO | logger | Executing 4 tasks
+2025-10-21 16:22:10 | INFO | logger | Executing task ast_nonexistent_file.py with tool ast_analysis
+2025-10-21 16:22:10 | INFO | logger | Executing task pylint_nonexistent_file.py with tool pylint_analysis
+2025-10-21 16:22:10 | ERROR | logger | Task ast_nonexistent_file.py failed: File does not exist: nonexistent_file.py
+2025-10-21 16:22:10 | INFO | logger | Executing task flake8_nonexistent_file.py with tool flake8_analysis
+2025-10-21 16:22:10 | ERROR | logger | Task pylint_nonexistent_file.py failed: File does not exist: nonexistent_file.py
+2025-10-21 16:22:10 | INFO | logger | Executing task bandit_nonexistent_file.py with tool bandit_analysis
+2025-10-21 16:22:10 | ERROR | logger | Task flake8_nonexistent_file.py failed: File does not exist: nonexistent_file.py
+2025-10-21 16:22:10 | ERROR | logger | Task bandit_nonexistent_file.py failed: File does not exist: nonexistent_file.py
+2025-10-21 16:22:10 | INFO | logger | Completed 4 tasks with 0 successes
+2025-10-21 16:22:10 | WARNING | logger | Tool ast failed for nonexistent_file.py: File does not exist: nonexistent_file.py
+2025-10-21 16:22:10 | WARNING | logger | Tool pylint failed for nonexistent_file.py: File does not exist: nonexistent_file.py
+2025-10-21 16:22:10 | WARNING | logger | Tool flake8 failed for nonexistent_file.py: File does not exist: nonexistent_file.py
+2025-10-21 16:22:10 | WARNING | logger | Tool bandit failed for nonexistent_file.py: File does not exist: nonexistent_file.py
+2025-10-21 16:22:10 | INFO | logger | Static analysis completed for nonexistent_file.py: 0 issues in 0.00s
+2025-10-21 16:22:10 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpp5or30xh/invalid_syntax.py
+2025-10-21 16:22:10 | INFO | logger | Executing 4 tasks
+2025-10-21 16:22:10 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpp5or30xh/invalid_syntax.py with tool ast_analysis
+2025-10-21 16:22:10 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpp5or30xh/invalid_syntax.py with tool pylint_analysis
+2025-10-21 16:22:10 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpp5or30xh/invalid_syntax.py with tool flake8_analysis
+2025-10-21 16:22:10 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpp5or30xh/invalid_syntax.py with tool bandit_analysis
+2025-10-21 16:22:10 | WARNING | logger | AST syntax error /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpp5or30xh/invalid_syntax.py: Syntax error: invalid syntax (line 3)
+2025-10-21 16:22:10 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpp5or30xh/invalid_syntax.py completed successfully in 0.01s
+2025-10-21 16:22:10 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpp5or30xh/invalid_syntax.py completed successfully in 0.11s
+2025-10-21 16:22:10 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpp5or30xh/invalid_syntax.py completed successfully in 0.13s
+2025-10-21 16:22:11 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpp5or30xh/invalid_syntax.py completed successfully in 0.32s
+2025-10-21 16:22:11 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-21 16:22:11 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpp5or30xh/invalid_syntax.py: 3 issues in 0.32s
+2025-10-21 16:22:11 | INFO | logger | Cleaning up execution engine
+2025-10-21 16:22:11 | INFO | logger | Execution engine cleaned up
+2025-10-21 16:22:27 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:22:27 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:22:27 | INFO | logger | Cache cleared
+2025-10-21 16:22:27 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:22:29 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:22:29 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:22:29 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:22:29 | INFO | logger | Cache cleared
+2025-10-21 16:22:29 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:22:31 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:22:31 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:22:31 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:22:31 | INFO | logger | Cache cleared
+2025-10-21 16:22:31 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:22:34 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:22:34 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:22:34 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:22:34 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:22:34 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:22:35 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:22:35 | INFO | logger | Memory cache backend initialized, max_size: 100
+2025-10-21 16:22:35 | WARNING | logger | Failed to initialize redis cache backend, falling back to memory: redis package is required for Redis cache backend
+2025-10-21 16:22:46 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-21 16:22:46 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-21 16:22:46 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-21 16:22:46 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-21 16:22:46 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-21 16:22:47 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-21 16:22:47 | INFO | logger | Starting deep analysis for nonexistent_file.py (type: comprehensive)
+2025-10-21 16:22:47 | ERROR | logger | File does not exist: nonexistent_file.py
+2025-10-21 16:22:47 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-21 16:22:47 | INFO | logger | Starting deep analysis for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpeoetat_c/large_file.py (type: comprehensive)
+2025-10-21 16:22:47 | WARNING | logger | File too large (830 bytes), truncating to 10 bytes
+2025-10-21 16:22:47 | WARNING | logger | Truncated content for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpeoetat_c/large_file.py
+2025-10-21 16:22:47 | ERROR | logger | Deep analysis failed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpeoetat_c/large_file.py: object MagicMock can't be used in 'await' expression
+2025-10-21 16:22:47 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:22:47 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-21 16:22:47 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-21 16:22:47 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-21 16:22:47 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-21 16:22:47 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-21 16:22:47 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-21 16:22:47 | INFO | logger | Starting static analysis for file: nonexistent_file.py
+2025-10-21 16:22:47 | INFO | logger | Executing 4 tasks
+2025-10-21 16:22:47 | INFO | logger | Executing task ast_nonexistent_file.py with tool ast_analysis
+2025-10-21 16:22:47 | INFO | logger | Executing task pylint_nonexistent_file.py with tool pylint_analysis
+2025-10-21 16:22:47 | ERROR | logger | Task ast_nonexistent_file.py failed: File does not exist: nonexistent_file.py
+2025-10-21 16:22:47 | INFO | logger | Executing task flake8_nonexistent_file.py with tool flake8_analysis
+2025-10-21 16:22:47 | ERROR | logger | Task pylint_nonexistent_file.py failed: File does not exist: nonexistent_file.py
+2025-10-21 16:22:47 | INFO | logger | Executing task bandit_nonexistent_file.py with tool bandit_analysis
+2025-10-21 16:22:47 | ERROR | logger | Task flake8_nonexistent_file.py failed: File does not exist: nonexistent_file.py
+2025-10-21 16:22:47 | ERROR | logger | Task bandit_nonexistent_file.py failed: File does not exist: nonexistent_file.py
+2025-10-21 16:22:47 | INFO | logger | Completed 4 tasks with 0 successes
+2025-10-21 16:22:47 | WARNING | logger | Tool ast failed for nonexistent_file.py: File does not exist: nonexistent_file.py
+2025-10-21 16:22:47 | WARNING | logger | Tool pylint failed for nonexistent_file.py: File does not exist: nonexistent_file.py
+2025-10-21 16:22:47 | WARNING | logger | Tool flake8 failed for nonexistent_file.py: File does not exist: nonexistent_file.py
+2025-10-21 16:22:47 | WARNING | logger | Tool bandit failed for nonexistent_file.py: File does not exist: nonexistent_file.py
+2025-10-21 16:22:47 | INFO | logger | Static analysis completed for nonexistent_file.py: 0 issues in 0.00s
+2025-10-21 16:22:47 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpzza7t6eb/invalid_syntax.py
+2025-10-21 16:22:47 | INFO | logger | Executing 4 tasks
+2025-10-21 16:22:47 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpzza7t6eb/invalid_syntax.py with tool ast_analysis
+2025-10-21 16:22:47 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpzza7t6eb/invalid_syntax.py with tool pylint_analysis
+2025-10-21 16:22:47 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpzza7t6eb/invalid_syntax.py with tool flake8_analysis
+2025-10-21 16:22:47 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpzza7t6eb/invalid_syntax.py with tool bandit_analysis
+2025-10-21 16:22:47 | WARNING | logger | AST syntax error /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpzza7t6eb/invalid_syntax.py: Syntax error: invalid syntax (line 3)
+2025-10-21 16:22:47 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpzza7t6eb/invalid_syntax.py completed successfully in 0.00s
+2025-10-21 16:22:47 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpzza7t6eb/invalid_syntax.py completed successfully in 0.09s
+2025-10-21 16:22:47 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpzza7t6eb/invalid_syntax.py completed successfully in 0.13s
+2025-10-21 16:22:47 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpzza7t6eb/invalid_syntax.py completed successfully in 0.28s
+2025-10-21 16:22:47 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-21 16:22:47 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpzza7t6eb/invalid_syntax.py: 3 issues in 0.28s
+2025-10-21 16:22:47 | INFO | logger | Cleaning up execution engine
+2025-10-21 16:22:47 | INFO | logger | Execution engine cleaned up
+2025-10-21 16:22:47 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-21 16:22:47 | ERROR | logger | Failed to read file test_file_reading.py: 'str' object has no attribute 'exists'
+2025-10-21 16:22:47 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-21 16:22:48 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-21 16:22:48 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-21 16:22:48 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-21 16:22:48 | WARNING | logger | Failed to initialize ZhipuAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:22:48 | WARNING | logger | Failed to initialize OpenAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:22:48 | WARNING | logger | Failed to initialize Anthropic provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:22:48 | WARNING | logger | Failed to initialize ZhipuAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:22:48 | WARNING | logger | Failed to initialize OpenAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:22:48 | WARNING | logger | Failed to initialize Anthropic provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:22:48 | WARNING | logger | Failed to initialize ZhipuAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:22:48 | WARNING | logger | Failed to initialize OpenAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:22:48 | WARNING | logger | Failed to initialize Anthropic provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:22:48 | WARNING | logger | Failed to initialize ZhipuAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:22:48 | WARNING | logger | Failed to initialize OpenAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:22:48 | WARNING | logger | Failed to initialize Anthropic provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:22:48 | WARNING | logger | Failed to initialize ZhipuAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:22:48 | WARNING | logger | Failed to initialize OpenAI provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:22:48 | WARNING | logger | Failed to initialize Anthropic provider: 'MockConfig' object has no attribute 'validate'
+2025-10-21 16:22:48 | INFO | logger | API Request - LLM | /analyze | success | 0.23s
+2025-10-21 16:22:48 | INFO | logger | API Request - Static Analysis | /pylint | success | 0.09s
+2025-10-21 16:22:48 | INFO | logger | Performance test log 0
+2025-10-21 16:22:48 | WARNING | logger | Warning message 0
+2025-10-21 16:22:48 | INFO | logger | Performance test log 1
+2025-10-21 16:22:48 | INFO | logger | Performance test log 2
+2025-10-21 16:22:48 | INFO | logger | Performance test log 3
+2025-10-21 16:22:48 | INFO | logger | Performance test log 4
+2025-10-21 16:22:48 | INFO | logger | Performance test log 5
+2025-10-21 16:22:48 | INFO | logger | Performance test log 6
+2025-10-21 16:22:48 | INFO | logger | Performance test log 7
+2025-10-21 16:22:48 | INFO | logger | Performance test log 8
+2025-10-21 16:22:48 | INFO | logger | Performance test log 9
+2025-10-21 16:22:48 | INFO | logger | Performance test log 10
+2025-10-21 16:22:48 | WARNING | logger | Warning message 10
+2025-10-21 16:22:48 | INFO | logger | Performance test log 11
+2025-10-21 16:22:48 | INFO | logger | Performance test log 12
+2025-10-21 16:22:48 | INFO | logger | Performance test log 13
+2025-10-21 16:22:48 | INFO | logger | Performance test log 14
+2025-10-21 16:22:48 | INFO | logger | Performance test log 15
+2025-10-21 16:22:48 | INFO | logger | Performance test log 16
+2025-10-21 16:22:48 | INFO | logger | Performance test log 17
+2025-10-21 16:22:48 | INFO | logger | Performance test log 18
+2025-10-21 16:22:48 | INFO | logger | Performance test log 19
+2025-10-21 16:22:48 | INFO | logger | Performance test log 20
+2025-10-21 16:22:48 | WARNING | logger | Warning message 20
+2025-10-21 16:22:48 | INFO | logger | Performance test log 21
+2025-10-21 16:22:48 | INFO | logger | Performance test log 22
+2025-10-21 16:22:48 | INFO | logger | Performance test log 23
+2025-10-21 16:22:48 | INFO | logger | Performance test log 24
+2025-10-21 16:22:48 | INFO | logger | Performance test log 25
+2025-10-21 16:22:48 | INFO | logger | Performance test log 26
+2025-10-21 16:22:48 | INFO | logger | Performance test log 27
+2025-10-21 16:22:48 | INFO | logger | Performance test log 28
+2025-10-21 16:22:48 | INFO | logger | Performance test log 29
+2025-10-21 16:22:48 | INFO | logger | Performance test log 30
+2025-10-21 16:22:48 | WARNING | logger | Warning message 30
+2025-10-21 16:22:48 | INFO | logger | Performance test log 31
+2025-10-21 16:22:48 | INFO | logger | Performance test log 32
+2025-10-21 16:22:48 | INFO | logger | Performance test log 33
+2025-10-21 16:22:48 | INFO | logger | Performance test log 34
+2025-10-21 16:22:48 | INFO | logger | Performance test log 35
+2025-10-21 16:22:48 | INFO | logger | Performance test log 36
+2025-10-21 16:22:48 | INFO | logger | Performance test log 37
+2025-10-21 16:22:48 | INFO | logger | Performance test log 38
+2025-10-21 16:22:48 | INFO | logger | Performance test log 39
+2025-10-21 16:22:48 | INFO | logger | Performance test log 40
+2025-10-21 16:22:48 | WARNING | logger | Warning message 40
+2025-10-21 16:22:48 | INFO | logger | Performance test log 41
+2025-10-21 16:22:48 | INFO | logger | Performance test log 42
+2025-10-21 16:22:48 | INFO | logger | Performance test log 43
+2025-10-21 16:22:48 | INFO | logger | Performance test log 44
+2025-10-21 16:22:48 | INFO | logger | Performance test log 45
+2025-10-21 16:22:48 | INFO | logger | Performance test log 46
+2025-10-21 16:22:48 | INFO | logger | Performance test log 47
+2025-10-21 16:22:48 | INFO | logger | Performance test log 48
+2025-10-21 16:22:48 | INFO | logger | Performance test log 49
+2025-10-21 16:22:48 | INFO | logger | Performance test log 50
+2025-10-21 16:22:48 | WARNING | logger | Warning message 50
+2025-10-21 16:22:48 | INFO | logger | Performance test log 51
+2025-10-21 16:22:48 | INFO | logger | Performance test log 52
+2025-10-21 16:22:48 | INFO | logger | Performance test log 53
+2025-10-21 16:22:48 | INFO | logger | Performance test log 54
+2025-10-21 16:22:48 | INFO | logger | Performance test log 55
+2025-10-21 16:22:48 | INFO | logger | Performance test log 56
+2025-10-21 16:22:48 | INFO | logger | Performance test log 57
+2025-10-21 16:22:48 | INFO | logger | Performance test log 58
+2025-10-21 16:22:48 | INFO | logger | Performance test log 59
+2025-10-21 16:22:48 | INFO | logger | Performance test log 60
+2025-10-21 16:22:48 | WARNING | logger | Warning message 60
+2025-10-21 16:22:48 | INFO | logger | Performance test log 61
+2025-10-21 16:22:48 | INFO | logger | Performance test log 62
+2025-10-21 16:22:48 | INFO | logger | Performance test log 63
+2025-10-21 16:22:48 | INFO | logger | Performance test log 64
+2025-10-21 16:22:48 | INFO | logger | Performance test log 65
+2025-10-21 16:22:48 | INFO | logger | Performance test log 66
+2025-10-21 16:22:48 | INFO | logger | Performance test log 67
+2025-10-21 16:22:48 | INFO | logger | Performance test log 68
+2025-10-21 16:22:48 | INFO | logger | Performance test log 69
+2025-10-21 16:22:48 | INFO | logger | Performance test log 70
+2025-10-21 16:22:48 | WARNING | logger | Warning message 70
+2025-10-21 16:22:48 | INFO | logger | Performance test log 71
+2025-10-21 16:22:48 | INFO | logger | Performance test log 72
+2025-10-21 16:22:48 | INFO | logger | Performance test log 73
+2025-10-21 16:22:48 | INFO | logger | Performance test log 74
+2025-10-21 16:22:48 | INFO | logger | Performance test log 75
+2025-10-21 16:22:48 | INFO | logger | Performance test log 76
+2025-10-21 16:22:48 | INFO | logger | Performance test log 77
+2025-10-21 16:22:48 | INFO | logger | Performance test log 78
+2025-10-21 16:22:48 | INFO | logger | Performance test log 79
+2025-10-21 16:22:48 | INFO | logger | Performance test log 80
+2025-10-21 16:22:48 | WARNING | logger | Warning message 80
+2025-10-21 16:22:48 | INFO | logger | Performance test log 81
+2025-10-21 16:22:48 | INFO | logger | Performance test log 82
+2025-10-21 16:22:48 | INFO | logger | Performance test log 83
+2025-10-21 16:22:48 | INFO | logger | Performance test log 84
+2025-10-21 16:22:48 | INFO | logger | Performance test log 85
+2025-10-21 16:22:48 | INFO | logger | Performance test log 86
+2025-10-21 16:22:48 | INFO | logger | Performance test log 87
+2025-10-21 16:22:48 | INFO | logger | Performance test log 88
+2025-10-21 16:22:48 | INFO | logger | Performance test log 89
+2025-10-21 16:22:48 | INFO | logger | Performance test log 90
+2025-10-21 16:22:48 | WARNING | logger | Warning message 90
+2025-10-21 16:22:48 | INFO | logger | Performance test log 91
+2025-10-21 16:22:48 | INFO | logger | Performance test log 92
+2025-10-21 16:22:48 | INFO | logger | Performance test log 93
+2025-10-21 16:22:48 | INFO | logger | Performance test log 94
+2025-10-21 16:22:48 | INFO | logger | Performance test log 95
+2025-10-21 16:22:48 | INFO | logger | Performance test log 96
+2025-10-21 16:22:48 | INFO | logger | Performance test log 97
+2025-10-21 16:22:48 | INFO | logger | Performance test log 98
+2025-10-21 16:22:48 | INFO | logger | Performance test log 99
+2025-10-21 16:22:48 | INFO | logger | Processing item 0
+2025-10-21 16:22:48 | INFO | logger | Processing item 1
+2025-10-21 16:22:48 | INFO | logger | Processing item 2
+2025-10-21 16:22:48 | INFO | logger | Processing item 3
+2025-10-21 16:22:48 | INFO | logger | Processing item 4
+2025-10-21 16:22:48 | INFO | logger | Processing item 5
+2025-10-21 16:22:48 | INFO | logger | Processing item 6
+2025-10-21 16:22:48 | INFO | logger | Processing item 7
+2025-10-21 16:22:48 | INFO | logger | Processing item 8
+2025-10-21 16:22:48 | INFO | logger | Processing item 9
+2025-10-21 16:22:48 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:22:48 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:22:48 | INFO | logger | Performance log 0
+2025-10-21 16:22:48 | INFO | logger | Performance log 1
+2025-10-21 16:22:48 | INFO | logger | Performance log 2
+2025-10-21 16:22:48 | INFO | logger | Performance log 3
+2025-10-21 16:22:48 | INFO | logger | Performance log 4
+2025-10-21 16:22:48 | INFO | logger | Performance log 5
+2025-10-21 16:22:48 | INFO | logger | Performance log 6
+2025-10-21 16:22:48 | INFO | logger | Performance log 7
+2025-10-21 16:22:48 | INFO | logger | Performance log 8
+2025-10-21 16:22:48 | INFO | logger | Performance log 9
+2025-10-21 16:22:48 | INFO | logger | Performance log 10
+2025-10-21 16:22:48 | INFO | logger | Performance log 11
+2025-10-21 16:22:48 | INFO | logger | Performance log 12
+2025-10-21 16:22:48 | INFO | logger | Performance log 13
+2025-10-21 16:22:48 | INFO | logger | Performance log 14
+2025-10-21 16:22:48 | INFO | logger | Performance log 15
+2025-10-21 16:22:48 | INFO | logger | Performance log 16
+2025-10-21 16:22:48 | INFO | logger | Performance log 17
+2025-10-21 16:22:48 | INFO | logger | Performance log 18
+2025-10-21 16:22:48 | INFO | logger | Performance log 19
+2025-10-21 16:22:48 | INFO | logger | Performance log 20
+2025-10-21 16:22:48 | INFO | logger | Performance log 21
+2025-10-21 16:22:48 | INFO | logger | Performance log 22
+2025-10-21 16:22:48 | INFO | logger | Performance log 23
+2025-10-21 16:22:48 | INFO | logger | Performance log 24
+2025-10-21 16:22:48 | INFO | logger | Performance log 25
+2025-10-21 16:22:48 | INFO | logger | Performance log 26
+2025-10-21 16:22:48 | INFO | logger | Performance log 27
+2025-10-21 16:22:48 | INFO | logger | Performance log 28
+2025-10-21 16:22:48 | INFO | logger | Performance log 29
+2025-10-21 16:22:48 | INFO | logger | API Request - LLM | /analyze | success | 0.23s
+2025-10-21 16:22:48 | INFO | logger | API Request - Static Analysis | /pylint | success | 0.09s
+2025-10-21 16:22:48 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:22:50 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-21 16:22:50 | INFO | logger | Cleaning up execution engine
+2025-10-21 16:22:50 | INFO | logger | Execution engine cleaned up
+2025-10-21 16:22:51 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:22:51 | INFO | logger | Performance test log 0
+2025-10-21 16:22:51 | INFO | logger | Performance test log 1
+2025-10-21 16:22:51 | INFO | logger | Performance test log 2
+2025-10-21 16:22:51 | INFO | logger | Performance test log 3
+2025-10-21 16:22:51 | INFO | logger | Performance test log 4
+2025-10-21 16:22:51 | INFO | logger | Performance test log 5
+2025-10-21 16:22:51 | INFO | logger | Performance test log 6
+2025-10-21 16:22:51 | INFO | logger | Performance test log 7
+2025-10-21 16:22:51 | INFO | logger | Performance test log 8
+2025-10-21 16:22:51 | INFO | logger | Performance test log 9
+2025-10-21 16:22:51 | INFO | logger | Performance test log 10
+2025-10-21 16:22:51 | INFO | logger | Performance test log 11
+2025-10-21 16:22:51 | INFO | logger | Performance test log 12
+2025-10-21 16:22:51 | INFO | logger | Performance test log 13
+2025-10-21 16:22:51 | INFO | logger | Performance test log 14
+2025-10-21 16:22:51 | INFO | logger | Performance test log 15
+2025-10-21 16:22:51 | INFO | logger | Performance test log 16
+2025-10-21 16:22:51 | INFO | logger | Performance test log 17
+2025-10-21 16:22:51 | INFO | logger | Performance test log 18
+2025-10-21 16:22:51 | INFO | logger | Performance test log 19
+2025-10-21 16:22:51 | INFO | logger | Performance test log 20
+2025-10-21 16:22:51 | INFO | logger | Performance test log 21
+2025-10-21 16:22:51 | INFO | logger | Performance test log 22
+2025-10-21 16:22:51 | INFO | logger | Performance test log 23
+2025-10-21 16:22:51 | INFO | logger | Performance test log 24
+2025-10-21 16:22:51 | INFO | logger | Performance test log 25
+2025-10-21 16:22:51 | INFO | logger | Performance test log 26
+2025-10-21 16:22:51 | INFO | logger | Performance test log 27
+2025-10-21 16:22:51 | INFO | logger | Performance test log 28
+2025-10-21 16:22:51 | INFO | logger | Performance test log 29
+2025-10-21 16:22:51 | INFO | logger | Performance test log 30
+2025-10-21 16:22:51 | INFO | logger | Performance test log 31
+2025-10-21 16:22:51 | INFO | logger | Performance test log 32
+2025-10-21 16:22:51 | INFO | logger | Performance test log 33
+2025-10-21 16:22:51 | INFO | logger | Performance test log 34
+2025-10-21 16:22:51 | INFO | logger | Performance test log 35
+2025-10-21 16:22:51 | INFO | logger | Performance test log 36
+2025-10-21 16:22:51 | INFO | logger | Performance test log 37
+2025-10-21 16:22:51 | INFO | logger | Performance test log 38
+2025-10-21 16:22:51 | INFO | logger | Performance test log 39
+2025-10-21 16:22:51 | INFO | logger | Performance test log 40
+2025-10-21 16:22:51 | INFO | logger | Performance test log 41
+2025-10-21 16:22:51 | INFO | logger | Performance test log 42
+2025-10-21 16:22:51 | INFO | logger | Performance test log 43
+2025-10-21 16:22:51 | INFO | logger | Performance test log 44
+2025-10-21 16:22:51 | INFO | logger | Performance test log 45
+2025-10-21 16:22:51 | INFO | logger | Performance test log 46
+2025-10-21 16:22:51 | INFO | logger | Performance test log 47
+2025-10-21 16:22:51 | INFO | logger | Performance test log 48
+2025-10-21 16:22:51 | INFO | logger | Performance test log 49
+2025-10-21 16:22:51 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-21 16:22:51 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-21 16:22:51 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-21 16:22:51 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-21 16:22:51 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-21 16:22:51 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-21 16:22:51 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-21 16:22:51 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-21 16:22:51 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-21 16:22:51 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-21 16:22:51 | INFO | logger | Cleaning up execution engine
+2025-10-21 16:22:51 | INFO | logger | Execution engine cleaned up
+2025-10-21 16:22:51 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-21 16:22:51 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-21 16:22:51 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-21 16:22:51 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-21 16:22:51 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-21 16:22:51 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-21 16:22:51 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4jyap6yw/python_test.py
+2025-10-21 16:22:51 | INFO | logger | Executing 4 tasks
+2025-10-21 16:22:51 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4jyap6yw/python_test.py with tool ast_analysis
+2025-10-21 16:22:51 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4jyap6yw/python_test.py with tool pylint_analysis
+2025-10-21 16:22:51 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4jyap6yw/python_test.py with tool flake8_analysis
+2025-10-21 16:22:51 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4jyap6yw/python_test.py with tool bandit_analysis
+2025-10-21 16:22:51 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4jyap6yw/python_test.py completed successfully in 0.00s
+2025-10-21 16:22:51 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4jyap6yw/python_test.py completed successfully in 0.09s
+2025-10-21 16:22:51 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4jyap6yw/python_test.py completed successfully in 0.11s
+2025-10-21 16:22:51 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4jyap6yw/python_test.py completed successfully in 0.34s
+2025-10-21 16:22:51 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-21 16:22:51 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4jyap6yw/python_test.py: 11 issues in 0.34s
+2025-10-21 16:22:51 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4jyap6yw/javascript_test.js
+2025-10-21 16:22:51 | INFO | logger | Executing 4 tasks
+2025-10-21 16:22:51 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4jyap6yw/javascript_test.js with tool ast_analysis
+2025-10-21 16:22:51 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4jyap6yw/javascript_test.js with tool pylint_analysis
+2025-10-21 16:22:51 | ERROR | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4jyap6yw/javascript_test.js failed: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4jyap6yw/javascript_test.js
+2025-10-21 16:22:51 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4jyap6yw/javascript_test.js with tool flake8_analysis
+2025-10-21 16:22:51 | ERROR | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4jyap6yw/javascript_test.js failed: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4jyap6yw/javascript_test.js
+2025-10-21 16:22:51 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4jyap6yw/javascript_test.js with tool bandit_analysis
+2025-10-21 16:22:51 | ERROR | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4jyap6yw/javascript_test.js failed: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4jyap6yw/javascript_test.js
+2025-10-21 16:22:51 | ERROR | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4jyap6yw/javascript_test.js failed: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4jyap6yw/javascript_test.js
+2025-10-21 16:22:51 | INFO | logger | Completed 4 tasks with 0 successes
+2025-10-21 16:22:51 | WARNING | logger | Tool ast failed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4jyap6yw/javascript_test.js: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4jyap6yw/javascript_test.js
+2025-10-21 16:22:51 | WARNING | logger | Tool pylint failed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4jyap6yw/javascript_test.js: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4jyap6yw/javascript_test.js
+2025-10-21 16:22:51 | WARNING | logger | Tool flake8 failed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4jyap6yw/javascript_test.js: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4jyap6yw/javascript_test.js
+2025-10-21 16:22:51 | WARNING | logger | Tool bandit failed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4jyap6yw/javascript_test.js: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4jyap6yw/javascript_test.js
+2025-10-21 16:22:51 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp4jyap6yw/javascript_test.js: 0 issues in 0.00s
+2025-10-21 16:22:51 | INFO | logger | Cleaning up execution engine
+2025-10-21 16:22:51 | INFO | logger | Execution engine cleaned up
+2025-10-21 16:22:51 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:24:37 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-21 16:24:37 | INFO | logger | Starting deep analysis for test_analysis_sample.py (type: comprehensive)
+2025-10-21 16:24:37 | INFO | logger | Deep analysis completed for test_analysis_sample.py in 0.00s
+2025-10-21 16:24:55 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-21 16:24:55 | INFO | logger | Starting deep analysis for nonexistent_file.py (type: comprehensive)
+2025-10-21 16:24:55 | ERROR | logger | File does not exist: nonexistent_file.py
+2025-10-21 16:24:55 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-21 16:24:55 | INFO | logger | Starting deep analysis for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmppmes7jhy/large_file.py (type: comprehensive)
+2025-10-21 16:24:55 | WARNING | logger | File too large (830 bytes), truncating to 10 bytes
+2025-10-21 16:24:55 | WARNING | logger | Truncated content for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmppmes7jhy/large_file.py
+2025-10-21 16:24:55 | ERROR | logger | Deep analysis failed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmppmes7jhy/large_file.py: object MagicMock can't be used in 'await' expression
+2025-10-21 16:24:55 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:24:55 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-21 16:24:55 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-21 16:24:55 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-21 16:24:55 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-21 16:24:55 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-21 16:24:55 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-21 16:24:55 | INFO | logger | Starting static analysis for file: nonexistent_file.py
+2025-10-21 16:24:55 | INFO | logger | Executing 4 tasks
+2025-10-21 16:24:55 | INFO | logger | Executing task ast_nonexistent_file.py with tool ast_analysis
+2025-10-21 16:24:55 | INFO | logger | Executing task pylint_nonexistent_file.py with tool pylint_analysis
+2025-10-21 16:24:55 | ERROR | logger | Task ast_nonexistent_file.py failed: File does not exist: nonexistent_file.py
+2025-10-21 16:24:55 | INFO | logger | Executing task flake8_nonexistent_file.py with tool flake8_analysis
+2025-10-21 16:24:55 | ERROR | logger | Task pylint_nonexistent_file.py failed: File does not exist: nonexistent_file.py
+2025-10-21 16:24:55 | INFO | logger | Executing task bandit_nonexistent_file.py with tool bandit_analysis
+2025-10-21 16:24:55 | ERROR | logger | Task flake8_nonexistent_file.py failed: File does not exist: nonexistent_file.py
+2025-10-21 16:24:55 | ERROR | logger | Task bandit_nonexistent_file.py failed: File does not exist: nonexistent_file.py
+2025-10-21 16:24:55 | INFO | logger | Completed 4 tasks with 0 successes
+2025-10-21 16:24:55 | WARNING | logger | Tool ast failed for nonexistent_file.py: File does not exist: nonexistent_file.py
+2025-10-21 16:24:55 | WARNING | logger | Tool pylint failed for nonexistent_file.py: File does not exist: nonexistent_file.py
+2025-10-21 16:24:55 | WARNING | logger | Tool flake8 failed for nonexistent_file.py: File does not exist: nonexistent_file.py
+2025-10-21 16:24:55 | WARNING | logger | Tool bandit failed for nonexistent_file.py: File does not exist: nonexistent_file.py
+2025-10-21 16:24:55 | INFO | logger | Static analysis completed for nonexistent_file.py: 0 issues in 0.00s
+2025-10-21 16:24:55 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp5g28x2p6/invalid_syntax.py
+2025-10-21 16:24:55 | INFO | logger | Executing 4 tasks
+2025-10-21 16:24:55 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp5g28x2p6/invalid_syntax.py with tool ast_analysis
+2025-10-21 16:24:55 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp5g28x2p6/invalid_syntax.py with tool pylint_analysis
+2025-10-21 16:24:55 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp5g28x2p6/invalid_syntax.py with tool flake8_analysis
+2025-10-21 16:24:55 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp5g28x2p6/invalid_syntax.py with tool bandit_analysis
+2025-10-21 16:24:55 | WARNING | logger | AST syntax error /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp5g28x2p6/invalid_syntax.py: Syntax error: invalid syntax (line 3)
+2025-10-21 16:24:55 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp5g28x2p6/invalid_syntax.py completed successfully in 0.01s
+2025-10-21 16:24:55 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp5g28x2p6/invalid_syntax.py completed successfully in 0.10s
+2025-10-21 16:24:55 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp5g28x2p6/invalid_syntax.py completed successfully in 0.12s
+2025-10-21 16:24:55 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp5g28x2p6/invalid_syntax.py completed successfully in 0.29s
+2025-10-21 16:24:55 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-21 16:24:55 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp5g28x2p6/invalid_syntax.py: 3 issues in 0.29s
+2025-10-21 16:24:55 | INFO | logger | Cleaning up execution engine
+2025-10-21 16:24:55 | INFO | logger | Execution engine cleaned up
+2025-10-21 16:25:04 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-21 16:25:04 | INFO | logger | Starting deep analysis for nonexistent_file.py (type: comprehensive)
+2025-10-21 16:25:04 | ERROR | logger | File does not exist: nonexistent_file.py
+2025-10-21 16:25:04 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-21 16:25:04 | INFO | logger | Starting deep analysis for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp9md7ntfx/large_file.py (type: comprehensive)
+2025-10-21 16:25:04 | WARNING | logger | File too large (830 bytes), truncating to 10 bytes
+2025-10-21 16:25:04 | WARNING | logger | Truncated content for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp9md7ntfx/large_file.py
+2025-10-21 16:25:04 | ERROR | logger | Deep analysis failed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp9md7ntfx/large_file.py: object MagicMock can't be used in 'await' expression
+2025-10-21 16:25:04 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:25:04 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-21 16:25:04 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-21 16:25:04 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-21 16:25:04 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-21 16:25:04 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-21 16:25:04 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-21 16:25:04 | INFO | logger | Starting static analysis for file: nonexistent_file.py
+2025-10-21 16:25:04 | INFO | logger | Executing 4 tasks
+2025-10-21 16:25:04 | INFO | logger | Executing task ast_nonexistent_file.py with tool ast_analysis
+2025-10-21 16:25:04 | INFO | logger | Executing task pylint_nonexistent_file.py with tool pylint_analysis
+2025-10-21 16:25:04 | INFO | logger | Executing task flake8_nonexistent_file.py with tool flake8_analysis
+2025-10-21 16:25:04 | ERROR | logger | Task ast_nonexistent_file.py failed: File does not exist: nonexistent_file.py
+2025-10-21 16:25:04 | ERROR | logger | Task pylint_nonexistent_file.py failed: File does not exist: nonexistent_file.py
+2025-10-21 16:25:04 | INFO | logger | Executing task bandit_nonexistent_file.py with tool bandit_analysis
+2025-10-21 16:25:04 | ERROR | logger | Task flake8_nonexistent_file.py failed: File does not exist: nonexistent_file.py
+2025-10-21 16:25:04 | ERROR | logger | Task bandit_nonexistent_file.py failed: File does not exist: nonexistent_file.py
+2025-10-21 16:25:04 | INFO | logger | Completed 4 tasks with 0 successes
+2025-10-21 16:25:04 | WARNING | logger | Tool ast failed for nonexistent_file.py: File does not exist: nonexistent_file.py
+2025-10-21 16:25:04 | WARNING | logger | Tool pylint failed for nonexistent_file.py: File does not exist: nonexistent_file.py
+2025-10-21 16:25:04 | WARNING | logger | Tool flake8 failed for nonexistent_file.py: File does not exist: nonexistent_file.py
+2025-10-21 16:25:04 | WARNING | logger | Tool bandit failed for nonexistent_file.py: File does not exist: nonexistent_file.py
+2025-10-21 16:25:04 | INFO | logger | Static analysis completed for nonexistent_file.py: 0 issues in 0.00s
+2025-10-21 16:25:04 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpspxiua2v/invalid_syntax.py
+2025-10-21 16:25:04 | INFO | logger | Executing 4 tasks
+2025-10-21 16:25:04 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpspxiua2v/invalid_syntax.py with tool ast_analysis
+2025-10-21 16:25:04 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpspxiua2v/invalid_syntax.py with tool pylint_analysis
+2025-10-21 16:25:04 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpspxiua2v/invalid_syntax.py with tool flake8_analysis
+2025-10-21 16:25:04 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpspxiua2v/invalid_syntax.py with tool bandit_analysis
+2025-10-21 16:25:04 | WARNING | logger | AST syntax error /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpspxiua2v/invalid_syntax.py: Syntax error: invalid syntax (line 3)
+2025-10-21 16:25:04 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpspxiua2v/invalid_syntax.py completed successfully in 0.01s
+2025-10-21 16:25:04 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpspxiua2v/invalid_syntax.py completed successfully in 0.09s
+2025-10-21 16:25:05 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpspxiua2v/invalid_syntax.py completed successfully in 0.11s
+2025-10-21 16:25:05 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpspxiua2v/invalid_syntax.py completed successfully in 0.28s
+2025-10-21 16:25:05 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-21 16:25:05 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmpspxiua2v/invalid_syntax.py: 3 issues in 0.28s
+2025-10-21 16:25:05 | INFO | logger | Cleaning up execution engine
+2025-10-21 16:25:05 | INFO | logger | Execution engine cleaned up
+2025-10-21 16:25:08 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-21 16:25:08 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-21 16:25:08 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-21 16:25:08 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-21 16:25:08 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-21 16:25:08 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-21 16:25:08 | INFO | logger | Cleaning up execution engine
+2025-10-21 16:25:08 | INFO | logger | Execution engine cleaned up
+2025-10-21 16:25:08 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-21 16:25:08 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-21 16:25:08 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-21 16:25:08 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-21 16:25:08 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-21 16:25:08 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-21 16:25:08 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp98f3clv9/python_test.py
+2025-10-21 16:25:08 | INFO | logger | Executing 4 tasks
+2025-10-21 16:25:08 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp98f3clv9/python_test.py with tool ast_analysis
+2025-10-21 16:25:08 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp98f3clv9/python_test.py with tool pylint_analysis
+2025-10-21 16:25:08 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp98f3clv9/python_test.py with tool flake8_analysis
+2025-10-21 16:25:08 | INFO | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp98f3clv9/python_test.py completed successfully in 0.00s
+2025-10-21 16:25:08 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp98f3clv9/python_test.py with tool bandit_analysis
+2025-10-21 16:25:08 | INFO | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp98f3clv9/python_test.py completed successfully in 0.09s
+2025-10-21 16:25:08 | INFO | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp98f3clv9/python_test.py completed successfully in 0.11s
+2025-10-21 16:25:08 | INFO | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp98f3clv9/python_test.py completed successfully in 0.33s
+2025-10-21 16:25:08 | INFO | logger | Completed 4 tasks with 4 successes
+2025-10-21 16:25:08 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp98f3clv9/python_test.py: 11 issues in 0.33s
+2025-10-21 16:25:08 | INFO | logger | Starting static analysis for file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp98f3clv9/javascript_test.js
+2025-10-21 16:25:08 | INFO | logger | Executing 4 tasks
+2025-10-21 16:25:08 | INFO | logger | Executing task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp98f3clv9/javascript_test.js with tool ast_analysis
+2025-10-21 16:25:08 | INFO | logger | Executing task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp98f3clv9/javascript_test.js with tool pylint_analysis
+2025-10-21 16:25:08 | ERROR | logger | Task ast_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp98f3clv9/javascript_test.js failed: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp98f3clv9/javascript_test.js
+2025-10-21 16:25:08 | INFO | logger | Executing task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp98f3clv9/javascript_test.js with tool flake8_analysis
+2025-10-21 16:25:08 | ERROR | logger | Task pylint_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp98f3clv9/javascript_test.js failed: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp98f3clv9/javascript_test.js
+2025-10-21 16:25:08 | INFO | logger | Executing task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp98f3clv9/javascript_test.js with tool bandit_analysis
+2025-10-21 16:25:08 | ERROR | logger | Task flake8_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp98f3clv9/javascript_test.js failed: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp98f3clv9/javascript_test.js
+2025-10-21 16:25:08 | ERROR | logger | Task bandit_/var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp98f3clv9/javascript_test.js failed: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp98f3clv9/javascript_test.js
+2025-10-21 16:25:08 | INFO | logger | Completed 4 tasks with 0 successes
+2025-10-21 16:25:08 | WARNING | logger | Tool ast failed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp98f3clv9/javascript_test.js: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp98f3clv9/javascript_test.js
+2025-10-21 16:25:08 | WARNING | logger | Tool pylint failed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp98f3clv9/javascript_test.js: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp98f3clv9/javascript_test.js
+2025-10-21 16:25:08 | WARNING | logger | Tool flake8 failed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp98f3clv9/javascript_test.js: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp98f3clv9/javascript_test.js
+2025-10-21 16:25:08 | WARNING | logger | Tool bandit failed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp98f3clv9/javascript_test.js: File is not a Python file: /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp98f3clv9/javascript_test.js
+2025-10-21 16:25:08 | INFO | logger | Static analysis completed for /var/folders/9q/5l3rd3c50dj6q2lwv3h50ws00000gn/T/tmp98f3clv9/javascript_test.js: 0 issues in 0.00s
+2025-10-21 16:25:08 | INFO | logger | Cleaning up execution engine
+2025-10-21 16:25:08 | INFO | logger | Execution engine cleaned up
+2025-10-21 16:25:08 | INFO | logger | Memory cache backend initialized, max_size: 1000
+2025-10-21 16:31:02 | WARNING | logger | Failed to load static report src/utils/config.py: Extra data: line 1 column 3 (char 2)
+2025-10-21 16:31:02 | ERROR | logger | Deep analysis failed: No LLM providers available
+2025-10-21 16:38:02 | WARNING | logger | Failed to load static report src/utils/config.py: Extra data: line 1 column 3 (char 2)
+2025-10-21 16:38:02 | ERROR | logger | Deep analysis failed: No LLM providers available
+2025-10-21 16:45:54 | WARNING | logger | Failed to load static report src/utils/config.py: Extra data: line 1 column 3 (char 2)
+2025-10-21 16:45:54 | ERROR | logger | Deep analysis failed: No LLM providers available
+2025-10-21 16:46:33 | WARNING | logger | Failed to load static report src/utils/config.py: Extra data: line 1 column 3 (char 2)
+2025-10-21 16:46:33 | INFO | logger | Loaded LLM config from config/llm_config.yaml
+2025-10-21 16:46:33 | INFO | logger | Mock provider initialized successfully
+2025-10-21 16:46:33 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-21 16:46:33 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-21 16:47:15 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-21 16:47:15 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-21 16:47:15 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-21 16:47:15 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-21 16:47:15 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-21 16:47:15 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-21 16:47:15 | INFO | logger | Starting deep analysis for test_analysis_sample.py (type: comprehensive)
+2025-10-21 16:47:15 | INFO | logger | Deep analysis completed for test_analysis_sample.py in 0.00s
+2025-10-21 16:50:01 | INFO | logger | ExecutionEngine initialized with 4 workers
+2025-10-21 16:50:01 | INFO | logger | Tool ast_analysis registered successfully
+2025-10-21 16:50:01 | INFO | logger | Tool pylint_analysis registered successfully
+2025-10-21 16:50:01 | INFO | logger | Tool flake8_analysis registered successfully
+2025-10-21 16:50:01 | INFO | logger | Tool bandit_analysis registered successfully
+2025-10-21 16:50:01 | INFO | logger | StaticAnalysisCoordinator initialized with tools: ['ast', 'pylint', 'flake8', 'bandit']
+2025-10-21 16:50:01 | INFO | logger | Loaded LLM config from config/llm_config.yaml
+2025-10-21 16:50:01 | INFO | logger | Mock provider initialized successfully
+2025-10-21 16:50:01 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-21 16:50:01 | INFO | logger | FixGenerator initialized with model: gpt-4
+2025-10-21 16:50:01 | INFO | logger | BackupManager initialized with backup directory: .fix_backups
+2025-10-21 16:50:01 | INFO | logger | DiffViewer initialized
+2025-10-21 16:50:01 | INFO | logger | DiffViewer initialized
+2025-10-21 16:50:01 | INFO | logger | FixConfirmationManager initialized
+2025-10-21 16:50:01 | INFO | logger | BackupManager initialized with backup directory: .fix_backups
+2025-10-21 16:50:01 | INFO | logger | DiffViewer initialized
+2025-10-21 16:50:01 | INFO | logger | FixExecutor initialized
+2025-10-21 16:50:01 | INFO | logger | FixCoordinator initialized
+2025-10-21 16:50:01 | INFO | logger | Cleaning up execution engine
+2025-10-21 16:50:01 | INFO | logger | Execution engine cleaned up
+2025-10-21 16:52:39 | WARNING | logger | Failed to load static report src/utils/config.py: Extra data: line 1 column 3 (char 2)
+2025-10-21 16:52:39 | INFO | logger | Loaded LLM config from config/llm_config.yaml
+2025-10-21 16:52:39 | INFO | logger | Mock provider initialized successfully
+2025-10-21 16:52:39 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-21 16:52:39 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-21 16:54:08 | WARNING | logger | Failed to load static report src/utils/config.py: Extra data: line 1 column 3 (char 2)
+2025-10-21 16:54:08 | INFO | logger | Loaded LLM config from config/llm_config.yaml
+2025-10-21 16:54:08 | INFO | logger | Mock provider initialized successfully
+2025-10-21 16:54:08 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-21 16:54:08 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-21 17:03:46 | WARNING | logger | Failed to load static report src/utils/config.py: Extra data: line 1 column 3 (char 2)
+2025-10-21 17:03:46 | INFO | logger | Loaded LLM config from config/llm_config.yaml
+2025-10-21 17:03:46 | INFO | logger | ZhipuAI provider initialized successfully
+2025-10-21 17:03:46 | INFO | logger | OpenAI provider initialized successfully
+2025-10-21 17:03:46 | INFO | logger | Anthropic provider initialized successfully
+2025-10-21 17:03:46 | INFO | logger | Mock provider initialized successfully
+2025-10-21 17:03:46 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-21 17:03:46 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5
+2025-10-21 17:15:14 | WARNING | logger | Failed to load static report src/utils/config.py: Extra data: line 1 column 3 (char 2)
+2025-10-21 17:15:14 | INFO | logger | Loaded LLM config from config/llm_config.yaml
+2025-10-21 17:15:14 | INFO | logger | ZhipuAI provider initialized successfully
+2025-10-21 17:15:14 | INFO | logger | OpenAI provider initialized successfully
+2025-10-21 17:15:14 | INFO | logger | Anthropic provider initialized successfully
+2025-10-21 17:15:14 | INFO | logger | Mock provider initialized successfully
+2025-10-21 17:15:14 | INFO | logger | Loaded 9 builtin prompt templates
+2025-10-21 17:15:14 | INFO | logger | DeepAnalyzer initialized with model: glm-4.5

@@ -1,0 +1,28 @@
+# AIDefectDetector 最小化配置模板
+# 适用于快速体验和演示
+
+llm:
+  # 最简配置，只需要一个provider
+  default_provider: "zhipu"
+
+  zhipu:
+    provider: "zhipu"
+    model: "glm-4.5"
+    api_key: "${ZHIPU_API_KEY}"
+    api_base: "https://open.bigmodel.cn/api/paas/v4/"
+
+# 或者使用Mock（不需要API密钥）
+# default_provider: "mock"
+# mock:
+#   provider: "mock"
+#   model: "mock-model"
+
+# 深度分析基本配置
+deep_analysis:
+  max_file_size: 50000        # 50KB
+  temperature: 0.3
+
+# 基本日志配置
+logging:
+  level: "INFO"
+  console_output: true
