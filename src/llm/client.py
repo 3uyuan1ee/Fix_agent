@@ -13,6 +13,7 @@ from .exceptions import LLMError, LLMTimeoutError, LLMRateLimitError, LLMAuthent
 from .openai_provider import OpenAIProvider
 from .anthropic_provider import AnthropicProvider
 from .zhipu_provider import ZhipuProvider
+from .mock_provider import MockLLMProvider
 from .config import LLMConfigManager
 from ..utils.logger import get_logger
 
@@ -20,7 +21,7 @@ from ..utils.logger import get_logger
 @dataclass
 class LLMClientConfig:
     """LLM客户端配置"""
-    default_provider: str = "openai"
+    default_provider: str = "zhipu"  # 默认使用智谱AI (国内稳定)
     fallback_providers: List[str] = None
     enable_fallback: bool = True
     max_retry_attempts: int = 3
@@ -28,7 +29,7 @@ class LLMClientConfig:
 
     def __post_init__(self):
         if self.fallback_providers is None:
-            self.fallback_providers = ["anthropic"]
+            self.fallback_providers = ["openai", "anthropic", "mock"]  # 回退到其他provider
 
 
 class LLMClient:
@@ -97,6 +98,16 @@ class LLMClient:
                 self.logger.info("Anthropic provider initialized successfully")
         except Exception as e:
             self.logger.warning(f"Failed to initialize Anthropic provider: {e}")
+
+        # 初始化Mock Provider（用于测试）
+        try:
+            mock_config = self.config_manager.get_config("mock")
+            if mock_config:
+                self.providers["mock"] = MockLLMProvider(mock_config)
+                self.stats["provider_usage"]["mock"] = 0
+                self.logger.info("Mock provider initialized successfully")
+        except Exception as e:
+            self.logger.warning(f"Failed to initialize Mock provider: {e}")
 
         if not self.providers:
             raise LLMError("No LLM providers available")
