@@ -1,0 +1,56 @@
+# AIDefectDetector 开发环境配置模板
+# 适用于本地开发和测试
+
+llm:
+  # 开发环境使用Mock提供商，避免API调用成本
+  default_provider: "mock"
+
+  # 开发环境配置
+  mock:
+    provider: "mock"
+    model: "mock-model"
+    api_key: "mock-api-key"
+    api_base: "https://mock.api.com"
+    max_tokens: 2000
+    temperature: 0.7
+    timeout: 10  # 开发环境减少超时时间
+    max_retries: 1
+
+  # 智谱AI配置（可选，用于真实测试）
+  zhipu:
+    provider: "zhipu"
+    model: "glm-4.5"
+    api_key: "${ZHIPU_API_KEY}"
+    api_base: "https://open.bigmodel.cn/api/paas/v4/"
+    max_tokens: 2000
+    temperature: 0.5
+    timeout: 15
+    max_retries: 2
+
+# 深度分析开发配置
+deep_analysis:
+  default_model: "mock-model"  # 开发时使用mock
+  max_file_size: 50000         # 50KB，开发环境限制文件大小
+  temperature: 0.7             # 开发时增加创造性
+  max_tokens: 2000
+  timeout: 30
+
+# 日志配置
+logging:
+  level: "DEBUG"               # 开发环境显示详细日志
+  file_path: "logs/dev.log"
+  max_size: "10MB"
+  backup_count: 3
+  console_output: true
+
+# 缓存配置
+cache:
+  backend: "memory"            # 开发环境使用内存缓存
+  ttl: 300                     # 5分钟缓存
+  max_size: 100
+
+# 其他配置
+analysis:
+  timeout: 60                  # 分析超时时间
+  parallel: false              # 开发环境不并行处理
+  verbose: true                # 显示详细输出
