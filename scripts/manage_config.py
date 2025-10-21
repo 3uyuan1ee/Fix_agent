@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 # 添加src目录到Python路径
-sys.path.insert(0, str(Path(__file__).parent / 'src'))
+sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 
 class ConfigManager:
     """配置管理器"""

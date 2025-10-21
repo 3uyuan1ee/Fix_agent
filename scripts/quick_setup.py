@@ -11,13 +11,13 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 # 添加src目录到Python路径
-sys.path.insert(0, str(Path(__file__).parent / 'src'))
+sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 
 class QuickSetup:
     """快速设置向导"""
 
     def __init__(self):
-        self.base_dir = Path(__file__).parent
+        self.base_dir = Path(__file__).parent.parent  # 指向项目根目录
 
     def run(self):
         """运行快速设置向导"""
@@ -79,7 +79,7 @@ class QuickSetup:
             'main.py',
             'src/llm/client.py',
             'config/default.yaml',
-            'API_CONFIG_GUIDE.md'
+            'docs/API_CONFIG_GUIDE.md'
         ]
 
         for file_name in required_files:
@@ -153,7 +153,7 @@ class QuickSetup:
         print(f"\n🔧 应用模板 '{template_name}'...")
         try:
             result = subprocess.run([
-                'python3', 'manage_config.py', 'apply', template_name
+                'python3', 'scripts/manage_config.py', 'apply', template_name
             ], capture_output=True, text=True, cwd=self.base_dir)
 
             if result.returncode == 0:
@@ -259,7 +259,7 @@ class QuickSetup:
         print("\n🛠️ 运行配置脚本...")
         print("-" * 30)
 
-        script_path = self.base_dir / 'setup_api.sh'
+        script_path = self.base_dir / 'scripts/setup_api.sh'
         if not script_path.exists():
             print("❌ setup_api.sh 脚本不存在")
             return
@@ -279,7 +279,7 @@ class QuickSetup:
 
         try:
             result = subprocess.run([
-                'python3', 'manage_config.py', 'apply', 'minimal'
+                'python3', 'scripts/manage_config.py', 'apply', 'minimal'
             ], capture_output=True, text=True, cwd=self.base_dir)
 
             if result.returncode == 0:
@@ -297,11 +297,11 @@ class QuickSetup:
         print("-" * 30)
 
         # 检查是否有诊断工具
-        diagnose_tool = self.base_dir / 'diagnose_config.py'
+        diagnose_tool = self.base_dir / 'scripts/diagnose_config.py'
         if diagnose_tool.exists():
             print("🔬 运行配置诊断...")
             try:
-                subprocess.run(['python3', 'diagnose_config.py'], cwd=self.base_dir)
+                subprocess.run(['python3', 'scripts/diagnose_config.py'], cwd=self.base_dir)
             except KeyboardInterrupt:
                 print("\n⚠️ 诊断被用户中断")
             except Exception as e:
@@ -354,9 +354,9 @@ class QuickSetup:
         print("")
 
         print("📚 更多帮助:")
-        print("- 配置指南: cat API_CONFIG_GUIDE.md")
-        print("- 配置管理: python3 manage_config.py --help")
-        print("- 问题诊断: python3 diagnose_config.py")
+        print("- 配置指南: cat docs/API_CONFIG_GUIDE.md")
+        print("- 配置管理: python3 scripts/manage_config.py --help")
+        print("- 问题诊断: python3 scripts/diagnose_config.py")
         print("")
 
         # 询问是否立即运行示例
