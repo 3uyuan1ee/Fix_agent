@@ -13,12 +13,12 @@ providers:
   # 智谱AI Provider - 推荐使用
   zhipu:
     provider: "zhipu"
-    model: "glm-4.5"
+    model: "glm-4.5-air"
     api_key: "${ZHIPU_API_KEY}"
     api_base: "https://open.bigmodel.cn/api/paas/v4/"
     max_tokens: 4000
     temperature: 0.3
-    timeout: 30
+    timeout: 60
     max_retries: 3
 
   # OpenAI Provider

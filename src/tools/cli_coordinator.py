@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from ..utils.logger import get_logger
 from ..utils.progress import ProgressTracker
 from .static_coordinator import StaticAnalysisCoordinator
+from .deep_analyzer import DeepAnalysisRequest
 
 
 class ConversationContext:
@@ -1096,9 +1097,12 @@ class CLIInteractiveCoordinator:
 
             # 设置其他参数
             request_params['temperature'] = self.analysis_config['temperature']
-            request_params['enable_structured_output'] = self.analysis_config['enable_structured_output']
-            request_params['language_style'] = self.analysis_config['language_style']
-            request_params['output_format'] = self.analysis_config['output_format']
+            # 将额外的配置参数添加到context中
+            request_params['context']['extra_config'] = {
+                'enable_structured_output': self.analysis_config.get('enable_structured_output', False),
+                'language_style': self.analysis_config.get('language_style', 'professional'),
+                'output_format': self.analysis_config.get('output_format', 'json')
+            }
 
             request = DeepAnalysisRequest(**request_params)
 

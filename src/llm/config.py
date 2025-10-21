@@ -63,6 +63,9 @@ class LLMConfigManager:
         if "providers" not in data:
             return
 
+        # 先进行环境变量替换
+        data = self._substitute_env_vars(data)
+
         for name, config_data in data["providers"].items():
             try:
                 config = LLMConfig.from_dict(config_data)
@@ -71,6 +74,32 @@ class LLMConfigManager:
                 self.logger.debug(f"Loaded provider config: {name}")
             except Exception as e:
                 self.logger.error(f"Failed to load provider config {name}: {e}")
+
+    def _substitute_env_vars(self, config: Any) -> Any:
+        """
+        递归替换配置中的环境变量
+
+        Args:
+            config: 配置对象
+
+        Returns:
+            替换环境变量后的配置
+        """
+        if isinstance(config, dict):
+            return {k: self._substitute_env_vars(v) for k, v in config.items()}
+        elif isinstance(config, list):
+            return [self._substitute_env_vars(item) for item in config]
+        elif isinstance(config, str) and config.startswith("${") and config.endswith("}"):
+            # 提取环境变量名
+            env_var = config[2:-1]
+            # 支持默认值，格式: ${VAR_NAME:default_value}
+            if ":" in env_var:
+                var_name, default_value = env_var.split(":", 1)
+                return os.getenv(var_name.strip(), default_value)
+            else:
+                return os.getenv(env_var.strip(), "")
+        else:
+            return config
 
     def _load_from_environment(self) -> None:
         """从环境变量加载配置"""
@@ -113,7 +142,7 @@ class LLMConfigManager:
         if "ZHIPU_API_KEY" in os.environ:
             zhipu_config = LLMConfig(
                 provider="zhipu",
-                model=os.environ.get("ZHIPU_MODEL", "glm-4.5"),
+                model=os.environ.get("ZHIPU_MODEL", "glm-4.5-air"),
                 api_key=os.environ["ZHIPU_API_KEY"],
                 api_base=os.environ.get("ZHIPU_API_BASE", "https://open.bigmodel.cn/api/paas/v4/"),
                 max_tokens=int(os.environ.get("ZHIPU_MAX_TOKENS", "4000")),
@@ -197,7 +226,7 @@ class LLMConfigManager:
         if "ZHIPU_API_KEY" in os.environ:
             zhipu_config = LLMConfig(
                 provider="zhipu",
-                model="glm-4.5",
+                model="glm-4.5-air",
                 api_key=os.environ["ZHIPU_API_KEY"],
                 api_base="https://open.bigmodel.cn/api/paas/v4/"
             )
