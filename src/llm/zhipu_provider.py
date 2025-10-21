@@ -46,11 +46,10 @@ class ZhipuProvider(LLMProvider):
             )
 
         # 初始化ZhipuAI客户端
+        # 根据官方文档，使用标准参数
         self.client = ZhipuAiClient(
             api_key=config.api_key,
-            base_url=config.api_base or "https://open.bigmodel.cn/api/paas/v4/",
-            timeout=config.timeout,
-            max_retries=config.max_retries
+            base_url=config.api_base or "https://open.bigmodel.cn/api/paas/v4/"
         )
 
         # 支持的模型列表
@@ -102,55 +101,129 @@ class ZhipuProvider(LLMProvider):
         self.validate_request(request)
         start_time = time.time()
 
-        try:
-            # 转换消息格式
-            messages = self._convert_messages(request.messages)
+        # 转换消息格式
+        messages = self._convert_messages(request.messages)
 
-            # 准备请求参数
-            kwargs = {
-                "model": self.config.model,
-                "messages": messages,
-                "temperature": self.config.temperature,
-                "max_tokens": self.config.max_tokens,
-                "top_p": self.config.top_p
-            }
+        # 准备请求参数
+        kwargs = {
+            "model": self.config.model,
+            "messages": messages,
+            "temperature": self.config.temperature,
+            "max_tokens": self.config.max_tokens,
+            "top_p": self.config.top_p
+        }
 
-            # 添加可选参数
-            if request.tools:
-                kwargs["tools"] = request.tools
-            if request.tool_choice:
-                kwargs["tool_choice"] = request.tool_choice
+        # 添加可选参数
+        if request.tools:
+            kwargs["tools"] = request.tools
+        if request.tool_choice:
+            kwargs["tool_choice"] = request.tool_choice
 
-            # 发送请求
-            response = self.client.chat.completions.create(**kwargs)
+        # 详细调试日志：记录请求参数
+        logger.info(f"ZhipuAI request parameters:")
+        logger.info(f"  Model: {kwargs['model']}")
+        logger.info(f"  Messages count: {len(kwargs['messages'])}")
+        logger.info(f"  Temperature: {kwargs['temperature']}")
+        logger.info(f"  Max tokens: {kwargs['max_tokens']}")
+        logger.info(f"  Top P: {kwargs['top_p']}")
+        for i, msg in enumerate(kwargs['messages']):
+            # kwargs['messages'] 已经转换为字典格式
+            content_preview = msg['content'][:100] + "..." if len(msg['content']) > 100 else msg['content']
+            logger.info(f"  Message {i+1}: {msg['role']} - {content_preview}")
 
-            # 解析响应
-            result = self._parse_response(response, request.request_id, start_time)
+        # 记录原始 Message 对象的信息
+        logger.info(f"Original Message objects:")
+        for i, msg in enumerate(request.messages):
+            content_preview = msg.content[:100] + "..." if len(msg.content) > 100 else msg.content
+            logger.info(f"  Original Message {i+1}: {msg.role.value} - {content_preview}")
 
-            logger.info(f"ZhipuAI request completed: {result.usage}")
-            return result
+        # 重试机制
+        max_retries = 3
+        base_delay = 1.0  # 基础延迟1秒
 
-        except zai.core.APIStatusError as e:
-            logger.error(f"ZhipuAI API status error: {e}")
-            raise LLMError(f"API status error: {e}")
-        except zai.core.APITimeoutError as e:
-            logger.error(f"ZhipuAI API timeout: {e}")
-            raise LLMTimeoutError(f"API timeout: {e}")
-        except zai.core.APIConnectionError as e:
-            logger.error(f"ZhipuAI connection error: {e}")
-            raise LLMNetworkError(f"Connection error: {e}")
-        except zai.core.AuthenticationError as e:
-            logger.error(f"ZhipuAI authentication error: {e}")
-            raise LLMAuthenticationError(f"Authentication failed: {e}")
-        except zai.core.RateLimitError as e:
-            logger.error(f"ZhipuAI rate limit error: {e}")
-            raise LLMRateLimitError(f"Rate limit exceeded: {e}")
-        except zai.core.APIError as e:
-            logger.error(f"ZhipuAI API error: {e}")
-            raise LLMError(f"API error: {e}")
-        except Exception as e:
-            logger.error(f"ZhipuAI unexpected error: {e}")
-            raise LLMError(f"Unexpected error: {e}")
+        for attempt in range(max_retries):
+            try:
+                if attempt > 0:
+                    delay = base_delay * (2 ** (attempt - 1))  # 指数退避
+                    logger.info(f"Retry attempt {attempt + 1}/{max_retries} after {delay:.1f}s delay")
+                    await asyncio.sleep(delay)
+
+                # 发送请求 (使用asyncio.run_in_executor更可靠)
+                loop = asyncio.get_event_loop()
+
+                # 为大文件请求增加超时时间
+                total_content_size = sum(len(msg.get('content', '')) for msg in kwargs['messages'])
+                timeout = 120 + (total_content_size // 500)  # 基础120秒 + 每500字符增加1秒
+
+                response = await asyncio.wait_for(
+                    loop.run_in_executor(None, lambda: self.client.chat.completions.create(**kwargs)),
+                    timeout=timeout
+                )
+
+                # 解析响应
+                result = self._parse_response(response, request.request_id, start_time)
+
+                # 详细调试日志：记录响应内容
+                logger.info(f"ZhipuAI response details:")
+                logger.info(f"  Response content: '{result.content[:200]}...'")  # 只显示前200字符
+                logger.info(f"  Content length: {len(result.content) if result.content else 0}")
+                logger.info(f"  Finish reason: {result.finish_reason}")
+                logger.info(f"  Usage: {result.usage}")
+                logger.info(f"  Response time: {result.response_time:.2f}s")
+
+                logger.info(f"ZhipuAI request completed: {result.usage}")
+                return result
+
+            except asyncio.TimeoutError:
+                error_msg = f"Request timeout after {timeout}s (attempt {attempt + 1}/{max_retries})"
+                logger.warning(f"ZhipuAI {error_msg}")
+                if attempt == max_retries - 1:
+                    raise LLMTimeoutError(f"Request timeout: {error_msg}")
+
+            except zai.core.APIStatusError as e:
+                error_msg = f"API status error (attempt {attempt + 1}/{max_retries}): {e}"
+                logger.error(f"ZhipuAI {error_msg}")
+                if attempt == max_retries - 1:
+                    raise LLMError(f"API status error: {e}")
+
+            except zai.core.APITimeoutError as e:
+                error_msg = f"API timeout (attempt {attempt + 1}/{max_retries}): {e}"
+                logger.error(f"ZhipuAI {error_msg}")
+                if attempt == max_retries - 1:
+                    raise LLMTimeoutError(f"API timeout: {e}")
+
+            except zai.core.APIAuthenticationError as e:
+                error_msg = f"Authentication error (attempt {attempt + 1}/{max_retries}): {e}"
+                logger.error(f"ZhipuAI {error_msg}")
+                # 认证错误不重试
+                raise LLMAuthenticationError(f"Authentication failed: {e}")
+
+            except zai.core.APIReachLimitError as e:
+                error_msg = f"Rate limit error (attempt {attempt + 1}/{max_retries}): {e}"
+                logger.error(f"ZhipuAI {error_msg}")
+                if attempt == max_retries - 1:
+                    raise LLMRateLimitError(f"Rate limit exceeded: {e}")
+
+            except zai.core.APIRequestFailedError as e:
+                error_msg = f"Connection error (attempt {attempt + 1}/{max_retries}): {e}"
+                logger.error(f"ZhipuAI {error_msg}")
+                if attempt == max_retries - 1:
+                    raise LLMNetworkError(f"Connection error: {e}")
+
+            except zai.core.APIInternalError as e:
+                error_msg = f"API internal error (attempt {attempt + 1}/{max_retries}): {e}"
+                logger.error(f"ZhipuAI {error_msg}")
+                if attempt == max_retries - 1:
+                    raise LLMError(f"API internal error: {e}")
+
+            except Exception as e:
+                error_msg = f"Unexpected error (attempt {attempt + 1}/{max_retries}): {e}"
+                logger.error(f"ZhipuAI {error_msg}")
+                if attempt == max_retries - 1:
+                    raise LLMError(f"Unexpected error: {e}")
+
+        # 这里不应该到达，但为了安全起见
+        raise LLMError("All retry attempts failed")
 
     async def stream_complete(self, request: LLMRequest) -> AsyncGenerator[LLMResponse, None]:
         """
@@ -185,8 +258,9 @@ class ZhipuProvider(LLMProvider):
             if request.tool_choice:
                 kwargs["tool_choice"] = request.tool_choice
 
-            # 发送流式请求
-            response_stream = self.client.chat.completions.create(**kwargs)
+            # 发送流式请求 (使用asyncio.run_in_executor更可靠)
+            loop = asyncio.get_event_loop()
+            response_stream = await loop.run_in_executor(None, self.client.chat.completions.create, **kwargs)
 
             # 处理流式响应
             for chunk in response_stream:
@@ -200,18 +274,18 @@ class ZhipuProvider(LLMProvider):
         except zai.core.APITimeoutError as e:
             logger.error(f"ZhipuAI API timeout in stream: {e}")
             raise LLMTimeoutError(f"API timeout: {e}")
-        except zai.core.APIConnectionError as e:
-            logger.error(f"ZhipuAI connection error in stream: {e}")
-            raise LLMNetworkError(f"Connection error: {e}")
-        except zai.core.AuthenticationError as e:
+        except zai.core.APIAuthenticationError as e:
             logger.error(f"ZhipuAI authentication error in stream: {e}")
             raise LLMAuthenticationError(f"Authentication failed: {e}")
-        except zai.core.RateLimitError as e:
+        except zai.core.APIReachLimitError as e:
             logger.error(f"ZhipuAI rate limit error in stream: {e}")
             raise LLMRateLimitError(f"Rate limit exceeded: {e}")
-        except zai.core.APIError as e:
-            logger.error(f"ZhipuAI API error in stream: {e}")
-            raise LLMError(f"API error: {e}")
+        except zai.core.APIRequestFailedError as e:
+            logger.error(f"ZhipuAI connection error in stream: {e}")
+            raise LLMNetworkError(f"Connection error: {e}")
+        except zai.core.APIInternalError as e:
+            logger.error(f"ZhipuAI API internal error in stream: {e}")
+            raise LLMError(f"API internal error: {e}")
         except Exception as e:
             logger.error(f"ZhipuAI unexpected error in stream: {e}")
             raise LLMError(f"Unexpected error: {e}")
