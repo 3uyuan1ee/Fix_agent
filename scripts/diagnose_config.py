@@ -14,7 +14,7 @@ from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
 
 # 添加src目录到Python路径
-sys.path.insert(0, str(Path(__file__).parent / 'src'))
+sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 
 @dataclass
 class DiagnosticResult:
@@ -117,7 +117,7 @@ class ConfigDiagnostics:
             'config/default.yaml',
             'config/user_config.example.yaml',
             'config/llm_config.yaml',
-            'API_CONFIG_GUIDE.md'
+            'docs/API_CONFIG_GUIDE.md'
         ]
 
         for file_path in required_files:

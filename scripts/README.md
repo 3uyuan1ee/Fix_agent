@@ -1,80 +1,40 @@
-# AIDefectDetector
-
-基于AI Agent的软件项目缺陷自主检测与修复系统
-
-[![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://python.org)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-904%20passed-brightgreen.svg)](tests/)
-
-## 🚀 项目简介
-
-AIDefectDetector是一个智能化的代码缺陷检测与修复系统，基于AI Agent架构开发，能够自主理解项目上下文、利用工具进行分析、制定决策并执行修复任务。系统采用模块化设计，支持多种分析模式和交互界面。
-
-## ✨ 核心特性
-
-### 🤖 三种智能工作模式
-- **静态分析模式** (Static)：基于传统工具进行快速代码质量、安全和风格检查
-- **深度分析模式** (Deep)：结合大语言模型提供智能代码分析和深度洞察
-- **分析修复模式** (Fix)：智能检测代码问题并提供自动修复建议
-
-### 🖥️ 双界面支持
-- **命令行界面** (CLI)：适合开发者和自动化脚本
-- **Web界面** (Web)：直观的可视化操作界面，支持拖拽上传
-
-### 🧰 丰富的分析工具
-- **AST语法分析器**：深度解析代码结构
-- **Pylint代码质量检查**：全面的代码质量评估
-- **Flake8代码风格检查**：PEP8风格规范检查
-- **Bandit安全漏洞检测**：常见安全问题扫描
-
-### 🎯 智能化功能
-- **智能文件选择**：根据用户需求自动选择相关文件
-- **上下文理解**：基于项目结构提供更精准的分析
-- **专业代码对比**：直观显示修复前后的代码差异
-- **进度追踪**：实时显示分析进度和结果
-- **结果导出**：支持JSON、CSV、HTML等多种格式导出
 
 ## 📁 项目结构
 
 ```
 AIDefectDetector/
+├── main.py                 # 主程序入口
 ├── src/                    # 核心源代码
-│   ├── agent/             # AI Agent核心模块
-│   │   ├── orchestrator.py    # 任务编排器
-│   │   ├── planner.py        # 任务规划器
-│   │   ├── execution_engine.py # 执行引擎
-│   │   └── mode_router.py     # 模式路由器
-│   ├── interfaces/        # 用户界面
-│   │   ├── cli.py           # 命令行界面
-│   │   └── web.py          # Web界面
-│   ├── tools/            # 分析工具
-│   │   ├── ast_analyzer.py    # AST分析器
-│   │   ├── pylint_analyzer.py # Pylint分析器
-│   │   ├── flake8_analyzer.py # Flake8分析器
-│   │   └── bandit_analyzer.py # Bandit分析器
-│   ├── llm/              # 大语言模型集成
-│   ├── utils/            # 工具模块
-│   └── prompts/          # 提示词模板
-├── web/                   # Web前端资源
-│   ├── templates/        # HTML模板
-│   └── static/          # 静态资源
-├── tests/                # 测试代码
-├── config/               # 配置文件
-├── docs/                 # 项目文档
-│   ├── README.md        # 项目主文档
-│   ├── QUICKSTART.md    # 快速开始指南
-│   ├── INSTALL.md       # 安装指南
-│   ├── OVERVIEW.md      # 项目概览
-│   ├── DEMO_GUIDE.md    # 演示指南
-│   └── LICENSE          # 许可证
-├── scripts/              # 安装和脚本文件
-│   ├── install.sh       # Linux/macOS安装脚本
-│   ├── install.bat      # Windows安装脚本
-│   ├── aidefect         # 全局可执行脚本
-│   ├── setup.py         # Python包配置
-│   └── pyproject.toml   # 现代Python包配置
-├── demos/                # 功能演示脚本
-└── main.py              # 程序入口
+│   ├── agent/             # Agent核心逻辑
+│   ├── interfaces/        # 接口层（CLI/Web）
+│   ├── llm/              # LLM集成模块
+│   ├── tools/            # 工具集成模块
+│   └── utils/            # 工具类（配置、日志、缓存等）
+├── config/                # 配置文件
+│   ├── examples/         # 配置模板
+│   ├── default.yaml      # 默认配置
+│   └── user_config.yaml  # 用户配置
+├── scripts/               # 配置和管理脚本 ⭐
+│   ├── quick_setup.py    # 🚀 快速设置向导
+│   ├── manage_config.py  # 🔧 配置管理工具
+│   ├── diagnose_config.py # 🔍 配置诊断工具
+│   ├── setup_api.sh      # 📋 API配置向导
+│   └── set_zhipu_key.sh  # ⚡ 智谱AI快速配置
+├── tools/                 # 辅助工具
+│   ├── aidefect_cli.py   # CLI工具
+│   ├── aidefect_web.py   # Web工具
+│   └── setup.py          # 安装脚本
+├── demos/                 # 演示和示例
+│   ├── simple_demo.py    # 简单演示
+│   └── demo_cli.py       # CLI演示
+├── docs/                  # 文档 📚
+│   ├── API_CONFIG_GUIDE.md     # API配置详细指南
+│   ├── CONFIG_IMPROVEMENTS.md  # 配置改进总结
+│   ├── QUICK_START.md          # 快速开始指南
+│   └── T026_DEEP_ANALYSIS_TASKS.md # 深度分析任务
+├── tests/                 # 正式测试
+├── tests-temp/           # 临时测试文件
+└── logs/                 # 日志文件
 ```
 
 ## 🛠️ 快速开始
@@ -231,6 +191,22 @@ web:
   debug: false
 ```
 
+
+## 📚 文档
+
+- **[API配置指南](docs/API_CONFIG_GUIDE.md)** - 详细的API配置说明
+- **[快速开始](docs/QUICK_START.md)** - 快速上手指南
+- **[配置改进总结](docs/CONFIG_IMPROVEMENTS.md)** - 配置系统改进说明
+
+## 🔑 支持的LLM提供商
+
+| 提供商 | 推荐场景 | 特点 |
+|--------|----------|------|
+| 智谱AI | 国内用户 | 访问稳定，性价比高 |
+| OpenAI | 国际用户 | 功能强大，生态完善 |
+| Anthropic | 安全场景 | 推理能力强，安全性高 |
+| Mock | 测试开发 | 无需API，立即可用 |
+
 ## 🧪 测试
 
 ```bash
@@ -288,14 +264,6 @@ python -m pytest --cov=src tests/
 - 更新相关文档
 - 通过所有测试用例
 
-## 📝 更新日志
-
-### v1.0.0 (2025-10-19)
-- ✅ 完成三种工作模式实现
-- ✅ 完成Web界面开发
-- ✅ 完成T031修复操作界面
-- ✅ 904个测试用例全部通过
-- ✅ 支持多厂商大语言模型集成
 
 ## 📄 许可证
 
