@@ -15,6 +15,7 @@ from .http_client import HTTPClient, RetryConfig
 from .openai_provider import OpenAIProvider
 from .anthropic_provider import AnthropicProvider
 from .zhipu_provider import ZhipuProvider
+from .mock_provider import MockLLMProvider
 from .client import LLMClient, LLMClientConfig
 from .response_parser import LLMResponseParser, ParsedAnalysis, ParseResult
 
@@ -42,6 +43,7 @@ __all__ = [
     'OpenAIProvider',
     'AnthropicProvider',
     'ZhipuProvider',
+    'MockLLMProvider',
     'LLMClient',
     'LLMClientConfig',
     'LLMResponseParser',
