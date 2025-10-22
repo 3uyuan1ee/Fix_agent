@@ -64,9 +64,74 @@
     </nav>
 
     <!-- 主要内容区域 -->
-    <main class="container-fluid mt-4">
-        {% block content %}{% endblock %}
-    </main>
+    <div class="main-container">
+        <!-- 侧边栏导航 -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h5 class="sidebar-title">
+                    <i class="fas fa-robot me-2"></i>
+                    AIDefectDetector
+                </h5>
+                <button class="sidebar-toggle d-md-none" type="button" id="sidebarClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <ul class="sidebar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('index') }}" data-page="index">
+                        <i class="fas fa-home me-2"></i>
+                        <span>首页</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('config') }}" data-page="config">
+                        <i class="fas fa-cog me-2"></i>
+                        <span>API配置</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('static_analysis') }}" data-page="static">
+                        <i class="fas fa-tachometer-alt me-2"></i>
+                        <span>静态分析</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('deep_analysis') }}" data-page="deep">
+                        <i class="fas fa-brain me-2"></i>
+                        <span>深度分析</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('fix_mode') }}" data-page="fix">
+                        <i class="fas fa-tools me-2"></i>
+                        <span>修复模式</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('history') }}" data-page="history">
+                        <i class="fas fa-history me-2"></i>
+                        <span>历史记录</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- 内容区域 -->
+        <main class="main-content">
+            <!-- 顶部导航栏（移动端） -->
+            <nav class="topbar d-md-none">
+                <button class="topbar-toggle" type="button" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h6 class="topbar-title mb-0">AIDefectDetector</h6>
+            </nav>
+
+            <div class="content-wrapper">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
 
     <!-- 页脚 -->
     <footer class="bg-light text-center py-3 mt-5">
