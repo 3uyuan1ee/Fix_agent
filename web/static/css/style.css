@@ -1,10 +1,237 @@
-/* AIDefectDetector 自定义样式 */
+/* AIDefectDetector 主样式文件 */
 
-/* 全局样式 */
+/* CSS变量定义 */
+:root {
+    /* 主题色彩 */
+    --primary-color: #0d6efd;
+    --secondary-color: #6c757d;
+    --success-color: #198754;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #0dcaf0;
+
+    /* 侧边栏色彩 */
+    --sidebar-bg: #212529;
+    --sidebar-hover: #343a40;
+    --sidebar-active: #0d6efd;
+    --sidebar-text: #ffffff;
+    --sidebar-width: 250px;
+    --sidebar-collapsed-width: 70px;
+
+    /* 布局尺寸 */
+    --topbar-height: 56px;
+    --content-padding: 2rem;
+
+    /* 阴影 */
+    --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    --shadow-md: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    --shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+}
+
+/* 基础重置 */
+* {
+    box-sizing: border-box;
+}
+
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background-color: #f8f9fa;
     line-height: 1.6;
+    color: #333;
+    background-color: #f8f9fa;
+}
+
+/* 主容器布局 */
+.main-container {
+    display: flex;
+    min-height: calc(100vh - 56px); /* 减去顶部导航栏高度 */
+    margin-top: -56px; /* 抵消顶部导航栏的margin */
+}
+
+/* 侧边栏样式 */
+.sidebar {
+    width: var(--sidebar-width);
+    background-color: var(--sidebar-bg);
+    color: var(--sidebar-text);
+    position: fixed;
+    top: 56px; /* 从顶部导航栏下方开始 */
+    left: 0;
+    height: calc(100vh - 56px);
+    overflow-y: auto;
+    z-index: 1000;
+    transition: transform 0.3s ease;
+    box-shadow: var(--shadow-md);
+}
+
+.sidebar-header {
+    padding: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sidebar-title {
+    color: var(--sidebar-text);
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.sidebar-toggle {
+    background: none;
+    border: none;
+    color: var(--sidebar-text);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 0.25rem;
+    transition: background-color 0.2s;
+}
+
+.sidebar-toggle:hover {
+    background-color: var(--sidebar-hover);
+}
+
+.sidebar-nav {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.nav-item {
+    margin: 0;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    color: var(--sidebar-text);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.nav-link:hover {
+    background-color: var(--sidebar-hover);
+    color: var(--sidebar-text);
+    text-decoration: none;
+}
+
+.nav-link.active {
+    background-color: var(--sidebar-active);
+    border-left-color: #ffffff;
+    color: #ffffff;
+}
+
+.nav-link i {
+    width: 20px;
+    text-align: center;
+    margin-right: 0.5rem;
+}
+
+/* 主内容区域 */
+.main-content {
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    min-height: calc(100vh - 56px);
+    transition: margin-left 0.3s ease;
+}
+
+.content-wrapper {
+    padding: var(--content-padding);
+}
+
+/* 顶部导航栏（移动端） */
+.topbar {
+    background-color: var(--primary-color);
+    color: white;
+    height: var(--topbar-height);
+    display: flex;
+    align-items: center;
+    padding: 0 1rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.topbar-toggle {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    margin-right: 1rem;
+    padding: 0.25rem;
+    border-radius: 0.25rem;
+    transition: background-color 0.2s;
+}
+
+.topbar-toggle:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.topbar-title {
+    color: white;
+    font-weight: 600;
+}
+
+/* 响应式设计 */
+@media (max-width: 767.98px) {
+    .main-container {
+        margin-top: 0;
+    }
+
+    .sidebar {
+        transform: translateX(-100%);
+        z-index: 1050;
+    }
+
+    .sidebar.show {
+        transform: translateX(0);
+    }
+
+    .main-content {
+        margin-left: 0;
+    }
+
+    .content-wrapper {
+        padding: 1rem;
+    }
+
+    .nav-link span {
+        display: inline;
+    }
+}
+
+@media (min-width: 768px) {
+    .sidebar-nav .nav-link span {
+        display: inline;
+    }
+}
+
+/* 大屏幕优化 */
+@media (min-width: 1200px) {
+    .content-wrapper {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+}
+
+/* 滚动条样式 */
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
 }
 
 /* 导航栏样式 */

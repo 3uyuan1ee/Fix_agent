@@ -1,6 +1,24 @@
-// AIDefectDetector Web应用主要JavaScript文件
+/**
+ * AIDefectDetector 通用JavaScript工具库
+ * 提供页面间通用的功能和工具函数
+ */
 
 // 全局变量
+window.App = {
+    currentPage: 'index',
+    sidebarVisible: true,
+    config: {},
+    themes: {
+        primary: '#0d6efd',
+        secondary: '#6c757d',
+        success: '#198754',
+        danger: '#dc3545',
+        warning: '#ffc107',
+        info: '#0dcaf0'
+    }
+};
+
+// 兼容旧版本
 window.AIDefectDetector = {
     config: {
         apiBaseUrl: '/api',
@@ -12,9 +30,377 @@ window.AIDefectDetector = {
     }
 };
 
+/**
+ * AJAX请求封装函数
+ * @param {string} url - 请求URL
+ * @param {Object} options - 请求选项
+ * @returns {Promise} 返回Promise对象
+ */
+App.ajax = function(url, options = {}) {
+    const defaultOptions = {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        timeout: 30000
+    };
+
+    const finalOptions = { ...defaultOptions, ...options };
+
+    return new Promise((resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+            reject(new Error('请求超时'));
+        }, finalOptions.timeout);
+
+        fetch(url, finalOptions)
+            .then(response => {
+                clearTimeout(timeoutId);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                resolve(data);
+            })
+            .catch(error => {
+                clearTimeout(timeoutId);
+                reject(error);
+            });
+    });
+};
+
+/**
+ * GET请求快捷方法
+ */
+App.get = function(url, options = {}) {
+    return App.ajax(url, { ...options, method: 'GET' });
+};
+
+/**
+ * POST请求快捷方法
+ */
+App.post = function(url, data, options = {}) {
+    return App.ajax(url, {
+        ...options,
+        method: 'POST',
+        body: JSON.stringify(data)
+    });
+};
+
+/**
+ * 错误处理函数
+ * @param {Error} error - 错误对象
+ * @param {string} context - 错误上下文
+ */
+App.handleError = function(error, context = '') {
+    console.error(`[${context}] 错误:`, error);
+
+    let message = '操作失败';
+
+    if (error.message.includes('超时')) {
+        message = '请求超时，请检查网络连接';
+    } else if (error.message.includes('HTTP 4')) {
+        message = '请求参数错误';
+    } else if (error.message.includes('HTTP 5')) {
+        message = '服务器内部错误';
+    } else if (error.message.includes('Failed to fetch')) {
+        message = '网络连接失败，请检查网络';
+    } else {
+        message = error.message || '未知错误';
+    }
+
+    App.showAlert(message, 'danger');
+};
+
+/**
+ * 显示提示信息
+ * @param {string} message - 提示信息
+ * @param {string} type - 提示类型 (success, danger, warning, info)
+ * @param {number} duration - 显示时长（毫秒）
+ */
+App.showAlert = function(message, type = 'info', duration = 5000) {
+    // 创建提示框容器
+    const alertContainer = document.getElementById('alert-container') || (() => {
+        const container = document.createElement('div');
+        container.id = 'alert-container';
+        container.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            max-width: 400px;
+        `;
+        document.body.appendChild(container);
+        return container;
+    })();
+
+    // 创建提示框
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.style.cssText = `
+        margin-bottom: 10px;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        border-radius: 0.5rem;
+        animation: slideInRight 0.3s ease-out;
+    `;
+
+    // 设置图标
+    const icons = {
+        success: 'fas fa-check-circle',
+        danger: 'fas fa-times-circle',
+        warning: 'fas fa-exclamation-triangle',
+        info: 'fas fa-info-circle'
+    };
+
+    alertDiv.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="${icons[type]} me-2"></i>
+            <div class="flex-grow-1">${message}</div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+
+    // 添加到容器
+    alertContainer.appendChild(alertDiv);
+
+    // 绑定关闭事件
+    alertDiv.querySelector('.btn-close').addEventListener('click', () => {
+        alertDiv.remove();
+    });
+
+    // 自动移除
+    if (duration > 0) {
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.style.animation = 'slideOutRight 0.3s ease-out';
+                setTimeout(() => alertDiv.remove(), 300);
+            }
+        }, duration);
+    }
+};
+
+/**
+ * 页面状态管理
+ */
+App.PageState = {
+    set: function(key, value) {
+        try {
+            sessionStorage.setItem(`app_${key}`, JSON.stringify(value));
+        } catch (e) {
+            console.warn('无法保存状态到sessionStorage:', e);
+        }
+    },
+
+    get: function(key, defaultValue = null) {
+        try {
+            const value = sessionStorage.getItem(`app_${key}`);
+            return value ? JSON.parse(value) : defaultValue;
+        } catch (e) {
+            console.warn('无法从sessionStorage读取状态:', e);
+            return defaultValue;
+        }
+    },
+
+    remove: function(key) {
+        try {
+            sessionStorage.removeItem(`app_${key}`);
+        } catch (e) {
+            console.warn('无法从sessionStorage删除状态:', e);
+        }
+    }
+};
+
+/**
+ * 侧边栏控制
+ */
+App.Sidebar = {
+    show: function() {
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar) {
+            sidebar.classList.add('show');
+            App.sidebarVisible = true;
+            App.PageState.set('sidebarVisible', true);
+        }
+    },
+
+    hide: function() {
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar) {
+            sidebar.classList.remove('show');
+            App.sidebarVisible = false;
+            App.PageState.set('sidebarVisible', false);
+        }
+    },
+
+    toggle: function() {
+        if (App.sidebarVisible) {
+            this.hide();
+        } else {
+            this.show();
+        }
+    },
+
+    setActive: function(pageName) {
+        // 移除所有活动状态
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.remove('active');
+        });
+
+        // 设置当前页面为活动状态
+        const activeLink = document.querySelector(`[data-page="${pageName}"]`);
+        if (activeLink) {
+            activeLink.classList.add('active');
+        }
+
+        // 更新当前页面状态
+        App.currentPage = pageName;
+        App.PageState.set('currentPage', pageName);
+    }
+};
+
+/**
+ * 工具函数 - 防抖
+ * @param {Function} func - 要防抖的函数
+ * @param {number} wait - 等待时间（毫秒）
+ * @returns {Function} 防抖后的函数
+ */
+App.debounce = function(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+};
+
+/**
+ * 工具函数 - 节流
+ * @param {Function} func - 要节流的函数
+ * @param {number} limit - 限制间隔（毫秒）
+ * @returns {Function} 节流后的函数
+ */
+App.throttle = function(func, limit) {
+    let inThrottle;
+    return function() {
+        const args = arguments;
+        const context = this;
+        if (!inThrottle) {
+            func.apply(context, args);
+            inThrottle = true;
+            setTimeout(() => inThrottle = false, limit);
+        }
+    };
+};
+
+/**
+ * 初始化应用
+ */
+App.init = function() {
+    // 恢复页面状态
+    const savedPage = App.PageState.get('currentPage') || 'index';
+    const sidebarVisible = App.PageState.get('sidebarVisible', true);
+
+    // 设置侧边栏状态
+    if (window.innerWidth <= 767 && !sidebarVisible) {
+        App.Sidebar.hide();
+    }
+
+    // 设置当前页面
+    App.Sidebar.setActive(savedPage);
+
+    // 绑定事件监听器
+    this.bindEvents();
+
+    console.log('AIDefectDetector 应用初始化完成');
+};
+
+/**
+ * 绑定全局事件监听器
+ */
+App.bindEvents = function() {
+    // 侧边栏切换
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', () => App.Sidebar.toggle());
+    }
+
+    const sidebarClose = document.getElementById('sidebarClose');
+    if (sidebarClose) {
+        sidebarClose.addEventListener('click', () => App.Sidebar.hide());
+    }
+
+    // 导航链接点击
+    document.querySelectorAll('.nav-link[data-page]').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const page = link.getAttribute('data-page');
+            App.Sidebar.setActive(page);
+
+            // 移动端自动隐藏侧边栏
+            if (window.innerWidth <= 767) {
+                App.Sidebar.hide();
+            }
+        });
+    });
+
+    // 响应式处理
+    window.addEventListener('resize', App.throttle(() => {
+        if (window.innerWidth > 767) {
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar && sidebar.classList.contains('show')) {
+                sidebar.classList.remove('show');
+            }
+        }
+    }, 250));
+
+    // 键盘快捷键
+    document.addEventListener('keydown', (e) => {
+        // Ctrl/Cmd + B 切换侧边栏
+        if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+            e.preventDefault();
+            App.Sidebar.toggle();
+        }
+    });
+};
+
+// 添加CSS动画
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideOutRight {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(style);
+
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', function() {
     console.log('AIDefectDetector Web应用初始化中...');
+
+    // 初始化应用
+    App.init();
 
     // 初始化工具提示
     initializeTooltips();
