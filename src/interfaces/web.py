@@ -1107,6 +1107,237 @@ class AIDefectDetectorWeb:
                 self.logger.error(f"渲染修复模式页面失败: {e}")
                 return "<h1>AIDefectDetector</h1><p>修复模式页面正在开发中...</p>", 200
 
+        # 修复模式API端点
+        @self.app.route('/api/fix/suggestions', methods=['GET'])
+        def get_fix_suggestions():
+            """获取修复建议列表API"""
+            try:
+                task_id = request.args.get('task_id')
+                if not task_id:
+                    return jsonify({'error': '任务ID不能为空'}), 400
+
+                self.logger.info(f"获取修复建议: {task_id}")
+
+                # 生成模拟的修复建议
+                suggestions = self._generate_mock_fix_suggestions(task_id)
+
+                return jsonify({
+                    'success': True,
+                    'suggestions': suggestions
+                })
+
+            except Exception as e:
+                self.logger.error(f"获取修复建议失败: {e}")
+                return jsonify({'error': '获取修复建议失败'}), 500
+
+        @self.app.route('/api/fix/suggest', methods=['POST'])
+        def generate_fix_suggestion():
+            """生成修复建议API"""
+            try:
+                data = request.get_json()
+                issue_id = data.get('issue_id')
+                file_path = data.get('file_path')
+                issue_type = data.get('issue_type')
+                original_code = data.get('original_code')
+
+                if not all([issue_id, file_path, issue_type, original_code]):
+                    return jsonify({'error': '缺少必要参数'}), 400
+
+                self.logger.info(f"生成修复建议: {issue_id}")
+
+                # 生成修复建议
+                fix_suggestion = self._generate_fix_suggestion(
+                    issue_id, file_path, issue_type, original_code
+                )
+
+                return jsonify({
+                    'success': True,
+                    'suggestion': fix_suggestion
+                })
+
+            except Exception as e:
+                self.logger.error(f"生成修复建议失败: {e}")
+                return jsonify({'error': '生成修复建议失败'}), 500
+
+        @self.app.route('/api/fix/apply', methods=['POST'])
+        def apply_fix():
+            """应用修复API"""
+            try:
+                data = request.get_json()
+                suggestion_id = data.get('suggestion_id')
+                fixed_code = data.get('fixed_code')
+                auto_apply = data.get('auto_apply', False)
+
+                if not suggestion_id:
+                    return jsonify({'error': '建议ID不能为空'}), 400
+
+                self.logger.info(f"应用修复: {suggestion_id}")
+
+                # 模拟修复应用过程
+                result = self._apply_fix_suggestion(
+                    suggestion_id, fixed_code, auto_apply
+                )
+
+                return jsonify({
+                    'success': True,
+                    'result': result
+                })
+
+            except Exception as e:
+                self.logger.error(f"应用修复失败: {e}")
+                return jsonify({'error': '应用修复失败'}), 500
+
+        @self.app.route('/api/fix/reject', methods=['POST'])
+        def reject_fix():
+            """拒绝修复建议API"""
+            try:
+                data = request.get_json()
+                suggestion_id = data.get('suggestion_id')
+                reason = data.get('reason', '用户拒绝')
+
+                if not suggestion_id:
+                    return jsonify({'error': '建议ID不能为空'}), 400
+
+                self.logger.info(f"拒绝修复建议: {suggestion_id}")
+
+                # 记录拒绝原因
+                result = self._reject_fix_suggestion(suggestion_id, reason)
+
+                return jsonify({
+                    'success': True,
+                    'result': result
+                })
+
+            except Exception as e:
+                self.logger.error(f"拒绝修复失败: {e}")
+                return jsonify({'error': '拒绝修复失败'}), 500
+
+        @self.app.route('/api/fix/diff/<fix_id>', methods=['GET'])
+        def get_fix_diff(fix_id):
+            """获取修复差异API"""
+            try:
+                self.logger.info(f"获取修复差异: {fix_id}")
+
+                # 生成差异数据
+                diff_data = self._generate_fix_diff(fix_id)
+
+                return jsonify({
+                    'success': True,
+                    'diff': diff_data
+                })
+
+            except Exception as e:
+                self.logger.error(f"获取修复差异失败: {e}")
+                return jsonify({'error': '获取修复差异失败'}), 500
+
+        @self.app.route('/api/fix/batch-apply', methods=['POST'])
+        def batch_apply_fixes():
+            """批量应用修复API"""
+            try:
+                data = request.get_json()
+                task_id = data.get('task_id')
+                suggestions = data.get('suggestions', [])
+                strategy = data.get('strategy', 'conservative')
+
+                if not task_id or not suggestions:
+                    return jsonify({'error': '任务ID和建议列表不能为空'}), 400
+
+                self.logger.info(f"批量应用修复: {task_id}, {len(suggestions)}个建议")
+
+                # 模拟批量修复过程
+                results = self._batch_apply_fixes(task_id, suggestions, strategy)
+
+                return jsonify({
+                    'success': True,
+                    'results': results
+                })
+
+            except Exception as e:
+                self.logger.error(f"批量应用修复失败: {e}")
+                return jsonify({'error': '批量应用修复失败'}), 500
+
+        @self.app.route('/api/fix/backup', methods=['POST'])
+        def create_backup():
+            """创建备份API"""
+            try:
+                data = request.get_json()
+                task_id = data.get('task_id')
+
+                if not task_id:
+                    return jsonify({'error': '任务ID不能为空'}), 400
+
+                self.logger.info(f"创建备份: {task_id}")
+
+                # 模拟创建备份
+                backup_info = self._create_backup(task_id)
+
+                return jsonify({
+                    'success': True,
+                    'backup': backup_info
+                })
+
+            except Exception as e:
+                self.logger.error(f"创建备份失败: {e}")
+                return jsonify({'error': '创建备份失败'}), 500
+
+        @self.app.route('/api/fix/test-all', methods=['POST'])
+        def test_all_fixes():
+            """测试所有修复API"""
+            try:
+                data = request.get_json()
+                task_id = data.get('task_id')
+                suggestions = data.get('suggestions', [])
+
+                if not task_id:
+                    return jsonify({'error': '任务ID不能为空'}), 400
+
+                self.logger.info(f"测试所有修复: {task_id}")
+
+                # 模拟测试过程
+                results = self._test_all_fixes(task_id, suggestions)
+
+                return jsonify({
+                    'success': True,
+                    'results': results
+                })
+
+            except Exception as e:
+                self.logger.error(f"测试修复失败: {e}")
+                return jsonify({'error': '测试修复失败'}), 500
+
+        @self.app.route('/api/fix/export', methods=['GET'])
+        def export_fix_report():
+            """导出修复报告API"""
+            try:
+                task_id = request.args.get('task_id')
+                format_type = request.args.get('format', 'json')
+
+                if not task_id:
+                    return jsonify({'error': '任务ID不能为空'}), 400
+
+                self.logger.info(f"导出修复报告: {task_id}, 格式: {format_type}")
+
+                # 生成报告
+                report_data = self._generate_fix_report(task_id, format_type)
+
+                if format_type == 'json':
+                    return jsonify({
+                        'success': True,
+                        'report': report_data
+                    })
+                else:
+                    # 返回文件下载
+                    return send_file(
+                        io.BytesIO(report_data.encode('utf-8')),
+                        as_attachment=True,
+                        download_name=f'fix_report_{task_id}.{format_type}',
+                        mimetype='application/octet-stream'
+                    )
+
+            except Exception as e:
+                self.logger.error(f"导出修复报告失败: {e}")
+                return jsonify({'error': '导出修复报告失败'}), 500
+
         # 历史记录页面路由
         @self.app.route('/history')
         def history():
@@ -2639,6 +2870,529 @@ AIDefectDetector 修复数据导出报告
         except Exception as e:
             self.logger.error(f"启动Web应用失败: {e}")
             raise
+
+
+  def _generate_mock_fix_suggestions(self, task_id):
+        """生成模拟的修复建议数据"""
+        import random
+        import uuid
+
+        # 模拟的修复建议数据
+        suggestions = []
+
+        # 定义问题类型和对应的修复方案
+        fix_templates = [
+            {
+                'issue_type': 'security',
+                'severity': 'critical',
+                'title': '硬编码密码修复',
+                'description': '将硬编码的密码替换为环境变量引用',
+                'original_code': 'password = "admin123"  # 硬编码密码',
+                'fixed_code': 'password = os.getenv("DB_PASSWORD")  # 从环境变量获取',
+                'risk_level': 2,
+                'confidence': 95,
+                'file_path': 'src/config/database.py',
+                'line_number': 45
+            },
+            {
+                'issue_type': 'style',
+                'severity': 'warning',
+                'title': '导入语句格式化',
+                'description': '按照PEP8标准格式化导入语句',
+                'original_code': 'import os,sys, json\nimport requests',
+                'fixed_code': 'import json\nimport os\nimport sys\n\nimport requests',
+                'risk_level': 1,
+                'confidence': 90,
+                'file_path': 'src/utils/helpers.py',
+                'line_number': 12
+            },
+            {
+                'issue_type': 'performance',
+                'severity': 'info',
+                'title': '优化字符串拼接',
+                'description': '使用join()方法替代循环中的字符串拼接',
+                'original_code': 'result = ""\nfor item in items:\n    result += str(item)',
+                'fixed_code': 'result = "".join(str(item) for item in items)',
+                'risk_level': 1,
+                'confidence': 85,
+                'file_path': 'src/processors/data_processor.py',
+                'line_number': 78
+            },
+            {
+                'issue_type': 'security',
+                'severity': 'critical',
+                'title': 'SQL注入漏洞修复',
+                'description': '使用参数化查询替代字符串拼接',
+                'original_code': 'query = f"SELECT * FROM users WHERE id = {user_id}"',
+                'fixed_code': 'query = "SELECT * FROM users WHERE id = %s"\ncursor.execute(query, (user_id,))',
+                'risk_level': 3,
+                'confidence': 98,
+                'file_path': 'src/models/database.py',
+                'line_number': 134
+            },
+            {
+                'issue_type': 'maintainability',
+                'severity': 'warning',
+                'title': '函数拆分重构',
+                'description': '将复杂函数拆分为多个简单函数',
+                'original_code': 'def process_data(data):\n    # 50行复杂逻辑\n    pass',
+                'fixed_code': 'def process_data(data):\n    cleaned_data = _clean_data(data)\n    validated_data = _validate_data(cleaned_data)\n    return _transform_data(validated_data)\n\ndef _clean_data(data):\n    # 数据清洗逻辑\n    pass\n\ndef _validate_data(data):\n    # 数据验证逻辑\n    pass\n\ndef _transform_data(data):\n    # 数据转换逻辑\n    pass',
+                'risk_level': 2,
+                'confidence': 88,
+                'file_path': 'src/services/analysis_service.py',
+                'line_number': 200
+            }
+        ]
+
+        # 生成5-12个修复建议
+        num_suggestions = random.randint(5, 12)
+
+        for i in range(num_suggestions):
+            template = random.choice(fix_templates)
+            suggestion_id = f"fix_{task_id}_{i+1:03d}"
+
+            suggestion = {
+                'id': suggestion_id,
+                'task_id': task_id,
+                'issue_id': f"issue_{task_id}_{i+1:03d}",
+                'issue_type': template['issue_type'],
+                'severity': template['severity'],
+                'title': template['title'],
+                'description': template['description'],
+                'original_code': template['original_code'],
+                'fixed_code': template['fixed_code'],
+                'risk_level': template['risk_level'],
+                'confidence': template['confidence'],
+                'file_path': template['file_path'],
+                'line_number': template['line_number'],
+                'status': 'pending',  # pending, applied, rejected
+                'created_at': self._get_current_time(),
+                'explanation': self._generate_fix_explanation(template),
+                'test_results': None,
+                'backup_created': False
+            }
+
+            suggestions.append(suggestion)
+
+        return suggestions
+
+    def _generate_fix_suggestion(self, issue_id, file_path, issue_type, original_code):
+        """生成单个修复建议"""
+        import uuid
+
+        # 根据问题类型生成修复建议
+        fix_strategies = {
+            'security': {
+                'title': '安全问题修复',
+                'description': '修复潜在的安全漏洞',
+                'fixed_code': original_code.replace('hardcoded', 'os.getenv("HARDCODED")'),
+                'risk_level': 3,
+                'confidence': 95
+            },
+            'style': {
+                'title': '代码风格修复',
+                'description': '按照PEP8标准调整代码格式',
+                'fixed_code': original_code.replace('  ', '    '),
+                'risk_level': 1,
+                'confidence': 90
+            },
+            'performance': {
+                'title': '性能优化',
+                'description': '优化代码执行性能',
+                'fixed_code': original_code.replace('for item in items:\n    result += item', 'result = "".join(items)'),
+                'risk_level': 2,
+                'confidence': 85
+            },
+            'maintainability': {
+                'title': '可维护性改进',
+                'description': '提高代码的可读性和可维护性',
+                'fixed_code': f"# {original_code}\n# TODO: 重构此部分代码",
+                'risk_level': 1,
+                'confidence': 80
+            }
+        }
+
+        strategy = fix_strategies.get(issue_type, fix_strategies['style'])
+
+        return {
+            'id': str(uuid.uuid4()),
+            'issue_id': issue_id,
+            'title': strategy['title'],
+            'description': strategy['description'],
+            'original_code': original_code,
+            'fixed_code': strategy['fixed_code'],
+            'risk_level': strategy['risk_level'],
+            'confidence': strategy['confidence'],
+            'file_path': file_path,
+            'explanation': f"根据{issue_type}类型的最佳实践进行修复"
+        }
+
+    def _apply_fix_suggestion(self, suggestion_id, fixed_code, auto_apply=False):
+        """应用修复建议"""
+        import time
+        import uuid
+
+        # 模拟修复应用过程
+        if auto_apply:
+            time.sleep(0.5)  # 模拟自动应用时间
+        else:
+            time.sleep(1.0)  # 模拟手动确认时间
+
+        return {
+            'suggestion_id': suggestion_id,
+            'status': 'applied',
+            'applied_at': self._get_current_time(),
+            'backup_file': f'backup_{suggestion_id}_{int(time.time())}.py',
+            'changes_made': 1,
+            'lines_added': len(fixed_code.split('\n')),
+            'lines_removed': 5,
+            'success': True,
+            'message': '修复已成功应用'
+        }
+
+    def _reject_fix_suggestion(self, suggestion_id, reason):
+        """拒绝修复建议"""
+        import time
+
+        # 记录拒绝原因
+        time.sleep(0.2)  # 模拟记录时间
+
+        return {
+            'suggestion_id': suggestion_id,
+            'status': 'rejected',
+            'rejected_at': self._get_current_time(),
+            'reason': reason,
+            'message': '修复建议已被拒绝'
+        }
+
+    def _generate_fix_diff(self, fix_id):
+        """生成修复差异"""
+        import random
+
+        # 模拟差异数据
+        diff_lines = [
+            {
+                'line_number': 42,
+                'type': 'context',
+                'content': 'def authenticate_user(username, password):'
+            },
+            {
+                'line_number': 43,
+                'type': 'removed',
+                'content': '    if password == "admin123":  # 硬编码密码'
+            },
+            {
+                'line_number': 44,
+                'type': 'removed',
+                'content': '        return True'
+            },
+            {
+                'line_number': 45,
+                'type': 'added',
+                'content': '    if password == os.getenv("ADMIN_PASSWORD"):'
+            },
+            {
+                'line_number': 46,
+                'type': 'added',
+                'content': '        return True'
+            },
+            {
+                'line_number': 47,
+                'type': 'context',
+                'content': '    return False'
+            }
+        ]
+
+        return {
+            'fix_id': fix_id,
+            'file_path': 'src/auth/user_manager.py',
+            'diff_lines': diff_lines,
+            'total_changes': len([line for line in diff_lines if line['type'] in ['added', 'removed']]),
+            'added_lines': len([line for line in diff_lines if line['type'] == 'added']),
+            'removed_lines': len([line for line in diff_lines if line['type'] == 'removed']),
+            'generated_at': self._get_current_time()
+        }
+
+    def _batch_apply_fixes(self, task_id, suggestions, strategy='conservative'):
+        """批量应用修复"""
+        import time
+        import random
+
+        results = []
+        total_suggestions = len(suggestions)
+
+        # 根据策略决定应用哪些修复
+        if strategy == 'conservative':
+            # 保守策略：只应用低风险和高置信度的修复
+            applicable_suggestions = [
+                s for s in suggestions
+                if s.get('risk_level', 3) <= 2 and s.get('confidence', 0) >= 90
+            ]
+        elif strategy == 'aggressive':
+            # 激进策略：应用所有修复
+            applicable_suggestions = suggestions
+        else:  # balanced
+            # 平衡策略：应用中等风险及以下的修复
+            applicable_suggestions = [
+                s for s in suggestions
+                if s.get('risk_level', 3) <= 3
+            ]
+
+        # 模拟批量处理时间
+        processing_time = len(applicable_suggestions) * 0.3
+        time.sleep(min(processing_time, 3.0))  # 最多等待3秒
+
+        for suggestion in applicable_suggestions:
+            # 模拟个别修复失败的情况
+            success_rate = 0.95 if suggestion.get('risk_level', 3) <= 2 else 0.85
+
+            if random.random() < success_rate:
+                result = {
+                    'suggestion_id': suggestion['id'],
+                    'status': 'applied',
+                    'success': True,
+                    'message': '修复应用成功'
+                }
+            else:
+                result = {
+                    'suggestion_id': suggestion['id'],
+                    'status': 'failed',
+                    'success': False,
+                    'message': '修复应用失败：存在语法错误'
+                }
+
+            results.append(result)
+
+        # 对于未应用的修复，添加跳过记录
+        skipped_suggestions = set(s['id'] for s in suggestions) - set(r['suggestion_id'] for r in results)
+        for suggestion_id in skipped_suggestions:
+            results.append({
+                'suggestion_id': suggestion_id,
+                'status': 'skipped',
+                'success': False,
+                'message': f'根据{strategy}策略跳过此修复'
+            })
+
+        return {
+            'task_id': task_id,
+            'strategy': strategy,
+            'total_suggestions': total_suggestions,
+            'applicable_count': len(applicable_suggestions),
+            'applied_count': len([r for r in results if r['status'] == 'applied']),
+            'failed_count': len([r for r in results if r['status'] == 'failed']),
+            'skipped_count': len([r for r in results if r['status'] == 'skipped']),
+            'success_rate': len([r for r in results if r['status'] == 'applied']) / total_suggestions * 100,
+            'processing_time': processing_time,
+            'results': results,
+            'completed_at': self._get_current_time()
+        }
+
+    def _create_backup(self, task_id):
+        """创建备份"""
+        import time
+        import os
+
+        backup_id = f"backup_{task_id}_{int(time.time())}"
+        backup_path = f".fix_backups/{backup_id}"
+
+        # 模拟备份创建过程
+        time.sleep(0.5)
+
+        return {
+            'backup_id': backup_id,
+            'task_id': task_id,
+            'backup_path': backup_path,
+            'created_at': self._get_current_time(),
+            'size_mb': round(random.uniform(1.5, 8.2), 2),
+            'files_count': random.randint(5, 15),
+            'success': True,
+            'message': '备份创建成功'
+        }
+
+    def _test_all_fixes(self, task_id, suggestions):
+        """测试所有修复"""
+        import time
+        import random
+
+        results = []
+
+        # 模拟测试过程
+        for suggestion in suggestions:
+            time.sleep(0.1)  # 模拟单个测试时间
+
+            # 根据风险级别和置信度决定测试结果
+            base_success_rate = 0.9
+            if suggestion.get('risk_level', 3) == 1:
+                base_success_rate = 0.98
+            elif suggestion.get('risk_level', 3) == 3:
+                base_success_rate = 0.75
+
+            confidence_factor = suggestion.get('confidence', 85) / 100.0
+            final_success_rate = base_success_rate * confidence_factor
+
+            success = random.random() < final_success_rate
+
+            result = {
+                'suggestion_id': suggestion['id'],
+                'test_passed': success,
+                'execution_time_ms': random.randint(50, 500),
+                'memory_usage_mb': round(random.uniform(10, 50), 2),
+                'issues_found': 0 if success else random.randint(1, 3)
+            }
+
+            if not success:
+                result['error_message'] = random.choice([
+                    '语法错误：缩进不正确',
+                    '运行时错误：变量未定义',
+                    '逻辑错误：函数返回值不正确',
+                    '导入错误：模块不存在'
+                ])
+
+            results.append(result)
+
+        # 计算总体统计
+        passed_count = len([r for r in results if r['test_passed']])
+        total_tests = len(results)
+
+        return {
+            'task_id': task_id,
+            'total_tests': total_tests,
+            'passed_tests': passed_count,
+            'failed_tests': total_tests - passed_count,
+            'success_rate': (passed_count / total_tests * 100) if total_tests > 0 else 0,
+            'total_execution_time_ms': sum(r['execution_time_ms'] for r in results),
+            'average_memory_usage_mb': sum(r['memory_usage_mb'] for r in results) / total_tests if total_tests > 0 else 0,
+            'results': results,
+            'completed_at': self._get_current_time()
+        }
+
+    def _generate_fix_report(self, task_id, format_type='json'):
+        """生成修复报告"""
+        import time
+        import random
+
+        # 获取模拟的修复建议数据
+        suggestions = self._generate_mock_fix_suggestions(task_id)
+
+        # 生成报告数据
+        report_data = {
+            'task_id': task_id,
+            'generated_at': self._get_current_time(),
+            'summary': {
+                'total_suggestions': len(suggestions),
+                'applied_count': random.randint(8, len(suggestions)),
+                'rejected_count': random.randint(0, 3),
+                'pending_count': random.randint(0, 2),
+                'success_rate': round(random.uniform(75, 95), 1)
+            },
+            'severity_breakdown': {
+                'critical': len([s for s in suggestions if s['severity'] == 'critical']),
+                'warning': len([s for s in suggestions if s['severity'] == 'warning']),
+                'info': len([s for s in suggestions if s['severity'] == 'info'])
+            },
+            'risk_assessment': {
+                'high_risk_fixed': random.randint(1, 3),
+                'medium_risk_fixed': random.randint(3, 6),
+                'low_risk_fixed': random.randint(5, 10),
+                'total_risk_reduction': round(random.uniform(15, 40), 1)
+            },
+            'suggestions': suggestions
+        }
+
+        if format_type == 'json':
+            return report_data
+        elif format_type == 'html':
+            # 生成HTML格式报告
+            html_template = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>修复报告 - {task_id}</title>
+    <style>
+        body {{ font-family: Arial, sans-serif; margin: 20px; }}
+        .header {{ text-align: center; margin-bottom: 30px; }}
+        .summary {{ display: flex; justify-content: space-around; margin: 20px 0; }}
+        .summary-item {{ text-align: center; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }}
+        .suggestion {{ margin: 10px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }}
+        .critical {{ border-left: 4px solid #dc3545; }}
+        .warning {{ border-left: 4px solid #ffc107; }}
+        .info {{ border-left: 4px solid #17a2b8; }}
+        .code {{ background: #f8f9fa; padding: 10px; font-family: monospace; margin: 5px 0; }}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>AIDefectDetector 修复报告</h1>
+        <p>任务ID: {task_id}</p>
+        <p>生成时间: {report_data['generated_at']}</p>
+    </div>
+
+    <div class="summary">
+        <div class="summary-item">
+            <h3>{report_data['summary']['total_suggestions']}</h3>
+            <p>总建议数</p>
+        </div>
+        <div class="summary-item">
+            <h3>{report_data['summary']['applied_count']}</h3>
+            <p>已应用</p>
+        </div>
+        <div class="summary-item">
+            <h3>{report_data['summary']['success_rate']}%</h3>
+            <p>成功率</p>
+        </div>
+    </div>
+
+    <h2>修复建议详情</h2>
+    {''.join([f'''
+    <div class="suggestion {s['severity']}">
+        <h4>{s['title']}</h4>
+        <p><strong>文件:</strong> {s['file_path']}:{s['line_number']}</p>
+        <p><strong>描述:</strong> {s['description']}</p>
+        <p><strong>风险级别:</strong> {s['risk_level']}/3</p>
+        <p><strong>置信度:</strong> {s['confidence']}%</p>
+        <div class="code"><strong>原始代码:</strong><br>{s['original_code']}</div>
+        <div class="code"><strong>修复后:</strong><br>{s['fixed_code']}</div>
+    </div>
+    ''' for s in suggestions])}
+</body>
+</html>
+            """
+            return html_template
+        else:
+            # CSV格式
+            import csv
+            import io
+
+            output = io.StringIO()
+            writer = csv.writer(output)
+
+            # 写入表头
+            writer.writerow([
+                'ID', '标题', '严重程度', '风险级别', '置信度', '文件路径', '行号', '描述'
+            ])
+
+            # 写入数据
+            for s in suggestions:
+                writer.writerow([
+                    s['id'], s['title'], s['severity'], s['risk_level'],
+                    s['confidence'], s['file_path'], s['line_number'], s['description']
+                ])
+
+            return output.getvalue()
+
+    def _generate_fix_explanation(self, template):
+        """生成修复说明"""
+        explanations = {
+            'security': '此修复解决了潜在的安全漏洞，防止恶意攻击和数据泄露。',
+            'style': '此修复使代码符合PEP8编码规范，提高代码可读性。',
+            'performance': '此修复优化了代码执行效率，减少资源消耗。',
+            'maintainability': '此修复提高了代码的可维护性，便于后续开发和调试。'
+        }
+
+        base_explanation = explanations.get(template['issue_type'], '此修复改进了代码质量。')
+
+        return f"{base_explanation}\n\n修复原理：{template['description']}\n预期效果：降低{template['risk_level']}级风险，提升代码质量。"
 
 
 def create_app():
