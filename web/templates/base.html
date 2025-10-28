@@ -39,13 +39,13 @@
                             <i class="fas fa-search me-1"></i>代码分析
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-tachometer-alt me-1"></i>静态分析</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-brain me-1"></i>深度分析</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-tools me-1"></i>分析修复</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('static') }}"><i class="fas fa-tachometer-alt me-1"></i>静态分析</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('deep') }}"><i class="fas fa-brain me-1"></i>深度分析</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('fix') }}"><i class="fas fa-tools me-1"></i>分析修复</a></li>
                         </ul>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="fas fa-history me-1"></i>历史记录</a>
+                        <a class="nav-link" href="{{ url_for('history') }}"><i class="fas fa-history me-1"></i>历史记录</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#"><i class="fas fa-cog me-1"></i>设置</a>
