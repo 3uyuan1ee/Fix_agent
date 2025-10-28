@@ -17,6 +17,16 @@ except ImportError:
     jsonify = None
     request = None
 
+# WebSocket相关导入
+try:
+    from flask_socketio import SocketIO, emit, join_room, leave_room, disconnect
+except ImportError:
+    SocketIO = None
+    emit = None
+    join_room = None
+    leave_room = None
+    disconnect = None
+
 # 项目内部导入
 from src.utils.config import get_config_manager
 from src.utils.logger import get_logger
@@ -34,6 +44,7 @@ class AIDefectDetectorWeb:
         self.config = self.config_manager._config
         self.logger = get_logger()
         self.app = None
+        self.socketio = None
         self._create_app()
 
     def _create_app(self):
@@ -53,6 +64,12 @@ class AIDefectDetectorWeb:
 
         # 注册路由
         self._register_routes()
+
+        # 初始化SocketIO
+        self._init_socketio()
+
+        # 注册WebSocket事件
+        self._register_socketio_events()
 
         # 注册错误处理器
         self._register_error_handlers()
@@ -913,6 +930,172 @@ class AIDefectDetectorWeb:
             except Exception as e:
                 self.logger.error(f"渲染深度分析页面失败: {e}")
                 return "<h1>AIDefectDetector</h1><p>深度分析页面正在开发中...</p>", 200
+
+        # 深度分析API端点
+        @self.app.route('/api/deep/chat', methods=['POST'])
+        def deep_chat():
+            """处理深度分析聊天请求"""
+            try:
+                data = request.get_json()
+                content = data.get('content', '').strip()
+                session_id = data.get('session_id')
+                context = data.get('context')
+                options = data.get('options', {})
+
+                if not content:
+                    return jsonify({'error': '消息内容不能为空'}), 400
+
+                # 生成会话ID（如果未提供）
+                if not session_id:
+                    import uuid
+                    session_id = str(uuid.uuid4())
+
+                self.logger.info(f"收到深度分析请求: {session_id}")
+
+                # 这里应该调用实际的LLM进行深度分析
+                # 目前返回模拟响应
+                result = self._process_deep_analysis(content, session_id, context, options)
+
+                return jsonify({
+                    'success': True,
+                    'sessionId': session_id,
+                    'content': result['content'],
+                    'model': result['model'],
+                    'timestamp': self._get_current_time()
+                })
+
+            except Exception as e:
+                self.logger.error(f"处理深度分析请求失败: {e}")
+                return jsonify({'error': f'处理请求失败: {str(e)}'}), 500
+
+        @self.app.route('/api/deep/sessions', methods=['GET'])
+        def get_deep_sessions():
+            """获取深度分析会话列表"""
+            try:
+                # 这里应该从数据库读取实际的会话列表
+                # 目前返回模拟数据
+                mock_sessions = self._generate_mock_sessions()
+
+                return jsonify({
+                    'success': True,
+                    'sessions': mock_sessions
+                })
+
+            except Exception as e:
+                self.logger.error(f"获取会话列表失败: {e}")
+                return jsonify({'error': '获取会话列表失败'}), 500
+
+        @self.app.route('/api/deep/sessions', methods=['POST'])
+        def save_deep_session():
+            """保存深度分析会话"""
+            try:
+                data = request.get_json()
+                session_id = data.get('sessionId')
+                title = data.get('title', '新建会话')
+                messages = data.get('messages', [])
+                context = data.get('context')
+
+                if not session_id:
+                    return jsonify({'error': '会话ID不能为空'}), 400
+
+                self.logger.info(f"保存深度分析会话: {session_id}")
+
+                # 这里应该保存到数据库
+                # 目前返回成功响应
+                return jsonify({
+                    'success': True,
+                    'sessionId': session_id,
+                    'message': '会话保存成功'
+                })
+
+            except Exception as e:
+                self.logger.error(f"保存会话失败: {e}")
+                return jsonify({'error': '保存会话失败'}), 500
+
+        @self.app.route('/api/deep/sessions/<session_id>', methods=['GET'])
+        def get_deep_session(session_id):
+            """获取特定深度分析会话"""
+            try:
+                # 这里应该从数据库读取实际的会话数据
+                # 目前返回模拟数据
+                mock_session = self._generate_mock_session(session_id)
+
+                return jsonify({
+                    'success': True,
+                    'session': mock_session
+                })
+
+            except Exception as e:
+                self.logger.error(f"获取会话失败: {e}")
+                return jsonify({'error': '获取会话失败'}), 500
+
+        @self.app.route('/api/deep/sessions/<session_id>', methods=['DELETE'])
+        def delete_deep_session(session_id):
+            """删除深度分析会话"""
+            try:
+                self.logger.info(f"删除深度分析会话: {session_id}")
+
+                # 这里应该从数据库删除会话
+                # 目前返回成功响应
+                return jsonify({
+                    'success': True,
+                    'message': '会话删除成功'
+                })
+
+            except Exception as e:
+                self.logger.error(f"删除会话失败: {e}")
+                return jsonify({'error': '删除会话失败'}), 500
+
+        @self.app.route('/api/deep/sessions', methods=['DELETE'])
+        def clear_deep_sessions():
+            """清空所有深度分析会话"""
+            try:
+                self.logger.info("清空所有深度分析会话")
+
+                # 这里应该清空数据库中的所有会话
+                # 目前返回成功响应
+                return jsonify({
+                    'success': True,
+                    'message': '所有会话已清空'
+                })
+
+            except Exception as e:
+                self.logger.error(f"清空会话失败: {e}")
+                return jsonify({'error': '清空会话失败'}), 500
+
+        @self.app.route('/api/projects', methods=['GET'])
+        def get_projects():
+            """获取可用的项目列表"""
+            try:
+                # 这里应该从数据库或文件系统读取实际的项目列表
+                # 目前返回模拟数据
+                mock_projects = [
+                    {
+                        'id': 'project_1',
+                        'name': '示例Python项目',
+                        'path': '/path/to/example_project',
+                        'type': 'python',
+                        'createdAt': '2024-01-15T10:30:00Z',
+                        'updatedAt': '2024-01-15T14:20:00Z'
+                    },
+                    {
+                        'id': 'project_2',
+                        'name': 'Web应用项目',
+                        'path': '/path/to/web_project',
+                        'type': 'javascript',
+                        'createdAt': '2024-01-14T09:15:00Z',
+                        'updatedAt': '2024-01-15T11:45:00Z'
+                    }
+                ]
+
+                return jsonify({
+                    'success': True,
+                    'projects': mock_projects
+                })
+
+            except Exception as e:
+                self.logger.error(f"获取项目列表失败: {e}")
+                return jsonify({'error': '获取项目列表失败'}), 500
 
         # 修复模式页面路由
         @self.app.route('/fix_mode')
@@ -1930,6 +2113,502 @@ AIDefectDetector 修复数据导出报告
 
         return html
 
+    def _init_socketio(self):
+        """初始化SocketIO"""
+        if SocketIO is None:
+            self.logger.warning("Flask-SocketIO未安装，WebSocket功能将不可用")
+            return
+
+        try:
+            self.socketio = SocketIO(
+                self.app,
+                cors_allowed_origins="*",
+                async_mode='threading'
+            )
+            self.logger.info("SocketIO初始化完成")
+        except Exception as e:
+            self.logger.error(f"SocketIO初始化失败: {e}")
+            self.socketio = None
+
+    def _register_socketio_events(self):
+        """注册WebSocket事件处理器"""
+        if self.socketio is None:
+            return
+
+        @self.socketio.on('connect')
+        def handle_connect():
+            """客户端连接事件"""
+            self.logger.info("WebSocket客户端已连接")
+            emit('status', {'status': 'connected', 'message': '连接成功'})
+
+        @self.socketio.on('disconnect')
+        def handle_disconnect():
+            """客户端断开连接事件"""
+            self.logger.info("WebSocket客户端已断开连接")
+
+        @self.socketio.on('join_room')
+        def handle_join_room(data):
+            """加入房间事件"""
+            room = data.get('room', 'default')
+            join_room(room)
+            emit('status', {'status': 'joined', 'room': room})
+
+        @self.socketio.on('leave_room')
+        def handle_leave_room(data):
+            """离开房间事件"""
+            room = data.get('room', 'default')
+            leave_room(room)
+            emit('status', {'status': 'left', 'room': room})
+
+        @self.socketio.on('chat_message')
+        def handle_chat_message(data):
+            """处理聊天消息"""
+            try:
+                content = data.get('content', '').strip()
+                session_id = data.get('session_id')
+                context = data.get('context')
+
+                if not content:
+                    emit('error', {'error': '消息内容不能为空'})
+                    return
+
+                self.logger.info(f"收到WebSocket聊天消息: {session_id}")
+
+                # 处理消息
+                result = self._process_deep_analysis(content, session_id, context, data.get('options', {}))
+
+                # 发送响应
+                emit('chat_response', {
+                    'type': 'chat.response',
+                    'content': result['content'],
+                    'sessionId': session_id,
+                    'model': result['model'],
+                    'timestamp': self._get_current_time()
+                })
+
+            except Exception as e:
+                self.logger.error(f"处理WebSocket聊天消息失败: {e}")
+                emit('error', {'error': f'处理消息失败: {str(e)}'})
+
+        @self.socketio.on('session_create')
+        def handle_session_create(data):
+            """创建新会话"""
+            try:
+                import uuid
+                session_id = str(uuid.uuid4())
+                title = data.get('title', '新建会话')
+
+                self.logger.info(f"创建新会话: {session_id}")
+
+                emit('session_created', {
+                    'type': 'session.created',
+                    'sessionId': session_id,
+                    'title': title,
+                    'timestamp': self._get_current_time()
+                })
+
+            except Exception as e:
+                self.logger.error(f"创建会话失败: {e}")
+                emit('error', {'error': f'创建会话失败: {str(e)}'})
+
+        @self.socketio.on('context_set')
+        def handle_context_set(data):
+            """设置上下文"""
+            try:
+                context = data.get('context')
+                session_id = data.get('session_id')
+
+                self.logger.info(f"设置上下文: {session_id}")
+
+                emit('context_set', {
+                    'type': 'context.set',
+                    'context': context,
+                    'sessionId': session_id,
+                    'timestamp': self._get_current_time()
+                })
+
+            except Exception as e:
+                self.logger.error(f"设置上下文失败: {e}")
+                emit('error', {'error': f'设置上下文失败: {str(e)}'})
+
+        @self.socketio.on('heartbeat')
+        def handle_heartbeat():
+            """心跳检测"""
+            emit('heartbeat', {
+                'timestamp': self._get_current_time()
+            })
+
+        self.logger.info("WebSocket事件处理器注册完成")
+
+    def _process_deep_analysis(self, content, session_id, context, options):
+        """处理深度分析请求"""
+        import random
+        import time
+
+        # 模拟处理延迟
+        time.sleep(random.uniform(0.5, 2.0))
+
+        # 根据内容类型生成不同的响应
+        if '安全漏洞' in content or '安全问题' in content:
+            responses = [
+                """我已经分析了您的代码安全问题。主要发现以下几类安全漏洞：
+
+## 🔒 高风险安全问题
+
+1. **硬编码敏感信息**
+   - 在配置文件中发现硬编码的密码和API密钥
+   - 建议：使用环境变量或密钥管理服务
+
+2. **SQL注入风险**
+   - 数据库查询未使用参数化语句
+   - 建议：使用ORM或参数化查询
+
+3. **不安全的随机数生成**
+   - 使用了predictable的随机数生成器
+   - 建议：使用cryptographically secure的随机数生成器
+
+## 🛡️ 修复建议
+
+1. 立即修复高风险漏洞
+2. 实施安全代码审查流程
+3. 使用自动化安全扫描工具
+4. 定期进行安全测试
+
+需要我提供具体的修复代码示例吗？""",
+                """# 安全分析报告
+
+通过对您的代码进行深度安全分析，我发现了以下关键问题：
+
+## ⚠️ 关键发现
+
+- **认证机制薄弱**: 当前系统存在绕过认证的风险
+- **数据验证不足**: 缺少输入验证和数据清理
+- **权限控制不完善**: 存在横向越权的可能性
+
+## 📊 风险评估
+
+| 风险类型 | 风险等级 | 影响范围 |
+|---------|---------|---------|
+| 认证绕过 | 高 | 整个系统 |
+| 数据泄露 | 中 | 用户数据 |
+| 权限提升 | 中 | 管理功能 |
+
+## 🔧 推荐措施
+
+1. **立即行动**: 修复认证机制
+2. **短期计划**: 加强输入验证
+3. **长期规划**: 实施零信任架构
+
+是否需要我详细说明任何一个修复方案？"""
+            ]
+        elif '性能' in content or '优化' in content:
+            responses = [
+                """# 性能分析报告
+
+经过深度性能分析，我识别出了以下性能瓶颈：
+
+## 🐌 主要性能问题
+
+### 1. 数据库查询优化
+- **N+1查询问题**: 在循环中执行数据库查询
+- **缺少索引**: 关键字段缺少数据库索引
+- **查询效率低**: 复杂的JOIN查询可以优化
+
+### 2. 算法复杂度问题
+- **时间复杂度过高**: O(n²)的嵌套循环
+- **内存使用不当**: 大对象未及时释放
+- **缓存策略缺失**: 重复计算相同结果
+
+### 3. 并发处理问题
+- **锁竞争**: 过多的数据库锁使用
+- **线程池配置不当**: 线程数量设置不合理
+- **异步处理缺失**: 同步处理耗时操作
+
+## 🚀 优化建议
+
+1. **数据库优化**
+   - 添加合适的索引
+   - 使用查询缓存
+   - 实施读写分离
+
+2. **代码优化**
+   - 优化算法复杂度
+   - 实施缓存策略
+   - 使用异步处理
+
+3. **架构优化**
+   - 引入消息队列
+   - 实施微服务拆分
+   - 使用CDN加速
+
+需要我提供具体的优化代码示例吗？""",
+                """基于您的代码分析，我发现了几个关键的性能改进点：
+
+## 📈 性能瓶颈分析
+
+### 数据库层面
+- 查询响应时间: 平均2.3秒 (目标: <500ms)
+- 并发处理能力: 峰值50 QPS (目标: 200+ QPS)
+- 缓存命中率: 15% (目标: 80%+)
+
+### 应用层面
+- 内存使用率: 85% (目标: <70%)
+- CPU使用率: 峰值90% (目标: <70%)
+- 响应时间: P95 5.2秒 (目标: <2秒)
+
+## 💡 立即可实施的优化
+
+1. **数据库优化**
+   ```sql
+   -- 添加复合索引
+   CREATE INDEX idx_user_status_created ON users(status, created_at);
+   ```
+
+2. **缓存策略**
+   ```python
+   # 使用Redis缓存热点数据
+   @cache.memoize(timeout=300)
+   def get_user_profile(user_id):
+       return User.query.get(user_id)
+   ```
+
+3. **异步处理**
+   ```python
+   # 使用Celery处理耗时任务
+   @app.task
+   def process_data_async(data):
+       return heavy_processing(data)
+   ```
+
+预计这些优化可以将整体性能提升60-80%。需要我详细说明任何优化方案吗？"""
+            ]
+        elif '代码质量' in content or '重构' in content:
+            responses = [
+                """# 代码质量分析报告
+
+通过深度代码质量分析，我发现以下需要改进的方面：
+
+## 📊 质量指标概览
+
+- **圈复杂度**: 平均12.5 (建议: <10)
+- **代码重复率**: 18% (建议: <5%)
+- **测试覆盖率**: 45% (建议: >80%)
+- **技术债务**: 高 (建议: 定期清理)
+
+## 🔍 具体问题分析
+
+### 1. 复杂度过高
+- **问题**: 函数`process_data()`圈复杂度为25
+- **影响**: 难以理解和维护，容易引入bug
+- **建议**: 拆分为多个小函数，每个函数单一职责
+
+### 2. 代码重复
+- **问题**: 相似的数据验证逻辑重复了8次
+- **影响**: 维护成本高，修改时容易遗漏
+- **建议**: 提取公共验证函数
+
+### 3. 命名规范
+- **问题**: 变量名不够描述性，如`data`, `temp`
+- **影响**: 代码可读性差
+- **建议**: 使用更有意义的变量名
+
+## 🛠️ 重构建议
+
+### 立即重构 (高优先级)
+1. 拆分复杂函数
+2. 提取公共代码
+3. 改善命名规范
+
+### 计划重构 (中优先级)
+1. 优化数据结构
+2. 简化算法逻辑
+3. 增加错误处理
+
+### 长期改进 (低优先级)
+1. 引入设计模式
+2. 架构重构
+3. 技术栈升级
+
+需要我为具体的问题提供重构示例吗？""",
+                """# 重构建议报告
+
+基于代码质量分析，我为您提供以下重构建议：
+
+## 🎯 重构优先级
+
+### 🔴 高优先级 (立即处理)
+1. **安全漏洞修复**
+   - 输入验证缺失
+   - 权限检查不足
+
+2. **性能瓶颈**
+   - 数据库查询优化
+   - 缓存策略实施
+
+### 🟡 中优先级 (本周处理)
+1. **代码结构优化**
+   - 函数拆分
+   - 类职责明确
+
+2. **错误处理改进**
+   - 异常处理完善
+   - 日志记录规范
+
+### 🟢 低优先级 (下个迭代)
+1. **代码风格统一**
+   - 命名规范
+   - 格式化标准
+
+2. **文档完善**
+   - API文档
+   - 代码注释
+
+## 📝 重构步骤建议
+
+1. **第1步**: 创建重构分支
+2. **第2步**: 编写单元测试
+3. **第3步**: 逐步重构
+4. **第4步**: 测试验证
+5. **第5步**: 代码审查
+
+需要我详细说明任何一个重构方案吗？"""
+            ]
+        else:
+            responses = [
+                """我是AIDefectDetector的AI助手，可以帮助您进行深度代码分析。
+
+## 🔍 我的能力包括：
+
+### 📊 静态分析
+- 代码质量评估
+- 安全漏洞检测
+- 性能瓶颈识别
+- 最佳实践建议
+
+### 🤖 智能分析
+- 代码理解和解释
+- 复杂度分析
+- 重构建议
+- 优化方案
+
+### 🛠️ 实用工具
+- 生成测试用例
+- 代码格式化
+- 文档生成
+- 技术债务评估
+
+请告诉我您想要分析的具体内容，比如：
+- "请分析这个Python文件的安全问题"
+- "帮我找出这段代码的性能瓶颈"
+- "评估这个项目的代码质量"
+- "提供重构建议"
+
+您有什么具体的代码分析需求吗？""",
+                """# AIDefectDetector 深度分析
+
+我可以为您提供以下专业的代码分析服务：
+
+## 🔒 安全分析
+- 漏洞扫描和风险评估
+- 安全编码规范检查
+- 依赖包安全审计
+- 渗透测试建议
+
+## ⚡ 性能分析
+- 算法复杂度分析
+- 资源使用优化
+- 并发性能评估
+- 扩展性分析
+
+## 📈 质量分析
+- 代码度量指标
+- 技术债务评估
+- 可维护性分析
+- 测试覆盖率建议
+
+## 🎯 定制分析
+根据您的具体需求，我可以：
+- 分析特定文件或模块
+- 评估架构设计
+- 提供最佳实践建议
+- 生成改进计划
+
+请上传您的代码文件或提供项目路径，我将开始深度分析。如果需要，您可以先设置分析的重点和深度。"""
+            ]
+
+        # 随机选择一个响应
+        selected_response = random.choice(responses)
+
+        # 添加一些个性化的内容
+        if context and context.get('name'):
+            context_name = context['name']
+            selected_response = f"基于项目 **{context_name}** 的分析结果：\n\n{selected_response}"
+
+        return {
+            'content': selected_response,
+            'model': options.get('model', 'gpt-4'),
+            'sessionId': session_id
+        }
+
+    def _generate_mock_sessions(self):
+        """生成模拟会话列表"""
+        import random
+        from datetime import datetime, timedelta
+
+        sessions = []
+        session_titles = [
+            'Python项目安全分析',
+            '性能优化咨询',
+            '代码重构建议',
+            '架构设计讨论',
+            '最佳实践分享',
+            'Bug分析报告',
+            '新功能开发讨论',
+            '技术选型建议'
+        ]
+
+        for i in range(5):
+            created_time = datetime.now() - timedelta(days=random.randint(1, 30))
+            updated_time = created_time + timedelta(hours=random.randint(1, 24))
+
+            sessions.append({
+                'id': f'session_{i+1}',
+                'title': random.choice(session_titles),
+                'lastMessage': f'关于{random.choice(["安全", "性能", "架构", "代码质量"])}的讨论...',
+                'messageCount': random.randint(3, 15),
+                'createdAt': created_time.isoformat(),
+                'updatedAt': updated_time.isoformat()
+            })
+
+        return sorted(sessions, key=lambda x: x['updatedAt'], reverse=True)
+
+    def _generate_mock_session(self, session_id):
+        """生成模拟会话数据"""
+        import random
+        from datetime import datetime
+
+        return {
+            'id': session_id,
+            'title': f'会话 {session_id}',
+            'messages': [
+                {
+                    'id': 'msg_1',
+                    'type': 'user',
+                    'content': '请分析这个Python项目的代码质量',
+                    'timestamp': datetime.now().isoformat()
+                },
+                {
+                    'id': 'msg_2',
+                    'type': 'ai',
+                    'content': '我将为您分析代码质量。请提供项目的具体信息或上传相关文件。',
+                    'timestamp': datetime.now().isoformat()
+                }
+            ],
+            'context': None,
+            'createdAt': datetime.now().isoformat(),
+            'updatedAt': datetime.now().isoformat()
+        }
+
     def run(self, host=None, port=None, debug=None):
         """运行Web应用"""
         # 获取运行配置
@@ -1941,12 +2620,22 @@ AIDefectDetector 修复数据导出报告
         self.logger.info(f"启动Web应用 - http://{run_host}:{run_port}")
 
         try:
-            self.app.run(
-                host=run_host,
-                port=run_port,
-                debug=run_debug,
-                threaded=True
-            )
+            if self.socketio:
+                # 使用SocketIO运行
+                self.socketio.run(
+                    self.app,
+                    host=run_host,
+                    port=run_port,
+                    debug=run_debug
+                )
+            else:
+                # 使用普通Flask运行
+                self.app.run(
+                    host=run_host,
+                    port=run_port,
+                    debug=run_debug,
+                    threaded=True
+                )
         except Exception as e:
             self.logger.error(f"启动Web应用失败: {e}")
             raise
