@@ -731,20 +731,526 @@ const StaticAnalysisManager = {
             return;
         }
 
-        let html = '<h5 class="mb-3">问题详情</h5>';
+        // 创建过滤和排序控件
+        let html = this.createResultsControls();
 
-        // 按严重程度分组显示
-        const groupedIssues = this.groupIssuesBySeverity(issues);
+        // 创建结果展示区域
+        html += '<div class="results-container">';
+        html += '<div class="results-tabs" id="resultsTabs"></div>';
+        html += '<div class="results-content" id="resultsContent"></div>';
+        html += '</div>';
 
-        Object.entries(groupedIssues).forEach(([severity, severityIssues]) => {
-            html += `<h6 class="mt-4 mb-3">${this.getSeverityLabel(severity)} (${severityIssues.length})</h6>`;
+        detailsDiv.innerHTML = html;
 
-            severityIssues.forEach(issue => {
-                html += this.createIssueCard(issue);
+        // 初始化结果展示
+        this.initializeResultsDisplay(issues);
+    },
+
+    // 创建结果控制面板
+    createResultsControls: function() {
+        return `
+            <div class="results-controls mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-3">
+                        <label class="form-label">视图模式:</label>
+                        <select class="form-select" id="viewMode">
+                            <option value="by_severity">按严重程度</option>
+                            <option value="by_file">按文件分类</option>
+                            <option value="by_tool">按工具分类</option>
+                            <option value="by_category">按问题类别</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">排序方式:</label>
+                        <select class="form-select" id="sortOrder">
+                            <option value="severity_desc">严重程度 (高到低)</option>
+                            <option value="severity_asc">严重程度 (低到高)</option>
+                            <option value="file_asc">文件路径 (A-Z)</option>
+                            <option value="file_desc">文件路径 (Z-A)</option>
+                            <option value="line_asc">行号 (小到大)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">过滤条件:</label>
+                        <div class="filter-controls">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="filterCritical" value="error" checked>
+                                <label class="form-check-label" for="filterCritical">
+                                    <span class="badge bg-danger">严重</span>
+                                </label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="filterWarning" value="warning" checked>
+                                <label class="form-check-label" for="filterWarning">
+                                    <span class="badge bg-warning text-dark">警告</span>
+                                </label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="filterInfo" value="info" checked>
+                                <label class="form-check-label" for="filterInfo">
+                                    <span class="badge bg-info">信息</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">搜索:</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="searchIssues" placeholder="搜索问题...">
+                            <button class="btn btn-outline-secondary" type="button" id="clearSearch">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+
+    // 初始化结果展示
+    initializeResultsDisplay: function(issues) {
+        this.currentIssues = issues;
+        this.filteredIssues = [...issues];
+
+        // 绑定控件事件
+        this.bindResultsControlsEvents();
+
+        // 初始显示
+        this.updateResultsDisplay();
+    },
+
+    // 绑定结果控件事件
+    bindResultsControlsEvents: function() {
+        // 视图模式变化
+        document.getElementById('viewMode').addEventListener('change', () => {
+            this.updateResultsDisplay();
+        });
+
+        // 排序方式变化
+        document.getElementById('sortOrder').addEventListener('change', () => {
+            this.updateResultsDisplay();
+        });
+
+        // 过滤条件变化
+        document.querySelectorAll('.filter-controls input').forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                this.applyFilters();
             });
         });
 
-        detailsDiv.innerHTML = html;
+        // 搜索功能
+        const searchInput = document.getElementById('searchIssues');
+        searchInput.addEventListener('input', () => {
+            this.applySearch(searchInput.value);
+        });
+
+        // 清除搜索
+        document.getElementById('clearSearch').addEventListener('click', () => {
+            searchInput.value = '';
+            this.applySearch('');
+        });
+    },
+
+    // 应用过滤器
+    applyFilters: function() {
+        const enabledSeverities = [];
+        document.querySelectorAll('.filter-controls input:checked').forEach(checkbox => {
+            enabledSeverities.push(checkbox.value);
+        });
+
+        this.filteredIssues = this.currentIssues.filter(issue =>
+            enabledSeverities.includes(issue.severity || 'info')
+        );
+
+        // 重新应用搜索
+        const searchValue = document.getElementById('searchIssues').value;
+        if (searchValue) {
+            this.applySearch(searchValue);
+        } else {
+            this.updateResultsDisplay();
+        }
+    },
+
+    // 应用搜索
+    applySearch: function(searchTerm) {
+        if (!searchTerm.trim()) {
+            this.updateResultsDisplay();
+            return;
+        }
+
+        const term = searchTerm.toLowerCase();
+        this.filteredIssues = this.filteredIssues.filter(issue => {
+            return (issue.message && issue.message.toLowerCase().includes(term)) ||
+                   (issue.file_path && issue.file_path.toLowerCase().includes(term)) ||
+                   (issue.tool_name && issue.tool_name.toLowerCase().includes(term)) ||
+                   (issue.issue_type && issue.issue_type.toLowerCase().includes(term));
+        });
+
+        this.updateResultsDisplay();
+    },
+
+    // 更新结果显示
+    updateResultsDisplay: function() {
+        const viewMode = document.getElementById('viewMode').value;
+        const sortOrder = document.getElementById('sortOrder').value;
+
+        // 排序
+        this.sortIssues(this.filteredIssues, sortOrder);
+
+        // 根据视图模式显示
+        switch (viewMode) {
+            case 'by_file':
+                this.displayByFile();
+                break;
+            case 'by_tool':
+                this.displayByTool();
+                break;
+            case 'by_category':
+                this.displayByCategory();
+                break;
+            case 'by_severity':
+            default:
+                this.displayBySeverity();
+                break;
+        }
+    },
+
+    // 排序问题
+    sortIssues: function(issues, sortOrder) {
+        issues.sort((a, b) => {
+            switch (sortOrder) {
+                case 'severity_desc':
+                    return this.getSeverityOrder(b.severity) - this.getSeverityOrder(a.severity);
+                case 'severity_asc':
+                    return this.getSeverityOrder(a.severity) - this.getSeverityOrder(b.severity);
+                case 'file_asc':
+                    return (a.file_path || '').localeCompare(b.file_path || '');
+                case 'file_desc':
+                    return (b.file_path || '').localeCompare(a.file_path || '');
+                case 'line_asc':
+                    return (a.line || 0) - (b.line || 0);
+                default:
+                    return 0;
+            }
+        });
+    },
+
+    // 获取严重程度排序权重
+    getSeverityOrder: function(severity) {
+        const weights = {
+            'error': 3,
+            'warning': 2,
+            'info': 1,
+            'low': 0
+        };
+        return weights[severity] || 0;
+    },
+
+    // 按严重程度显示
+    displayBySeverity: function() {
+        const grouped = this.groupIssuesBy(this.filteredIssues, 'severity');
+        this.renderGroupedResults(grouped, 'severity', this.getSeverityLabel);
+    },
+
+    // 按文件显示
+    displayByFile: function() {
+        const grouped = this.groupIssuesBy(this.filteredIssues, 'file_path');
+        this.renderGroupedResults(grouped, 'file', (filePath) => {
+            const fileName = filePath.split('/').pop() || filePath;
+            return `<i class="fas fa-file-code me-1"></i>${fileName}`;
+        });
+    },
+
+    // 按工具显示
+    displayByTool: function() {
+        const grouped = this.groupIssuesBy(this.filteredIssues, 'tool_name');
+        this.renderGroupedResults(grouped, 'tool', (toolName) => {
+            const toolLabels = {
+                'ast': 'AST分析',
+                'pylint': 'Pylint',
+                'flake8': 'Flake8',
+                'bandit': 'Bandit'
+            };
+            return `<i class="fas fa-tools me-1"></i>${toolLabels[toolName] || toolName}`;
+        });
+    },
+
+    // 按类别显示
+    displayByCategory: function() {
+        const grouped = this.groupIssuesBy(this.filteredIssues, 'issue_type');
+        this.renderGroupedResults(grouped, 'category', (category) => {
+            const categoryLabels = {
+                'syntax_error': '语法错误',
+                'complexity': '复杂度',
+                'style': '代码风格',
+                'security': '安全问题',
+                'performance': '性能问题'
+            };
+            return `<i class="fas fa-tag me-1"></i>${categoryLabels[category] || category}`;
+        });
+    },
+
+    // 分组问题
+    groupIssuesBy: function(issues, groupBy) {
+        return issues.reduce((groups, issue) => {
+            const key = issue[groupBy] || 'unknown';
+            if (!groups[key]) {
+                groups[key] = [];
+            }
+            groups[key].push(issue);
+            return groups;
+        }, {});
+    },
+
+    // 渲染分组结果
+    renderGroupedResults: function(grouped, groupType, labelFormatter) {
+        const tabsDiv = document.getElementById('resultsTabs');
+        const contentDiv = document.getElementById('resultsContent');
+
+        // 创建标签页
+        let tabsHtml = '<ul class="nav nav-tabs" id="resultsTabNav" role="tablist">';
+        let contentHtml = '<div class="tab-content" id="resultsTabContent">';
+
+        let isFirst = true;
+        Object.entries(grouped).forEach(([key, issues]) => {
+            const tabId = `${groupType}_${key.replace(/[^a-zA-Z0-9]/g, '_')}`;
+            const isActive = isFirst ? 'active' : '';
+            const label = labelFormatter(key);
+            const count = issues.length;
+
+            // 创建标签
+            tabsHtml += `
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link ${isActive}" id="${tabId}-tab" data-bs-toggle="tab"
+                            data-bs-target="#${tabId}" type="button" role="tab">
+                        ${label} <span class="badge bg-secondary ms-1">${count}</span>
+                    </button>
+                </li>
+            `;
+
+            // 创建内容
+            contentHtml += `
+                <div class="tab-pane fade ${isActive}" id="${tabId}" role="tabpanel">
+                    ${this.renderIssuesList(issues)}
+                </div>
+            `;
+
+            isFirst = false;
+        });
+
+        tabsHtml += '</ul>';
+        contentHtml += '</div>';
+
+        tabsDiv.innerHTML = tabsHtml;
+        contentDiv.innerHTML = contentHtml;
+    },
+
+    // 渲染问题列表
+    renderIssuesList: function(issues) {
+        if (issues.length === 0) {
+            return '<p class="text-muted">暂无问题</p>';
+        }
+
+        let html = '<div class="issues-list">';
+
+        issues.forEach((issue, index) => {
+            html += this.createEnhancedIssueCard(issue, index);
+        });
+
+        html += '</div>';
+        return html;
+    },
+
+    // 创建增强的问题卡片
+    createEnhancedIssueCard: function(issue, index) {
+        const issueId = `issue_${index}`;
+        const severityClass = this.getSeverityClass(issue.severity);
+        const severityLabel = this.getSeverityLabel(issue.severity);
+
+        return `
+            <div class="issue-card ${severityClass} mb-3" id="${issueId}">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center"
+                         data-bs-toggle="collapse" data-bs-target="#${issueId}_body"
+                         style="cursor: pointer;">
+                        <div class="d-flex align-items-center">
+                            <span class="severity-indicator ${severityClass} me-2"></span>
+                            <div>
+                                <h6 class="mb-1">${this.escapeHtml(issue.message || '未知问题')}</h6>
+                                <small class="text-muted">
+                                    <i class="fas fa-file-code me-1"></i>${this.escapeHtml(issue.file_path || '未知文件')}
+                                    <i class="fas fa-map-marker-alt ms-2 me-1"></i>行 ${issue.line || 0}
+                                    <i class="fas fa-tools ms-2 me-1"></i>${issue.tool_name || 'unknown'}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="badge ${severityClass} me-2">${severityLabel}</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                    </div>
+                    <div class="collapse" id="${issueId}_body">
+                        <div class="card-body">
+                            ${this.renderIssueDetails(issue)}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+
+    // 渲染问题详情
+    renderIssueDetails: function(issue) {
+        let html = '<div class="issue-details">';
+
+        // 基本信息
+        html += `
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <strong>问题类型:</strong> ${this.escapeHtml(issue.issue_type || '未知')}<br>
+                    <strong>规则代码:</strong> ${this.escapeHtml(issue.code || 'N/A')}<br>
+                    <strong>置信度:</strong> ${this.escapeHtml(issue.confidence || 'N/A')}
+                </div>
+                <div class="col-md-6">
+                    <strong>列号:</strong> ${issue.column || 0}<br>
+                    <strong>严重程度:</strong> <span class="badge ${this.getSeverityClass(issue.severity)}">${this.getSeverityLabel(issue.severity)}</span><br>
+                    <strong>检测工具:</strong> ${this.escapeHtml(issue.tool_name || '未知')}
+                </div>
+            </div>
+        `;
+
+        // 问题描述
+        if (issue.message) {
+            html += `
+                <div class="mb-3">
+                    <strong>问题描述:</strong>
+                    <p class="mb-0">${this.escapeHtml(issue.message)}</p>
+                </div>
+            `;
+        }
+
+        // 源代码片段
+        if (issue.source_code) {
+            html += `
+                <div class="mb-3">
+                    <strong>相关代码:</strong>
+                    <div class="code-snippet">
+                        <pre><code class="language-python">${this.escapeHtml(issue.source_code)}</code></pre>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 修复建议
+        html += `
+            <div class="mb-3">
+                <strong>修复建议:</strong>
+                <div class="fix-suggestion alert alert-info">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    ${this.generateFixSuggestion(issue)}
+                </div>
+            </div>
+        `;
+
+        // 操作按钮
+        html += `
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-primary" onclick="StaticAnalysisManager.showIssueDetails('${issue.file_path}', ${issue.line})">
+                    <i class="fas fa-eye me-1"></i>查看详情
+                </button>
+                <button class="btn btn-sm btn-outline-success" onclick="StaticAnalysisManager.goToFix('${issue.file_path}', ${issue.line})">
+                    <i class="fas fa-tools me-1"></i>立即修复
+                </button>
+                <button class="btn btn-sm btn-outline-warning" onclick="StaticAnalysisManager.ignoreIssue('${issue.tool_name}', '${issue.code}')">
+                    <i class="fas fa-times me-1"></i>忽略此问题
+                </button>
+            </div>
+        `;
+
+        html += '</div>';
+        return html;
+    },
+
+    // 获取严重程度样式类
+    getSeverityClass: function(severity) {
+        const classes = {
+            'error': 'bg-danger',
+            'warning': 'bg-warning text-dark',
+            'info': 'bg-info',
+            'low': 'bg-secondary'
+        };
+        return classes[severity] || 'bg-secondary';
+    },
+
+    // 生成修复建议
+    generateFixSuggestion: function(issue) {
+        const suggestions = {
+            'syntax_error': '检查语法是否正确，确保括号、引号等配对',
+            'complexity': '考虑将复杂函数拆分为更小的函数',
+            'style': '按照代码风格指南调整格式',
+            'security': '修复安全漏洞，使用更安全的替代方案',
+            'performance': '优化代码以提高性能'
+        };
+
+        const baseSuggestion = suggestions[issue.issue_type] || '请检查代码并进行相应修复';
+        const toolSpecific = this.getToolSpecificSuggestion(issue);
+
+        return toolSpecific || baseSuggestion;
+    },
+
+    // 获取工具特定建议
+    getToolSpecificSuggestion: function(issue) {
+        if (!issue.code) return null;
+
+        const toolSuggestions = {
+            'pylint': {
+                'C0111': '添加文档字符串说明函数用途',
+                'W0612': '删除未使用的变量',
+                'R0913': '减少函数参数数量'
+            },
+            'flake8': {
+                'E501': '缩短行长度或调整代码格式',
+                'W293': '在文件末尾添加空行',
+                'F401': '删除未使用的导入'
+            },
+            'bandit': {
+                'B101': '移除或保护 assert 语句',
+                'B301': '使用更安全的序列化方法',
+                'B501': '验证请求数据，防止 SSRF 攻击'
+            }
+        };
+
+        const tool = issue.tool_name;
+        const code = issue.code;
+
+        if (toolSuggestions[tool] && toolSuggestions[tool][code]) {
+            return toolSuggestions[tool][code];
+        }
+
+        return null;
+    },
+
+    // 显示问题详情
+    showIssueDetails: function(filePath, line) {
+        // 这里可以实现显示更多详情的逻辑
+        App.showAlert(`查看文件详情: ${filePath}:${line}`, 'info');
+    },
+
+    // 跳转到修复
+    goToFix: function(filePath, line) {
+        if (!this.analysisTaskId) {
+            App.showAlert('没有可修复的分析结果', 'warning');
+            return;
+        }
+
+        // 跳转到修复页面，传递位置信息
+        window.location.href = `/fix?task_id=${this.analysisTaskId}&file=${encodeURIComponent(filePath)}&line=${line}`;
+    },
+
+    // 忽略问题
+    ignoreIssue: function(toolName, code) {
+        App.showAlert(`已忽略 ${toolName} 的问题 ${code}`, 'success');
+        // 这里可以实现忽略问题的逻辑
     },
 
     // 按严重程度分组问题
