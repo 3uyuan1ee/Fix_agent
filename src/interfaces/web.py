@@ -13,6 +13,10 @@ import json
 import logging
 import random
 import uuid
+import zipfile
+import tarfile
+import tempfile
+import shutil
 
 # Flask相关导入
 try:
@@ -38,6 +42,7 @@ except ImportError:
 # 项目内部导入
 from src.utils.config import get_config_manager
 from src.utils.logger import get_logger
+from src.interfaces.file_manager import FileManager
 
 
 def find_available_port(start_port=5000, max_attempts=10):
@@ -196,10 +201,10 @@ class AIDefectDetectorWeb:
                     return jsonify({'error': '没有选择文件'}), 400
 
                 # 验证文件类型
-                allowed_extensions = {'.zip', '.tar', '.gz'}
+                allowed_extensions = {'.zip', '.tar', '.gz', '.tgz'}
                 file_ext = os.path.splitext(file.filename)[1].lower()
                 if file_ext not in allowed_extensions:
-                    return jsonify({'error': '不支持的文件类型'}), 400
+                    return jsonify({'error': '不支持的文件类型，仅支持ZIP、TAR、GZ格式'}), 400
 
                 # 验证文件大小
                 file.seek(0, os.SEEK_END)
@@ -208,26 +213,99 @@ class AIDefectDetectorWeb:
 
                 max_size = self.app.config.get('MAX_CONTENT_LENGTH', 50 * 1024 * 1024)
                 if file_size > max_size:
-                    return jsonify({'error': '文件太大'}), 400
+                    return jsonify({'error': f'文件太大，最大支持{max_size//1024//1024}MB'}), 400
 
-                # 保存文件
-                import uuid
+                # 创建FileManager实例
+                file_manager = FileManager()
+
+                # 保存上传的文件
                 upload_folder = self.app.config['UPLOAD_FOLDER']
                 file_id = str(uuid.uuid4())
                 filename = f"{file_id}_{file.filename}"
                 filepath = os.path.join(upload_folder, filename)
 
+                # 确保上传目录存在
+                os.makedirs(upload_folder, exist_ok=True)
                 file.save(filepath)
 
                 self.logger.info(f"文件上传成功: {file.filename} -> {filepath}")
 
-                return jsonify({
+                # 如果是压缩文件，进行解压和项目管理
+                extracted_info = None
+                project_info = None
+
+                if file_ext in {'.zip', '.tar', '.gz', '.tgz'}:
+                    try:
+                        # 解压文件
+                        extract_result = file_manager.extract_uploaded_file(filepath)
+
+                        if extract_result['success']:
+                            # 创建项目文件夹
+                            project_name = os.path.splitext(file.filename)[0]
+                            project_result = file_manager.create_project_folder(
+                                project_name,
+                                extract_result['files']
+                            )
+
+                            if project_result['success']:
+                                project_info = {
+                                    'project_id': project_result['project_id'],
+                                    'project_name': project_name,
+                                    'project_path': project_result['project_path'],
+                                    'total_files': len(extract_result['files']),
+                                    'total_size': extract_result['total_size'],
+                                    'file_types': extract_result['file_types']
+                                }
+
+                                # 分析项目结构
+                                structure_result = file_manager.analyze_project_structure(
+                                    project_result['project_id']
+                                )
+
+                                if structure_result['success']:
+                                    project_info.update({
+                                        'programming_languages': structure_result['programming_languages'],
+                                        'frameworks_detected': structure_result['frameworks_detected'],
+                                        'complexity_score': structure_result['complexity_score'],
+                                        'structure_summary': structure_result['structure_summary']
+                                    })
+
+                                extracted_info = {
+                                    'extracted_path': extract_result['extract_path'],
+                                    'files_count': len(extract_result['files']),
+                                    'file_types': extract_result['file_types']
+                                }
+
+                                self.logger.info(f"文件解压和项目创建成功: {project_name} -> {project_result['project_path']}")
+                            else:
+                                self.logger.warning(f"项目创建失败: {project_result.get('error', '未知错误')}")
+                        else:
+                            self.logger.warning(f"文件解压失败: {extract_result.get('error', '未知错误')}")
+
+                    except Exception as extract_error:
+                        self.logger.error(f"文件解压过程出错: {extract_error}")
+                        # 解压失败不影响文件上传成功，只记录错误
+
+                # 返回成功响应
+                response_data = {
                     'success': True,
                     'file_id': file_id,
                     'filename': file.filename,
                     'size': file_size,
-                    'path': filepath
-                })
+                    'path': filepath,
+                    'file_type': file_ext,
+                    'uploaded_at': self._get_current_time()
+                }
+
+                # 如果有解压信息，添加到响应中
+                if extracted_info:
+                    response_data['extraction'] = extracted_info
+
+                # 如果有项目信息，添加到响应中
+                if project_info:
+                    response_data['project'] = project_info
+
+                return jsonify(response_data)
 
             except Exception as e:
                 self.logger.error(f"文件上传失败: {e}")
