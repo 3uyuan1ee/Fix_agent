@@ -360,7 +360,7 @@ const StaticAnalysisManager = {
         formData.append('file', file);
 
         // 上传文件
-        App.upload('/api/upload', formData, {
+        App.uploadFile(file, {
             onProgress: (progress) => {
                 this.updateUploadProgress(progress);
             }
@@ -540,10 +540,11 @@ const StaticAnalysisManager = {
         }
 
         // 构建分析请求
+        const toolNames = this.selectedTools.map(tool => typeof tool === 'string' ? tool : tool.name);
         const requestData = {
             project_path: this.projectPath,
             project_id: this.projectId,
-            tools: this.selectedTools,
+            tools: toolNames,
             config: this.analysisConfig,
             mode: 'static'
         };
