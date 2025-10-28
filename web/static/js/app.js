@@ -218,8 +218,13 @@ App.PageState = {
 App.Sidebar = {
     show: function() {
         const sidebar = document.getElementById('sidebar');
+        const mainContent = document.querySelector('.main-content');
         if (sidebar) {
+            sidebar.classList.remove('collapsed');
             sidebar.classList.add('show');
+            if (mainContent) {
+                mainContent.classList.remove('collapsed');
+            }
             App.sidebarVisible = true;
             App.PageState.set('sidebarVisible', true);
         }
@@ -227,8 +232,13 @@ App.Sidebar = {
 
     hide: function() {
         const sidebar = document.getElementById('sidebar');
+        const mainContent = document.querySelector('.main-content');
         if (sidebar) {
             sidebar.classList.remove('show');
+            sidebar.classList.add('collapsed');
+            if (mainContent) {
+                mainContent.classList.add('collapsed');
+            }
             App.sidebarVisible = false;
             App.PageState.set('sidebarVisible', false);
         }
@@ -242,6 +252,39 @@ App.Sidebar = {
         }
     },
 
+    collapse: function() {
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.querySelector('.main-content');
+        if (sidebar) {
+            sidebar.classList.add('collapsed');
+            if (mainContent) {
+                mainContent.classList.add('collapsed');
+            }
+            App.PageState.set('sidebarCollapsed', true);
+        }
+    },
+
+    expand: function() {
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.querySelector('.main-content');
+        if (sidebar) {
+            sidebar.classList.remove('collapsed');
+            if (mainContent) {
+                mainContent.classList.remove('collapsed');
+            }
+            App.PageState.set('sidebarCollapsed', false);
+        }
+    },
+
+    toggleCollapse: function() {
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar && sidebar.classList.contains('collapsed')) {
+            this.expand();
+        } else {
+            this.collapse();
+        }
+    },
+
     setActive: function(pageName) {
         // 移除所有活动状态
         document.querySelectorAll('.nav-link').forEach(link => {
@@ -252,11 +295,148 @@ App.Sidebar = {
         const activeLink = document.querySelector(`[data-page="${pageName}"]`);
         if (activeLink) {
             activeLink.classList.add('active');
+
+            // 添加提示文字
+            this.updateTooltip(activeLink, pageName);
         }
 
         // 更新当前页面状态
         App.currentPage = pageName;
         App.PageState.set('currentPage', pageName);
+
+        // 更新页面标题
+        this.updatePageTitle(pageName);
+    },
+
+    updateTooltip: function(element, pageName) {
+        const titles = {
+            'index': '首页',
+            'config': 'API配置',
+            'static': '静态分析',
+            'deep': '深度分析',
+            'fix': '修复模式',
+            'history': '历史记录'
+        };
+
+        const title = titles[pageName] || pageName;
+        element.setAttribute('title', title);
+
+        // 初始化或更新Bootstrap tooltip
+        if (window.bootstrap && window.bootstrap.Tooltip) {
+            const tooltip = window.bootstrap.Tooltip.getInstance(element);
+            if (tooltip) {
+                tooltip.setContent({ '.tooltip-inner': title });
+            } else {
+                new window.bootstrap.Tooltip(element);
+            }
+        }
+    },
+
+    updatePageTitle: function(pageName) {
+        const titles = {
+            'index': '首页',
+            'config': 'API配置',
+            'static': '静态分析',
+            'deep': '深度分析',
+            'fix': '修复模式',
+            'history': '历史记录'
+        };
+
+        const title = titles[pageName] || pageName;
+        document.title = `${title} - AIDefectDetector`;
+    },
+
+    navigateTo: function(pageName) {
+        // 设置活动状态
+        this.setActive(pageName);
+
+        // 导航到对应页面
+        const link = document.querySelector(`[data-page="${pageName}"]`);
+        if (link && link.href) {
+            window.location.href = link.href;
+        }
+    },
+
+    initKeyboardShortcuts: function() {
+        document.addEventListener('keydown', (e) => {
+            // Alt + 数字键快速导航
+            if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                const pageMap = {
+                    '1': 'index',
+                    '2': 'config',
+                    '3': 'static',
+                    '4': 'deep',
+                    '5': 'fix',
+                    '6': 'history'
+                };
+
+                const pageName = pageMap[e.key];
+                if (pageName) {
+                    e.preventDefault();
+                    this.navigateTo(pageName);
+                }
+            }
+
+            // Ctrl/Cmd + B 切换侧边栏
+            if ((e.ctrlKey || e.metaKey) && e.key === 'b' && !e.altKey && !e.shiftKey) {
+                e.preventDefault();
+                this.toggle();
+            }
+
+            // Ctrl/Cmd + [ 或 ] 折叠/展开侧边栏
+            if ((e.ctrlKey || e.metaKey) && (e.key === '[' || e.key === ']') && !e.altKey && !e.shiftKey) {
+                e.preventDefault();
+                if (e.key === '[') {
+                    this.collapse();
+                } else {
+                    this.expand();
+                }
+            }
+
+            // Esc 关闭移动端侧边栏
+            if (e.key === 'Escape' && window.innerWidth <= 767 && App.sidebarVisible) {
+                this.hide();
+            }
+        });
+    },
+
+    addKeyboardHelp: function() {
+        // 创建快捷键帮助提示
+        const helpText = `
+            快捷键：
+            Alt + 1-6: 快速导航
+            Ctrl/Cmd + B: 切换侧边栏
+            Ctrl/Cmd + [: 折叠侧边栏
+            Ctrl/Cmd + ]: 展开侧边栏
+            Esc: 关闭移动端侧边栏
+        `;
+
+        // 在侧边栏底部添加帮助信息
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar && !sidebar.querySelector('.keyboard-help')) {
+            const helpDiv = document.createElement('div');
+            helpDiv.className = 'keyboard-help';
+            helpDiv.innerHTML = `
+                <div class="sidebar-help-section">
+                    <button class="btn btn-sm btn-outline-light help-toggle" type="button">
+                        <i class="fas fa-keyboard me-1"></i>快捷键
+                    </button>
+                    <div class="help-content d-none">
+                        <pre>${helpText}</pre>
+                    </div>
+                </div>
+            `;
+
+            sidebar.appendChild(helpDiv);
+
+            // 绑定帮助显示/隐藏事件
+            const helpToggle = helpDiv.querySelector('.help-toggle');
+            const helpContent = helpDiv.querySelector('.help-content');
+
+            helpToggle.addEventListener('click', () => {
+                helpContent.classList.toggle('d-none');
+            });
+        }
     }
 };
 
@@ -346,26 +526,119 @@ App.bindEvents = function() {
                 App.Sidebar.hide();
             }
         });
+
+        // 添加悬停提示
+        link.addEventListener('mouseenter', () => {
+            const pageName = link.getAttribute('data-page');
+            App.Sidebar.updateTooltip(link, pageName);
+        });
     });
+
+    // 添加侧边栏折叠按钮（桌面端）
+    this.addCollapseButton();
 
     // 响应式处理
     window.addEventListener('resize', App.throttle(() => {
-        if (window.innerWidth > 767) {
-            const sidebar = document.getElementById('sidebar');
-            if (sidebar && sidebar.classList.contains('show')) {
-                sidebar.classList.remove('show');
-            }
-        }
+        this.handleResponsiveLayout();
     }, 250));
 
-    // 键盘快捷键
-    document.addEventListener('keydown', (e) => {
-        // Ctrl/Cmd + B 切换侧边栏
-        if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
-            e.preventDefault();
-            App.Sidebar.toggle();
+    // 初始化键盘快捷键
+    App.Sidebar.initKeyboardShortcuts();
+
+    // 添加键盘帮助
+    App.Sidebar.addKeyboardHelp();
+
+    // 点击外部区域关闭移动端侧边栏
+    document.addEventListener('click', (e) => {
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+
+        if (window.innerWidth <= 767 &&
+            App.sidebarVisible &&
+            sidebar && !sidebar.contains(e.target) &&
+            sidebarToggle && !sidebarToggle.contains(e.target)) {
+            App.Sidebar.hide();
         }
     });
+};
+
+/**
+ * 添加侧边栏折叠按钮
+ */
+App.addCollapseButton = function() {
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar && !sidebar.querySelector('.collapse-btn')) {
+        const collapseBtn = document.createElement('button');
+        collapseBtn.className = 'collapse-btn d-none d-md-block';
+        collapseBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+        collapseBtn.setAttribute('title', '折叠侧边栏');
+        collapseBtn.setAttribute('type', 'button');
+
+        collapseBtn.addEventListener('click', () => {
+            App.Sidebar.toggleCollapse();
+            this.updateCollapseButton(collapseBtn);
+        });
+
+        sidebar.appendChild(collapseBtn);
+        this.updateCollapseButton(collapseBtn);
+    }
+};
+
+/**
+ * 更新折叠按钮状态
+ */
+App.updateCollapseButton = function(button) {
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar && button) {
+        if (sidebar.classList.contains('collapsed')) {
+            button.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            button.setAttribute('title', '展开侧边栏');
+        } else {
+            button.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            button.setAttribute('title', '折叠侧边栏');
+        }
+    }
+};
+
+/**
+ * 处理响应式布局
+ */
+App.handleResponsiveLayout = function() {
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.querySelector('.main-content');
+
+    if (window.innerWidth > 767) {
+        // 桌面端
+        if (sidebar) {
+            sidebar.classList.remove('show');
+            // 恢复折叠状态
+            const isCollapsed = App.PageState.get('sidebarCollapsed', false);
+            if (isCollapsed) {
+                sidebar.classList.add('collapsed');
+                if (mainContent) mainContent.classList.add('collapsed');
+            } else {
+                sidebar.classList.remove('collapsed');
+                if (mainContent) mainContent.classList.remove('collapsed');
+            }
+        }
+    } else {
+        // 移动端
+        if (sidebar) {
+            sidebar.classList.remove('collapsed');
+            if (mainContent) mainContent.classList.remove('collapsed');
+            App.Sidebar.hide();
+        }
+    }
+
+    // 更新折叠按钮显示状态
+    const collapseBtn = document.querySelector('.collapse-btn');
+    if (collapseBtn) {
+        if (window.innerWidth <= 767) {
+            collapseBtn.classList.add('d-none');
+        } else {
+            collapseBtn.classList.remove('d-none');
+        }
+    }
 };
 
 // 添加CSS动画
