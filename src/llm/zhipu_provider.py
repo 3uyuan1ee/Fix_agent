@@ -49,6 +49,7 @@ class ZhipuProvider(LLMProvider):
         # 根据官方文档，使用标准参数
         self.client = ZhipuAiClient(
             api_key=config.api_key,
+            #api_key="99391fd6e23e4f718f9df45a5a780599.e0YS7Cwg3hVyBkZN",
             base_url=config.api_base or "https://open.bigmodel.cn/api/paas/v4/"
         )
 
@@ -428,7 +429,7 @@ class ZhipuProvider(LLMProvider):
         """
         config = super().get_default_config()
         config.update({
-            "model": "glm-4.5",
+            "model": "glm-4.5-air",
             "api_base": "https://open.bigmodel.cn/api/paas/v4/",
             "max_tokens": 4000,
             "temperature": 0.7
