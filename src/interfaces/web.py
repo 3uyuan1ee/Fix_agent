@@ -6,16 +6,23 @@ Flask Web应用基础框架
 
 import os
 from pathlib import Path
+from datetime import datetime, timedelta
+import io
+import json
+import logging
+import random
+import uuid
 
 # Flask相关导入
 try:
-    from flask import Flask, render_template, send_from_directory, jsonify, request
+    from flask import Flask, render_template, send_from_directory, jsonify, request, send_file
 except ImportError:
     Flask = None
     render_template = None
     send_from_directory = None
     jsonify = None
     request = None
+    send_file = None
 
 # WebSocket相关导入
 try:
@@ -733,6 +740,7 @@ class AIDefectDetectorWeb:
 
         # 静态分析页面路由
         @self.app.route('/static_analysis')
+        @self.app.route('/static')  # 添加简化路由
         def static_analysis():
             """静态分析页面路由"""
             try:
@@ -923,6 +931,7 @@ class AIDefectDetectorWeb:
 
         # 深度分析页面路由
         @self.app.route('/deep_analysis')
+        @self.app.route('/deep')  # 添加简化路由
         def deep_analysis():
             """深度分析页面路由"""
             try:
@@ -1099,6 +1108,7 @@ class AIDefectDetectorWeb:
 
         # 修复模式页面路由
         @self.app.route('/fix_mode')
+        @self.app.route('/fix')  # 添加简化路由
         def fix_mode():
             """修复模式页面路由"""
             try:
@@ -1337,6 +1347,228 @@ class AIDefectDetectorWeb:
             except Exception as e:
                 self.logger.error(f"导出修复报告失败: {e}")
                 return jsonify({'error': '导出修复报告失败'}), 500
+
+        # 历史记录API端点
+        @self.app.route('/api/history/records', methods=['GET'])
+        def get_history_records():
+            """获取历史记录列表API"""
+            try:
+                # 生成模拟的历史记录数据
+                records = self._generate_mock_history_records()
+
+                return jsonify({
+                    'success': True,
+                    'records': records,
+                    'total': len(records)
+                })
+
+            except Exception as e:
+                self.logger.error(f"获取历史记录失败: {e}")
+                return jsonify({'error': '获取历史记录失败'}), 500
+
+        @self.app.route('/api/history/record/<record_id>', methods=['GET'])
+        def get_history_record(record_id):
+            """获取单个历史记录详情API"""
+            try:
+                self.logger.info(f"获取历史记录详情: {record_id}")
+
+                # 生成模拟的记录详情
+                record = self._generate_mock_record_detail(record_id)
+
+                if not record:
+                    return jsonify({'error': '记录不存在'}), 404
+
+                return jsonify({
+                    'success': True,
+                    'record': record
+                })
+
+            except Exception as e:
+                self.logger.error(f"获取历史记录详情失败: {e}")
+                return jsonify({'error': '获取历史记录详情失败'}), 500
+
+        @self.app.route('/api/history/record/<record_id>/export', methods=['GET'])
+        def export_history_record(record_id):
+            """导出单个历史记录API"""
+            try:
+                self.logger.info(f"导出历史记录: {record_id}")
+
+                # 获取记录详情
+                record = self._generate_mock_record_detail(record_id)
+
+                if not record:
+                    return jsonify({'error': '记录不存在'}), 404
+
+                # 生成导出数据
+                export_data = {
+                    'export_info': {
+                        'record_id': record_id,
+                        'export_time': self._get_current_time(),
+                        'format': 'json'
+                    },
+                    'record': record
+                }
+
+                # 返回JSON文件下载
+                import io
+                import json
+
+                json_data = json.dumps(export_data, ensure_ascii=False, indent=2)
+                return send_file(
+                    io.BytesIO(json_data.encode('utf-8')),
+                    as_attachment=True,
+                    download_name=f'history_record_{record_id}.json',
+                    mimetype='application/json'
+                )
+
+            except Exception as e:
+                self.logger.error(f"导出历史记录失败: {e}")
+                return jsonify({'error': '导出历史记录失败'}), 500
+
+        @self.app.route('/api/history/export', methods=['POST'])
+        def export_history_records():
+            """批量导出历史记录API"""
+            try:
+                data = request.get_json()
+                record_ids = data.get('record_ids', [])
+
+                if not record_ids:
+                    return jsonify({'error': '请选择要导出的记录'}), 400
+
+                self.logger.info(f"批量导出历史记录: {len(record_ids)}条")
+
+                # 获取选中的记录
+                all_records = self._generate_mock_history_records()
+                selected_records = [r for r in all_records if r['id'] in record_ids]
+
+                # 生成导出数据
+                export_data = {
+                    'export_info': {
+                        'export_time': self._get_current_time(),
+                        'total_records': len(selected_records),
+                        'format': 'json'
+                    },
+                    'records': selected_records
+                }
+
+                # 返回JSON文件下载
+                import io
+                import json
+
+                json_data = json.dumps(export_data, ensure_ascii=False, indent=2)
+                return send_file(
+                    io.BytesIO(json_data.encode('utf-8')),
+                    as_attachment=True,
+                    download_name=f'history_export_{len(selected_records)}_records.json',
+                    mimetype='application/json'
+                )
+
+            except Exception as e:
+                self.logger.error(f"批量导出历史记录失败: {e}")
+                return jsonify({'error': '批量导出历史记录失败'}), 500
+
+        @self.app.route('/api/history/record/<record_id>', methods=['DELETE'])
+        def delete_history_record(record_id):
+            """删除单个历史记录API"""
+            try:
+                self.logger.info(f"删除历史记录: {record_id}")
+
+                # 这里应该从数据库或文件中删除记录
+                # 由于是模拟实现，我们只是返回成功响应
+                return jsonify({
+                    'success': True,
+                    'message': '记录删除成功'
+                })
+
+            except Exception as e:
+                self.logger.error(f"删除历史记录失败: {e}")
+                return jsonify({'error': '删除历史记录失败'}), 500
+
+        @self.app.route('/api/history/batch-delete', methods=['DELETE'])
+        def batch_delete_history_records():
+            """批量删除历史记录API"""
+            try:
+                data = request.get_json()
+                record_ids = data.get('record_ids', [])
+
+                if not record_ids:
+                    return jsonify({'error': '请选择要删除的记录'}), 400
+
+                self.logger.info(f"批量删除历史记录: {len(record_ids)}条")
+
+                # 这里应该从数据库或文件中删除记录
+                # 由于是模拟实现，我们只是返回成功响应
+                return jsonify({
+                    'success': True,
+                    'message': f'成功删除{len(record_ids)}条记录'
+                })
+
+            except Exception as e:
+                self.logger.error(f"批量删除历史记录失败: {e}")
+                return jsonify({'error': '批量删除历史记录失败'}), 500
+
+        @self.app.route('/api/history/clear', methods=['DELETE'])
+        def clear_all_history_records():
+            """清空所有历史记录API"""
+            try:
+                self.logger.info("清空所有历史记录")
+
+                # 这里应该清空数据库或文件中的所有记录
+                # 由于是模拟实现，我们只是返回成功响应
+                return jsonify({
+                    'success': True,
+                    'message': '所有历史记录已清空'
+                })
+
+            except Exception as e:
+                self.logger.error(f"清空历史记录失败: {e}")
+                return jsonify({'error': '清空历史记录失败'}), 500
+
+        @self.app.route('/api/history/statistics', methods=['GET'])
+        def get_history_statistics():
+            """获取历史记录统计信息API"""
+            try:
+                records = self._generate_mock_history_records()
+
+                # 计算统计信息
+                stats = {
+                    'total_records': len(records),
+                    'analysis_types': {},
+                    'status_distribution': {},
+                    'monthly_records': {},
+                    'recent_activity': []
+                }
+
+                # 按分析类型统计
+                for record in records:
+                    analysis_type = record.get('analysis_type', 'unknown')
+                    stats['analysis_types'][analysis_type] = stats['analysis_types'].get(analysis_type, 0) + 1
+
+                # 按状态统计
+                for record in records:
+                    status = record.get('status', 'unknown')
+                    stats['status_distribution'][status] = stats['status_distribution'].get(status, 0) + 1
+
+                # 按月统计
+                for record in records:
+                    month = record.get('created_at', '')[:7]  # YYYY-MM
+                    stats['monthly_records'][month] = stats['monthly_records'].get(month, 0) + 1
+
+                # 最近活动
+                stats['recent_activity'] = sorted(
+                    records,
+                    key=lambda x: x.get('created_at', ''),
+                    reverse=True
+                )[:10]
+
+                return jsonify({
+                    'success': True,
+                    'statistics': stats
+                })
+
+            except Exception as e:
+                self.logger.error(f"获取历史统计信息失败: {e}")
+                return jsonify({'error': '获取历史统计信息失败'}), 500
 
         # 历史记录页面路由
         @self.app.route('/history')
@@ -3393,6 +3625,250 @@ AIDefectDetector 修复数据导出报告
         base_explanation = explanations.get(template['issue_type'], '此修复改进了代码质量。')
 
         return f"{base_explanation}\n\n修复原理：{template['description']}\n预期效果：降低{template['risk_level']}级风险，提升代码质量。"
+
+    def _generate_mock_history_records(self):
+        """生成模拟的历史记录数据"""
+        import random
+        import uuid
+        from datetime import datetime, timedelta
+
+        records = []
+
+        # 项目名称模板
+        project_names = [
+            'AI代码审查系统', '电商平台后端', '数据分析工具', 'Web应用框架', '移动APP API',
+            '机器学习模型', '微服务架构', '用户管理系统', '支付网关', '消息队列系统'
+        ]
+
+        # 分析类型
+        analysis_types = ['static', 'deep', 'fix']
+
+        # 状态类型
+        statuses = ['completed', 'failed', 'running', 'pending']
+
+        # 生成30-50条历史记录
+        num_records = random.randint(30, 50)
+
+        for i in range(num_records):
+            # 随机生成时间（最近6个月内）
+            days_ago = random.randint(0, 180)
+            created_time = datetime.now() - timedelta(days=days_ago, hours=random.randint(0, 23), minutes=random.randint(0, 59))
+
+            # 根据状态决定完成时间
+            status = random.choice(statuses)
+            if status == 'completed':
+                duration = random.randint(30, 1800)  # 30秒到30分钟
+                completed_time = created_time + timedelta(seconds=duration)
+            else:
+                duration = random.randint(10, 300)
+                completed_time = None
+
+            record_id = f"hist_{uuid.uuid4().hex[:8]}"
+
+            record = {
+                'id': record_id,
+                'project_name': random.choice(project_names),
+                'analysis_type': random.choice(analysis_types),
+                'status': status,
+                'file_path': f'/projects/project_{i+1:03d}',
+                'file_count': random.randint(5, 100),
+                'issue_count': random.randint(0, 50),
+                'created_at': created_time.isoformat(),
+                'completed_at': completed_time.isoformat() if completed_time else None,
+                'duration': duration,
+                'description': f'{self._get_analysis_type_label(random.choice(analysis_types))}任务',
+                'tools': self._get_analysis_tools(random.choice(analysis_types)),
+                'model_name': self._get_model_name(),
+                'provider': self._get_provider_name()
+            }
+
+            records.append(record)
+
+        # 按创建时间倒序排列
+        records.sort(key=lambda x: x['created_at'], reverse=True)
+
+        return records
+
+    def _generate_mock_record_detail(self, record_id):
+        """生成模拟的单个记录详情"""
+        import random
+        import uuid
+
+        # 首先从记录列表中找到基础信息
+        all_records = self._generate_mock_history_records()
+        base_record = next((r for r in all_records if r['id'] == record_id), None)
+
+        if not base_record:
+            return None
+
+        # 生成文件列表
+        files = []
+        num_files = random.randint(5, 20)
+
+        for i in range(num_files):
+            file_extensions = ['.py', '.js', '.java', '.cpp', '.go', '.rs']
+            file_path = f"src/module_{i+1:02d}/file_{i+1:02d}{random.choice(file_extensions)}"
+
+            file_info = {
+                'path': file_path,
+                'size': f"{random.randint(1, 100)}KB",
+                'lines': random.randint(50, 1000),
+                'issues': random.randint(0, 10),
+                'last_modified': (datetime.now() - timedelta(days=random.randint(1, 30))).isoformat()
+            }
+            files.append(file_info)
+
+        # 生成问题列表
+        issues = []
+        num_issues = base_record.get('issue_count', 0)
+
+        if num_issues > 0:
+            severity_levels = ['critical', 'warning', 'info']
+            issue_types = ['security', 'style', 'performance', 'maintainability', 'bug']
+
+            for i in range(min(num_issues, 20)):  # 最多显示20个问题
+                severity = random.choice(severity_levels)
+                issue_type = random.choice(issue_types)
+
+                issue = {
+                    'id': f"issue_{uuid.uuid4().hex[:8]}",
+                    'title': self._generate_issue_title(issue_type, severity),
+                    'description': self._generate_issue_description(issue_type),
+                    'severity': severity,
+                    'type': issue_type,
+                    'file_path': random.choice(files)['path'],
+                    'line_number': random.randint(1, 500),
+                    'confidence': random.randint(70, 100),
+                    'rule_id': f"RULE_{random.randint(1000, 9999)}",
+                    'suggestion': self._generate_issue_suggestion(issue_type)
+                }
+                issues.append(issue)
+
+        # 构建详细记录
+        detailed_record = {
+            **base_record,
+            'files': files,
+            'issues': issues,
+            'statistics': {
+                'total_files': len(files),
+                'total_issues': len(issues),
+                'severity_distribution': {
+                    'critical': len([i for i in issues if i['severity'] == 'critical']),
+                    'warning': len([i for i in issues if i['severity'] == 'warning']),
+                    'info': len([i for i in issues if i['severity'] == 'info'])
+                },
+                'type_distribution': {
+                    'security': len([i for i in issues if i['type'] == 'security']),
+                    'style': len([i for i in issues if i['type'] == 'style']),
+                    'performance': len([i for i in issues if i['type'] == 'performance']),
+                    'maintainability': len([i for i in issues if i['type'] == 'maintainability']),
+                    'bug': len([i for i in issues if i['type'] == 'bug'])
+                }
+            },
+            'configuration': {
+                'analysis_depth': random.choice(['basic', 'standard', 'deep']),
+                'timeout_minutes': random.randint(5, 60),
+                'parallel_jobs': random.randint(1, 8),
+                'custom_rules_enabled': random.choice([True, False]),
+                'experimental_features': random.choice([True, False])
+            }
+        }
+
+        return detailed_record
+
+    def _get_analysis_type_label(self, analysis_type):
+        """获取分析类型标签"""
+        labels = {
+            'static': '静态代码分析',
+            'deep': '深度智能分析',
+            'fix': '代码修复建议'
+        }
+        return labels.get(analysis_type, '未知分析类型')
+
+    def _get_analysis_tools(self, analysis_type):
+        """根据分析类型获取工具列表"""
+        tools_map = {
+            'static': ['pylint', 'flake8', 'mypy', 'bandit', 'black'],
+            'deep': ['gpt-4', 'claude-3', 'codex', 'copilot'],
+            'fix': ['ai-fixer', 'autopep8', 'isort', 'black']
+        }
+        tools = tools_map.get(analysis_type, [])
+        return random.sample(tools, random.randint(1, len(tools)))
+
+    def _get_model_name(self):
+        """获取随机模型名称"""
+        models = ['gpt-4', 'gpt-3.5-turbo', 'claude-3-sonnet', 'claude-3-haiku', 'gemini-pro']
+        return random.choice(models)
+
+    def _get_provider_name(self):
+        """获取随机提供商名称"""
+        providers = ['OpenAI', 'Anthropic', 'Google', 'Microsoft', 'Local']
+        return random.choice(providers)
+
+    def _generate_issue_title(self, issue_type, severity):
+        """生成问题标题"""
+        templates = {
+            'security': [
+                '潜在的安全漏洞',
+                'SQL注入风险',
+                'XSS攻击风险',
+                '硬编码敏感信息',
+                '不安全的随机数生成'
+            ],
+            'style': [
+                '代码风格不符合规范',
+                '变量命名不规范',
+                '函数过长',
+                '缺少文档注释',
+                '导入语句格式问题'
+            ],
+            'performance': [
+                '性能瓶颈',
+                '低效的循环实现',
+                '内存泄漏风险',
+                '不必要的计算',
+                'IO操作优化建议'
+            ],
+            'maintainability': [
+                '代码复杂度过高',
+                '重复代码块',
+                '函数职责不明确',
+                '缺乏错误处理',
+                '硬编码常量'
+            ],
+            'bug': [
+                '潜在的空指针引用',
+                '数组越界风险',
+                '逻辑错误',
+                '条件判断问题',
+                '异常处理缺陷'
+            ]
+        }
+
+        title_list = templates.get(issue_type, ['代码质量问题'])
+        return random.choice(title_list)
+
+    def _generate_issue_description(self, issue_type):
+        """生成问题描述"""
+        descriptions = {
+            'security': '检测到可能的安全漏洞，建议立即修复以防止潜在的安全风险。',
+            'style': '代码风格不符合团队规范，建议调整以提高代码可读性。',
+            'performance': '发现性能优化机会，建议优化以提高程序执行效率。',
+            'maintainability': '代码可维护性较低，建议重构以降低维护成本。',
+            'bug': '发现潜在的程序错误，建议修复以避免运行时异常。'
+        }
+        return descriptions.get(issue_type, '发现代码质量问题，需要进一步检查。')
+
+    def _generate_issue_suggestion(self, issue_type):
+        """生成修复建议"""
+        suggestions = {
+            'security': '使用安全的编程实践，避免硬编码敏感信息，进行输入验证。',
+            'style': '遵循PEP8编码规范，使用有意义的变量名，添加适当的注释。',
+            'performance': '优化算法复杂度，减少不必要的计算，使用缓存机制。',
+            'maintainability': '拆分复杂函数，消除重复代码，增加单元测试。',
+            'bug': '添加边界检查，改进错误处理，进行充分的测试验证。'
+        }
+        return suggestions.get(issue_type, '建议仔细检查代码逻辑并进行相应修复。')
 
 
 def create_app():
