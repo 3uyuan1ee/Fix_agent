@@ -1,0 +1,324 @@
+{% extends "base.html" %}
+
+{% block title %}静态分析 - AIDefectDetector{% endblock %}
+
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/static_analysis.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">
+                <i class="fas fa-tachometer-alt me-2"></i>
+                静态分析
+            </h2>
+
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                静态分析通过扫描代码文件，检测潜在的语法错误、安全漏洞、性能问题和代码风格问题。
+            </div>
+
+            <!-- 分析输入区域 -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-upload me-2"></i>
+                                项目上传
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- 文件拖拽上传区域 -->
+                            <div class="upload-area" id="uploadArea">
+                                <div class="upload-content">
+                                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                                    <h5>拖拽项目文件到此处</h5>
+                                    <p class="text-muted">支持 .zip, .tar, .gz 格式，最大 50MB</p>
+                                    <button class="btn btn-outline-primary" id="selectFileBtn">
+                                        <i class="fas fa-folder-open me-2"></i>
+                                        选择文件
+                                    </button>
+                                    <input type="file" id="fileInput" accept=".zip,.tar,.gz" style="display: none;">
+                                </div>
+                                <div class="upload-progress" id="uploadProgress" style="display: none;">
+                                    <div class="progress">
+                                        <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                    </div>
+                                    <p class="text-center mt-2 mb-0">正在上传...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-folder-tree me-2"></i>
+                                路径输入
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="pathForm">
+                                <div class="mb-3">
+                                    <label for="projectPath" class="form-label">项目路径</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="projectPath"
+                                               placeholder="/path/to/your/project">
+                                        <button class="btn btn-outline-secondary" type="button" id="browseBtn">
+                                            <i class="fas fa-folder-open"></i>
+                                        </button>
+                                    </div>
+                                    <div class="form-text">输入本地项目路径或点击浏览按钮选择</div>
+                                </div>
+                                <button type="button" class="btn btn-primary w-100" id="validatePathBtn">
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    验证路径
+                                </button>
+                            </form>
+
+                            <!-- 路径验证结果 -->
+                            <div id="pathValidationResult" class="mt-3"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 分析工具选择 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-tools me-2"></i>
+                        选择分析工具
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% include 'components/static_tools.html' %}
+                </div>
+            </div>
+
+            <!-- 分析参数配置 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-sliders-h me-2"></i>
+                        分析参数配置
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="analysisConfigForm">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="analysisDepth" class="form-label">分析深度</label>
+                                    <select class="form-select" id="analysisDepth">
+                                        <option value="basic">基础分析</option>
+                                        <option value="standard" selected>标准分析</option>
+                                        <option value="deep">深度分析</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="includeTests" class="form-label">包含测试文件</label>
+                                    <select class="form-select" id="includeTests">
+                                        <option value="true">是</option>
+                                        <option value="false" selected>否</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="maxIssues" class="form-label">最大问题数</label>
+                                    <input type="number" class="form-control" id="maxIssues"
+                                           value="100" min="10" max="1000">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">问题严重程度</label>
+                                    <div class="form-check-group">
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" id="severityCritical"
+                                                   value="critical" checked>
+                                            <label class="form-check-label" for="severityCritical">
+                                                严重
+                                            </label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" id="severityWarning"
+                                                   value="warning" checked>
+                                            <label class="form-check-label" for="severityWarning">
+                                                警告
+                                            </label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" id="severityInfo"
+                                                   value="info" checked>
+                                            <label class="form-check-label" for="severityInfo">
+                                                信息
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">问题类别</label>
+                                    <div class="form-check-group">
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" id="categorySecurity"
+                                                   value="security" checked>
+                                            <label class="form-check-label" for="categorySecurity">
+                                                安全
+                                            </label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" id="categoryPerformance"
+                                                   value="performance" checked>
+                                            <label class="form-check-label" for="categoryPerformance">
+                                                性能
+                                            </label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" id="categoryStyle"
+                                                   value="style" checked>
+                                            <label class="form-check-label" for="categoryStyle">
+                                                风格
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 开始分析按钮 -->
+            <div class="text-center mb-4">
+                <button type="button" class="btn btn-success btn-lg" id="startAnalysisBtn" disabled>
+                    <i class="fas fa-play me-2"></i>
+                    开始静态分析
+                </button>
+            </div>
+
+            <!-- 分析进度显示区域 -->
+            <div class="card" id="analysisProgressCard" style="display: none;">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-spinner fa-spin me-2"></i>
+                        分析进度
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="analysis-progress" id="analysisProgress">
+                        <div class="progress mb-3">
+                            <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h6>当前状态</h6>
+                                    <p class="text-muted" id="currentStatus">准备中...</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h6>已分析文件</h6>
+                                    <p class="text-muted" id="analyzedFiles">0 / 0</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h6>发现问题</h6>
+                                    <p class="text-muted" id="foundIssues">0</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h6>剩余时间</h6>
+                                    <p class="text-muted" id="remainingTime">计算中...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 分析结果展示区域 -->
+            <div class="card" id="analysisResultsCard" style="display: none;">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-line me-2"></i>
+                        分析结果
+                    </h5>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="exportResultsBtn">
+                            <i class="fas fa-download me-1"></i>
+                            导出结果
+                        </button>
+                        <button type="button" class="btn btn-outline-success btn-sm" id="goToFixBtn">
+                            <i class="fas fa-tools me-1"></i>
+                            进入修复模式
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- 结果概览 -->
+                    <div class="results-summary" id="resultsSummary">
+                        <!-- 动态填充结果概览 -->
+                    </div>
+
+                    <!-- 详细结果列表 -->
+                    <div class="results-details" id="resultsDetails">
+                        <!-- 动态填充详细结果 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 导出结果模态框 -->
+<div class="modal fade" id="exportModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">导出分析结果</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="exportFormat" class="form-label">导出格式</label>
+                    <select class="form-select" id="exportFormat">
+                        <option value="json">JSON</option>
+                        <option value="csv">CSV</option>
+                        <option value="html">HTML报告</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="exportFilename" class="form-label">文件名</label>
+                    <input type="text" class="form-control" id="exportFilename"
+                           placeholder="analysis_results">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="confirmExportBtn">导出</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/static_analysis.js') }}"></script>
+{% endblock %}

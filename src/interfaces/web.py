@@ -724,6 +724,186 @@ class AIDefectDetectorWeb:
                 self.logger.error(f"渲染静态分析页面失败: {e}")
                 return "<h1>AIDefectDetector</h1><p>静态分析页面正在开发中...</p>", 200
 
+        # 静态分析API端点
+        @self.app.route('/api/static/start', methods=['POST'])
+        def start_static_analysis():
+            """启动静态分析任务API"""
+            try:
+                data = request.get_json()
+                project_path = data.get('project_path')
+                project_id = data.get('project_id')
+                tools = data.get('tools', [])
+                config = data.get('config', {})
+
+                if not project_path and not project_id:
+                    return jsonify({'error': '项目路径或项目ID不能为空'}), 400
+
+                if not tools:
+                    return jsonify({'error': '请至少选择一个分析工具'}), 400
+
+                # 生成分析任务ID
+                import uuid
+                task_id = str(uuid.uuid4())
+
+                self.logger.info(f"启动静态分析任务: {task_id} - 工具: {[t['name'] for t in tools]}")
+
+                # 这里应该启动后台静态分析任务
+                # 目前返回模拟的任务ID
+                return jsonify({
+                    'success': True,
+                    'task_id': task_id,
+                    'status': 'started',
+                    'message': '静态分析任务已启动'
+                })
+
+            except Exception as e:
+                self.logger.error(f"启动静态分析失败: {e}")
+                return jsonify({'error': f'启动分析失败: {str(e)}'}), 500
+
+        @self.app.route('/api/static/status/<task_id>')
+        def get_static_analysis_status(task_id):
+            """获取静态分析任务状态API"""
+            try:
+                # 这里应该查询实际的任务状态
+                # 目前返回模拟状态
+                import random
+                import time
+
+                # 模拟任务进度
+                progress_states = [
+                    {'progress': 25, 'status': 'running', 'analyzed_files': 5, 'total_files': 20, 'found_issues': 3},
+                    {'progress': 50, 'status': 'running', 'analyzed_files': 10, 'total_files': 20, 'found_issues': 8},
+                    {'progress': 75, 'status': 'running', 'analyzed_files': 15, 'total_files': 20, 'found_issues': 12},
+                    {'progress': 100, 'status': 'completed', 'analyzed_files': 20, 'total_files': 20, 'found_issues': 15}
+                ]
+
+                # 简单的模拟逻辑，基于任务ID的最后一位数字选择状态
+                task_hash = hash(task_id) % len(progress_states)
+                state = progress_states[abs(task_hash)]
+
+                response_data = {
+                    'task_id': task_id,
+                    'status': state['status'],
+                    'progress': state['progress'],
+                    'analyzed_files': state['analyzed_files'],
+                    'total_files': state['total_files'],
+                    'found_issues': state['found_issues']
+                }
+
+                if state['status'] == 'completed':
+                    response_data['remaining_time'] = '已完成'
+                else:
+                    remaining = (state['total_files'] - state['analyzed_files']) * 2  # 假设每个文件2秒
+                    response_data['remaining_time'] = f'{remaining}秒'
+
+                return jsonify(response_data)
+
+            except Exception as e:
+                self.logger.error(f"获取静态分析状态失败: {e}")
+                return jsonify({'error': '获取状态失败', 'status': 'failed'}), 500
+
+        @self.app.route('/api/static/results/<task_id>')
+        def get_static_analysis_results(task_id):
+            """获取静态分析结果API"""
+            try:
+                # 这里应该从数据库或文件中读取实际的分析结果
+                # 目前返回模拟数据
+                mock_results = self._generate_mock_static_analysis_results(task_id)
+
+                return jsonify({
+                    'success': True,
+                    'task_id': task_id,
+                    'analysis_info': {
+                        'project_name': '示例项目',
+                        'project_path': '/path/to/project',
+                        'analysis_mode': 'static',
+                        'analysis_time': '2024-01-15 14:30:00',
+                        'total_files_analyzed': len(mock_results),
+                        'total_issues': len(mock_results),
+                        'critical_count': len([i for i in mock_results if i['severity'] == 'critical']),
+                        'warning_count': len([i for i in mock_results if i['severity'] == 'warning']),
+                        'info_count': len([i for i in mock_results if i['severity'] == 'info']),
+                        'tools_used': ['pylint', 'flake8', 'mypy']
+                    },
+                    'issues': mock_results
+                })
+
+            except Exception as e:
+                self.logger.error(f"获取静态分析结果失败: {e}")
+                return jsonify({'error': '获取结果失败'}), 500
+
+        @self.app.route('/api/static/export/<task_id>')
+        def export_static_analysis_results(task_id):
+            """导出静态分析结果API"""
+            try:
+                # 获取导出格式
+                export_format = request.args.get('format', 'json').lower()
+
+                if export_format not in ['json', 'csv', 'html']:
+                    return jsonify({'error': '不支持的导出格式'}), 400
+
+                # 这里应该获取实际的分析结果
+                mock_results = self._generate_mock_static_analysis_results(task_id)
+
+                if export_format == 'json':
+                    return jsonify({
+                        'success': True,
+                        'format': 'json',
+                        'data': mock_results,
+                        'filename': f'static_analysis_{task_id}.json'
+                    })
+
+                elif export_format == 'csv':
+                    # 生成CSV格式的数据
+                    import csv
+                    import io
+
+                    output = io.StringIO()
+                    writer = csv.writer(output)
+
+                    # 写入表头
+                    writer.writerow(['ID', '严重程度', '类别', '标题', '描述', '文件', '行号', '代码', '建议', '工具'])
+
+                    # 写入数据
+                    for issue in mock_results:
+                        writer.writerow([
+                            issue['id'],
+                            issue['severity'],
+                            issue['category'],
+                            issue['title'],
+                            issue['description'],
+                            issue['file'],
+                            issue['line'],
+                            issue['code'],
+                            issue['suggestion'],
+                            issue.get('tool', 'unknown')
+                        ])
+
+                    csv_data = output.getvalue()
+                    output.close()
+
+                    return jsonify({
+                        'success': True,
+                        'format': 'csv',
+                        'data': csv_data,
+                        'filename': f'static_analysis_{task_id}.csv'
+                    })
+
+                elif export_format == 'html':
+                    # 生成HTML格式的报告
+                    html_content = self._generate_static_analysis_html_report(mock_results, task_id)
+
+                    return jsonify({
+                        'success': True,
+                        'format': 'html',
+                        'data': html_content,
+                        'filename': f'static_analysis_{task_id}.html'
+                    })
+
+            except Exception as e:
+                self.logger.error(f"导出静态分析结果失败: {e}")
+                return jsonify({'error': '导出失败'}), 500
+
         # 深度分析页面路由
         @self.app.route('/deep_analysis')
         def deep_analysis():
@@ -1454,6 +1634,301 @@ AIDefectDetector 修复数据导出报告
             'anthropic': 'Anthropic Claude'
         }
         return names.get(provider, provider)
+
+    def _generate_mock_static_analysis_results(self, task_id):
+        """生成模拟静态分析结果数据"""
+        import random
+
+        # 静态分析特有的问题模板
+        static_issue_templates = [
+            {
+                'tool': 'pylint',
+                'category': 'style',
+                'severity': 'warning',
+                'title_pattern': '行长度超过限制',
+                'description_pattern': '代码行长度超过PEP8建议的79个字符',
+                'code_pattern': 'long_variable_name_that_exceeds_pep8_line_length_limit = "very_long_string_value"',
+                'suggestion_pattern': '将长行拆分为多行或使用更短的变量名'
+            },
+            {
+                'tool': 'pylint',
+                'category': 'maintainability',
+                'severity': 'info',
+                'title_pattern': '函数复杂度过高',
+                'description_pattern': '函数的圈复杂度过高，建议拆分为更小的函数',
+                'code_pattern': 'def complex_function(param1, param2, param3):\n    # 复杂逻辑...\n    if condition1:\n        if condition2:\n            # 嵌套逻辑...',
+                'suggestion_pattern': '将复杂函数拆分为多个简单函数，提高代码可维护性'
+            },
+            {
+                'tool': 'flake8',
+                'category': 'style',
+                'severity': 'warning',
+                'title_pattern': '未使用的导入',
+                'description_pattern': '导入了模块但未使用',
+                'code_pattern': 'import os\nimport sys\nimport json  # json未使用',
+                'suggestion_pattern': '删除未使用的导入语句'
+            },
+            {
+                'tool': 'mypy',
+                'category': 'type',
+                'severity': 'warning',
+                'title_pattern': '缺少类型注解',
+                'description_pattern': '函数缺少参数或返回值的类型注解',
+                'code_pattern': 'def calculate_sum(a, b):\n    return a + b',
+                'suggestion_pattern': '添加类型注解：def calculate_sum(a: int, b: int) -> int:'
+            },
+            {
+                'tool': 'bandit',
+                'category': 'security',
+                'severity': 'critical',
+                'title_pattern': '硬编码密码',
+                'description_pattern': '检测到硬编码的密码或密钥，存在安全风险',
+                'code_pattern': 'password = "admin123"  # 硬编码密码',
+                'suggestion_pattern': '使用环境变量或配置文件存储敏感信息'
+            },
+            {
+                'tool': 'bandit',
+                'category': 'security',
+                'severity': 'warning',
+                'title_pattern': '使用不安全的随机数生成器',
+                'description_pattern': '使用了不安全的随机数生成器',
+                'code_pattern': 'import random\nrandom_number = random.random()',
+                'suggestion_pattern': '使用secrets模块生成加密安全的随机数'
+            },
+            {
+                'tool': 'vulture',
+                'category': 'cleanup',
+                'severity': 'info',
+                'title_pattern': '未使用的函数',
+                'description_pattern': '定义了函数但从未调用',
+                'code_pattern': 'def unused_function():\n    print("This function is never called")',
+                'suggestion_pattern': '删除未使用的函数或添加到配置中排除'
+            }
+        ]
+
+        # 定义示例文件路径
+        file_paths = [
+            'src/auth/user_manager.py',
+            'src/utils/helpers.py',
+            'src/api/endpoints.py',
+            'src/services/data_processor.py',
+            'src/models/database.py',
+            'src/config/settings.py',
+            'src/cli/main.py',
+            'src/tests/test_models.py',
+            'src/web/routes.py',
+            'src/processors/file_processor.py'
+        ]
+
+        mock_results = []
+
+        # 生成随机数量的问题（10-25个）
+        issue_count = random.randint(10, 25)
+
+        for i in range(1, issue_count + 1):
+            # 随机选择问题模板
+            template = random.choice(static_issue_templates)
+
+            # 随机选择文件
+            file_path = random.choice(file_paths)
+
+            # 生成随机行号
+            line_number = random.randint(1, 200)
+
+            issue = {
+                'id': i,
+                'tool': template['tool'],
+                'severity': template['severity'],
+                'category': template['category'],
+                'title': template['title_pattern'],
+                'description': template['description_pattern'],
+                'file': file_path,
+                'line': line_number,
+                'code': template['code_pattern'],
+                'suggestion': template['suggestion_pattern'],
+                'rule_id': f'{template["tool"].upper()}_{i:03d}',
+                'confidence': random.randint(70, 100)
+            }
+
+            mock_results.append(issue)
+
+        # 按严重程度和文件名排序
+        severity_order = {'critical': 3, 'warning': 2, 'info': 1}
+        mock_results.sort(key=lambda x: (-severity_order[x['severity']], x['file'], x['line']))
+
+        return mock_results
+
+    def _generate_static_analysis_html_report(self, results, task_id):
+        """生成静态分析的HTML格式报告"""
+        # 统计数据
+        critical_count = len([r for r in results if r['severity'] == 'critical'])
+        warning_count = len([r for r in results if r['severity'] == 'warning'])
+        info_count = len([r for r in results if r['severity'] == 'info'])
+
+        # 按工具分组
+        tool_groups = {}
+        for result in results:
+            tool = result.get('tool', 'unknown')
+            if tool not in tool_groups:
+                tool_groups[tool] = []
+            tool_groups[tool].append(result)
+
+        # 按文件分组
+        file_groups = {}
+        for result in results:
+            if result['file'] not in file_groups:
+                file_groups[result['file']] = []
+            file_groups[result['file']].append(result)
+
+        # 生成HTML
+        html = f"""<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>静态分析结果报告 - AIDefectDetector</title>
+    <style>
+        body {{ font-family: Arial, sans-serif; margin: 20px; background-color: #f8f9fa; }}
+        .container {{ max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
+        .header {{ text-align: center; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 2px solid #dee2e6; }}
+        .summary {{ display: flex; justify-content: space-around; margin: 30px 0; }}
+        .summary-item {{ text-align: center; padding: 20px; border-radius: 8px; }}
+        .critical {{ background-color: #f8d7da; color: #721c24; }}
+        .warning {{ background-color: #fff3cd; color: #856404; }}
+        .info {{ background-color: #d1ecf1; color: #0c5460; }}
+        .total {{ background-color: #d4edda; color: #155724; }}
+        .section {{ margin: 30px 0; }}
+        .section-header {{ background-color: #e9ecef; padding: 15px; border-radius: 5px 5px 0 0; font-weight: bold; margin-bottom: 0; }}
+        .tool-section, .file-section {{ border: 1px solid #dee2e6; }}
+        .tool-body, .file-body {{ padding: 15px; }}
+        .issue {{ padding: 15px; border-bottom: 1px solid #dee2e6; }}
+        .issue:last-child {{ border-bottom: none; }}
+        .issue-header {{ display: flex; justify-content: between; align-items: center; margin-bottom: 10px; }}
+        .severity-badge {{ padding: 4px 8px; border-radius: 4px; color: white; font-size: 12px; margin-right: 10px; }}
+        .severity-critical {{ background-color: #dc3545; }}
+        .severity-warning {{ background-color: #ffc107; color: #000; }}
+        .severity-info {{ background-color: #17a2b8; }}
+        .tool-badge {{ background-color: #6c757d; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px; margin-left: 5px; }}
+        .code {{ background-color: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; white-space: pre-wrap; margin: 10px 0; font-size: 0.9em; }}
+        .suggestion {{ background-color: #d4edda; padding: 10px; border-radius: 4px; margin: 10px 0; }}
+        .file-info {{ color: #6c757d; font-size: 0.9em; margin-bottom: 5px; }}
+        .footer {{ text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #dee2e6; color: #6c757d; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>AIDefectDetector 静态分析报告</h1>
+            <p>任务ID: {task_id}</p>
+            <p>生成时间: {self._get_current_time()}</p>
+        </div>
+
+        <div class="summary">
+            <div class="summary-item critical">
+                <h3>{critical_count}</h3>
+                <p>严重问题</p>
+            </div>
+            <div class="summary-item warning">
+                <h3>{warning_count}</h3>
+                <p>警告问题</p>
+            </div>
+            <div class="summary-item info">
+                <h3>{info_count}</h3>
+                <p>信息问题</p>
+            </div>
+            <div class="summary-item total">
+                <h3>{len(results)}</h3>
+                <p>总问题数</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>按工具分组</h3>"""
+
+        # 按工具生成问题列表
+        for tool, issues in tool_groups.items():
+            html += f"""
+        <div class="tool-section">
+            <div class="section-header">
+                <i class="fas fa-tools"></i> {tool.upper()} ({len(issues)} 个问题)
+            </div>
+            <div class="tool-body">"""
+
+            for issue in issues:
+                severity_class = f"severity-{issue['severity']}"
+                severity_text = {'critical': '严重', 'warning': '警告', 'info': '信息'}[issue['severity']]
+
+                html += f"""
+                <div class="issue">
+                    <div class="issue-header">
+                        <span class="severity-badge {severity_class}">{severity_text}</span>
+                        <strong>{issue['title']}</strong>
+                        <span class="tool-badge">{issue.get('tool', 'unknown').upper()}</span>
+                    </div>
+                    <div class="file-info">
+                        <i class="fas fa-file-code"></i> {issue['file']} 行 {issue['line']}
+                    </div>
+                    <p>{issue['description']}</p>
+                    {f'<div class="code">{issue["code"]}</div>' if issue.get('code') else ''}
+                    <div class="suggestion">
+                        <strong>修复建议:</strong> {issue['suggestion']}
+                    </div>
+                </div>"""
+
+            html += """
+            </div>
+        </div>"""
+
+        html += """
+        </div>
+
+        <div class="section">
+            <h3>按文件分组</h3>"""
+
+        # 按文件生成问题列表
+        for file_path, issues in file_groups.items():
+            html += f"""
+        <div class="file-section">
+            <div class="section-header">
+                <i class="fas fa-file-code"></i> {file_path} ({len(issues)} 个问题)
+            </div>
+            <div class="file-body">"""
+
+            for issue in issues:
+                severity_class = f"severity-{issue['severity']}"
+                severity_text = {'critical': '严重', 'warning': '警告', 'info': '信息'}[issue['severity']]
+
+                html += f"""
+                <div class="issue">
+                    <div class="issue-header">
+                        <span class="severity-badge {severity_class}">{severity_text}</span>
+                        <strong>{issue['title']}</strong>
+                        <span class="tool-badge">{issue.get('tool', 'unknown').upper()}</span>
+                        <span style="margin-left: auto; color: #6c757d;">行 {issue['line']}</span>
+                    </div>
+                    <p>{issue['description']}</p>
+                    {f'<div class="code">{issue["code"]}</div>' if issue.get('code') else ''}
+                    <div class="suggestion">
+                        <strong>修复建议:</strong> {issue['suggestion']}
+                    </div>
+                </div>"""
+
+            html += """
+            </div>
+        </div>"""
+
+        html += f"""
+        </div>
+
+        <div class="footer">
+            <p>报告由 AIDefectDetector 自动生成</p>
+            <p>项目地址: https://github.com/your-repo/ai-defect-detector</p>
+        </div>
+    </div>
+</body>
+</html>"""
+
+        return html
 
     def run(self, host=None, port=None, debug=None):
         """运行Web应用"""
