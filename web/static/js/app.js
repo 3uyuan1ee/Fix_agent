@@ -6,7 +6,6 @@
 // 全局变量
 window.App = {
     currentPage: 'index',
-    sidebarVisible: true,
     config: {},
     themes: {
         primary: '#0d6efd',
@@ -49,952 +48,283 @@ App.ajax = function(url, options = {}) {
     const finalOptions = { ...defaultOptions, ...options };
 
     return new Promise((resolve, reject) => {
-        const timeoutId = setTimeout(() => {
-            reject(new Error('请求超时'));
-        }, finalOptions.timeout);
+        const xhr = new XMLHttpRequest();
+        xhr.open(finalOptions.method, url, true);
 
-        fetch(url, finalOptions)
-            .then(response => {
-                clearTimeout(timeoutId);
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        // 设置请求头
+        Object.keys(finalOptions.headers).forEach(key => {
+            xhr.setRequestHeader(key, finalOptions.headers[key]);
+        });
+
+        // 设置超时
+        xhr.timeout = finalOptions.timeout;
+
+        xhr.onload = function() {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                    const response = xhr.getResponseHeader('Content-Type').includes('application/json')
+                        ? JSON.parse(xhr.responseText)
+                        : xhr.responseText;
+                    resolve(response);
+                } catch (e) {
+                    resolve(xhr.responseText);
                 }
-                return response.json();
-            })
-            .then(data => {
-                resolve(data);
-            })
-            .catch(error => {
-                clearTimeout(timeoutId);
-                reject(error);
-            });
+            } else {
+                reject(new Error(`HTTP ${xhr.status}: ${xhr.statusText}`));
+            }
+        };
+
+        xhr.onerror = function() {
+            reject(new Error('网络请求失败'));
+        };
+
+        xhr.ontimeout = function() {
+            reject(new Error('请求超时'));
+        };
+
+        // 发送请求
+        const data = finalOptions.data;
+        if (data) {
+            if (typeof data === 'object' && finalOptions.headers['Content-Type'].includes('application/json')) {
+                xhr.send(JSON.stringify(data));
+            } else {
+                xhr.send(data);
+            }
+        } else {
+            xhr.send();
+        }
     });
 };
 
 /**
- * GET请求快捷方法
+ * 显示通知消息
+ * @param {string} message - 消息内容
+ * @param {string} type - 消息类型 (success, info, warning, danger)
+ * @param {Object} options - 选项
  */
-App.get = function(url, options = {}) {
-    return App.ajax(url, { ...options, method: 'GET' });
-};
-
-/**
- * POST请求快捷方法
- */
-App.post = function(url, data, options = {}) {
-    return App.ajax(url, {
-        ...options,
-        method: 'POST',
-        body: JSON.stringify(data)
-    });
-};
-
-/**
- * 错误处理函数
- * @param {Error} error - 错误对象
- * @param {string} context - 错误上下文
- */
-App.handleError = function(error, context = '') {
-    console.error(`[${context}] 错误:`, error);
-
-    let message = '操作失败';
-
-    if (error.message.includes('超时')) {
-        message = '请求超时，请检查网络连接';
-    } else if (error.message.includes('HTTP 4')) {
-        message = '请求参数错误';
-    } else if (error.message.includes('HTTP 5')) {
-        message = '服务器内部错误';
-    } else if (error.message.includes('Failed to fetch')) {
-        message = '网络连接失败，请检查网络';
-    } else {
-        message = error.message || '未知错误';
-    }
-
-    App.showAlert(message, 'danger');
-};
-
-/**
- * 显示提示信息
- * @param {string} message - 提示信息
- * @param {string} type - 提示类型 (success, danger, warning, info)
- * @param {number} duration - 显示时长（毫秒）
- */
-App.showAlert = function(message, type = 'info', duration = 5000) {
-    // 创建提示框容器
-    const alertContainer = document.getElementById('alert-container') || (() => {
-        const container = document.createElement('div');
-        container.id = 'alert-container';
-        container.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 9999;
-            max-width: 400px;
-        `;
-        document.body.appendChild(container);
-        return container;
-    })();
-
-    // 创建提示框
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
-    alertDiv.style.cssText = `
-        margin-bottom: 10px;
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-        border-radius: 0.5rem;
-        animation: slideInRight 0.3s ease-out;
-    `;
-
-    // 设置图标
-    const icons = {
-        success: 'fas fa-check-circle',
-        danger: 'fas fa-times-circle',
-        warning: 'fas fa-exclamation-triangle',
-        info: 'fas fa-info-circle'
+App.notify = function(message, type = 'info', options = {}) {
+    const defaultOptions = {
+        duration: 5000,
+        dismissible: true
     };
 
+    const finalOptions = { ...defaultOptions, ...options };
+
+    // 创建通知元素
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+
     alertDiv.innerHTML = `
-        <div class="d-flex align-items-center">
-            <i class="${icons[type]} me-2"></i>
-            <div class="flex-grow-1">${message}</div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        ${message}
+        ${finalOptions.dismissible ? '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' : ''}
+    `;
+
+    // 添加到页面
+    document.body.appendChild(alertDiv);
+
+    // 自动移除
+    if (finalOptions.duration > 0) {
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.parentNode.removeChild(alertDiv);
+            }
+        }, finalOptions.duration);
+    }
+
+    return alertDiv;
+};
+
+/**
+ * 显示加载指示器
+ * @param {string} message - 加载消息
+ * @returns {Object} 加载器对象
+ */
+App.showLoading = function(message = '加载中...') {
+    const overlay = document.createElement('div');
+    overlay.className = 'loading-overlay position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center';
+    overlay.style.cssText = 'background-color: rgba(0,0,0,0.5); z-index: 9999;';
+
+    overlay.innerHTML = `
+        <div class="bg-white p-4 rounded shadow-lg text-center">
+            <div class="spinner-border text-primary mb-3" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <div>${message}</div>
         </div>
     `;
 
-    // 添加到容器
-    alertContainer.appendChild(alertDiv);
+    document.body.appendChild(overlay);
 
-    // 绑定关闭事件
-    alertDiv.querySelector('.btn-close').addEventListener('click', () => {
-        alertDiv.remove();
-    });
-
-    // 自动移除
-    if (duration > 0) {
-        setTimeout(() => {
-            if (alertDiv.parentNode) {
-                alertDiv.style.animation = 'slideOutRight 0.3s ease-out';
-                setTimeout(() => alertDiv.remove(), 300);
+    return {
+        hide: () => {
+            if (overlay.parentNode) {
+                overlay.parentNode.removeChild(overlay);
             }
-        }, duration);
+        },
+        updateMessage: (newMessage) => {
+            const messageDiv = overlay.querySelector('.bg-white div:last-child');
+            if (messageDiv) {
+                messageDiv.textContent = newMessage;
+            }
+        }
+    };
+};
+
+/**
+ * 确认对话框
+ * @param {string} message - 确认消息
+ * @param {string} title - 对话框标题
+ * @returns {Promise} 返回Promise对象
+ */
+App.confirm = function(message, title = '确认') {
+    return new Promise((resolve) => {
+        if (window.confirm(`${title}\n\n${message}`)) {
+            resolve(true);
+        } else {
+            resolve(false);
+        }
+    });
+};
+
+/**
+ * 格式化文件大小
+ * @param {number} bytes - 字节数
+ * @returns {string} 格式化后的文件大小
+ */
+App.formatFileSize = function(bytes) {
+    if (bytes === 0) return '0 Bytes';
+
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+
+/**
+ * 格式化时间
+ * @param {Date|string} date - 日期对象或时间字符串
+ * @returns {string} 格式化后的时间字符串
+ */
+App.formatTime = function(date) {
+    const d = new Date(date);
+    const now = new Date();
+    const diff = now - d;
+
+    // 小于1分钟
+    if (diff < 60000) {
+        return '刚刚';
     }
+
+    // 小于1小时
+    if (diff < 3600000) {
+        return Math.floor(diff / 60000) + '分钟前';
+    }
+
+    // 小于1天
+    if (diff < 86400000) {
+        return Math.floor(diff / 3600000) + '小时前';
+    }
+
+    // 大于1天，显示具体日期
+    return d.toLocaleDateString('zh-CN') + ' ' + d.toLocaleTimeString('zh-CN', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
 };
 
 /**
  * 页面状态管理
  */
 App.PageState = {
-    set: function(key, value) {
+    get: function(key, defaultValue = null) {
         try {
-            sessionStorage.setItem(`app_${key}`, JSON.stringify(value));
+            const value = localStorage.getItem(`app_${key}`);
+            return value ? JSON.parse(value) : defaultValue;
         } catch (e) {
-            console.warn('无法保存状态到sessionStorage:', e);
+            return defaultValue;
         }
     },
 
-    get: function(key, defaultValue = null) {
+    set: function(key, value) {
         try {
-            const value = sessionStorage.getItem(`app_${key}`);
-            return value ? JSON.parse(value) : defaultValue;
+            localStorage.setItem(`app_${key}`, JSON.stringify(value));
         } catch (e) {
-            console.warn('无法从sessionStorage读取状态:', e);
-            return defaultValue;
+            console.warn('无法保存到localStorage:', e);
         }
     },
 
     remove: function(key) {
         try {
-            sessionStorage.removeItem(`app_${key}`);
+            localStorage.removeItem(`app_${key}`);
         } catch (e) {
-            console.warn('无法从sessionStorage删除状态:', e);
+            console.warn('无法从localStorage删除:', e);
         }
     }
-};
-
-/**
- * 侧边栏控制
- */
-App.Sidebar = {
-    show: function() {
-        const sidebar = document.getElementById('sidebar');
-        const mainContent = document.querySelector('.main-content');
-        if (sidebar) {
-            sidebar.classList.remove('collapsed');
-            sidebar.classList.add('show');
-            if (mainContent) {
-                mainContent.classList.remove('collapsed');
-            }
-            App.sidebarVisible = true;
-            App.PageState.set('sidebarVisible', true);
-        }
-    },
-
-    hide: function() {
-        const sidebar = document.getElementById('sidebar');
-        const mainContent = document.querySelector('.main-content');
-        if (sidebar) {
-            sidebar.classList.remove('show');
-            sidebar.classList.add('collapsed');
-            if (mainContent) {
-                mainContent.classList.add('collapsed');
-            }
-            App.sidebarVisible = false;
-            App.PageState.set('sidebarVisible', false);
-        }
-    },
-
-    toggle: function() {
-        if (App.sidebarVisible) {
-            this.hide();
-        } else {
-            this.show();
-        }
-    },
-
-    collapse: function() {
-        const sidebar = document.getElementById('sidebar');
-        const mainContent = document.querySelector('.main-content');
-        if (sidebar) {
-            sidebar.classList.add('collapsed');
-            if (mainContent) {
-                mainContent.classList.add('collapsed');
-            }
-            App.PageState.set('sidebarCollapsed', true);
-        }
-    },
-
-    expand: function() {
-        const sidebar = document.getElementById('sidebar');
-        const mainContent = document.querySelector('.main-content');
-        if (sidebar) {
-            sidebar.classList.remove('collapsed');
-            if (mainContent) {
-                mainContent.classList.remove('collapsed');
-            }
-            App.PageState.set('sidebarCollapsed', false);
-        }
-    },
-
-    toggleCollapse: function() {
-        const sidebar = document.getElementById('sidebar');
-        if (sidebar && sidebar.classList.contains('collapsed')) {
-            this.expand();
-        } else {
-            this.collapse();
-        }
-    },
-
-    setActive: function(pageName) {
-        // 移除所有活动状态
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.classList.remove('active');
-        });
-
-        // 设置当前页面为活动状态
-        const activeLink = document.querySelector(`[data-page="${pageName}"]`);
-        if (activeLink) {
-            activeLink.classList.add('active');
-
-            // 添加提示文字
-            this.updateTooltip(activeLink, pageName);
-        }
-
-        // 更新当前页面状态
-        App.currentPage = pageName;
-        App.PageState.set('currentPage', pageName);
-
-        // 更新页面标题
-        this.updatePageTitle(pageName);
-    },
-
-    updateTooltip: function(element, pageName) {
-        const titles = {
-            'index': '首页',
-            'config': 'API配置',
-            'static': '静态分析',
-            'deep': '深度分析',
-            'fix': '修复模式',
-            'history': '历史记录'
-        };
-
-        const title = titles[pageName] || pageName;
-        element.setAttribute('title', title);
-
-        // 初始化或更新Bootstrap tooltip
-        if (window.bootstrap && window.bootstrap.Tooltip) {
-            const tooltip = window.bootstrap.Tooltip.getInstance(element);
-            if (tooltip) {
-                tooltip.setContent({ '.tooltip-inner': title });
-            } else {
-                new window.bootstrap.Tooltip(element);
-            }
-        }
-    },
-
-    updatePageTitle: function(pageName) {
-        const titles = {
-            'index': '首页',
-            'config': 'API配置',
-            'static': '静态分析',
-            'deep': '深度分析',
-            'fix': '修复模式',
-            'history': '历史记录'
-        };
-
-        const title = titles[pageName] || pageName;
-        document.title = `${title} - AIDefectDetector`;
-    },
-
-    navigateTo: function(pageName) {
-        // 设置活动状态
-        this.setActive(pageName);
-
-        // 导航到对应页面
-        const link = document.querySelector(`[data-page="${pageName}"]`);
-        if (link && link.href) {
-            window.location.href = link.href;
-        }
-    },
-
-    initKeyboardShortcuts: function() {
-        document.addEventListener('keydown', (e) => {
-            // Alt + 数字键快速导航
-            if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
-                const pageMap = {
-                    '1': 'index',
-                    '2': 'config',
-                    '3': 'static',
-                    '4': 'deep',
-                    '5': 'fix',
-                    '6': 'history'
-                };
-
-                const pageName = pageMap[e.key];
-                if (pageName) {
-                    e.preventDefault();
-                    this.navigateTo(pageName);
-                }
-            }
-
-            // Ctrl/Cmd + B 切换侧边栏
-            if ((e.ctrlKey || e.metaKey) && e.key === 'b' && !e.altKey && !e.shiftKey) {
-                e.preventDefault();
-                this.toggle();
-            }
-
-            // Ctrl/Cmd + [ 或 ] 折叠/展开侧边栏
-            if ((e.ctrlKey || e.metaKey) && (e.key === '[' || e.key === ']') && !e.altKey && !e.shiftKey) {
-                e.preventDefault();
-                if (e.key === '[') {
-                    this.collapse();
-                } else {
-                    this.expand();
-                }
-            }
-
-            // Esc 关闭移动端侧边栏
-            if (e.key === 'Escape' && window.innerWidth <= 767 && App.sidebarVisible) {
-                this.hide();
-            }
-        });
-    },
-
-    addKeyboardHelp: function() {
-        // 创建快捷键帮助提示
-        const helpText = `
-            快捷键：
-            Alt + 1-6: 快速导航
-            Ctrl/Cmd + B: 切换侧边栏
-            Ctrl/Cmd + [: 折叠侧边栏
-            Ctrl/Cmd + ]: 展开侧边栏
-            Esc: 关闭移动端侧边栏
-        `;
-
-        // 在侧边栏底部添加帮助信息
-        const sidebar = document.getElementById('sidebar');
-        if (sidebar && !sidebar.querySelector('.keyboard-help')) {
-            const helpDiv = document.createElement('div');
-            helpDiv.className = 'keyboard-help';
-            helpDiv.innerHTML = `
-                <div class="sidebar-help-section">
-                    <button class="btn btn-sm btn-outline-light help-toggle" type="button">
-                        <i class="fas fa-keyboard me-1"></i>快捷键
-                    </button>
-                    <div class="help-content d-none">
-                        <pre>${helpText}</pre>
-                    </div>
-                </div>
-            `;
-
-            sidebar.appendChild(helpDiv);
-
-            // 绑定帮助显示/隐藏事件
-            const helpToggle = helpDiv.querySelector('.help-toggle');
-            const helpContent = helpDiv.querySelector('.help-content');
-
-            helpToggle.addEventListener('click', () => {
-                helpContent.classList.toggle('d-none');
-            });
-        }
-    }
-};
-
-/**
- * 工具函数 - 防抖
- * @param {Function} func - 要防抖的函数
- * @param {number} wait - 等待时间（毫秒）
- * @returns {Function} 防抖后的函数
- */
-App.debounce = function(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-};
-
-/**
- * 工具函数 - 节流
- * @param {Function} func - 要节流的函数
- * @param {number} limit - 限制间隔（毫秒）
- * @returns {Function} 节流后的函数
- */
-App.throttle = function(func, limit) {
-    let inThrottle;
-    return function() {
-        const args = arguments;
-        const context = this;
-        if (!inThrottle) {
-            func.apply(context, args);
-            inThrottle = true;
-            setTimeout(() => inThrottle = false, limit);
-        }
-    };
 };
 
 /**
  * 初始化应用
  */
 App.init = function() {
-    // 恢复页面状态
-    const savedPage = App.PageState.get('currentPage') || 'index';
-    const sidebarVisible = App.PageState.get('sidebarVisible', true);
-
-    // 设置侧边栏状态
-    if (window.innerWidth <= 767 && !sidebarVisible) {
-        App.Sidebar.hide();
-    }
-
     // 设置当前页面
-    App.Sidebar.setActive(savedPage);
-
-    // 绑定事件监听器
-    this.bindEvents();
-
-    console.log('AIDefectDetector 应用初始化完成');
-};
-
-/**
- * 绑定全局事件监听器
- */
-App.bindEvents = function() {
-    // 侧边栏切换
-    const sidebarToggle = document.getElementById('sidebarToggle');
-    if (sidebarToggle) {
-        sidebarToggle.addEventListener('click', () => App.Sidebar.toggle());
-    }
-
-    const sidebarClose = document.getElementById('sidebarClose');
-    if (sidebarClose) {
-        sidebarClose.addEventListener('click', () => App.Sidebar.hide());
-    }
-
-    // 导航链接点击
-    document.querySelectorAll('.nav-link[data-page]').forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            const page = link.getAttribute('data-page');
-            App.Sidebar.setActive(page);
-
-            // 移动端自动隐藏侧边栏
-            if (window.innerWidth <= 767) {
-                App.Sidebar.hide();
-            }
-        });
-
-        // 添加悬停提示
-        link.addEventListener('mouseenter', () => {
-            const pageName = link.getAttribute('data-page');
-            App.Sidebar.updateTooltip(link, pageName);
-        });
-    });
-
-    // 添加侧边栏折叠按钮（桌面端）
-    this.addCollapseButton();
-
-    // 响应式处理
-    window.addEventListener('resize', App.throttle(() => {
-        this.handleResponsiveLayout();
-    }, 250));
-
-    // 初始化键盘快捷键
-    App.Sidebar.initKeyboardShortcuts();
-
-    // 添加键盘帮助
-    App.Sidebar.addKeyboardHelp();
-
-    // 点击外部区域关闭移动端侧边栏
-    document.addEventListener('click', (e) => {
-        const sidebar = document.getElementById('sidebar');
-        const sidebarToggle = document.getElementById('sidebarToggle');
-
-        if (window.innerWidth <= 767 &&
-            App.sidebarVisible &&
-            sidebar && !sidebar.contains(e.target) &&
-            sidebarToggle && !sidebarToggle.contains(e.target)) {
-            App.Sidebar.hide();
-        }
-    });
-};
-
-/**
- * 添加侧边栏折叠按钮
- */
-App.addCollapseButton = function() {
-    const sidebar = document.getElementById('sidebar');
-    if (sidebar && !sidebar.querySelector('.collapse-btn')) {
-        const collapseBtn = document.createElement('button');
-        collapseBtn.className = 'collapse-btn d-none d-md-block';
-        collapseBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
-        collapseBtn.setAttribute('title', '折叠侧边栏');
-        collapseBtn.setAttribute('type', 'button');
-
-        collapseBtn.addEventListener('click', () => {
-            App.Sidebar.toggleCollapse();
-            this.updateCollapseButton(collapseBtn);
-        });
-
-        sidebar.appendChild(collapseBtn);
-        this.updateCollapseButton(collapseBtn);
-    }
-};
-
-/**
- * 更新折叠按钮状态
- */
-App.updateCollapseButton = function(button) {
-    const sidebar = document.getElementById('sidebar');
-    if (sidebar && button) {
-        if (sidebar.classList.contains('collapsed')) {
-            button.innerHTML = '<i class="fas fa-chevron-right"></i>';
-            button.setAttribute('title', '展开侧边栏');
-        } else {
-            button.innerHTML = '<i class="fas fa-chevron-left"></i>';
-            button.setAttribute('title', '折叠侧边栏');
-        }
-    }
-};
-
-/**
- * 处理响应式布局
- */
-App.handleResponsiveLayout = function() {
-    const sidebar = document.getElementById('sidebar');
-    const mainContent = document.querySelector('.main-content');
-
-    if (window.innerWidth > 767) {
-        // 桌面端
-        if (sidebar) {
-            sidebar.classList.remove('show');
-            // 恢复折叠状态
-            const isCollapsed = App.PageState.get('sidebarCollapsed', false);
-            if (isCollapsed) {
-                sidebar.classList.add('collapsed');
-                if (mainContent) mainContent.classList.add('collapsed');
-            } else {
-                sidebar.classList.remove('collapsed');
-                if (mainContent) mainContent.classList.remove('collapsed');
-            }
-        }
-    } else {
-        // 移动端
-        if (sidebar) {
-            sidebar.classList.remove('collapsed');
-            if (mainContent) mainContent.classList.remove('collapsed');
-            App.Sidebar.hide();
-        }
-    }
-
-    // 更新折叠按钮显示状态
-    const collapseBtn = document.querySelector('.collapse-btn');
-    if (collapseBtn) {
-        if (window.innerWidth <= 767) {
-            collapseBtn.classList.add('d-none');
-        } else {
-            collapseBtn.classList.remove('d-none');
-        }
-    }
-};
-
-// 添加CSS动画
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideInRight {
-        from {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
-
-    @keyframes slideOutRight {
-        from {
-            transform: translateX(0);
-            opacity: 1;
-        }
-        to {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-    }
-`;
-document.head.appendChild(style);
-
-// 页面加载完成后初始化
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('AIDefectDetector Web应用初始化中...');
-
-    // 初始化应用
-    App.init();
+    const path = window.location.pathname;
+    App.currentPage = path.replace('/', '') || 'index';
 
     // 初始化工具提示
-    initializeTooltips();
-
-    // 初始化页面动画
-    initializeAnimations();
-
-    // 检查系统状态
-    checkSystemHealth();
-
-    console.log('AIDefectDetector Web应用初始化完成');
-});
-
-// 初始化Bootstrap工具提示
-function initializeTooltips() {
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
-}
-
-// 初始化页面动画
-function initializeAnimations() {
-    // 为卡片添加淡入动画
-    const cards = document.querySelectorAll('.card');
-    cards.forEach((card, index) => {
-        card.classList.add('fade-in');
-        card.style.animationDelay = `${index * 0.1}s`;
-    });
-}
-
-// 检查系统健康状态
-function checkSystemHealth() {
-    fetch('/health')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log('系统健康状态:', data);
-            updateSystemStatus(data);
-        })
-        .catch(error => {
-            console.error('系统健康检查失败:', error);
-            updateSystemStatus({ status: 'unhealthy' });
-        });
-}
-
-// 更新系统状态显示
-function updateSystemStatus(statusData) {
-    const statusElements = document.querySelectorAll('.system-status');
-    statusElements.forEach(element => {
-        if (statusData.status === 'healthy') {
-            element.innerHTML = '<span class="status-indicator online"></span>正常';
-            element.className = 'badge bg-success';
-        } else {
-            element.innerHTML = '<span class="status-indicator offline"></span>异常';
-            element.className = 'badge bg-danger';
-        }
-    });
-}
-
-// API调用封装
-class APIClient {
-    constructor(baseUrl = '/api') {
-        this.baseUrl = baseUrl;
-    }
-
-    async request(endpoint, options = {}) {
-        const url = `${this.baseUrl}${endpoint}`;
-        const defaultOptions = {
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        };
-
-        const finalOptions = { ...defaultOptions, ...options };
-
-        try {
-            const response = await fetch(url, finalOptions);
-
-            if (!response.ok) {
-                throw new Error(`API request failed: ${response.status} ${response.statusText}`);
-            }
-
-            return await response.json();
-        } catch (error) {
-            console.error('API请求失败:', error);
-            throw error;
-        }
-    }
-
-    // 获取系统信息
-    getSystemInfo() {
-        return this.request('/info');
-    }
-
-    // 开始分析
-    startAnalysis(projectPath, mode, options = {}) {
-        return this.request('/analysis', {
-            method: 'POST',
-            body: JSON.stringify({
-                project_path: projectPath,
-                mode: mode,
-                options: options
-            })
+    if (typeof bootstrap !== 'undefined') {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
         });
     }
 
-    // 获取分析结果
-    getAnalysisResult(analysisId) {
-        return this.request(`/analysis/${analysisId}`);
-    }
-}
+    // 初始化其他组件
+    App.initComponents();
 
-// 全局API客户端
-window.api = new APIClient();
-
-// 通知系统
-class NotificationManager {
-    show(message, type = 'info', duration = 5000) {
-        const notification = this.createNotification(message, type);
-        document.body.appendChild(notification);
-
-        // 触发动画
-        setTimeout(() => {
-            notification.classList.add('show');
-        }, 100);
-
-        // 自动移除
-        setTimeout(() => {
-            this.hide(notification);
-        }, duration);
-    }
-
-    createNotification(message, type) {
-        const notification = document.createElement('div');
-        notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-        notification.style.cssText = `
-            top: 20px;
-            right: 20px;
-            z-index: 9999;
-            min-width: 300px;
-            max-width: 500px;
-        `;
-
-        notification.innerHTML = `
-            <div class="d-flex align-items-center">
-                <div class="flex-grow-1">${message}</div>
-                <button type="button" class="btn-close" onclick="this.parentElement.parentElement.remove()"></button>
-            </div>
-        `;
-
-        return notification;
-    }
-
-    hide(notification) {
-        notification.classList.remove('show');
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.parentNode.removeChild(notification);
-            }
-        }, 300);
-    }
-}
-
-// 全局通知管理器
-window.notifications = new NotificationManager();
-
-// 分析管理器
-class AnalysisManager {
-    constructor() {
-        this.currentAnalysis = null;
-    }
-
-    async startAnalysis(projectPath, mode, options = {}) {
-        if (this.currentAnalysis) {
-            window.notifications.show('已有分析任务正在进行中', 'warning');
-            return;
-        }
-
-        try {
-            window.notifications.show(`正在开始${this.getModeText(mode)}...`, 'info');
-
-            // 设置加载状态
-            this.setLoadingState(true);
-
-            // 调用API开始分析
-            const result = await window.api.startAnalysis(projectPath, mode, options);
-
-            this.currentAnalysis = result;
-            window.notifications.show('分析任务已启动', 'success');
-
-            // 轮询分析结果
-            this.pollAnalysisResult(result.id);
-
-        } catch (error) {
-            console.error('启动分析失败:', error);
-            window.notifications.show('启动分析失败: ' + error.message, 'error');
-            this.setLoadingState(false);
-        }
-    }
-
-    async pollAnalysisResult(analysisId) {
-        const maxAttempts = 60; // 最多轮询60次
-        let attempts = 0;
-
-        const poll = async () => {
-            try {
-                const result = await window.api.getAnalysisResult(analysisId);
-
-                if (result.status === 'completed') {
-                    this.handleAnalysisComplete(result);
-                } else if (result.status === 'failed') {
-                    this.handleAnalysisError(result);
-                } else {
-                    // 继续轮询
-                    attempts++;
-                    if (attempts < maxAttempts) {
-                        setTimeout(poll, 2000); // 2秒后再次轮询
-                    } else {
-                        window.notifications.show('分析超时，请稍后查看结果', 'warning');
-                        this.setLoadingState(false);
-                    }
-                }
-            } catch (error) {
-                console.error('轮询分析结果失败:', error);
-                setTimeout(poll, 5000); // 5秒后重试
-            }
-        };
-
-        poll();
-    }
-
-    handleAnalysisComplete(result) {
-        this.setLoadingState(false);
-        this.currentAnalysis = null;
-        window.notifications.show('分析完成！', 'success');
-
-        // TODO: 显示分析结果
-        console.log('分析结果:', result);
-    }
-
-    handleAnalysisError(result) {
-        this.setLoadingState(false);
-        this.currentAnalysis = null;
-        window.notifications.show('分析失败: ' + result.error, 'error');
-    }
-
-    setLoadingState(isLoading) {
-        window.AIDefectDetector.state.isAnalyzing = isLoading;
-
-        // 更新UI状态
-        const buttons = document.querySelectorAll('.btn-analysis');
-        buttons.forEach(button => {
-            if (isLoading) {
-                button.disabled = true;
-                button.innerHTML = '<span class="loading me-2"></span>分析中...';
-            } else {
-                button.disabled = false;
-                button.innerHTML = button.getAttribute('data-original-text') || '开始分析';
-            }
-        });
-    }
-
-    getModeText(mode) {
-        const modeMap = {
-            'static': '静态分析',
-            'deep': '深度分析',
-            'fix': '分析修复'
-        };
-        return modeMap[mode] || mode;
-    }
-}
-
-// 全局分析管理器
-window.analysisManager = new AnalysisManager();
-
-// 工具函数
-window.utils = {
-    // 格式化文件大小
-    formatFileSize(bytes) {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    },
-
-    // 格式化时间
-    formatTime(timestamp) {
-        return new Date(timestamp * 1000).toLocaleString();
-    },
-
-    // 获取文件扩展名
-    getFileExtension(filename) {
-        return filename.slice((filename.lastIndexOf(".") - 1 >>> 0) + 2);
-    },
-
-    // 防抖函数
-    debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
+    console.log('AIDefectDetector应用已初始化');
 };
 
-// 导出模块（如果使用模块系统）
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        APIClient,
-        NotificationManager,
-        AnalysisManager,
-        utils: window.utils
-    };
-}
+/**
+ * 初始化页面组件
+ */
+App.initComponents = function() {
+    // 初始化下拉菜单
+    const dropdowns = document.querySelectorAll('.dropdown-toggle');
+    dropdowns.forEach(dropdown => {
+        if (typeof bootstrap !== 'undefined') {
+            new bootstrap.Dropdown(dropdown);
+        }
+    });
+
+    // 初始化导航高亮
+    App.highlightCurrentNav();
+};
+
+/**
+ * 高亮当前导航项
+ */
+App.highlightCurrentNav = function() {
+    const currentPath = window.location.pathname;
+    const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
+
+    navLinks.forEach(link => {
+        link.classList.remove('active');
+        const href = link.getAttribute('href');
+        if (href === currentPath ||
+            (currentPath !== '/' && href && currentPath.startsWith(href))) {
+            link.classList.add('active');
+        }
+    });
+};
+
+/**
+ * 页面加载完成后初始化
+ */
+document.addEventListener('DOMContentLoaded', function() {
+    App.init();
+});
+
+// 导出到全局
+window.App = App;
