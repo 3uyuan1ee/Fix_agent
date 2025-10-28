@@ -2209,6 +2209,229 @@ class AIDefectDetectorWeb:
         from datetime import datetime
         return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
+    # 新增报告生成相关方法
+    def _get_actual_analysis_results(self, task_id):
+        """
+        获取实际的分析结果
+        这里应该从数据库或文件中读取实际的分析结果
+        目前返回None，表示没有实际结果
+        """
+        # TODO: 实现从实际存储中获取分析结果的逻辑
+        # 可以从数据库、缓存文件或其他存储中读取
+        return None
+
+    def _convert_mock_to_static_analysis_results(self, mock_results):
+        """
+        将模拟数据转换为StaticAnalysisResult格式
+        """
+        from ..tools.static_coordinator import StaticAnalysisResult, AnalysisIssue, SeverityLevel
+
+        # 按文件分组
+        file_groups = {}
+        for issue in mock_results:
+            file_path = issue['file_path']
+            if file_path not in file_groups:
+                file_groups[file_path] = []
+            file_groups[file_path].append(issue)
+
+        # 转换为StaticAnalysisResult列表
+        results = []
+        for file_path, issues in file_groups.items():
+            static_analysis_issues = []
+
+            for issue in issues:
+                # 转换严重程度
+                severity_map = {
+                    'error': SeverityLevel.ERROR,
+                    'warning': SeverityLevel.WARNING,
+                    'info': SeverityLevel.INFO,
+                    'low': SeverityLevel.LOW
+                }
+
+                static_issue = AnalysisIssue(
+                    tool_name=issue.get('tool_name', 'unknown'),
+                    file_path=issue['file_path'],
+                    line=issue['line'],
+                    column=issue.get('column', 0),
+                    message=issue['message'],
+                    severity=severity_map.get(issue['severity'], SeverityLevel.INFO),
+                    issue_type=issue.get('issue_type', 'unknown'),
+                    code=issue.get('code', ''),
+                    confidence=issue.get('confidence', ''),
+                    source_code=issue.get('source_code', '')
+                )
+                static_analysis_issues.append(static_issue)
+
+            result = StaticAnalysisResult(
+                file_path=file_path,
+                issues=static_analysis_issues,
+                execution_time=0.0,  # 模拟数据没有执行时间
+                summary={
+                    'total_issues': len(static_analysis_issues),
+                    'file_path': file_path
+                }
+            )
+            results.append(result)
+
+        return results
+
+    def _generate_csv_from_report(self, report):
+        """
+        从报告生成CSV格式数据
+        """
+        import csv
+        import io
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        # 写入表头
+        writer.writerow(['ID', '严重程度', '问题类型', '消息', '文件路径', '行号', '列号', '工具', '置信度'])
+
+        # 写入问题数据
+        issues = report.get('issues', [])
+        for i, issue in enumerate(issues, 1):
+            writer.writerow([
+                i,
+                issue.get('severity', ''),
+                issue.get('issue_type', ''),
+                issue.get('message', ''),
+                issue.get('file_path', ''),
+                issue.get('line', ''),
+                issue.get('column', ''),
+                issue.get('tool_name', ''),
+                issue.get('confidence', '')
+            ])
+
+        return output.getvalue()
+
+    def _generate_html_from_report(self, report, task_id):
+        """
+        从报告生成HTML格式数据
+        """
+        # 如果有现有的HTML生成方法，使用它
+        if hasattr(self, '_generate_html_report'):
+            # 从issues重新构建原始格式
+            mock_results = []
+            for issue in report.get('issues', []):
+                mock_results.append({
+                    'id': issue.get('id', 0),
+                    'severity': issue.get('severity', ''),
+                    'category': issue.get('issue_type', ''),
+                    'title': issue.get('message', ''),
+                    'description': issue.get('description', issue.get('message', '')),
+                    'file': issue.get('file_path', ''),
+                    'line': issue.get('line', 0),
+                    'code': issue.get('source_code', ''),
+                    'suggestion': issue.get('suggestion', ''),
+                    'rule_id': issue.get('code', ''),
+                    'confidence': issue.get('confidence', '')
+                })
+            return self._generate_html_report(mock_results, task_id)
+
+        # 否则生成简单的HTML报告
+        metadata = report.get('metadata', {})
+        summary = report.get('summary', {})
+
+        html = f"""<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>静态分析报告 - {task_id}</title>
+    <style>
+        body {{ font-family: Arial, sans-serif; margin: 20px; background-color: #f8f9fa; }}
+        .container {{ max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
+        .header {{ text-align: center; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 2px solid #dee2e6; }}
+        .summary {{ display: flex; justify-content: space-around; margin: 30px 0; }}
+        .summary-item {{ text-align: center; padding: 20px; border-radius: 8px; }}
+        .critical {{ background-color: #f8d7da; color: #721c24; }}
+        .warning {{ background-color: #fff3cd; color: #856404; }}
+        .info {{ background-color: #d1ecf1; color: #0c5460; }}
+        .issue {{ padding: 15px; border-bottom: 1px solid #dee2e6; }}
+        .issue:last-child {{ border-bottom: none; }}
+        .severity-badge {{ padding: 4px 8px; border-radius: 4px; color: white; font-size: 12px; }}
+        .severity-critical {{ background-color: #dc3545; }}
+        .severity-warning {{ background-color: #ffc107; color: #000; }}
+        .severity-info {{ background-color: #17a2b8; }}
+        .code {{ background-color: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; white-space: pre-wrap; margin: 10px 0; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>AIDefectDetector 静态分析报告</h1>
+            <p>任务ID: {task_id}</p>
+            <p>生成时间: {report.get('export_time', self._get_current_time())}</p>
+        </div>
+
+        <div class="summary">
+            <div class="summary-item critical">
+                <h3>{summary.get('severity_distribution', {}).get('error', 0)}</h3>
+                <p>严重问题</p>
+            </div>
+            <div class="summary-item warning">
+                <h3>{summary.get('severity_distribution', {}).get('warning', 0)}</h3>
+                <p>警告问题</p>
+            </div>
+            <div class="summary-item info">
+                <h3>{summary.get('severity_distribution', {}).get('info', 0)}</h3>
+                <p>信息问题</p>
+            </div>
+            <div class="summary-item">
+                <h3>{summary.get('total_issues', 0)}</h3>
+                <p>总问题数</p>
+            </div>
+        </div>
+
+        <h2>问题详情</h2>"""
+
+        # 添加问题列表
+        issues = report.get('issues', [])
+        for issue in issues[:50]:  # 限制显示前50个问题
+            severity_class = f"severity-{issue.get('severity', 'info')}"
+            severity_text = {'error': '严重', 'warning': '警告', 'info': '信息'}.get(issue.get('severity'), '未知')
+
+            html += f"""
+        <div class="issue">
+            <div class="issue-header">
+                <span class="severity-badge {severity_class}">{severity_text}</span>
+                <strong>{issue.get('message', '')}</strong>
+                <span style="margin-left: auto; color: #6c757d;">
+                    {issue.get('file_path', '')}:{issue.get('line', '')}
+                </span>
+            </div>
+            <p><strong>工具:</strong> {issue.get('tool_name', '')} | <strong>置信度:</strong> {issue.get('confidence', '')}</p>"""
+
+            if issue.get('source_code'):
+                html += f'<div class="code">{issue.get("source_code", "")}</div>'
+
+            if issue.get('suggestion'):
+                html += f'<p><strong>建议:</strong> {issue.get("suggestion", "")}</p>'
+
+            html += '</div>'
+
+        html += """
+    </div>
+</body>
+</html>"""
+
+        return html
+
+    def _convert_html_to_pdf(self, html_content):
+        """
+        将HTML转换为PDF（简化实现）
+        返回Base64编码的PDF数据
+        """
+        # 这里应该使用HTML到PDF的转换库，如weasyprint或pdfkit
+        # 为了演示，返回一个占位符
+        import base64
+
+        # 占位符PDF内容（实际应该转换HTML）
+        placeholder_pdf = b'%PDF-1.4\n%....'  # 简化的PDF占位符
+
+        return base64.b64encode(placeholder_pdf).decode('utf-8')
+
     def _generate_mock_fix_data(self, task_id, issue_id):
         """生成模拟修复数据"""
         import random
