@@ -5,6 +5,7 @@ Flask Web应用基础框架
 """
 
 import os
+import socket
 from pathlib import Path
 from datetime import datetime, timedelta
 import io
@@ -37,6 +38,47 @@ except ImportError:
 # 项目内部导入
 from src.utils.config import get_config_manager
 from src.utils.logger import get_logger
+
+
+def find_available_port(start_port=5000, max_attempts=10):
+    """
+    寻找可用的端口号
+
+    Args:
+        start_port (int): 起始端口号，默认5000
+        max_attempts (int): 最大尝试次数，默认10次
+
+    Returns:
+        int: 可用的端口号
+
+    Raises:
+        OSError: 如果无法找到可用端口
+    """
+    for i in range(max_attempts):
+        port = start_port + i
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                sock.settimeout(1)
+                result = sock.connect_ex(('127.0.0.1', port))
+                if result != 0:  # 连接失败，表示端口可用
+                    return port
+        except Exception:
+            continue
+
+    # 如果所有端口都不可用，尝试随机端口
+    import random
+    for _ in range(max_attempts):
+        port = random.randint(5000, 65535)
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                sock.settimeout(1)
+                result = sock.connect_ex(('127.0.0.1', port))
+                if result != 0:  # 连接失败，表示端口可用
+                    return port
+        except Exception:
+            continue
+
+    raise OSError(f"无法在{start_port}-{start_port + max_attempts - 1}范围内找到可用端口")
 
 
 class AIDefectDetectorWeb:
@@ -3077,10 +3119,19 @@ AIDefectDetector 修复数据导出报告
         # 获取运行配置
         web_config = self.config.get('web', {})
         run_host = host or web_config.get('host', '127.0.0.1')
-        run_port = port or web_config.get('port', 5000)
+        preferred_port = port or web_config.get('port', 5000)
         run_debug = debug if debug is not None else web_config.get('debug', False)
 
-        self.logger.info(f"启动Web应用 - http://{run_host}:{run_port}")
+        # 自动寻找可用端口
+        try:
+            available_port = find_available_port(preferred_port)
+            if available_port != preferred_port:
+                self.logger.info(f"端口 {preferred_port} 被占用，自动切换到端口 {available_port}")
+        except OSError as e:
+            self.logger.error(f"无法找到可用端口: {e}")
+            raise
+
+        self.logger.info(f"启动Web应用 - http://{run_host}:{available_port}")
 
         try:
             if self.socketio:
@@ -3088,7 +3139,7 @@ AIDefectDetector 修复数据导出报告
                 self.socketio.run(
                     self.app,
                     host=run_host,
-                    port=run_port,
+                    port=available_port,
                     debug=run_debug,
                     allow_unsafe_werkzeug=True
                 )
@@ -3096,7 +3147,7 @@ AIDefectDetector 修复数据导出报告
                 # 使用普通Flask运行
                 self.app.run(
                     host=run_host,
-                    port=run_port,
+                    port=available_port,
                     debug=run_debug,
                     threaded=True,
                     allow_unsafe_werkzeug=True
@@ -3890,10 +3941,21 @@ def main():
         # 获取配置
         web_config = web_app.config.get('web', {})
         host = web_config.get('host', '127.0.0.1')
-        port = web_config.get('port', 5000)
+        preferred_port = web_config.get('port', 5000)
 
         print(f"Web界面启动中...")
-        print(f"访问地址: http://{host}:{port}")
+
+        # 自动寻找可用端口
+        try:
+            available_port = find_available_port(preferred_port)
+            if available_port != preferred_port:
+                print(f"⚠️  端口 {preferred_port} 被占用，自动切换到端口 {available_port}")
+            print(f"✅ 使用端口 {available_port}")
+        except OSError as e:
+            print(f"❌ 无法找到可用端口: {e}")
+            return 1
+
+        print(f"访问地址: http://{host}:{available_port}")
         print("按 Ctrl+C 停止服务")
         print("=" * 50)
 
