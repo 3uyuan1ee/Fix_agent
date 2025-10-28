@@ -43,6 +43,7 @@ except ImportError:
 from src.utils.config import get_config_manager
 from src.utils.logger import get_logger
 from src.interfaces.file_manager import FileManager
+from src.tools.static_coordinator import StaticAnalysisCoordinator
 
 
 def find_available_port(start_port=5000, max_attempts=10):
@@ -913,6 +914,218 @@ class AIDefectDetectorWeb:
             except Exception as e:
                 self.logger.error(f"启动静态分析失败: {e}")
                 return jsonify({'error': f'启动分析失败: {str(e)}'}), 500
+
+        @self.app.route('/api/static/execute', methods=['POST'])
+        def execute_static_analysis():
+            """执行静态分析API - 集成StaticCoordinator"""
+            try:
+                data = request.get_json()
+                project_path = data.get('project_path')
+                project_id = data.get('project_id')
+                tools = data.get('tools', [])
+                file_paths = data.get('file_paths', [])
+                options = data.get('options', {})
+
+                # 验证输入参数
+                if not project_path and not project_id and not file_paths:
+                    return jsonify({'error': '项目路径、项目ID或文件路径列表不能为空'}), 400
+
+                if not tools:
+                    return jsonify({'error': '请至少选择一个分析工具'}), 400
+
+                # 生成任务ID
+                import uuid
+                task_id = str(uuid.uuid4())
+
+                self.logger.info(f"执行静态分析: {task_id} - 工具: {tools}")
+
+                # 创建StaticCoordinator实例
+                try:
+                    coordinator = StaticAnalysisCoordinator()
+
+                    # 设置启用的工具
+                    coordinator.set_enabled_tools(tools)
+
+                    # 准备文件路径列表
+                    target_files = []
+
+                    if file_paths:
+                        # 直接使用提供的文件路径
+                        target_files = file_paths
+                    elif project_path:
+                        # 扫描项目路径下的代码文件
+                        target_files = self._scan_project_files(project_path)
+                    elif project_id:
+                        # 根据project_id查找项目路径
+                        project_root = self._get_project_path_by_id(project_id)
+                        if project_root:
+                            target_files = self._scan_project_files(project_root)
+                        else:
+                            return jsonify({'error': f'项目ID {project_id} 对应的项目不存在'}), 404
+
+                    if not target_files:
+                        return jsonify({'error': '未找到可分析的代码文件'}), 400
+
+                    # 执行静态分析
+                    self.logger.info(f"开始分析 {len(target_files)} 个文件")
+
+                    # 发送开始分析的WebSocket通知
+                    self._broadcast_static_analysis_progress(task_id, {
+                        'status': 'started',
+                        'message': '开始执行静态分析',
+                        'progress': 0,
+                        'total_files': len(target_files),
+                        'current_file': '',
+                        'current_tool': '',
+                        'tools': tools,
+                        'timestamp': self._get_current_time()
+                    })
+
+                    analysis_results = []
+                    successful_results = []
+                    failed_results = []
+
+                    # 逐个文件进行分析并发送进度更新
+                    for i, file_path in enumerate(target_files):
+                        try:
+                            # 发送当前文件分析开始的通知
+                            self._broadcast_static_analysis_progress(task_id, {
+                                'status': 'analyzing',
+                                'message': f'正在分析文件 {i+1}/{len(target_files)}',
+                                'progress': int((i / len(target_files)) * 100),
+                                'total_files': len(target_files),
+                                'current_file': os.path.basename(file_path),
+                                'current_tool': '准备中',
+                                'tools': tools,
+                                'timestamp': self._get_current_time()
+                            })
+
+                            # 分析单个文件
+                            result = coordinator.analyze_file(file_path)
+                            analysis_results.append(result)
+
+                            # 发送文件分析完成的通知
+                            if result.summary and 'error' not in result.summary:
+                                file_issues = len(result.issues)
+                                converted_result = self._convert_static_analysis_result(result)
+                                successful_results.append(converted_result)
+
+                                self._broadcast_static_analysis_progress(task_id, {
+                                    'status': 'file_completed',
+                                    'message': f'文件 {os.path.basename(file_path)} 分析完成，发现 {file_issues} 个问题',
+                                    'progress': int(((i + 1) / len(target_files)) * 80),  # 80%留给工具处理
+                                    'total_files': len(target_files),
+                                    'current_file': os.path.basename(file_path),
+                                    'current_tool': '完成',
+                                    'tools': tools,
+                                    'file_issues': file_issues,
+                                    'timestamp': self._get_current_time()
+                                })
+                            else:
+                                failed_results.append({
+                                    'file_path': result.file_path,
+                                    'error': result.summary.get('error', '分析失败') if result.summary else '未知错误'
+                                })
+
+                                self._broadcast_static_analysis_progress(task_id, {
+                                    'status': 'file_failed',
+                                    'message': f'文件 {os.path.basename(file_path)} 分析失败',
+                                    'progress': int(((i + 1) / len(target_files)) * 80),
+                                    'total_files': len(target_files),
+                                    'current_file': os.path.basename(file_path),
+                                    'current_tool': '失败',
+                                    'tools': tools,
+                                    'error': result.summary.get('error', '分析失败') if result.summary else '未知错误',
+                                    'timestamp': self._get_current_time()
+                                })
+
+                        except Exception as file_error:
+                            self.logger.error(f"分析文件 {file_path} 时出错: {file_error}")
+                            failed_results.append({
+                                'file_path': file_path,
+                                'error': str(file_error)
+                            })
+
+                            # 发送文件分析错误的通知
+                            self._broadcast_static_analysis_progress(task_id, {
+                                'status': 'file_error',
+                                'message': f'文件 {os.path.basename(file_path)} 分析出错',
+                                'progress': int(((i + 1) / len(target_files)) * 80),
+                                'total_files': len(target_files),
+                                'current_file': os.path.basename(file_path),
+                                'current_tool': '错误',
+                                'tools': tools,
+                                'error': str(file_error),
+                                'timestamp': self._get_current_time()
+                            })
+
+                    # 发送分析完成的通知
+                    self._broadcast_static_analysis_progress(task_id, {
+                        'status': 'processing_results',
+                        'message': '正在处理分析结果',
+                        'progress': 85,
+                        'total_files': len(target_files),
+                        'current_file': '',
+                        'current_tool': '汇总中',
+                        'tools': tools,
+                        'timestamp': self._get_current_time()
+                    })
+
+                    # 生成分析摘要
+                    total_issues = sum(len(result.get('issues', [])) for result in successful_results)
+                    severity_summary = self._calculate_severity_summary(successful_results)
+                    tool_summary = self._calculate_tool_summary(successful_results)
+
+                    analysis_summary = {
+                        'task_id': task_id,
+                        'total_files': len(target_files),
+                        'successful_files': len(successful_results),
+                        'failed_files': len(failed_results),
+                        'total_issues': total_issues,
+                        'severity_summary': severity_summary,
+                        'tool_summary': tool_summary,
+                        'execution_time': sum(r.get('execution_time', 0) for r in successful_results),
+                        'tools_used': tools
+                    }
+
+                    # 清理资源
+                    coordinator.cleanup()
+
+                    # 发送最终完成通知
+                    self._broadcast_static_analysis_complete(task_id, {
+                        'total_files': len(target_files),
+                        'successful_files': len(successful_results),
+                        'failed_files': len(failed_results),
+                        'total_issues': total_issues,
+                        'severity_summary': severity_summary,
+                        'tool_summary': tool_summary,
+                        'execution_time': analysis_summary['execution_time'],
+                        'tools_used': tools
+                    })
+
+                    self.logger.info(f"静态分析完成: {task_id} - 分析了 {len(target_files)} 个文件，发现 {total_issues} 个问题")
+
+                    return jsonify({
+                        'success': True,
+                        'task_id': task_id,
+                        'status': 'completed',
+                        'summary': analysis_summary,
+                        'results': successful_results,
+                        'failed_files': failed_results,
+                        'message': f'静态分析完成，分析了 {len(target_files)} 个文件，发现 {total_issues} 个问题'
+                    })
+
+                except Exception as coord_error:
+                    self.logger.error(f"StaticCoordinator执行失败: {coord_error}")
+                    return jsonify({
+                        'error': f'静态分析执行失败: {str(coord_error)}',
+                        'task_id': task_id,
+                        'status': 'failed'
+                    }), 500
+
+            except Exception as e:
+                self.logger.error(f"执行静态分析失败: {e}")
+                return jsonify({'error': f'执行分析失败: {str(e)}'}), 500
 
         @self.app.route('/api/static/status/<task_id>')
         def get_static_analysis_status(task_id):
@@ -1852,15 +2065,19 @@ class AIDefectDetectorWeb:
             issue = {
                 'id': i,
                 'severity': template['severity'],
-                'category': template['category'],
-                'title': title,
+                'issue_type': template['category'],
+                'message': title,
                 'description': description,
-                'file': file_path,
+                'file_path': file_path,
                 'line': line_number,
-                'code': code,
+                'column': random.randint(0, 80),  # 添加列号
+                'source_code': code,  # 重命名为source_code以匹配前端
                 'suggestion': suggestion,
+                'code': f'{template["category"].upper()}_{i:03d}',  # 规则代码
                 'rule_id': f'{template["category"].upper()}_{i:03d}',
-                'confidence': random.randint(70, 100)
+                'confidence': f'{random.randint(70, 100)}%',  # 添加百分比符号
+                'tool_name': template['tool'],  # 添加工具名称
+                'confidence_score': random.randint(70, 100)  # 原始置信度分数
             }
 
             mock_results.append(issue)
@@ -2830,6 +3047,56 @@ AIDefectDetector 修复数据导出报告
                 'timestamp': self._get_current_time()
             })
 
+        @self.socketio.on('static_analysis_subscribe')
+        def handle_static_analysis_subscribe(data):
+            """订阅静态分析进度推送"""
+            try:
+                task_id = data.get('task_id')
+                if not task_id:
+                    emit('error', {'error': '任务ID不能为空'})
+                    return
+
+                # 加入任务特定的房间
+                room = f"static_analysis_{task_id}"
+                join_room(room)
+
+                self.logger.info(f"客户端订阅静态分析进度: {task_id}")
+
+                emit('static_analysis_subscribed', {
+                    'task_id': task_id,
+                    'message': '已订阅静态分析进度推送',
+                    'timestamp': self._get_current_time()
+                })
+
+            except Exception as e:
+                self.logger.error(f"处理静态分析订阅失败: {e}")
+                emit('error', {'error': f'订阅失败: {str(e)}'})
+
+        @self.socketio.on('static_analysis_unsubscribe')
+        def handle_static_analysis_unsubscribe(data):
+            """取消订阅静态分析进度推送"""
+            try:
+                task_id = data.get('task_id')
+                if not task_id:
+                    emit('error', {'error': '任务ID不能为空'})
+                    return
+
+                # 离开任务特定的房间
+                room = f"static_analysis_{task_id}"
+                leave_room(room)
+
+                self.logger.info(f"客户端取消订阅静态分析进度: {task_id}")
+
+                emit('static_analysis_unsubscribed', {
+                    'task_id': task_id,
+                    'message': '已取消订阅静态分析进度推送',
+                    'timestamp': self._get_current_time()
+                })
+
+            except Exception as e:
+                self.logger.error(f"处理静态分析取消订阅失败: {e}")
+                emit('error', {'error': f'取消订阅失败: {str(e)}'})
+
         self.logger.info("WebSocket事件处理器注册完成")
 
     def _process_deep_analysis(self, content, session_id, context, options):
@@ -3200,6 +3467,240 @@ AIDefectDetector 修复数据导出报告
             'createdAt': datetime.now().isoformat(),
             'updatedAt': datetime.now().isoformat()
         }
+
+    def _scan_project_files(self, project_path: str) -> List[str]:
+        """
+        扫描项目路径下的代码文件
+
+        Args:
+            project_path: 项目根路径
+
+        Returns:
+            代码文件路径列表
+        """
+        code_extensions = {'.py', '.js', '.ts', '.java', '.cpp', '.c', '.h', '.hpp',
+                          '.cs', '.php', '.rb', '.go', '.rs', '.swift', '.kt', '.scala'}
+
+        code_files = []
+        project_root = Path(project_path)
+
+        if not project_root.exists():
+            self.logger.warning(f"项目路径不存在: {project_path}")
+            return []
+
+        try:
+            for file_path in project_root.rglob('*'):
+                if file_path.is_file() and file_path.suffix.lower() in code_extensions:
+                    # 排除一些常见的忽略目录
+                    if any(parent.name.startswith('.') for parent in file_path.parents):
+                        continue
+                    if any(parent.name.lower() in ['node_modules', '__pycache__', 'target', 'build', 'dist']
+                           for parent in file_path.parents):
+                        continue
+
+                    code_files.append(str(file_path))
+
+                    # 限制文件数量，避免分析过多文件
+                    if len(code_files) >= 500:
+                        self.logger.warning(f"文件数量过多，限制分析前500个文件")
+                        break
+
+        except Exception as e:
+            self.logger.error(f"扫描项目文件失败: {e}")
+
+        self.logger.info(f"在项目 {project_path} 中找到 {len(code_files)} 个代码文件")
+        return code_files
+
+    def _get_project_path_by_id(self, project_id: str) -> Optional[str]:
+        """
+        根据项目ID获取项目路径
+
+        Args:
+            project_id: 项目ID
+
+        Returns:
+            项目路径或None
+        """
+        try:
+            # 这里应该从数据库或项目管理器中获取项目信息
+            # 目前使用简单的映射逻辑
+            projects_dir = Path("temp/projects")
+            if not projects_dir.exists():
+                return None
+
+            # 查找匹配的项目目录
+            for project_dir in projects_dir.iterdir():
+                if project_dir.is_dir() and project_id in project_dir.name:
+                    return str(project_dir)
+
+            # 如果没有找到，尝试直接使用ID作为路径
+            potential_path = projects_dir / project_id
+            if potential_path.exists():
+                return str(potential_path)
+
+        except Exception as e:
+            self.logger.error(f"获取项目路径失败: {e}")
+
+        return None
+
+    def _convert_static_analysis_result(self, result) -> Dict[str, Any]:
+        """
+        转换静态分析结果为统一格式
+
+        Args:
+            result: StaticAnalysisResult对象
+
+        Returns:
+            转换后的结果字典
+        """
+        try:
+            # 转换问题列表
+            issues = []
+            for issue in result.issues:
+                issue_dict = issue.to_dict() if hasattr(issue, 'to_dict') else {
+                    'tool_name': getattr(issue, 'tool_name', 'unknown'),
+                    'file_path': getattr(issue, 'file_path', result.file_path),
+                    'line': getattr(issue, 'line', 0),
+                    'column': getattr(issue, 'column', 0),
+                    'message': getattr(issue, 'message', ''),
+                    'severity': getattr(issue, 'severity', 'info'),
+                    'issue_type': getattr(issue, 'issue_type', 'unknown'),
+                    'code': getattr(issue, 'code', ''),
+                    'confidence': getattr(issue, 'confidence', ''),
+                    'source_code': getattr(issue, 'source_code', '')
+                }
+                issues.append(issue_dict)
+
+            # 构建转换后的结果
+            converted_result = {
+                'file_path': result.file_path,
+                'issues': issues,
+                'tool_results': result.tool_results if hasattr(result, 'tool_results') else {},
+                'execution_time': result.execution_time if hasattr(result, 'execution_time') else 0.0,
+                'summary': result.summary if hasattr(result, 'summary') else {},
+                'total_issues': len(issues),
+                'severity_distribution': {},
+                'issue_types': {}
+            }
+
+            # 计算严重程度分布
+            for issue in issues:
+                severity = issue.get('severity', 'unknown')
+                converted_result['severity_distribution'][severity] = \
+                    converted_result['severity_distribution'].get(severity, 0) + 1
+
+                issue_type = issue.get('issue_type', 'unknown')
+                converted_result['issue_types'][issue_type] = \
+                    converted_result['issue_types'].get(issue_type, 0) + 1
+
+            return converted_result
+
+        except Exception as e:
+            self.logger.error(f"转换静态分析结果失败: {e}")
+            return {
+                'file_path': getattr(result, 'file_path', 'unknown'),
+                'issues': [],
+                'error': str(e)
+            }
+
+    def _calculate_severity_summary(self, results: List[Dict[str, Any]]) -> Dict[str, int]:
+        """
+        计算严重程度摘要
+
+        Args:
+            results: 分析结果列表
+
+        Returns:
+            严重程度统计
+        """
+        severity_summary = {'error': 0, 'warning': 0, 'info': 0, 'low': 0}
+
+        for result in results:
+            for issue in result.get('issues', []):
+                severity = issue.get('severity', 'info')
+                if severity in severity_summary:
+                    severity_summary[severity] += 1
+
+        return severity_summary
+
+    def _calculate_tool_summary(self, results: List[Dict[str, Any]]) -> Dict[str, int]:
+        """
+        计算工具摘要
+
+        Args:
+            results: 分析结果列表
+
+        Returns:
+            工具统计
+        """
+        tool_summary = {}
+
+        for result in results:
+            for issue in result.get('issues', []):
+                tool = issue.get('tool_name', 'unknown')
+                tool_summary[tool] = tool_summary.get(tool, 0) + 1
+
+        return tool_summary
+
+    def _broadcast_static_analysis_progress(self, task_id: str, progress_data: Dict[str, Any]):
+        """
+        向订阅的客户端广播静态分析进度更新
+
+        Args:
+            task_id: 任务ID
+            progress_data: 进度数据
+        """
+        try:
+            if self.socketio:
+                room = f"static_analysis_{task_id}"
+                self.socketio.emit('static_analysis_progress', {
+                    'task_id': task_id,
+                    'timestamp': self._get_current_time(),
+                    **progress_data
+                }, room=room)
+                self.logger.debug(f"广播静态分析进度: {task_id} - 进度: {progress_data.get('progress', 'N/A')}%")
+        except Exception as e:
+            self.logger.error(f"广播静态分析进度失败: {e}")
+
+    def _broadcast_static_analysis_complete(self, task_id: str, result_summary: Dict[str, Any]):
+        """
+        广播静态分析完成通知
+
+        Args:
+            task_id: 任务ID
+            result_summary: 分析结果摘要
+        """
+        try:
+            if self.socketio:
+                room = f"static_analysis_{task_id}"
+                self.socketio.emit('static_analysis_complete', {
+                    'task_id': task_id,
+                    'timestamp': self._get_current_time(),
+                    'summary': result_summary
+                }, room=room)
+                self.logger.info(f"静态分析完成通知已发送: {task_id}")
+        except Exception as e:
+            self.logger.error(f"发送静态分析完成通知失败: {e}")
+
+    def _broadcast_static_analysis_error(self, task_id: str, error_info: Dict[str, Any]):
+        """
+        广播静态分析错误通知
+
+        Args:
+            task_id: taskID
+            error_info: 错误信息
+        """
+        try:
+            if self.socketio:
+                room = f"static_analysis_{task_id}"
+                self.socketio.emit('static_analysis_error', {
+                    'task_id': task_id,
+                    'timestamp': self._get_current_time(),
+                    'error': error_info
+                }, room=room)
+                self.logger.warning(f"静态分析错误通知已发送: {task_id}")
+        except Exception as e:
+            self.logger.error(f"发送静态分析错误通知失败: {e}")
 
     def run(self, host=None, port=None, debug=None):
         """运行Web应用"""
