@@ -3089,7 +3089,8 @@ AIDefectDetector 修复数据导出报告
                     self.app,
                     host=run_host,
                     port=run_port,
-                    debug=run_debug
+                    debug=run_debug,
+                    allow_unsafe_werkzeug=True
                 )
             else:
                 # 使用普通Flask运行
@@ -3097,7 +3098,8 @@ AIDefectDetector 修复数据导出报告
                     host=run_host,
                     port=run_port,
                     debug=run_debug,
-                    threaded=True
+                    threaded=True,
+                    allow_unsafe_werkzeug=True
                 )
         except Exception as e:
             self.logger.error(f"启动Web应用失败: {e}")
