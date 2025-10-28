@@ -39,8 +39,8 @@
                             <i class="fas fa-search me-1"></i>代码分析
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{{ url_for('static') }}"><i class="fas fa-tachometer-alt me-1"></i>静态分析</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('deep') }}"><i class="fas fa-brain me-1"></i>深度分析</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('static_analysis') }}"><i class="fas fa-tachometer-alt me-1"></i>静态分析</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('deep_analysis') }}"><i class="fas fa-brain me-1"></i>深度分析</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('fix') }}"><i class="fas fa-tools me-1"></i>分析修复</a></li>
                         </ul>
                     </li>
@@ -91,13 +91,13 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('static') }}" data-page="static" data-bs-toggle="tooltip" data-bs-placement="right" title="静态分析 (Alt+3)">
+                    <a class="nav-link" href="{{ url_for('static_analysis') }}" data-page="static" data-bs-toggle="tooltip" data-bs-placement="right" title="静态分析 (Alt+3)">
                         <i class="fas fa-tachometer-alt me-2"></i>
                         <span>静态分析 <kbd class="kbd-hint">Alt+3</kbd></span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('deep') }}" data-page="deep" data-bs-toggle="tooltip" data-bs-placement="right" title="深度分析 (Alt+4)">
+                    <a class="nav-link" href="{{ url_for('deep_analysis') }}" data-page="deep" data-bs-toggle="tooltip" data-bs-placement="right" title="深度分析 (Alt+4)">
                         <i class="fas fa-brain me-2"></i>
                         <span>深度分析 <kbd class="kbd-hint">Alt+4</kbd></span>
                     </a>
