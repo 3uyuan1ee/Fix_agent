@@ -165,6 +165,15 @@ class AIDefectDetectorWeb:
                 'version': '1.0.0'
             })
 
+        @self.app.route('/status')
+        def status_page():
+            """系统状态页面路由"""
+            try:
+                return render_template('status.html')
+            except Exception as e:
+                self.logger.error(f"渲染状态页面失败: {e}")
+                return "<h1>AIDefectDetector</h1><p>状态页面正在开发中...</p>", 200
+
         @self.app.route('/api/info')
         def api_info():
             """API信息路由"""
