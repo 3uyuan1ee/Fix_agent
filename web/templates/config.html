@@ -1,0 +1,482 @@
+{% extends "base.html" %}
+
+{% block title %}API配置 - AIDefectDetector{% endblock %}
+
+{% block extra_css %}
+<style>
+    .config-section {
+        background: white;
+        border-radius: 0.75rem;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        border: 1px solid #e9ecef;
+    }
+
+    .provider-card {
+        border: 2px solid #e9ecef;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .provider-card:hover {
+        border-color: #0d6efd;
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+    }
+
+    .provider-card.selected {
+        border-color: #0d6efd;
+        background-color: #f8f9ff;
+    }
+
+    .provider-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+
+    .provider-title {
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin: 0;
+    }
+
+    .provider-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+
+    .config-form {
+        display: none;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .config-form.show {
+        display: block;
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .api-key-input-group {
+        position: relative;
+    }
+
+    .api-key-toggle {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        border: none;
+        background: none;
+        color: #6c757d;
+        cursor: pointer;
+        z-index: 10;
+    }
+
+    .test-connection-btn {
+        min-width: 120px;
+    }
+
+    .status-indicator {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 0.5rem;
+    }
+
+    .status-indicator.success {
+        background-color: #198754;
+    }
+
+    .status-indicator.error {
+        background-color: #dc3545;
+    }
+
+    .status-indicator.testing {
+        background-color: #ffc107;
+        animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+
+    .config-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .alert-config {
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .model-select {
+        margin-bottom: 1rem;
+    }
+
+    .advanced-config {
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+
+    .advanced-toggle {
+        background: none;
+        border: none;
+        color: #0d6efd;
+        cursor: pointer;
+        font-weight: 500;
+        padding: 0;
+    }
+
+    .advanced-toggle:hover {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">
+                <i class="fas fa-cog me-2"></i>
+                API配置
+            </h2>
+
+            <div class="alert alert-info alert-config">
+                <i class="fas fa-info-circle me-2"></i>
+                配置您的LLM API密钥以启用深度分析功能。支持多种主流LLM供应商。
+            </div>
+
+            <!-- LLM供应商选择 -->
+            <div class="config-section">
+                <h4 class="mb-4">
+                    <i class="fas fa-robot me-2"></i>
+                    选择LLM供应商
+                </h4>
+
+                <!-- OpenAI -->
+                <div class="provider-card" data-provider="openai">
+                    <div class="provider-header">
+                        <div>
+                            <h5 class="provider-title">
+                                <i class="fab fa-openai me-2"></i>
+                                OpenAI
+                            </h5>
+                            <p class="text-muted mb-0">支持GPT-4、GPT-3.5等模型</p>
+                        </div>
+                        <span class="badge bg-primary provider-badge">推荐</span>
+                    </div>
+
+                    <div class="config-form" id="openai-config">
+                        <form id="openai-form">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="openai-api-key" class="form-label">API Key</label>
+                                        <div class="api-key-input-group">
+                                            <input type="password" class="form-control" id="openai-api-key"
+                                                   placeholder="sk-..." required>
+                                            <button type="button" class="api-key-toggle"
+                                                    data-target="openai-api-key">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="openai-base-url" class="form-label">Base URL (可选)</label>
+                                        <input type="url" class="form-control" id="openai-base-url"
+                                               placeholder="https://api.openai.com/v1">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3 model-select">
+                                        <label for="openai-model" class="form-label">模型</label>
+                                        <select class="form-select" id="openai-model" required>
+                                            <option value="">请选择模型</option>
+                                            <option value="gpt-4">GPT-4</option>
+                                            <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                                            <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="openai-temperature" class="form-label">Temperature</label>
+                                        <input type="number" class="form-control" id="openai-temperature"
+                                               min="0" max="2" step="0.1" value="0.7">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="advanced-config">
+                                <button type="button" class="advanced-toggle mb-3">
+                                    <i class="fas fa-cog me-1"></i>
+                                    高级配置
+                                </button>
+                                <div class="advanced-options" style="display: none;">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="openai-max-tokens" class="form-label">Max Tokens</label>
+                                                <input type="number" class="form-control" id="openai-max-tokens"
+                                                       min="1" max="8000" value="4000">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="openai-timeout" class="form-label">超时时间(秒)</label>
+                                                <input type="number" class="form-control" id="openai-timeout"
+                                                       min="1" max="300" value="30">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-end">
+                                <button type="button" class="btn btn-outline-primary test-connection-btn"
+                                        data-provider="openai">
+                                    <i class="fas fa-plug me-2"></i>
+                                    测试连接
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 智谱AI -->
+                <div class="provider-card" data-provider="zhipu">
+                    <div class="provider-header">
+                        <div>
+                            <h5 class="provider-title">
+                                <i class="fas fa-brain me-2"></i>
+                                智谱AI
+                            </h5>
+                            <p class="text-muted mb-0">支持GLM-4等中文优化模型</p>
+                        </div>
+                        <span class="badge bg-success provider-badge">已验证</span>
+                    </div>
+
+                    <div class="config-form" id="zhipu-config">
+                        <form id="zhipu-form">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="zhipu-api-key" class="form-label">API Key</label>
+                                        <div class="api-key-input-group">
+                                            <input type="password" class="form-control" id="zhipu-api-key"
+                                                   placeholder="输入智谱AI API Key" required>
+                                            <button type="button" class="api-key-toggle"
+                                                    data-target="zhipu-api-key">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="zhipu-base-url" class="form-label">Base URL (可选)</label>
+                                        <input type="url" class="form-control" id="zhipu-base-url"
+                                               placeholder="https://open.bigmodel.cn/api/paas/v4/">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3 model-select">
+                                        <label for="zhipu-model" class="form-label">模型</label>
+                                        <select class="form-select" id="zhipu-model" required>
+                                            <option value="">请选择模型</option>
+                                            <option value="glm-4">GLM-4</option>
+                                            <option value="glm-4-0520">GLM-4-0520</option>
+                                            <option value="glm-4-air">GLM-4-Air</option>
+                                            <option value="glm-4-airx">GLM-4-AirX</option>
+                                            <option value="glm-4-flash">GLM-4-Flash</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="zhipu-temperature" class="form-label">Temperature</label>
+                                        <input type="number" class="form-control" id="zhipu-temperature"
+                                               min="0" max="2" step="0.1" value="0.7">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="advanced-config">
+                                <button type="button" class="advanced-toggle mb-3">
+                                    <i class="fas fa-cog me-1"></i>
+                                    高级配置
+                                </button>
+                                <div class="advanced-options" style="display: none;">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="zhipu-max-tokens" class="form-label">Max Tokens</label>
+                                                <input type="number" class="form-control" id="zhipu-max-tokens"
+                                                       min="1" max="8000" value="4000">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="zhipu-timeout" class="form-label">超时时间(秒)</label>
+                                                <input type="number" class="form-control" id="zhipu-timeout"
+                                                       min="1" max="300" value="30">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-end">
+                                <button type="button" class="btn btn-outline-primary test-connection-btn"
+                                        data-provider="zhipu">
+                                    <i class="fas fa-plug me-2"></i>
+                                    测试连接
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Anthropic -->
+                <div class="provider-card" data-provider="anthropic">
+                    <div class="provider-header">
+                        <div>
+                            <h5 class="provider-title">
+                                <i class="fas fa-shield-alt me-2"></i>
+                                Anthropic Claude
+                            </h5>
+                            <p class="text-muted mb-0">支持Claude-3等安全优先模型</p>
+                        </div>
+                        <span class="badge bg-secondary provider-badge">企业级</span>
+                    </div>
+
+                    <div class="config-form" id="anthropic-config">
+                        <form id="anthropic-form">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="anthropic-api-key" class="form-label">API Key</label>
+                                        <div class="api-key-input-group">
+                                            <input type="password" class="form-control" id="anthropic-api-key"
+                                                   placeholder="sk-ant-..." required>
+                                            <button type="button" class="api-key-toggle"
+                                                    data-target="anthropic-api-key">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="anthropic-base-url" class="form-label">Base URL (可选)</label>
+                                        <input type="url" class="form-control" id="anthropic-base-url"
+                                               placeholder="https://api.anthropic.com">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3 model-select">
+                                        <label for="anthropic-model" class="form-label">模型</label>
+                                        <select class="form-select" id="anthropic-model" required>
+                                            <option value="">请选择模型</option>
+                                            <option value="claude-3-opus-20240229">Claude-3 Opus</option>
+                                            <option value="claude-3-sonnet-20240229">Claude-3 Sonnet</option>
+                                            <option value="claude-3-haiku-20240307">Claude-3 Haiku</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="anthropic-temperature" class="form-label">Temperature</label>
+                                        <input type="number" class="form-control" id="anthropic-temperature"
+                                               min="0" max="2" step="0.1" value="0.7">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-end">
+                                <button type="button" class="btn btn-outline-primary test-connection-btn"
+                                        data-provider="anthropic">
+                                    <i class="fas fa-plug me-2"></i>
+                                    测试连接
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 配置操作按钮 -->
+            <div class="config-actions">
+                <button type="button" class="btn btn-secondary" id="reset-btn">
+                    <i class="fas fa-undo me-2"></i>
+                    重置配置
+                </button>
+                <button type="button" class="btn btn-success" id="save-env-btn">
+                    <i class="fas fa-save me-2"></i>
+                    保存到环境变量
+                </button>
+                <button type="button" class="btn btn-primary" id="save-config-btn">
+                    <i class="fas fa-check me-2"></i>
+                    保存配置
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 配置确认模态框 -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">确认配置</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>确定要保存API配置吗？这将覆盖现有配置。</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    配置将保存到 <code>config/user_config.yaml</code> 文件中。
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="confirm-save-btn">确认保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/config.js') }}"></script>
+{% endblock %}

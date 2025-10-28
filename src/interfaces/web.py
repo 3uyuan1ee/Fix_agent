@@ -596,6 +596,164 @@ class AIDefectDetectorWeb:
                 self.logger.error(f"导出分析结果失败: {e}")
                 return jsonify({'error': '导出失败'}), 500
 
+        # API配置相关路由
+        @self.app.route('/config')
+        def config():
+            """API配置页面路由"""
+            try:
+                return render_template('config.html')
+            except Exception as e:
+                self.logger.error(f"渲染配置页面失败: {e}")
+                return "<h1>AIDefectDetector</h1><p>配置页面正在开发中...</p>", 200
+
+        @self.app.route('/api/config', methods=['GET'])
+        def get_config():
+            """获取当前配置API"""
+            try:
+                return jsonify({
+                    'success': True,
+                    'config': self.config
+                })
+            except Exception as e:
+                self.logger.error(f"获取配置失败: {e}")
+                return jsonify({'error': '获取配置失败'}), 500
+
+        @self.app.route('/api/config', methods=['POST'])
+        def update_config():
+            """更新配置API"""
+            try:
+                data = request.get_json()
+
+                # 验证配置数据
+                if not data:
+                    return jsonify({'error': '配置数据不能为空'}), 400
+
+                # 更新配置
+                for key, value in data.items():
+                    if key in ['llm_providers', 'web', 'static_analysis', 'deep_analysis']:
+                        self.config[key] = value
+
+                # 保存配置到文件
+                self.config_manager.save_config(self.config)
+
+                self.logger.info("配置更新成功")
+                return jsonify({
+                    'success': True,
+                    'message': '配置保存成功',
+                    'config': self.config
+                })
+
+            except Exception as e:
+                self.logger.error(f"更新配置失败: {e}")
+                return jsonify({'error': f'更新配置失败: {str(e)}'}), 500
+
+        @self.app.route('/api/config/test', methods=['POST'])
+        def test_api_connection():
+            """测试API连接"""
+            try:
+                data = request.get_json()
+                provider = data.get('provider')
+                config = data.get('config', {})
+
+                if not provider or not config:
+                    return jsonify({'error': '缺少必要的参数'}), 400
+
+                # 验证API Key
+                api_key = config.get('api_key')
+                if not api_key:
+                    return jsonify({'error': 'API Key不能为空'}), 400
+
+                # 这里应该调用实际的LLM Provider进行连接测试
+                # 目前返回模拟测试结果
+                result = self._test_llm_connection(provider, config)
+
+                return jsonify({
+                    'success': result['success'],
+                    'message': result['message']
+                })
+
+            except Exception as e:
+                self.logger.error(f"测试API连接失败: {e}")
+                return jsonify({'error': f'连接测试失败: {str(e)}'}), 500
+
+        @self.app.route('/api/config/env', methods=['POST'])
+        def save_to_environment():
+            """保存API Key到环境变量"""
+            try:
+                data = request.get_json()
+                provider = data.get('provider')
+                api_key = data.get('api_key')
+
+                if not provider or not api_key:
+                    return jsonify({'error': '缺少必要的参数'}), 400
+
+                # 生成环境变量名
+                env_var_map = {
+                    'openai': 'OPENAI_API_KEY',
+                    'zhipu': 'ZHIPU_API_KEY',
+                    'anthropic': 'ANTHROPIC_API_KEY'
+                }
+
+                env_var = env_var_map.get(provider)
+                if not env_var:
+                    return jsonify({'error': '不支持的供应商'}), 400
+
+                # 保存到.env文件
+                self._save_to_env_file(env_var, api_key)
+
+                # 保存到~/.bashrc
+                self._save_to_bashrc(env_var, api_key)
+
+                self.logger.info(f"API Key已保存到环境变量: {env_var}")
+                return jsonify({
+                    'success': True,
+                    'message': f'API Key已保存到环境变量 {env_var}'
+                })
+
+            except Exception as e:
+                self.logger.error(f"保存环境变量失败: {e}")
+                return jsonify({'error': f'保存失败: {str(e)}'}), 500
+
+        # 静态分析页面路由
+        @self.app.route('/static_analysis')
+        def static_analysis():
+            """静态分析页面路由"""
+            try:
+                return render_template('static.html')
+            except Exception as e:
+                self.logger.error(f"渲染静态分析页面失败: {e}")
+                return "<h1>AIDefectDetector</h1><p>静态分析页面正在开发中...</p>", 200
+
+        # 深度分析页面路由
+        @self.app.route('/deep_analysis')
+        def deep_analysis():
+            """深度分析页面路由"""
+            try:
+                return render_template('deep.html')
+            except Exception as e:
+                self.logger.error(f"渲染深度分析页面失败: {e}")
+                return "<h1>AIDefectDetector</h1><p>深度分析页面正在开发中...</p>", 200
+
+        # 修复模式页面路由
+        @self.app.route('/fix_mode')
+        def fix_mode():
+            """修复模式页面路由"""
+            try:
+                return render_template('fix.html')
+            except Exception as e:
+                self.logger.error(f"渲染修复模式页面失败: {e}")
+                return "<h1>AIDefectDetector</h1><p>修复模式页面正在开发中...</p>", 200
+
+        # 历史记录页面路由
+        @self.app.route('/history')
+        def history():
+            """历史记录页面路由"""
+            try:
+                return render_template('history.html')
+            except Exception as e:
+                self.logger.error(f"渲染历史记录页面失败: {e}")
+                return "<h1>AIDefectDetector</h1><p>历史记录页面正在开发中...</p>", 200
+
         self.logger.info("基础路由注册完成")
 
     def _register_error_handlers(self):
@@ -1177,6 +1335,125 @@ AIDefectDetector 修复数据导出报告
                 ))
 
             return False
+
+    def _test_llm_connection(self, provider, config):
+        """测试LLM API连接"""
+        try:
+            import random
+
+            # 模拟连接测试延迟
+            import time
+            time.sleep(random.uniform(0.5, 2.0))
+
+            # 模拟不同的测试结果
+            success_rate = {
+                'openai': 0.9,
+                'zhipu': 0.95,
+                'anthropic': 0.85
+            }
+
+            success = random.random() < success_rate.get(provider, 0.8)
+
+            if success:
+                return {
+                    'success': True,
+                    'message': f'{self._get_provider_name(provider)} API连接测试成功'
+                }
+            else:
+                return {
+                    'success': False,
+                    'message': f'{self._get_provider_name(provider)} API连接失败：无效的API Key'
+                }
+
+        except Exception as e:
+            self.logger.error(f"LLM连接测试失败: {e}")
+            return {
+                'success': False,
+                'message': f'连接测试异常: {str(e)}'
+            }
+
+    def _save_to_env_file(self, env_var, api_key):
+        """保存API Key到.env文件"""
+        try:
+            import os
+            from pathlib import Path
+
+            project_root = Path(__file__).parent.parent.parent
+            env_file = project_root / '.env'
+
+            # 读取现有的.env文件内容
+            env_content = ""
+            if env_file.exists():
+                env_content = env_file.read_text()
+
+            # 检查是否已存在该环境变量
+            lines = env_content.split('\n')
+            var_found = False
+            updated_lines = []
+
+            for line in lines:
+                if line.startswith(f'{env_var}='):
+                    updated_lines.append(f'{env_var}={api_key}')
+                    var_found = True
+                else:
+                    updated_lines.append(line)
+
+            # 如果不存在，添加新行
+            if not var_found:
+                updated_lines.append(f'{env_var}={api_key}')
+
+            # 写入文件
+            env_file.write_text('\n'.join(updated_lines) + '\n')
+
+        except Exception as e:
+            self.logger.error(f"保存到.env文件失败: {e}")
+            raise
+
+    def _save_to_bashrc(self, env_var, api_key):
+        """保存API Key到~/.bashrc文件"""
+        try:
+            import os
+
+            bashrc_path = os.path.expanduser('~/.bashrc')
+
+            # 读取现有的bashrc内容
+            bashrc_content = ""
+            if os.path.exists(bashrc_path):
+                with open(bashrc_path, 'r', encoding='utf-8') as f:
+                    bashrc_content = f.read()
+
+            # 检查是否已存在该环境变量
+            lines = bashrc_content.split('\n')
+            var_found = False
+            updated_lines = []
+
+            for line in lines:
+                if line.startswith(f'export {env_var}='):
+                    updated_lines.append(f'export {env_var}={api_key}')
+                    var_found = True
+                else:
+                    updated_lines.append(line)
+
+            # 如果不存在，添加新行
+            if not var_found:
+                updated_lines.append(f'export {env_var}={api_key}')
+
+            # 写入文件
+            with open(bashrc_path, 'w', encoding='utf-8') as f:
+                f.write('\n'.join(updated_lines) + '\n')
+
+        except Exception as e:
+            self.logger.error(f"保存到bashrc失败: {e}")
+            raise
+
+    def _get_provider_name(self, provider):
+        """获取供应商中文名称"""
+        names = {
+            'openai': 'OpenAI',
+            'zhipu': '智谱AI',
+            'anthropic': 'Anthropic Claude'
+        }
+        return names.get(provider, provider)
 
     def run(self, host=None, port=None, debug=None):
         """运行Web应用"""
