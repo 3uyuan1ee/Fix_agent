@@ -13,6 +13,7 @@ import json
 import logging
 import random
 import uuid
+from typing import Dict, List, Any, Optional
 import zipfile
 import tarfile
 import tempfile
@@ -243,19 +244,37 @@ class AIDefectDetectorWeb:
                         if extract_result['success']:
                             # 创建项目文件夹
                             project_name = os.path.splitext(file.filename)[0]
+
+                            # 转换文件列表格式以匹配FileManager期望的格式
+                            file_list = []
+                            for file_path in extract_result.get('files', []):
+                                file_list.append({'file_path': file_path})
+
                             project_result = file_manager.create_project_folder(
                                 project_name,
-                                extract_result['files']
+                                file_list
                             )
 
                             if project_result['success']:
+                                # 计算文件大小和类型统计
+                                total_size = 0
+                                file_types = {}
+                                for file_path in extract_result['files']:
+                                    try:
+                                        file_size = os.path.getsize(file_path)
+                                        total_size += file_size
+                                        file_ext = os.path.splitext(file_path)[1].lower()
+                                        file_types[file_ext] = file_types.get(file_ext, 0) + 1
+                                    except OSError:
+                                        continue
+
                                 project_info = {
                                     'project_id': project_result['project_id'],
                                     'project_name': project_name,
                                     'project_path': project_result['project_path'],
                                     'total_files': len(extract_result['files']),
-                                    'total_size': extract_result['total_size'],
-                                    'file_types': extract_result['file_types']
+                                    'total_size': total_size,
+                                    'file_types': file_types
                                 }
 
                                 # 分析项目结构
@@ -264,17 +283,36 @@ class AIDefectDetectorWeb:
                                 )
 
                                 if structure_result['success']:
+                                    analysis = structure_result['analysis']
+                                    # 简单分析编程语言
+                                    languages = set()
+                                    for file_type in analysis.get('file_types', {}):
+                                        if file_type == '.py':
+                                            languages.add('Python')
+                                        elif file_type in ['.js', '.jsx']:
+                                            languages.add('JavaScript')
+                                        elif file_type in ['.ts', '.tsx']:
+                                            languages.add('TypeScript')
+                                        elif file_type == '.java':
+                                            languages.add('Java')
+                                        elif file_type in ['.cpp', '.cc']:
+                                            languages.add('C++')
+                                        elif file_type == '.c':
+                                            languages.add('C')
+                                        elif file_type in ['.h', '.hpp']:
+                                            languages.add('C/C++ Header')
+
                                     project_info.update({
-                                        'programming_languages': structure_result['programming_languages'],
-                                        'frameworks_detected': structure_result['frameworks_detected'],
-                                        'complexity_score': structure_result['complexity_score'],
-                                        'structure_summary': structure_result['structure_summary']
+                                        'programming_languages': list(languages),
+                                        'frameworks_detected': [],  # 简化实现，暂不检测框架
+                                        'complexity_score': min(100, analysis.get('total_files', 0) * 5),  # 简单复杂度计算
+                                        'structure_summary': f"项目包含 {analysis.get('total_files', 0)} 个文件，主要语言: {', '.join(languages) if languages else '未知'}"
                                     })
 
                                 extracted_info = {
-                                    'extracted_path': extract_result['extract_path'],
+                                    'extracted_path': extract_result['extracted_to'],
                                     'files_count': len(extract_result['files']),
-                                    'file_types': extract_result['file_types']
+                                    'file_types': file_types
                                 }
 
                                 self.logger.info(f"文件解压和项目创建成功: {project_name} -> {project_result['project_path']}")
@@ -3745,21 +3783,20 @@ AIDefectDetector 修复数据导出报告
             项目路径或None
         """
         try:
-            # 这里应该从数据库或项目管理器中获取项目信息
-            # 目前使用简单的映射逻辑
-            projects_dir = Path("temp/projects")
+            # 使用FileManager的项目目录路径
+            projects_dir = Path("uploads/temp")
             if not projects_dir.exists():
                 return None
 
-            # 查找匹配的项目目录
-            for project_dir in projects_dir.iterdir():
-                if project_dir.is_dir() and project_id in project_dir.name:
-                    return str(project_dir)
-
-            # 如果没有找到，尝试直接使用ID作为路径
+            # 直接使用项目ID作为路径
             potential_path = projects_dir / project_id
             if potential_path.exists():
                 return str(potential_path)
+
+            # 如果没有找到，尝试查找包含项目ID的目录
+            for project_dir in projects_dir.iterdir():
+                if project_dir.is_dir() and project_id == project_dir.name:
+                    return str(project_dir)
 
         except Exception as e:
             self.logger.error(f"获取项目路径失败: {e}")
