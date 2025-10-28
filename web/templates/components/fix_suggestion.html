@@ -1,0 +1,515 @@
+<!-- 修复建议组件模板 -->
+
+<!-- 修复建议卡片模板 -->
+<template id="fixSuggestionTemplate">
+    <div class="fix-suggestion-card" data-suggestion-id="">
+        <div class="suggestion-header">
+            <div class="suggestion-info">
+                <div class="suggestion-title">
+                    <i class="fas fa-tools me-2"></i>
+                    <span class="title-text"></span>
+                </div>
+                <div class="suggestion-meta">
+                    <span class="severity-badge">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        <span class="severity-text"></span>
+                    </span>
+                    <span class="issue-type">
+                        <i class="fas fa-tag me-1"></i>
+                        <span class="type-text"></span>
+                    </span>
+                </div>
+            </div>
+            <div class="suggestion-actions">
+                <button class="action-btn expand-btn" title="展开/收起">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <button class="action-btn edit-btn" title="编辑建议">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="action-btn dismiss-btn" title="忽略建议">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="suggestion-content">
+            <!-- 问题描述 -->
+            <div class="issue-section">
+                <h6>
+                    <i class="fas fa-info-circle me-2"></i>
+                    问题描述
+                </h6>
+                <div class="issue-description">
+                    <p class="description-text"></p>
+                    <div class="issue-details">
+                        <div class="detail-item">
+                            <span class="label">文件:</span>
+                            <span class="value file-path"></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">行号:</span>
+                            <span class="value line-number"></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">影响范围:</span>
+                            <span class="value impact-level"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 原始代码 -->
+            <div class="original-code-section">
+                <h6>
+                    <i class="fas fa-times-circle me-2 text-danger"></i>
+                    原始代码
+                </h6>
+                <div class="code-container">
+                    <div class="code-header">
+                        <span class="file-name"></span>
+                        <div class="code-actions">
+                            <button class="code-action-btn copy-original-btn" title="复制代码">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                            <button class="code-action-btn highlight-original-btn" title="高亮问题行">
+                                <i class="fas fa-highlighter"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="code-content">
+                        <pre><code class="language-python original-code"></code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 修复后代码 -->
+            <div class="fixed-code-section">
+                <h6>
+                    <i class="fas fa-check-circle me-2 text-success"></i>
+                    修复后代码
+                </h6>
+                <div class="code-container">
+                    <div class="code-header">
+                        <span class="file-name"></span>
+                        <div class="code-actions">
+                            <button class="code-action-btn copy-fixed-btn" title="复制代码">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                            <button class="code-action-btn edit-fixed-btn" title="编辑修复">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="code-action-btn preview-fixed-btn" title="预览效果">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="code-content">
+                        <pre><code class="language-python fixed-code"></code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 代码差异对比 -->
+            <div class="diff-section">
+                <h6>
+                    <i class="fas fa-exchange-alt me-2"></i>
+                    代码差异
+                </h6>
+                <div class="diff-viewer-container">
+                    <div class="diff-viewer">
+                        <!-- 代码差异将在这里动态生成 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 修复说明 -->
+            <div class="fix-explanation-section">
+                <h6>
+                    <i class="fas fa-lightbulb me-2"></i>
+                    修复说明
+                </h6>
+                <div class="explanation-content">
+                    <div class="explanation-text"></div>
+                    <div class="explanation-details">
+                        <div class="explanation-item">
+                            <h7>
+                                <i class="fas fa-shield-alt me-2"></i>
+                                安全影响
+                            </h7>
+                            <p class="security-impact"></p>
+                        </div>
+                        <div class="explanation-item">
+                            <h7>
+                                <i class="fas fa-tachometer-alt me-2"></i>
+                                性能影响
+                            </h7>
+                            <p class="performance-impact"></p>
+                        </div>
+                        <div class="explanation-item">
+                            <h7>
+                                <i class="fas fa-code-branch me-2"></i>
+                                兼容性
+                            </h7>
+                            <p class="compatibility-note"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 风险评估 -->
+            <div class="risk-assessment-section">
+                <h6>
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    风险评估
+                </h6>
+                <div class="risk-content">
+                    <div class="risk-meter">
+                        <div class="risk-scale">
+                            <div class="risk-level low">低风险</div>
+                            <div class="risk-level medium">中风险</div>
+                            <div class="risk-level high">高风险</div>
+                        </div>
+                        <div class="risk-indicator">
+                            <div class="risk-pointer"></div>
+                        </div>
+                    </div>
+                    <div class="risk-details">
+                        <div class="risk-factor">
+                            <span class="factor-label">破坏性:</span>
+                            <span class="factor-value breaking-change"></span>
+                        </div>
+                        <div class="risk-factor">
+                            <span class="factor-label">测试覆盖:</span>
+                            <span class="factor-value test-coverage"></span>
+                        </div>
+                        <div class="risk-factor">
+                            <span class="factor-label">回滚难度:</span>
+                            <span class="factor-value rollback-difficulty"></span>
+                        </div>
+                    </div>
+                    <div class="risk-recommendation">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <span class="recommendation-text"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 操作按钮区域 -->
+            <div class="action-buttons-section">
+                <div class="primary-actions">
+                    <button class="btn btn-success accept-btn" title="接受修复">
+                        <i class="fas fa-check me-2"></i>
+                        接受修复
+                    </button>
+                    <button class="btn btn-outline-warning modify-btn" title="修改修复">
+                        <i class="fas fa-edit me-2"></i>
+                        修改修复
+                    </button>
+                    <button class="btn btn-outline-danger reject-btn" title="拒绝修复">
+                        <i class="fas fa-times me-2"></i>
+                        拒绝修复
+                    </button>
+                </div>
+                <div class="secondary-actions">
+                    <button class="btn btn-outline-secondary preview-btn" title="预览变更">
+                        <i class="fas fa-eye me-1"></i>
+                        预览
+                    </button>
+                    <button class="btn btn-outline-secondary test-btn" title="测试修复">
+                        <i class="fas fa-play me-1"></i>
+                        测试
+                    </button>
+                    <button class="btn btn-outline-secondary schedule-btn" title="计划修复">
+                        <i class="fas fa-calendar me-1"></i>
+                        计划
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 编辑模态框 -->
+        <div class="edit-modal" style="display: none;">
+            <div class="modal-header">
+                <h6>
+                    <i class="fas fa-edit me-2"></i>
+                    编辑修复建议
+                </h6>
+                <button class="close-modal-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="edit-section">
+                    <label>修复说明:</label>
+                    <textarea class="explanation-edit" rows="3" placeholder="请输入修复说明..."></textarea>
+                </div>
+                <div class="edit-section">
+                    <label>修复后代码:</label>
+                    <textarea class="fixed-code-edit" rows="8" placeholder="请输入修复后的代码..."></textarea>
+                </div>
+                <div class="edit-section">
+                    <label>风险评估 (1-10):</label>
+                    <input type="range" class="risk-slider" min="1" max="10" value="5">
+                    <span class="risk-value">5</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary cancel-edit-btn">取消</button>
+                <button class="btn btn-primary save-edit-btn">保存修改</button>
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- 批量修复建议模板 -->
+<template id="batchFixSuggestionTemplate">
+    <div class="batch-fix-card">
+        <div class="batch-header">
+            <div class="batch-info">
+                <h5>
+                    <i class="fas fa-layer-group me-2"></i>
+                    批量修复建议
+                </h5>
+                <div class="batch-summary">
+                    <span class="issue-count">
+                        <i class="fas fa-bug me-1"></i>
+                        <span class="count">0</span> 个问题
+                    </span>
+                    <span class="file-count">
+                        <i class="fas fa-file-code me-1"></i>
+                        <span class="count">0</span> 个文件
+                    </span>
+                    <span class="estimated-time">
+                        <i class="fas fa-clock me-1"></i>
+                        预计 <span class="time">0</span> 分钟
+                    </span>
+                </div>
+            </div>
+            <div class="batch-actions">
+                <button class="action-btn expand-all-btn" title="全部展开">
+                    <i class="fas fa-expand-alt"></i>
+                </button>
+                <button class="action-btn collapse-all-btn" title="全部收起">
+                    <i class="fas fa-compress-alt"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="batch-content">
+            <!-- 修复策略选择 -->
+            <div class="strategy-section">
+                <h6>
+                    <i class="fas fa-cogs me-2"></i>
+                    修复策略
+                </h6>
+                <div class="strategy-options">
+                    <div class="strategy-option">
+                        <input type="radio" name="strategy" id="conservative" value="conservative" checked>
+                        <label for="conservative">
+                            <div class="strategy-icon">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div class="strategy-info">
+                                <div class="strategy-name">保守策略</div>
+                                <div class="strategy-desc">最小化修改，优先安全性</div>
+                            </div>
+                        </label>
+                    </div>
+                    <div class="strategy-option">
+                        <input type="radio" name="strategy" id="balanced" value="balanced">
+                        <label for="balanced">
+                            <div class="strategy-icon">
+                                <i class="fas fa-balance-scale"></i>
+                            </div>
+                            <div class="strategy-info">
+                                <div class="strategy-name">平衡策略</div>
+                                <div class="strategy-desc">平衡安全性和功能性</div>
+                            </div>
+                        </label>
+                    </div>
+                    <div class="strategy-option">
+                        <input type="radio" name="strategy" id="aggressive" value="aggressive">
+                        <label for="aggressive">
+                            <div class="strategy-icon">
+                                <i class="fas fa-rocket"></i>
+                            </div>
+                            <div class="strategy-info">
+                                <div class="strategy-name">激进策略</div>
+                                <div class="strategy-desc">最大程度优化代码质量</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 优先级设置 -->
+            <div class="priority-section">
+                <h6>
+                    <i class="fas fa-sort-amount-up me-2"></i>
+                    修复优先级
+                </h6>
+                <div class="priority-settings">
+                    <div class="priority-item">
+                        <label>安全漏洞:</label>
+                        <select class="priority-select security-priority">
+                            <option value="high">高优先级</option>
+                            <option value="medium">中优先级</option>
+                            <option value="low">低优先级</option>
+                        </select>
+                    </div>
+                    <div class="priority-item">
+                        <label>性能问题:</label>
+                        <select class="priority-select performance-priority">
+                            <option value="medium">中优先级</option>
+                            <option value="high">高优先级</option>
+                            <option value="low">低优先级</option>
+                        </select>
+                    </div>
+                    <div class="priority-item">
+                        <label>代码风格:</label>
+                        <select class="priority-select style-priority">
+                            <option value="low">低优先级</option>
+                            <option value="medium">中优先级</option>
+                            <option value="high">高优先级</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 批量操作按钮 -->
+            <div class="batch-actions-section">
+                <div class="action-row">
+                    <button class="btn btn-primary apply-all-btn" title="应用所有修复">
+                        <i class="fas fa-check-double me-2"></i>
+                        应用所有修复
+                    </button>
+                    <button class="btn btn-outline-success apply-selected-btn" title="应用选中的修复">
+                        <i class="fas fa-check me-2"></i>
+                        应用选中修复
+                    </button>
+                    <button class="btn btn-outline-secondary preview-all-btn" title="预览所有变更">
+                        <i class="fas fa-eye me-2"></i>
+                        预览变更
+                    </button>
+                </div>
+                <div class="action-row">
+                    <button class="btn btn-outline-info test-all-btn" title="运行所有测试">
+                        <i class="fas fa-play me-2"></i>
+                        运行测试
+                    </button>
+                    <button class="btn btn-outline-warning backup-btn" title="创建备份">
+                        <i class="fas fa-download me-2"></i>
+                        创建备份
+                    </button>
+                    <button class="btn btn-outline-secondary export-btn" title="导出报告">
+                        <i class="fas fa-file-export me-2"></i>
+                        导出报告
+                    </button>
+                </div>
+            </div>
+
+            <!-- 修复列表 -->
+            <div class="suggestions-list">
+                <!-- 单个修复建议将在这里动态添加 -->
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- 修复状态指示器模板 -->
+<template id="fixStatusIndicatorTemplate">
+    <div class="fix-status-indicator">
+        <div class="status-icon">
+            <i class="fas fa-clock"></i>
+        </div>
+        <div class="status-content">
+            <div class="status-title">待确认</div>
+            <div class="status-description">请审查修复建议</div>
+        </div>
+        <div class="status-progress">
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 0%"></div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- 修复进度条模板 -->
+<template id="fixProgressBarTemplate">
+    <div class="fix-progress-bar">
+        <div class="progress-header">
+            <div class="progress-title">
+                <i class="fas fa-cog fa-spin me-2"></i>
+                <span class="title-text">正在应用修复...</span>
+            </div>
+            <div class="progress-percentage">
+                <span class="percentage-text">0%</span>
+            </div>
+        </div>
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+        </div>
+        <div class="progress-details">
+            <div class="current-step">
+                <i class="fas fa-circle-notch fa-spin me-2"></i>
+                <span class="step-text">准备中...</span>
+            </div>
+            <div class="progress-stats">
+                <span class="stat-item">
+                    <i class="fas fa-check-circle me-1"></i>
+                    <span class="completed">0</span>/<span class="total">0</span>
+                </span>
+                <span class="stat-item">
+                    <i class="fas fa-clock me-1"></i>
+                    <span class="elapsed">0s</span>
+                </span>
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- 修复结果模板 -->
+<template id="fixResultTemplate">
+    <div class="fix-result">
+        <div class="result-header">
+            <div class="result-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="result-info">
+                <div class="result-title">修复完成</div>
+                <div class="result-description">所有修复已成功应用</div>
+            </div>
+            <div class="result-actions">
+                <button class="btn btn-sm btn-outline-primary view-details-btn">
+                    <i class="fas fa-list me-1"></i>
+                    查看详情
+                </button>
+                <button class="btn btn-sm btn-outline-secondary download-report-btn">
+                    <i class="fas fa-download me-1"></i>
+                    下载报告
+                </button>
+            </div>
+        </div>
+        <div class="result-stats">
+            <div class="stat-item">
+                <div class="stat-value">0</div>
+                <div class="stat-label">已修复</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">0</div>
+                <div class="stat-label">已跳过</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">0</div>
+                <div class="stat-label">失败</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">0s</div>
+                <div class="stat-label">耗时</div>
+            </div>
+        </div>
+    </div>
+</template>
