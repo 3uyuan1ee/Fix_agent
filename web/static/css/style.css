@@ -57,9 +57,56 @@ body {
     left: 0;
     height: calc(100vh - 56px);
     overflow-y: auto;
+    overflow-x: hidden;
     z-index: 1000;
-    transition: transform 0.3s ease;
+    transition: all 0.3s ease;
     box-shadow: var(--shadow-md);
+}
+
+/* 侧边栏折叠状态 */
+.sidebar.collapsed {
+    width: var(--sidebar-collapsed-width);
+}
+
+.sidebar.collapsed .sidebar-title span,
+.sidebar.collapsed .nav-link span {
+    display: none;
+}
+
+.sidebar.collapsed .sidebar-title {
+    justify-content: center;
+    padding: 1rem 0.5rem;
+}
+
+.sidebar.collapsed .nav-link {
+    justify-content: center;
+    padding: 0.75rem 0.5rem;
+}
+
+.sidebar.collapsed .nav-link i {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+/* 移动端侧边栏 */
+.sidebar.show {
+    transform: translateX(0);
+}
+
+@media (max-width: 767.98px) {
+    .sidebar {
+        transform: translateX(-100%);
+        width: 280px;
+    }
+
+    .sidebar.show {
+        transform: translateX(0);
+    }
+
+    .sidebar.collapsed {
+        transform: translateX(-100%);
+        width: 280px;
+    }
 }
 
 .sidebar-header {
@@ -136,6 +183,18 @@ body {
     margin-left: var(--sidebar-width);
     min-height: calc(100vh - 56px);
     transition: margin-left 0.3s ease;
+}
+
+/* 主内容区域折叠状态 */
+.main-content.collapsed {
+    margin-left: var(--sidebar-collapsed-width);
+}
+
+/* 移动端主内容区域 */
+@media (max-width: 767.98px) {
+    .main-content {
+        margin-left: 0;
+    }
 }
 
 .content-wrapper {
@@ -870,3 +929,265 @@ footer {
 .status-indicator.warning {
     background-color: #ffc107;
 }
+
+/* 侧边栏折叠按钮 */
+.collapse-btn {
+    position: absolute;
+    right: -15px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--sidebar-bg);
+    border: 2px solid var(--sidebar-hover);
+    color: var(--sidebar-text);
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 1001;
+    font-size: 0.8rem;
+}
+
+.collapse-btn:hover {
+    background: var(--sidebar-hover);
+    border-color: var(--sidebar-active);
+    transform: translateY(-50%) scale(1.1);
+}
+
+/* 侧边栏帮助部分 */
+.sidebar-help-section {
+    padding: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    margin-top: auto;
+}
+
+.help-toggle {
+    width: 100%;
+    font-size: 0.8rem;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.help-content {
+    margin-top: 0.5rem;
+}
+
+.help-content pre {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.7rem;
+    line-height: 1.4;
+    margin: 0;
+    white-space: pre-wrap;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar.collapsed .sidebar-help-section {
+    display: none;
+}
+
+/* 键盘快捷键提示 */
+.keyboard-shortcut-hint {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background: rgba(33, 37, 41, 0.9);
+    color: white;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.8rem;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    backdrop-filter: blur(5px);
+}
+
+.keyboard-shortcut-hint.show {
+    opacity: 1;
+}
+
+/* 工具提示增强 */
+.nav-link[data-bs-toggle="tooltip"] {
+    position: relative;
+}
+
+.tooltip {
+    font-size: 0.8rem;
+}
+
+.tooltip-inner {
+    background: rgba(33, 37, 41, 0.95);
+    backdrop-filter: blur(5px);
+}
+
+/* 动画效果 */
+@keyframes slideInLeft {
+    from {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutLeft {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+}
+
+.sidebar {
+    animation: slideInLeft 0.3s ease-out;
+}
+
+.sidebar.collapsing {
+    animation: slideOutLeft 0.3s ease-out;
+}
+
+/* 移动端优化 */
+@media (max-width: 767.98px) {
+    .collapse-btn {
+        display: none !important;
+    }
+
+    .keyboard-shortcut-hint {
+        bottom: 80px;
+        left: 10px;
+        right: 10px;
+        font-size: 0.75rem;
+    }
+
+    .sidebar-help-section {
+        padding: 0.75rem;
+    }
+
+    .help-content pre {
+        font-size: 0.65rem;
+    }
+}
+
+/* 高对比度模式支持 */
+@media (prefers-contrast: high) {
+    .sidebar {
+        border-right: 2px solid #ffffff;
+    }
+
+    .nav-link {
+        border-left-width: 4px;
+    }
+
+    .collapse-btn {
+        border-width: 3px;
+    }
+}
+
+/* 深色模式支持 */
+@media (prefers-color-scheme: dark) {
+    .sidebar {
+        background-color: #1a1a1a;
+        border-right: 1px solid #333;
+    }
+
+    .nav-link:hover {
+        background-color: #2d2d2d;
+    }
+
+    .nav-link.active {
+        background-color: var(--primary-color);
+    }
+}
+
+/* 键盘快捷键提示样式 */
+.kbd-hint {
+    font-size: 0.6rem;
+    padding: 0.1rem 0.2rem;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 0.2rem;
+    margin-left: 0.5rem;
+    font-family: monospace;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.sidebar.collapsed .kbd-hint {
+    display: none;
+}
+
+.nav-link:hover .kbd-hint {
+    opacity: 1;
+}
+
+/* 快捷键提示卡片 */
+.keyboard-shortcut-hint {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background: rgba(33, 37, 41, 0.95);
+    color: white;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.8rem;
+    z-index: 1000;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+    pointer-events: none;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.3);
+    max-width: 300px;
+}
+
+.keyboard-shortcut-hint.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.keyboard-shortcut-hint h6 {
+    margin-bottom: 0.5rem;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.keyboard-shortcut-hint .shortcut-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.keyboard-shortcut-hint .shortcut-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.25rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.keyboard-shortcut-hint .shortcut-list li:last-child {
+    border-bottom: none;
+}
+
+.keyboard-shortcut-hint kbd {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 0.2rem;
+    padding: 0.1rem 0.3rem;
+    font-family: monospace;
+    font-size: 0.7rem;
+}
+

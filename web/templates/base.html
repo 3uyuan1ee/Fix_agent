@@ -79,39 +79,39 @@
 
             <ul class="sidebar-nav">
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('index') }}" data-page="index">
+                    <a class="nav-link" href="{{ url_for('index') }}" data-page="index" data-bs-toggle="tooltip" data-bs-placement="right" title="首页 (Alt+1)">
                         <i class="fas fa-home me-2"></i>
-                        <span>首页</span>
+                        <span>首页 <kbd class="kbd-hint">Alt+1</kbd></span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('config') }}" data-page="config">
+                    <a class="nav-link" href="{{ url_for('config') }}" data-page="config" data-bs-toggle="tooltip" data-bs-placement="right" title="API配置 (Alt+2)">
                         <i class="fas fa-cog me-2"></i>
-                        <span>API配置</span>
+                        <span>API配置 <kbd class="kbd-hint">Alt+2</kbd></span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('static_analysis') }}" data-page="static">
+                    <a class="nav-link" href="{{ url_for('static') }}" data-page="static" data-bs-toggle="tooltip" data-bs-placement="right" title="静态分析 (Alt+3)">
                         <i class="fas fa-tachometer-alt me-2"></i>
-                        <span>静态分析</span>
+                        <span>静态分析 <kbd class="kbd-hint">Alt+3</kbd></span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('deep_analysis') }}" data-page="deep">
+                    <a class="nav-link" href="{{ url_for('deep') }}" data-page="deep" data-bs-toggle="tooltip" data-bs-placement="right" title="深度分析 (Alt+4)">
                         <i class="fas fa-brain me-2"></i>
-                        <span>深度分析</span>
+                        <span>深度分析 <kbd class="kbd-hint">Alt+4</kbd></span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('fix_mode') }}" data-page="fix">
+                    <a class="nav-link" href="{{ url_for('fix') }}" data-page="fix" data-bs-toggle="tooltip" data-bs-placement="right" title="修复模式 (Alt+5)">
                         <i class="fas fa-tools me-2"></i>
-                        <span>修复模式</span>
+                        <span>修复模式 <kbd class="kbd-hint">Alt+5</kbd></span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('history') }}" data-page="history">
+                    <a class="nav-link" href="{{ url_for('history') }}" data-page="history" data-bs-toggle="tooltip" data-bs-placement="right" title="历史记录 (Alt+6)">
                         <i class="fas fa-history me-2"></i>
-                        <span>历史记录</span>
+                        <span>历史记录 <kbd class="kbd-hint">Alt+6</kbd></span>
                     </a>
                 </li>
             </ul>
