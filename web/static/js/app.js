@@ -59,6 +59,16 @@ App.ajax = function(url, options = {}) {
         // 设置超时
         xhr.timeout = finalOptions.timeout;
 
+        // 上传进度回调
+        if (finalOptions.onProgress && xhr.upload) {
+            xhr.upload.addEventListener('progress', function(e) {
+                if (e.lengthComputable) {
+                    const progress = (e.loaded / e.total) * 100;
+                    finalOptions.onProgress(progress);
+                }
+            });
+        }
+
         xhr.onload = function() {
             if (xhr.status >= 200 && xhr.status < 300) {
                 try {
@@ -184,6 +194,151 @@ App.confirm = function(message, title = '确认') {
         } else {
             resolve(false);
         }
+    });
+};
+
+/**
+ * POST请求方法
+ * @param {string} url - 请求URL
+ * @param {Object} data - 请求数据
+ * @param {Object} options - 请求选项
+ * @returns {Promise} 返回Promise对象
+ */
+App.post = function(url, data = {}, options = {}) {
+    return App.ajax(url, {
+        method: 'POST',
+        data: data,
+        ...options
+    });
+};
+
+/**
+ * GET请求方法
+ * @param {string} url - 请求URL
+ * @param {Object} options - 请求选项
+ * @returns {Promise} 返回Promise对象
+ */
+App.get = function(url, options = {}) {
+    return App.ajax(url, {
+        method: 'GET',
+        ...options
+    });
+};
+
+/**
+ * PUT请求方法
+ * @param {string} url - 请求URL
+ * @param {Object} data - 请求数据
+ * @param {Object} options - 请求选项
+ * @returns {Promise} 返回Promise对象
+ */
+App.put = function(url, data = {}, options = {}) {
+    return App.ajax(url, {
+        method: 'PUT',
+        data: data,
+        ...options
+    });
+};
+
+/**
+ * DELETE请求方法
+ * @param {string} url - 请求URL
+ * @param {Object} options - 请求选项
+ * @returns {Promise} 返回Promise对象
+ */
+App.delete = function(url, options = {}) {
+    return App.ajax(url, {
+        method: 'DELETE',
+        ...options
+    });
+};
+
+/**
+ * 显示提示消息（别名）
+ * @param {string} message - 消息内容
+ * @param {string} type - 消息类型
+ * @param {Object} options - 选项
+ */
+App.showAlert = function(message, type = 'info', options = {}) {
+    return App.notify(message, type, options);
+};
+
+/**
+ * 处理错误
+ * @param {Error} error - 错误对象
+ * @param {string} context - 错误上下文
+ */
+App.handleError = function(error, context = '操作') {
+    console.error(`${context}失败:`, error);
+
+    let message = `${context}失败`;
+
+    if (error.message) {
+        if (error.message.includes('HTTP 4')) {
+            message += ' - 请求参数错误';
+        } else if (error.message.includes('HTTP 5')) {
+            message += ' - 服务器内部错误';
+        } else if (error.message.includes('网络')) {
+            message += ' - 网络连接失败';
+        } else if (error.message.includes('超时')) {
+            message += ' - 请求超时';
+        } else {
+            message += ` - ${error.message}`;
+        }
+    }
+
+    App.showAlert(message, 'danger', { duration: 8000 });
+};
+
+/**
+ * 表单序列化
+ * @param {HTMLFormElement} form - 表单元素
+ * @returns {Object} 序列化后的数据对象
+ */
+App.serializeForm = function(form) {
+    const formData = new FormData(form);
+    const data = {};
+
+    for (let [key, value] of formData.entries()) {
+        // 处理多选值
+        if (data.hasOwnProperty(key)) {
+            if (Array.isArray(data[key])) {
+                data[key].push(value);
+            } else {
+                data[key] = [data[key], value];
+            }
+        } else {
+            data[key] = value;
+        }
+    }
+
+    return data;
+};
+
+/**
+ * 文件上传
+ * @param {File} file - 文件对象
+ * @param {Object} options - 上传选项
+ * @returns {Promise} 返回Promise对象
+ */
+App.uploadFile = function(file, options = {}) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    // 添加额外字段
+    if (options.fields) {
+        Object.keys(options.fields).forEach(key => {
+            formData.append(key, options.fields[key]);
+        });
+    }
+
+    return App.ajax('/api/upload', {
+        method: 'POST',
+        data: formData,
+        headers: {
+            // 不设置Content-Type，让浏览器自动设置multipart/form-data边界
+        },
+        timeout: options.timeout || 60000 // 上传文件默认超时60秒
     });
 };
 

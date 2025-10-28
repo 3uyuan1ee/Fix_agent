@@ -770,6 +770,8 @@ async function startAnalysis(projectData, mode, options) {
                 showAlert(`文件上传失败: ${uploadResult.error}`, 'danger');
                 return;
             }
+            // 将上传结果添加到项目数据中
+            projectData.uploadResult = uploadResult;
         }
 
         // 显示开始分析信息
@@ -780,12 +782,14 @@ async function startAnalysis(projectData, mode, options) {
         showAlert(`正在对项目 "${projectName}" 进行${getModeText(mode)}...`, 'info');
         analyzeButton.innerHTML = '<span class="loading me-2"></span>分析中...';
 
-        // TODO: 调用实际的分析API
-        setTimeout(() => {
-            showAlert('分析功能正在开发中，敬请期待！', 'info');
-            analyzeButton.disabled = false;
-            analyzeButton.innerHTML = originalText;
-        }, 3000);
+        // 根据分析模式调用相应的API
+        if (mode === 'static') {
+            await startStaticAnalysis(projectData, options);
+        } else if (mode === 'deep') {
+            await startDeepAnalysis(projectData, options);
+        } else if (mode === 'fix') {
+            await startFixAnalysis(projectData, options);
+        }
 
     } catch (error) {
         console.error('分析启动失败:', error);
@@ -976,6 +980,92 @@ function throttle(func, limit) {
             setTimeout(() => inThrottle = false, limit);
         }
     };
+}
+
+// 启动静态分析
+async function startStaticAnalysis(projectData, options) {
+    try {
+        let projectPath = null;
+        let projectId = null;
+
+        if (projectData.type === 'upload') {
+            // 如果是上传模式，需要从上传结果中获取项目信息
+            projectId = projectData.uploadResult?.project?.project_id;
+            projectPath = projectData.uploadResult?.project?.project_path;
+        } else {
+            projectPath = projectData.value;
+        }
+
+        // 构建静态分析请求
+        const requestData = {
+            project_path: projectPath,
+            project_id: projectId,
+            tools: ['pylint', 'flake8', 'bandit'], // 默认工具
+            config: {
+                depth: options.includeTests ? 'deep' : 'standard',
+                include_tests: options.includeTests,
+                max_issues: 200,
+                severity: ['critical', 'warning', 'info'],
+                categories: ['security', 'style', 'performance']
+            }
+        };
+
+        const response = await fetch('/api/static/start', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestData)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showAlert(`静态分析已启动，任务ID: ${result.task_id}`, 'success');
+            // 跳转到静态分析页面查看结果
+            setTimeout(() => {
+                window.location.href = '/static';
+            }, 2000);
+        } else {
+            showAlert(`静态分析启动失败: ${result.error}`, 'danger');
+            resetAnalyzeButton();
+        }
+    } catch (error) {
+        console.error('静态分析启动失败:', error);
+        showAlert(`静态分析启动失败: ${error.message}`, 'danger');
+        resetAnalyzeButton();
+    }
+}
+
+// 启动深度分析
+async function startDeepAnalysis(projectData, options) {
+    try {
+        showAlert('深度分析功能正在开发中，敬请期待！', 'info');
+        resetAnalyzeButton();
+    } catch (error) {
+        console.error('深度分析启动失败:', error);
+        showAlert(`深度分析启动失败: ${error.message}`, 'danger');
+        resetAnalyzeButton();
+    }
+}
+
+// 启动修复分析
+async function startFixAnalysis(projectData, options) {
+    try {
+        showAlert('分析修复功能正在开发中，敬请期待！', 'info');
+        resetAnalyzeButton();
+    } catch (error) {
+        console.error('修复分析启动失败:', error);
+        showAlert(`修复分析启动失败: ${error.message}`, 'danger');
+        resetAnalyzeButton();
+    }
+}
+
+// 重置分析按钮
+function resetAnalyzeButton() {
+    const analyzeButton = document.getElementById('analyzeButton');
+    analyzeButton.disabled = false;
+    analyzeButton.innerHTML = '<i class="fas fa-search me-2"></i>开始分析';
 }
 </script>
 {% endblock %}
