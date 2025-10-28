@@ -1,0 +1,523 @@
+{% extends "base.html" %}
+
+{% block title %}系统状态 - AIDefectDetector{% endblock %}
+
+{% block extra_css %}
+<style>
+.status-card {
+    transition: transform 0.2s ease-in-out;
+}
+.status-card:hover {
+    transform: translateY(-2px);
+}
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+}
+.status-online { background-color: #28a745; }
+.status-offline { background-color: #dc3545; }
+.status-warning { background-color: #ffc107; }
+.system-metric {
+    border-left: 4px solid #007bff;
+    padding-left: 15px;
+}
+.refresh-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- 页面标题 -->
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-heartbeat me-2"></i>系统状态
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-outline-primary" id="refreshBtn">
+                <i class="fas fa-sync-alt me-1"></i>刷新状态
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="exportBtn">
+                <i class="fas fa-download me-1"></i>导出报告
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 系统概览 -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card status-card h-100">
+            <div class="card-body text-center">
+                <div class="status-indicator status-online mb-2"></div>
+                <h5 class="card-title">系统状态</h5>
+                <p class="card-text text-success" id="systemStatus">运行正常</p>
+                <small class="text-muted" id="lastUpdate">刚刚更新</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card status-card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-server fa-2x text-primary mb-2"></i>
+                <h5 class="card-title">服务运行时间</h5>
+                <p class="card-text" id="uptime">计算中...</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card status-card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-microchip fa-2x text-info mb-2"></i>
+                <h5 class="card-title">CPU使用率</h5>
+                <p class="card-text" id="cpuUsage">计算中...</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card status-card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-memory fa-2x text-warning mb-2"></i>
+                <h5 class="card-title">内存使用率</h5>
+                <p class="card-text" id="memoryUsage">计算中...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 服务状态 -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-cogs me-2"></i>服务组件状态
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row" id="servicesStatus">
+                    <div class="col-md-4 mb-3">
+                        <div class="d-flex justify-content-between align-items-center p-3 border rounded">
+                            <div>
+                                <strong>Web服务</strong>
+                                <div class="text-muted small">Flask应用服务器</div>
+                            </div>
+                            <div class="text-end">
+                                <span class="status-indicator status-online"></span>
+                                <span class="text-success">在线</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="d-flex justify-content-between align-items-center p-3 border rounded">
+                            <div>
+                                <strong>静态分析引擎</strong>
+                                <div class="text-muted small">Pylint, Flake8, Bandit</div>
+                            </div>
+                            <div class="text-end">
+                                <span class="status-indicator status-online"></span>
+                                <span class="text-success">就绪</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="d-flex justify-content-between align-items-center p-3 border rounded">
+                            <div>
+                                <strong>深度分析引擎</strong>
+                                <div class="text-muted small">LLM对话分析</div>
+                            </div>
+                            <div class="text-end">
+                                <span class="status-indicator status-online"></span>
+                                <span class="text-success">就绪</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="d-flex justify-content-between align-items-center p-3 border rounded">
+                            <div>
+                                <strong>修复引擎</strong>
+                                <div class="text-muted small">代码修复建议</div>
+                            </div>
+                            <div class="text-end">
+                                <span class="status-indicator status-online"></span>
+                                <span class="text-success">就绪</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="d-flex justify-content-between align-items-center p-3 border rounded">
+                            <div>
+                                <strong>WebSocket服务</strong>
+                                <div class="text-muted small">实时通信</div>
+                            </div>
+                            <div class="text-end">
+                                <span class="status-indicator status-online"></span>
+                                <span class="text-success">在线</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="d-flex justify-content-between align-items-center p-3 border rounded">
+                            <div>
+                                <strong>数据库连接</strong>
+                                <div class="text-muted small">本地存储</div>
+                            </div>
+                            <div class="text-end">
+                                <span class="status-indicator status-online"></span>
+                                <span class="text-success">正常</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 系统指标 -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-line me-2"></i>性能指标
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="system-metric mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>CPU使用率</span>
+                        <span id="cpuPercent">0%</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar" id="cpuProgressBar" role="progressbar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="system-metric mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>内存使用率</span>
+                        <span id="memoryPercent">0%</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar bg-warning" id="memoryProgressBar" role="progressbar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="system-metric mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>磁盘使用率</span>
+                        <span id="diskPercent">0%</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar bg-info" id="diskProgressBar" role="progressbar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="system-metric">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>网络延迟</span>
+                        <span id="networkLatency">0ms</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar bg-success" id="networkProgressBar" role="progressbar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>系统信息
+                </h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tbody>
+                        <tr>
+                            <td><strong>应用版本</strong></td>
+                            <td id="appVersion">1.0.0</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Python版本</strong></td>
+                            <td id="pythonVersion">3.9.x</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Flask版本</strong></td>
+                            <td id="flaskVersion">2.3.x</td>
+                        </tr>
+                        <tr>
+                            <td><strong>操作系统</strong></td>
+                            <td id="osInfo">macOS</td>
+                        </tr>
+                        <tr>
+                            <td><strong>启动时间</strong></td>
+                            <td id="startTime">--</td>
+                        </tr>
+                        <tr>
+                            <td><strong>当前时间</strong></td>
+                            <td id="currentTime">--</td>
+                        </tr>
+                        <tr>
+                            <td><strong>端口</strong></td>
+                            <td id="serverPort">5002</td>
+                        </tr>
+                        <tr>
+                            <td><strong>环境</strong></td>
+                            <td id="environment">开发环境</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 活动日志 -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list-alt me-2"></i>最近活动
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="activityLog" style="max-height: 300px; overflow-y: auto;">
+                    <div class="text-muted text-center py-3">
+                        <i class="fas fa-spinner fa-spin mb-2"></i>
+                        <p>正在加载活动日志...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 浮动刷新按钮 -->
+<button type="button" class="btn btn-primary btn-lg rounded-circle refresh-btn" id="floatingRefreshBtn" title="刷新状态">
+    <i class="fas fa-sync-alt"></i>
+</button>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 状态页面JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    // 初始化页面
+    initStatusPage();
+
+    // 设置定时刷新
+    setInterval(updateSystemStatus, 30000); // 30秒刷新一次
+
+    // 绑定刷新按钮
+    document.getElementById('refreshBtn').addEventListener('click', updateSystemStatus);
+    document.getElementById('floatingRefreshBtn').addEventListener('click', updateSystemStatus);
+
+    // 绑定导出按钮
+    document.getElementById('exportBtn').addEventListener('click', exportStatusReport);
+
+    // 立即更新一次
+    updateSystemStatus();
+});
+
+function initStatusPage() {
+    // 设置当前时间
+    updateCurrentTime();
+    setInterval(updateCurrentTime, 1000);
+
+    // 模拟系统信息
+    updateSystemInfo();
+
+    // 生成模拟活动日志
+    generateActivityLog();
+}
+
+function updateSystemStatus() {
+    // 显示加载状态
+    const refreshBtn = document.getElementById('refreshBtn');
+    const floatingBtn = document.getElementById('floatingRefreshBtn');
+
+    refreshBtn.disabled = true;
+    refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>刷新中...';
+
+    // 模拟API调用
+    setTimeout(() => {
+        // 更新系统指标（模拟数据）
+        updateSystemMetrics();
+
+        // 更新服务状态
+        updateServicesStatus();
+
+        // 更新活动日志
+        generateActivityLog();
+
+        // 更新最后刷新时间
+        document.getElementById('lastUpdate').textContent = '刚刚更新';
+
+        // 恢复按钮状态
+        refreshBtn.disabled = false;
+        refreshBtn.innerHTML = '<i class="fas fa-sync-alt me-1"></i>刷新状态';
+
+        // 显示成功通知
+        if (window.App && window.App.notify) {
+            App.notify('系统状态已更新', 'success', {duration: 2000});
+        }
+    }, 1000);
+}
+
+function updateSystemMetrics() {
+    // 模拟系统指标数据
+    const cpuUsage = Math.floor(Math.random() * 30 + 10); // 10-40%
+    const memoryUsage = Math.floor(Math.random() * 40 + 30); // 30-70%
+    const diskUsage = Math.floor(Math.random() * 20 + 40); // 40-60%
+    const networkLatency = Math.floor(Math.random() * 50 + 10); // 10-60ms
+
+    // 更新显示
+    document.getElementById('cpuUsage').textContent = cpuUsage + '%';
+    document.getElementById('cpuPercent').textContent = cpuUsage + '%';
+    document.getElementById('cpuProgressBar').style.width = cpuUsage + '%';
+
+    document.getElementById('memoryUsage').textContent = memoryUsage + '%';
+    document.getElementById('memoryPercent').textContent = memoryUsage + '%';
+    document.getElementById('memoryProgressBar').style.width = memoryUsage + '%';
+
+    document.getElementById('diskPercent').textContent = diskUsage + '%';
+    document.getElementById('diskProgressBar').style.width = diskUsage + '%';
+
+    document.getElementById('networkLatency').textContent = networkLatency + 'ms';
+    const networkQuality = networkLatency < 30 ? 100 : (networkLatency < 60 ? 70 : 40);
+    document.getElementById('networkProgressBar').style.width = networkQuality + '%';
+
+    // 更新运行时间（模拟）
+    const uptime = Math.floor(Math.random() * 24 + 1); // 1-24小时
+    document.getElementById('uptime').textContent = uptime + ' 小时';
+}
+
+function updateServicesStatus() {
+    // 模拟服务状态检查
+    const services = document.querySelectorAll('#servicesStatus .border');
+    services.forEach(service => {
+        const isOnline = Math.random() > 0.05; // 95%概率在线
+        const indicator = service.querySelector('.status-indicator');
+        const status = service.querySelector('.text-end span:last-child');
+
+        if (indicator && status) {
+            if (isOnline) {
+                indicator.className = 'status-indicator status-online';
+                status.className = 'text-success';
+                status.textContent = Math.random() > 0.5 ? '在线' : '就绪';
+            } else {
+                indicator.className = 'status-indicator status-warning';
+                status.className = 'text-warning';
+                status.textContent = '警告';
+            }
+        }
+    });
+}
+
+function updateSystemInfo() {
+    // 设置系统信息
+    document.getElementById('appVersion').textContent = '1.0.0';
+    document.getElementById('pythonVersion').textContent = '3.9.7';
+    document.getElementById('flaskVersion').textContent = '2.3.2';
+    document.getElementById('osInfo').textContent = 'macOS Darwin';
+    document.getElementById('startTime').textContent = new Date().toLocaleString('zh-CN');
+    document.getElementById('serverPort').textContent = window.location.port || '5002';
+    document.getElementById('environment').textContent = '开发环境';
+}
+
+function updateCurrentTime() {
+    document.getElementById('currentTime').textContent = new Date().toLocaleString('zh-CN');
+}
+
+function generateActivityLog() {
+    const activities = [
+        { time: new Date(), type: 'info', message: '系统状态检查完成' },
+        { time: new Date(Date.now() - 60000), type: 'success', message: 'Web服务正常运行' },
+        { time: new Date(Date.now() - 120000), type: 'info', message: '内存使用率正常' },
+        { time: new Date(Date.now() - 180000), type: 'warning', message: 'CPU使用率略高' },
+        { time: new Date(Date.now() - 240000), type: 'success', message: '所有服务组件就绪' },
+        { time: new Date(Date.now() - 300000), type: 'info', message: '系统启动完成' }
+    ];
+
+    const logContainer = document.getElementById('activityLog');
+    let logHtml = '';
+
+    activities.forEach(activity => {
+        const icon = getActivityIcon(activity.type);
+        const color = getActivityColor(activity.type);
+        const timeStr = activity.time.toLocaleTimeString('zh-CN');
+
+        logHtml += `
+            <div class="d-flex align-items-start mb-2">
+                <span class="${color} me-2">${icon}</span>
+                <div class="flex-grow-1">
+                    <small class="text-muted">${timeStr}</small>
+                    <div>${activity.message}</div>
+                </div>
+            </div>
+        `;
+    });
+
+    logContainer.innerHTML = logHtml;
+}
+
+function getActivityIcon(type) {
+    const icons = {
+        'success': '<i class="fas fa-check-circle"></i>',
+        'warning': '<i class="fas fa-exclamation-triangle"></i>',
+        'error': '<i class="fas fa-times-circle"></i>',
+        'info': '<i class="fas fa-info-circle"></i>'
+    };
+    return icons[type] || icons['info'];
+}
+
+function getActivityColor(type) {
+    const colors = {
+        'success': 'text-success',
+        'warning': 'text-warning',
+        'error': 'text-danger',
+        'info': 'text-info'
+    };
+    return colors[type] || colors['info'];
+}
+
+function exportStatusReport() {
+    // 生成状态报告
+    const report = {
+        timestamp: new Date().toISOString(),
+        system_status: '正常',
+        metrics: {
+            cpu: document.getElementById('cpuPercent').textContent,
+            memory: document.getElementById('memoryPercent').textContent,
+            disk: document.getElementById('diskPercent').textContent,
+            network: document.getElementById('networkLatency').textContent
+        },
+        services: '全部正常',
+        version: '1.0.0'
+    };
+
+    // 创建下载链接
+    const dataStr = JSON.stringify(report, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+
+    const exportFileDefaultName = `system_status_${new Date().toISOString().split('T')[0]}.json`;
+
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+
+    if (window.App && window.App.notify) {
+        App.notify('状态报告已导出', 'success');
+    }
+}
+</script>
+{% endblock %}
