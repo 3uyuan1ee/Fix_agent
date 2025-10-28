@@ -37,26 +37,36 @@ class LLMConfigManager:
         """加载配置"""
         self.configs: Dict[str, LLMConfig] = {}
 
-        # 尝试从配置文件加载
-        config_path = Path(self.config_file)
-        if config_path.exists():
+        # 定义加载优先级：配置文件 > 环境变量 > 全局配置 > 默认配置
+        load_methods = [
+            ("配置文件", self._load_from_config_file),
+            ("环境变量", self._load_from_environment),
+            ("全局配置", self._load_from_global_config),
+            ("默认配置", self._create_default_configs)
+        ]
+
+        for method_name, load_method in load_methods:
             try:
-                with open(config_path, 'r', encoding='utf-8') as f:
-                    data = yaml.safe_load(f)
-                    self._parse_config_file_data(data)
-                self.logger.info(f"Loaded LLM config from {config_path}")
+                load_method()
+                if self.configs:
+                    self.logger.info(f"Successfully loaded LLM configs from {method_name}")
+                    return  # 成功加载后立即停止
             except Exception as e:
-                self.logger.warning(f"Failed to load LLM config file: {e}")
+                self.logger.warning(f"Failed to load from {method_name}: {e}")
+                continue
 
-        # 尝试从环境变量加载
-        self._load_from_environment()
-
-        # 尝试从全局配置加载
-        self._load_from_global_config()
-
-        # 如果没有配置，创建默认配置
         if not self.configs:
-            self._create_default_configs()
+            self.logger.warning("No LLM configurations were loaded")
+
+    def _load_from_config_file(self) -> None:
+        """从配置文件加载配置"""
+        config_path = Path(self.config_file)
+        if not config_path.exists():
+            raise FileNotFoundError(f"Config file not found: {config_path}")
+
+        with open(config_path, 'r', encoding='utf-8') as f:
+            data = yaml.safe_load(f)
+            self._parse_config_file_data(data)
 
     def _parse_config_file_data(self, data: Dict[str, Any]) -> None:
         """解析配置文件数据"""
