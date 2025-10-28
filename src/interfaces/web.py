@@ -3103,8 +3103,7 @@ AIDefectDetector 修复数据导出报告
             self.logger.error(f"启动Web应用失败: {e}")
             raise
 
-
-  def _generate_mock_fix_suggestions(self, task_id):
+    def _generate_mock_fix_suggestions(self, task_id):
         """生成模拟的修复建议数据"""
         import random
         import uuid
