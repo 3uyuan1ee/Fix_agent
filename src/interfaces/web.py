@@ -964,7 +964,17 @@ class AIDefectDetectorWeb:
                     return jsonify({'error': f'项目中没有找到可分析的Python文件: {project_path}'}), 400
 
                 # 初始化静态分析协调器
-                from ..tools.static_coordinator import StaticAnalysisCoordinator
+                try:
+                    # 尝试使用相对导入
+                    from ..tools.static_coordinator import StaticAnalysisCoordinator
+                except ImportError:
+                    # 如果相对导入失败，使用绝对导入
+                    import sys
+                    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                    sys.path.insert(0, project_root)
+                    sys.path.insert(0, os.path.join(project_root, 'src'))
+                    from tools.static_coordinator import StaticAnalysisCoordinator
+
                 coordinator = StaticAnalysisCoordinator()
 
                 self.logger.info(f"开始静态分析: {task_id} - 项目: {project_path}, 工具: {processed_tools}")
