@@ -199,9 +199,9 @@ class DeepAnalysisCommand:
         conversation_manager.session = session
 
         try:
-            # 添加初始消息
+            # 添加初始消息（内部使用，不显示给用户）
             initial_prompt = f"请对 {target} 进行深度分析，找出潜在的代码问题、改进建议和最佳实践。"
-            conversation_manager.add_message("user", initial_prompt)
+            conversation_manager.add_message("user", initial_prompt, metadata={"internal": True})
 
             # 执行初始分析
             if not quiet:
