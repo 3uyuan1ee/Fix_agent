@@ -24,7 +24,13 @@ AI驱动的智能项目分析与修复工作流 - 多语言架构设计
 - 用户交互和状态管理
 
 **Phase 1-4 工作流程**:
-1. 扫描项目结构 → 2. 构建AI提示词 → 3. AI分析并返回JSON → 4. 解析结果 → 5. 用户确认 → 6. 执行操作
+1. 静态项目分析 → 2. AI项目分析 → 3. 用户决策 → 4. 文件选择 → 5. 进入AI修复工作流
+
+**详细说明**:
+- **静态项目分析**: 使用多语言静态分析工具扫描项目，发现代码问题
+- **AI项目分析**: AI基于静态分析结果和项目结构，智能选择需要分析的重点文件
+- **用户决策**: 用户查看AI的文件选择建议，进行确认或修改
+- **文件选择**: 确定最终要分析的文件列表，为AI修复工作流做准备
 
 🔄 **Phase 5: AI修复工作流** (新增)
 
@@ -71,7 +77,7 @@ Phase 4完成后 → AI发现问题 → AI修复建议 → 用户反馈 → 自�
 
 📊 简化任务分解
 
-**Phase 1: 核心数据结构 (已完成)**
+**Phase 0: 核心数据结构 (已完成)**
 
 T001: 项目分析数据结构 ✅
 - 文件: src/tools/project_analysis_types.py
@@ -88,85 +94,88 @@ T003: Logger模块扩展 ✅
 - 状态: 已完成
 - 功能: 项目分析日志
 
-**Phase 2: AI驱动的智能文件选择器**
+**Phase 1: 静态项目分析**
 
-T004: 创建AI驱动的项目扫描器
+T004: 创建多语言静态分析执行器
 
-- 文件: src/tools/ai_project_scanner.py
-- 任务描述: 扫描项目结构，为AI分析提供数据基础
+- 文件: src/tools/multilang_static_analyzer.py
+- 任务描述: 执行多语言静态分析，扫描项目发现代码问题
 - 验收标准:
-    - 扫描项目文件结构和基本信息
-    - 统计文件类型、大小、语言分布
-    - 识别核心文件和潜在问题文件
-    - 生成项目概览报告
-    - 支持自定义扫描规则
+    - 支持Python、JavaScript、Java、Go、C++等多种语言
+    - 集成AST、Pylint、Flake8、Bandit、ESLint等工具
+    - 统一的问题格式输出
+    - 代码质量、安全漏洞、复杂度分析
+    - 生成静态分析报告
 
-T005: 创建AI文件选择提示词
+T005: 创建静态分析结果聚合器
 
-- 文件: src/prompts/ai_file_selection.py
-- 任务描述: 创建AI文件选择的提示词模板
+- 文件: src/tools/static_analysis_aggregator.py
+- 任务描述: 聚合多个静态分析工具的结果，为AI分析提供数据
+- 验收标准:
+    - 整合不同工具的分析结果
+    - 问题去重和优先级排序
+    - 生成统一的问题摘要
+    - 按文件和严重程度分类
+    - 提供文件问题密度统计
+
+**Phase 2: AI项目分析**
+
+T006: 创建AI文件选择器
+
+- 文件: src/tools/ai_file_selector.py
+- 任务描述: AI基于静态分析结果和项目结构，智能选择需要重点分析的文件
+- 验收标准:
+    - 分析项目结构和依赖关系
+    - 评估文件重要性和复杂度
+    - 结合静态分析问题密度
+    - 生成文件优先级排序
+    - 支持用户需求输入和偏好设置
+
+T007: 创建AI项目分析提示词管理器
+
+- 文件: src/prompts/ai_project_analysis.py
+- 任务描述: 创建AI项目分析的提示词模板和管理
 - 验收标准:
     - 项目结构分析提示词
     - 文件重要性评估提示词
     - 用户需求理解提示词
     - 固定JSON响应格式要求
-    - Token优化设计
+    - Token优化设计和上下文管理
 
-T006: 创建AI响应解析器
+T008: 创建AI分析响应解析器
 
-- 文件: src/tools/ai_response_parser.py
-- 任务描述: 解析AI返回的JSON格式响应
+- 文件: src/tools/ai_analysis_parser.py
+- 任务描述: 解析AI返回的项目分析响应
 - 验收标准:
     - JSON格式验证和解析
     - 文件选择结果结构化
+    - 置信度和优先级评估
     - 错误处理和重试机制
-    - 响应置信度评估
+    - 分析结果排序和过滤
 
-**Phase 3: AI分析执行器**
+**Phase 3: 用户决策与文件选择**
 
-T007: 创建AI分析执行器
+T009: 创建交互式决策界面
 
-- 文件: src/tools/ai_analysis_executor.py
-- 任务描述: 执行AI分析任务并管理对话
+- 文件: src/tools/interactive_decision.py
+- 任务描述: 提供用户对AI文件选择建议的交互式决策界面
 - 验收标准:
-    - 调用AI进行文件分析
-    - 管理多轮对话上下文
-    - 处理用户输入和反馈
-    - 生成分析结果和建议
-    - 支持分析过程中断和继续
+    - 展示AI文件选择建议和理由
+    - 支持用户查看和修改选择
+    - 提供文件预览和问题摘要
+    - 支持批量选择和单独调整
+    - 实时更新选择统计
 
-T008: 创建静态分析集成
+T010: 创建文件选择确认器
 
-- 文件: src/tools/static_analysis_integration.py
-- 任务描述: 集成现有静态分析工具，为AI提供数据
+- 文件: src/tools/file_selection_confirm.py
+- 任务描述: 确认最终文件选择，为修复工作流做准备
 - 验收标准:
-    - 调用StaticAnalysisCoordinator
-    - 聚合静态分析结果
-    - 格式化分析数据供AI使用
-    - 生成问题摘要和统计
-
-**Phase 4: 交互式工作流**
-
-T009: 创建交互式会话管理器
-
-- 文件: src/tools/interactive_session.py
-- 任务描述: 管理用户与AI的交互式分析会话
-- 验收标准:
-    - 会话状态管理
-    - 用户输入处理
-    - AI响应展示
-    - 对话历史记录
-    - 会话持久化
-
-T010: 创建用户决策支持
-
-- 文件: src/tools/user_decision_support.py
-- 任务描述: 支持用户对AI建议的决策
-- 验收标准:
-    - AI建议展示
-    - 用户确认界面
-    - 修改和反馈机制
-    - 决策历史记录
+    - 生成最终选择的文件列表
+    - 记录用户决策历史
+    - 计算分析工作量和预估时间
+    - 生成文件选择摘要报告
+    - 支持选择结果导出和导入
 
 **Phase 5: AI修复工作流**
 
@@ -202,7 +211,7 @@ T013: 创建AI问题检测器
     - 结合静态分析结果和文件重要性进行AI分析
     - 支持用户需求输入和偏好设置
     - 多语言代码理解能力
-    - 返回结构化的问题检测结果
+    - 要求ai返回结构化的问题检测结果方便解析
     - 置信度和优先级评估
 
 T014: 创建AI修复建议生成器
@@ -210,11 +219,11 @@ T014: 创建AI修复建议生成器
 - 文件: src/tools/ai_fix_suggestion_generator.py
 - 任务描述: 为检测到的问题生成具体的修复建议和代码
 - 验收标准:
-    - 基于问题描述生成修复代码
+    - 基于问题描述让ai生成修复代码
     - 提供修复说明和推理过程
     - 评估修复风险和副作用
     - 支持多种修复方案对比
-    - 固定JSON格式输出便于解析
+    - 要求ai固定JSON格式输出便于解析
 
 T015: 创建用户反馈处理器
 
@@ -278,64 +287,78 @@ T019: 创建Web交互式界面
 
 🎯 核心组件设计
 
-**AI文件选择流程**:
+**Phase 1-4 完整流程**:
 ```python
-# 1. 项目扫描
-scanner = AIProjectScanner()
-project_info = scanner.scan_project(project_path)
+# Phase 1: 静态项目分析
+analyzer = MultilangStaticAnalyzer()
+static_results = analyzer.analyze_project(project_path)
 
-# 2. 构建AI提示
-prompt_builder = FileSelectionPromptBuilder()
-prompt = prompt_builder.build_prompt(project_info, user_requirements)
+aggregator = StaticAnalysisAggregator()
+aggregated_results = aggregator.aggregate_results(static_results)
 
-# 3. AI分析
-ai_executor = AIAnalysisExecutor()
-ai_response = ai_executor.analyze(prompt)
+# Phase 2: AI项目分析
+selector = AIFileSelector()
+prompt_manager = AIProjectAnalysisPromptManager()
+prompt = prompt_manager.build_analysis_prompt(aggregated_results, user_requirements)
 
-# 4. 解析结果
-parser = AIResponseParser()
-file_selections = parser.parse_file_selections(ai_response)
+ai_response = selector.analyze_project(prompt)
 
-# 5. 用户确认
-decision_support = UserDecisionSupport()
-final_selections = decision_support.get_user_confirmation(file_selections)
+parser = AIAnalysisParser()
+file_recommendations = parser.parse_ai_response(ai_response)
+
+# Phase 3: 用户决策与文件选择
+decision_interface = InteractiveDecision()
+user_decisions = decision_interface.present_recommendations(file_recommendations)
+
+confirmator = FileSelectionConfirm()
+final_files = confirmator.confirm_selection(user_decisions, aggregated_results)
+
+# Phase 4: 进入AI修复工作流
+# final_files 现在可以用于 Phase 5: AI修复工作流
 ```
 
 **AI修复工作流流程**:
 ```python
 # Phase 5: AI修复工作流
-workflow = AIFixWorkflowCoordinator()
+import asyncio
 
-# 1. 启动修复工作流
-session = await workflow.start_fix_workflow(
-    project_path="/path/to/project",
-    user_requirements="优化代码质量，修复安全漏洞",
-    selected_files=["src/services/user.py", "src/utils/helpers.js"]
-)
+async def run_fix_workflow():
+    workflow = AIFixWorkflowCoordinator()
 
-# 2. AI问题检测
-findings = await workflow.get_ai_findings()
-# 返回发现的问题列表
+    # 1. 启动修复工作流
+    session = await workflow.start_fix_workflow(
+        project_path="/path/to/project",
+        user_requirements="优化代码质量，修复安全漏洞",
+        selected_files=["src/services/user.py", "src/utils/helpers.js"]
+    )
 
-# 3. 生成修复建议
-suggestions = await workflow.generate_fix_suggestions(
-    selected_findings=["finding_1", "finding_2"]
-)
-# 返回具体的修复建议
+    # 2. AI问题检测
+    findings = await workflow.get_ai_findings()
+    # 返回发现的问题列表
 
-# 4. 处理用户反馈
-user_feedbacks = [
-    {
-        "suggestion_id": "suggestion_1",
-        "decision": "approve",  # approve/reject/modify
-        "comment": "这个修复很好",
-        "modified_suggestion": {...}  # 如果decision为modify
-    }
-]
-result = await workflow.process_user_feedback(user_feedbacks)
+    # 3. 生成修复建议
+    suggestions = await workflow.generate_fix_suggestions(
+        selected_findings=["finding_1", "finding_2"]
+    )
+    # 返回具体的修复建议
 
-# 5. 自动修复和验证
-# 自动执行修复建议并验证结果
+    # 4. 处理用户反馈
+    user_feedbacks = [
+        {
+            "suggestion_id": "suggestion_1",
+            "decision": "approve",  # approve/reject/modify
+            "comment": "这个修复很好",
+            "modified_suggestion": {...}  # 如果decision为modify
+        }
+    ]
+    result = await workflow.process_user_feedback(user_feedbacks)
+
+    # 5. 自动修复和验证
+    # 自动执行修复建议并验证结果
+    return result
+
+# 执行修复工作流
+result = asyncio.run(run_fix_workflow())
 ```
 
 **AI响应JSON格式 - 文件选择**:
@@ -434,7 +457,7 @@ result = await workflow.process_user_feedback(user_feedbacks)
 
 ```mermaid
 graph TD
-    A[Phase 1-4: 项目分析与文件选择] --> B[AI问题检测]
+    A[Phase 1-4: 静态分析与AI分析结合用户决策进行文件选择] --> B[AI问题检测]
     B --> C[AI修复建议生成]
     C --> D[用户审查与反馈]
     D --> E{用户决策}
