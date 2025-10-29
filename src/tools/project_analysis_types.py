@@ -628,11 +628,384 @@ class FileImportanceScore:
             return 20.0  # 低频变更
 
 
+@dataclass
 class FixSuggestion:
-    """修复建议数据类"""
-    pass
+    """修复建议数据类
+
+    包含针对检测到的问题的详细修复建议和实施步骤
+    """
+    # 基本信息
+    issue_id: str  # 问题唯一标识
+    file_path: str  # 目标文件路径
+    line_number: int = 0  # 问题所在行号
+    column_number: int = 0  # 问题所在列号
+
+    # 问题描述
+    issue_type: str = ""  # 问题类型
+    issue_description: str = ""  # 问题描述
+    severity: SeverityLevel = SeverityLevel.INFO  # 严重程度
+    confidence: float = 0.0  # 修复建议置信度 0-1
+
+    # 修复建议
+    fix_title: str = ""  # 修复建议标题
+    fix_description: str = ""  # 详细修复描述
+    fix_strategy: FixStrategy = FixStrategy.SUGGESTION_ONLY  # 修复策略
+    fix_priority: str = "medium"  # low, medium, high, critical
+
+    # 代码修复
+    original_code: str = ""  # 原始代码
+    fixed_code: str = ""  # 修复后代码
+    code_diff: str = ""  # 代码差异
+    patch_content: str = ""  # 补丁内容
+
+    # 修复步骤
+    fix_steps: List[str] = field(default_factory=list)  # 修复步骤列表
+    manual_instructions: str = ""  # 手动修复说明
+    automated_script: str = ""  # 自动化修复脚本
+
+    # 影响分析
+    impact_analysis: str = ""  # 影响分析
+    breaking_changes: List[str] = field(default_factory=list)  # 破坏性变更
+    side_effects: List[str] = field(default_factory=list)  # 副作用
+    dependencies_affected: List[str] = field(default_factory=list)  # 受影响的依赖
+
+    # 测试建议
+    test_suggestions: List[str] = field(default_factory=list)  # 测试建议
+    verification_steps: List[str] = field(default_factory=list)  # 验证步骤
+    regression_tests: List[str] = field(default_factory=list)  # 回归测试
+
+    # 替代方案
+    alternative_fixes: List[Dict[str, Any]] = field(default_factory=list)  # 替代修复方案
+    workarounds: List[str] = field(default_factory=list)  # 临时解决方案
+
+    # 风险评估
+    fix_risk: str = "low"  # low, medium, high, critical
+    rollback_plan: str = ""  # 回滚计划
+    backup_needed: bool = False  # 是否需要备份
+
+    # 上下文信息
+    context_snippet: str = ""  # 问题上下文代码片段
+    related_issues: List[str] = field(default_factory=list)  # 相关问题ID
+    references: List[str] = field(default_factory=list)  # 参考文档链接
+
+    # 元数据
+    suggested_by: str = "ai_analyzer"  # 建议来源
+    created_at: datetime = field(default_factory=datetime.now)
+    estimated_effort: str = ""  # 预估工作量（分钟/小时）
+    success_rate: float = 0.0  # 预期成功率 0-1
+
+    # 状态跟踪
+    status: str = "suggested"  # suggested, approved, rejected, applied, verified
+    applied_at: Optional[datetime] = None
+    applied_by: str = ""
+    verification_result: str = ""  # success, failed, pending
+
+    def to_dict(self) -> Dict[str, Any]:
+        """转换为字典格式"""
+        return {
+            "issue_id": self.issue_id,
+            "file_path": self.file_path,
+            "line_number": self.line_number,
+            "column_number": self.column_number,
+            "issue_type": self.issue_type,
+            "issue_description": self.issue_description,
+            "severity": self.severity.value,
+            "confidence": self.confidence,
+            "fix_title": self.fix_title,
+            "fix_description": self.fix_description,
+            "fix_strategy": self.fix_strategy.value,
+            "fix_priority": self.fix_priority,
+            "original_code": self.original_code,
+            "fixed_code": self.fixed_code,
+            "code_diff": self.code_diff,
+            "patch_content": self.patch_content,
+            "fix_steps": self.fix_steps,
+            "manual_instructions": self.manual_instructions,
+            "automated_script": self.automated_script,
+            "impact_analysis": self.impact_analysis,
+            "breaking_changes": self.breaking_changes,
+            "side_effects": self.side_effects,
+            "dependencies_affected": self.dependencies_affected,
+            "test_suggestions": self.test_suggestions,
+            "verification_steps": self.verification_steps,
+            "regression_tests": self.regression_tests,
+            "alternative_fixes": self.alternative_fixes,
+            "workarounds": self.workarounds,
+            "fix_risk": self.fix_risk,
+            "rollback_plan": self.rollback_plan,
+            "backup_needed": self.backup_needed,
+            "context_snippet": self.context_snippet,
+            "related_issues": self.related_issues,
+            "references": self.references,
+            "suggested_by": self.suggested_by,
+            "created_at": self.created_at.isoformat(),
+            "estimated_effort": self.estimated_effort,
+            "success_rate": self.success_rate,
+            "status": self.status,
+            "applied_at": self.applied_at.isoformat() if self.applied_at else None,
+            "applied_by": self.applied_by,
+            "verification_result": self.verification_result
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'FixSuggestion':
+        """从字典创建实例"""
+        # 处理枚举类型
+        if 'severity' in data:
+            data['severity'] = SeverityLevel(data['severity'])
+        if 'fix_strategy' in data:
+            data['fix_strategy'] = FixStrategy(data['fix_strategy'])
+
+        # 处理日期时间字段
+        datetime_fields = ['created_at', 'applied_at']
+        for field_name in datetime_fields:
+            if field_name in data and isinstance(data[field_name], str):
+                data[field_name] = datetime.fromisoformat(data[field_name])
+
+        return cls(**data)
+
+    def generate_fix_summary(self) -> str:
+        """生成修复建议摘要"""
+        summary_parts = [
+            f"问题: {self.issue_description}",
+            f"位置: {self.file_path}:{self.line_number}",
+            f"建议: {self.fix_title}",
+            f"风险: {self.fix_risk}",
+            f"预估工作量: {self.estimated_effort}"
+        ]
+        return "\n".join(summary_parts)
+
+    def is_applicable(self) -> bool:
+        """判断修复建议是否适用"""
+        return (
+            self.confidence >= 0.5 and
+            self.status == "suggested" and
+            self.fixed_code != self.original_code
+        )
+
+    def get_priority_score(self) -> int:
+        """获取修复优先级评分"""
+        priority_scores = {
+            "low": 1,
+            "medium": 2,
+            "high": 3,
+            "critical": 4
+        }
+        return priority_scores.get(self.fix_priority, 2)
 
 
+@dataclass
 class ProjectAnalysisResult:
-    """项目分析结果数据类"""
-    pass
+    """项目分析结果数据类
+
+    汇总整个项目分析工作流的最终结果，包含所有分析阶段的数据和建议
+    """
+    # 基本信息
+    project_info: ProjectInfo
+    analysis_id: str = ""
+    analysis_version: str = "1.0"
+
+    # 分析流程状态
+    current_phase: AnalysisPhase = AnalysisPhase.INITIALIZATION
+    completed_phases: List[AnalysisPhase] = field(default_factory=list)
+    failed_phases: List[AnalysisPhase] = field(default_factory=list)
+
+    # 执行信息
+    started_at: datetime = field(default_factory=datetime.now)
+    completed_at: Optional[datetime] = None
+    total_duration: float = 0.0  # 总耗时（秒）
+
+    # 静态分析结果
+    static_analysis_summary: Optional[StaticAnalysisSummary] = None
+    file_importance_scores: List[FileImportanceScore] = field(default_factory=list)
+    selected_files_for_ai: List[str] = field(default_factory=list)
+
+    # AI分析结果
+    ai_analysis_contexts: List[AIAnalysisContext] = field(default_factory=list)
+    ai_analysis_results: List[Dict[str, Any]] = field(default_factory=list)
+
+    # 修复建议
+    fix_suggestions: List[FixSuggestion] = field(default_factory=list)
+    applied_fixes: List[FixSuggestion] = field(default_factory=list)
+    failed_fixes: List[FixSuggestion] = field(default_factory=list)
+
+    # 质量评分
+    overall_quality_score: float = 0.0  # 0-100
+    improvement_potential: float = 0.0  # 改进潜力评分
+
+    # 问题统计
+    total_issues_found: int = 0
+    critical_issues_count: int = 0
+    issues_resolved: int = 0
+    issues_remaining: int = 0
+
+    # 成本和资源统计
+    tokens_used: int = 0
+    api_calls_made: int = 0
+    estimated_cost: float = 0.0  # 预估成本
+
+    # 有效性指标
+    fix_success_rate: float = 0.0  # 修复成功率
+    false_positive_rate: float = 0.0  # 误报率
+
+    # 趋势分析
+    quality_trend: Dict[str, float] = field(default_factory=dict)  # 历史质量趋势
+    issue_trend: Dict[str, int] = field(default_factory=dict)  # 问题数量趋势
+
+    # 配置和元数据
+    analysis_config: Dict[str, Any] = field(default_factory=dict)
+    execution_environment: Dict[str, str] = field(default_factory=dict)
+    error_logs: List[str] = field(default_factory=list)
+    warnings: List[str] = field(default_factory=list)
+
+    # 输出文件
+    report_files: List[str] = field(default_factory=list)  # 生成的报告文件
+    backup_files: List[str] = field(default_factory=list)  # 备份文件
+
+    # 推荐行动
+    recommended_actions: List[str] = field(default_factory=list)
+    next_analysis_suggestions: List[str] = field(default_factory=list)
+
+    # 状态和验证
+    analysis_status: str = "in_progress"  # in_progress, completed, failed, cancelled
+    validation_status: str = "pending"  # pending, validated, failed
+    final_assessment: str = ""  # 最终评估结果
+
+    def to_dict(self) -> Dict[str, Any]:
+        """转换为字典格式"""
+        return {
+            "project_info": self.project_info.to_dict(),
+            "analysis_id": self.analysis_id,
+            "analysis_version": self.analysis_version,
+            "current_phase": self.current_phase.value,
+            "completed_phases": [phase.value for phase in self.completed_phases],
+            "failed_phases": [phase.value for phase in self.failed_phases],
+            "started_at": self.started_at.isoformat(),
+            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "total_duration": self.total_duration,
+            "static_analysis_summary": self.static_analysis_summary.to_dict() if self.static_analysis_summary else None,
+            "file_importance_scores": [score.to_dict() for score in self.file_importance_scores],
+            "selected_files_for_ai": self.selected_files_for_ai,
+            "ai_analysis_contexts": [context.to_dict() for context in self.ai_analysis_contexts],
+            "ai_analysis_results": self.ai_analysis_results,
+            "fix_suggestions": [fix.to_dict() for fix in self.fix_suggestions],
+            "applied_fixes": [fix.to_dict() for fix in self.applied_fixes],
+            "failed_fixes": [fix.to_dict() for fix in self.failed_fixes],
+            "overall_quality_score": self.overall_quality_score,
+            "improvement_potential": self.improvement_potential,
+            "total_issues_found": self.total_issues_found,
+            "critical_issues_count": self.critical_issues_count,
+            "issues_resolved": self.issues_resolved,
+            "issues_remaining": self.issues_remaining,
+            "tokens_used": self.tokens_used,
+            "api_calls_made": self.api_calls_made,
+            "estimated_cost": self.estimated_cost,
+            "fix_success_rate": self.fix_success_rate,
+            "false_positive_rate": self.false_positive_rate,
+            "quality_trend": self.quality_trend,
+            "issue_trend": self.issue_trend,
+            "analysis_config": self.analysis_config,
+            "execution_environment": self.execution_environment,
+            "error_logs": self.error_logs,
+            "warnings": self.warnings,
+            "report_files": self.report_files,
+            "backup_files": self.backup_files,
+            "recommended_actions": self.recommended_actions,
+            "next_analysis_suggestions": self.next_analysis_suggestions,
+            "analysis_status": self.analysis_status,
+            "validation_status": self.validation_status,
+            "final_assessment": self.final_assessment
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'ProjectAnalysisResult':
+        """从字典创建实例"""
+        # 处理枚举类型
+        if 'current_phase' in data:
+            data['current_phase'] = AnalysisPhase(data['current_phase'])
+        if 'completed_phases' in data:
+            data['completed_phases'] = [AnalysisPhase(phase) for phase in data['completed_phases']]
+        if 'failed_phases' in data:
+            data['failed_phases'] = [AnalysisPhase(phase) for phase in data['failed_phases']]
+
+        # 处理ProjectInfo
+        if 'project_info' in data and data['project_info']:
+            data['project_info'] = ProjectInfo.from_dict(data['project_info'])
+
+        # 处理StaticAnalysisSummary
+        if 'static_analysis_summary' in data and data['static_analysis_summary']:
+            data['static_analysis_summary'] = StaticAnalysisSummary.from_dict(data['static_analysis_summary'])
+
+        # 处理FileImportanceScore列表
+        if 'file_importance_scores' in data:
+            importance_scores = []
+            for score_data in data['file_importance_scores']:
+                importance_scores.append(FileImportanceScore.from_dict(score_data))
+            data['file_importance_scores'] = importance_scores
+
+        # 处理AIAnalysisContext列表
+        if 'ai_analysis_contexts' in data:
+            ai_contexts = []
+            for context_data in data['ai_analysis_contexts']:
+                ai_contexts.append(AIAnalysisContext.from_dict(context_data))
+            data['ai_analysis_contexts'] = ai_contexts
+
+        # 处理FixSuggestion列表
+        for fix_field in ['fix_suggestions', 'applied_fixes', 'failed_fixes']:
+            if fix_field in data:
+                fixes = []
+                for fix_data in data[fix_field]:
+                    fixes.append(FixSuggestion.from_dict(fix_data))
+                data[fix_field] = fixes
+
+        # 处理日期时间字段
+        datetime_fields = ['started_at', 'completed_at']
+        for field_name in datetime_fields:
+            if field_name in data and isinstance(data[field_name], str):
+                data[field_name] = datetime.fromisoformat(data[field_name])
+
+        return cls(**data)
+
+    def mark_phase_completed(self, phase: AnalysisPhase):
+        """标记阶段为已完成"""
+        if phase not in self.completed_phases:
+            self.completed_phases.append(phase)
+        self.current_phase = phase
+
+    def mark_phase_failed(self, phase: AnalysisPhase):
+        """标记阶段为失败"""
+        if phase not in self.failed_phases:
+            self.failed_phases.append(phase)
+
+    def get_summary_stats(self) -> Dict[str, Any]:
+        """获取分析摘要统计"""
+        return {
+            "total_duration_minutes": round(self.total_duration / 60, 2),
+            "issues_found": self.total_issues_found,
+            "issues_resolved": self.issues_resolved,
+            "fix_success_rate_percent": round(self.fix_success_rate * 100, 2),
+            "quality_score": round(self.overall_quality_score, 2),
+            "files_analyzed": len(self.file_importance_scores),
+            "fixes_generated": len(self.fix_suggestions),
+            "fixes_applied": len(self.applied_fixes),
+            "estimated_cost_usd": round(self.estimated_cost, 4),
+            "tokens_used": self.tokens_used
+        }
+
+    def generate_final_report_summary(self) -> str:
+        """生成最终报告摘要"""
+        stats = self.get_summary_stats()
+
+        summary_lines = [
+            f"项目分析报告 - {self.project_info.project_name}",
+            f"分析耗时: {stats['total_duration_minutes']} 分钟",
+            f"发现问题: {stats['issues_found']} 个",
+            f"修复问题: {stats['issues_resolved']} 个",
+            f"质量评分: {stats['quality_score']}/100",
+            f"修复成功率: {stats['fix_success_rate_percent']}%",
+            f"分析文件: {stats['files_analyzed']} 个",
+            f"生成建议: {stats['fixes_generated']} 条",
+            f"应用修复: {stats['fixes_applied']} 条"
+        ]
+
+        return "\n".join(summary_lines)
