@@ -165,14 +165,24 @@ class FileImportanceAnalyzer:
             return 0
 
     def _analyze_complexity(self, importance_score: FileImportanceScore, file_path: str):
-        """分析文件复杂度"""
+        """分析文件复杂度
+
+        基于多个维度计算文件复杂度评分：
+        1. 代码行数和结构复杂度
+        2. 圈复杂度和控制流复杂度
+        3. 函数和类的复杂度分析
+        4. 代码嵌套深度分析
+        5. 代码重复度分析
+        """
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
 
             # 基础指标
             lines = content.splitlines()
-            importance_score.lines_of_code = len([line for line in lines if line.strip() and not line.strip().startswith('#')])
+            non_empty_lines = [line for line in lines if line.strip()]
+            comment_lines = [line for line in lines if line.strip().startswith('#')]
+            importance_score.lines_of_code = len(non_empty_lines) - len(comment_lines)
 
             # AST分析
             if file_path.endswith('.py'):
@@ -181,12 +191,49 @@ class FileImportanceAnalyzer:
                 # 对于其他语言类型的简单启发式分析
                 self._analyze_generic_complexity(importance_score, content)
 
-            # 计算复杂度评分 (0-100)
-            base_score = min(100, importance_score.cyclomatic_complexity * 2)
-            function_score = min(50, importance_score.function_count * 3)
-            class_score = min(30, importance_score.class_count * 5)
+            # 高级复杂度分析
+            nesting_depth = self._analyze_nesting_depth(file_path, content)
+            code_duplication = self._analyze_code_duplication(content)
+            parameter_complexity = self._analyze_parameter_complexity(file_path, content)
 
-            importance_score.complexity_score = min(100, base_score + function_score + class_score)
+            # 计算复杂度评分 (0-100)
+            # 基础复杂度分数
+            base_score = min(40, importance_score.cyclomatic_complexity * 1.5)
+
+            # 结构复杂度分数
+            structure_score = min(30, (importance_score.function_count * 2 + importance_score.class_count * 3))
+
+            # 规模复杂度分数
+            loc_score = min(20, importance_score.lines_of_code / 50)  # 每50行1分，最多20分
+
+            # 嵌套深度分数
+            nesting_score = min(15, nesting_depth * 3)
+
+            # 参数复杂度分数
+            param_score = min(10, parameter_complexity)
+
+            # 代码重复度分数（重复度越高，复杂度分数越高）
+            duplication_score = min(10, code_duplication * 5)
+
+            # 综合复杂度评分
+            raw_complexity_score = (
+                base_score + structure_score + loc_score +
+                nesting_score + param_score + duplication_score
+            )
+
+            # 根据文件大小调整评分（避免小文件获得不公平的高分）
+            size_adjustment = self._calculate_size_adjustment(importance_score.lines_of_code)
+            final_score = raw_complexity_score * size_adjustment
+
+            importance_score.complexity_score = min(100.0, round(final_score, 2))
+
+            self.logger.debug(f"复杂度分析完成: {importance_score.file_name}",
+                            complexity_score=importance_score.complexity_score,
+                            cyclomatic_complexity=importance_score.cyclomatic_complexity,
+                            function_count=importance_score.function_count,
+                            class_count=importance_score.class_count,
+                            nesting_depth=nesting_depth,
+                            lines_of_code=importance_score.lines_of_code)
 
         except Exception as e:
             self.logger.error(f"分析文件复杂度失败: {file_path}", error=str(e))
@@ -240,35 +287,115 @@ class FileImportanceAnalyzer:
         importance_score.cyclomatic_complexity = complexity_count
 
     def _analyze_issue_density(self, importance_score: FileImportanceScore, static_issues: List[AnalysisIssue]):
-        """分析问题密度"""
+        """分析问题密度
+
+        基于静态分析结果计算问题密度评分，考虑：
+        1. 问题数量与代码行数的比例
+        2. 问题严重程度的权重
+        3. 问题类型的多样性
+        4. 问题集中度分析
+        """
         if not static_issues:
             importance_score.issue_density_score = 0.0
             return
 
-        # 统计问题数量
+        # 统计问题数量和严重程度
         importance_score.total_issues = len(static_issues)
         importance_score.error_count = len([issue for issue in static_issues if issue.severity.value == 'error'])
         importance_score.warning_count = len([issue for issue in static_issues if issue.severity.value == 'warning'])
         importance_score.critical_issues = len([issue for issue in static_issues if issue.severity.value == 'critical'])
 
-        # 计算问题密度（每100行代码的问题数）
-        if importance_score.lines_of_code > 0:
-            density = (importance_score.total_issues / importance_score.lines_of_code) * 100
+        # 计算加权问题分数（严重程度权重）
+        critical_weight = 4.0
+        error_weight = 3.0
+        warning_weight = 2.0
+        info_weight = 1.0
 
-            # 根据密度阈值计算评分
-            if density <= self._issue_density_thresholds['low']:
-                importance_score.issue_density_score = 20.0  # 低密度，低重要性
-            elif density <= self._issue_density_thresholds['medium']:
-                importance_score.issue_density_score = 50.0  # 中等密度
-            elif density <= self._issue_density_thresholds['high']:
-                importance_score.issue_density_score = 80.0  # 高密度
+        weighted_score = (
+            importance_score.critical_issues * critical_weight +
+            importance_score.error_count * error_weight +
+            importance_score.warning_count * warning_weight +
+            (importance_score.total_issues - importance_score.critical_issues -
+             importance_score.error_count - importance_score.warning_count) * info_weight
+        )
+
+        # 计算问题密度（每100行代码的加权问题数）
+        if importance_score.lines_of_code > 0:
+            # 基础密度：加权问题数 / 代码行数 * 100
+            base_density = (weighted_score / importance_score.lines_of_code) * 100
+
+            # 问题类型多样性因子
+            issue_types = set(issue.issue_type for issue in static_issues if issue.issue_type)
+            diversity_factor = min(1.5, 1.0 + (len(issue_types) - 1) * 0.1)  # 最多增加50%分数
+
+            # 问题集中度分析（问题是否集中在少数几行）
+            line_numbers = [issue.line for issue in static_issues if issue.line > 0]
+            concentration_factor = 1.0
+            if len(line_numbers) > 1:
+                line_range = max(line_numbers) - min(line_numbers) + 1
+                if line_range < len(line_numbers) * 2:  # 问题比较集中
+                    concentration_factor = 1.2
+
+            # 调整后的密度分数
+            adjusted_density = base_density * diversity_factor * concentration_factor
+
+            # 根据密度阈值计算评分（使用更细粒度的评分）
+            if adjusted_density <= self._issue_density_thresholds['low']:
+                importance_score.issue_density_score = min(30.0, adjusted_density * 10)  # 低密度
+            elif adjusted_density <= self._issue_density_thresholds['medium']:
+                # 中等密度：线性插值
+                low_threshold = self._issue_density_thresholds['low']
+                medium_threshold = self._issue_density_thresholds['medium']
+                ratio = (adjusted_density - low_threshold) / (medium_threshold - low_threshold)
+                importance_score.issue_density_score = 30.0 + ratio * 30.0  # 30-60分
+            elif adjusted_density <= self._issue_density_thresholds['high']:
+                # 高密度：线性插值
+                medium_threshold = self._issue_density_thresholds['medium']
+                high_threshold = self._issue_density_thresholds['high']
+                ratio = (adjusted_density - medium_threshold) / (high_threshold - medium_threshold)
+                importance_score.issue_density_score = 60.0 + ratio * 25.0  # 60-85分
             else:
-                importance_score.issue_density_score = 100.0  # 极高密度
+                # 极高密度：对数增长避免分数过高
+                excess = adjusted_density - self._issue_density_thresholds['high']
+                importance_score.issue_density_score = min(100.0, 85.0 + min(15.0, excess * 2))
+
+            # 如果有严重问题，额外加分
+            if importance_score.critical_issues > 0:
+                critical_bonus = min(10.0, importance_score.critical_issues * 2.0)
+                importance_score.issue_density_score = min(100.0, importance_score.issue_density_score + critical_bonus)
+
         else:
-            importance_score.issue_density_score = 0.0
+            # 没有代码行数信息时，基于问题数量的简单评分
+            if importance_score.total_issues == 0:
+                importance_score.issue_density_score = 0.0
+            elif importance_score.total_issues <= 3:
+                importance_score.issue_density_score = 20.0
+            elif importance_score.total_issues <= 10:
+                importance_score.issue_density_score = 50.0
+            elif importance_score.total_issues <= 20:
+                importance_score.issue_density_score = 80.0
+            else:
+                importance_score.issue_density_score = 100.0
+
+        # 记录详细的密度分析信息
+        self.logger.debug(f"问题密度分析完成: {importance_score.file_name}",
+                         total_issues=importance_score.total_issues,
+                         weighted_score=weighted_score,
+                         lines_of_code=importance_score.lines_of_code,
+                         density_score=importance_score.issue_density_score,
+                         critical_issues=importance_score.critical_issues,
+                         error_count=importance_score.error_count)
 
     def _analyze_dependencies(self, importance_score: FileImportanceScore, file_path: str, project_context: Optional[Dict[str, Any]]):
-        """分析依赖关系"""
+        """分析依赖关系重要性
+
+        基于多个维度计算依赖关系重要性评分：
+        1. 被依赖数量（入度）
+        2. 导入依赖数量（出度）
+        3. 依赖网络中心性
+        4. 模块层次结构位置
+        5. 依赖稳定性分析
+        """
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
@@ -277,39 +404,79 @@ class FileImportanceAnalyzer:
             imports = self._extract_imports(file_path, content)
             importance_score.imports_count = len(imports)
 
-            # 从项目上下文中获取被依赖信息
-            if project_context and 'dependency_graph' in project_context:
-                dependency_graph = project_context['dependency_graph']
+            # 从项目上下文中获取依赖信息
+            dependency_graph = {}
+            reverse_deps = []
+            module_hierarchy = {}
+
+            if project_context:
+                dependency_graph = project_context.get('dependency_graph', {})
+                reverse_deps = project_context.get('reverse_dependencies', [])
+                module_hierarchy = project_context.get('module_hierarchy', {})
+
+            # 计算被依赖数量（入度）
+            if dependency_graph:
                 importance_score.dependents_count = len([
                     dep for deps in dependency_graph.values()
                     for dep in deps if file_path in dep
                 ])
+            elif reverse_deps:
+                importance_score.dependents_count = len(reverse_deps.get(file_path, []))
 
-            # 判断是否为核心模块或入口点
+            # 分析依赖网络特征
+            centrality_score = self._calculate_dependency_centrality(file_path, dependency_graph)
+            stability_score = self._calculate_dependency_stability(file_path, imports, dependency_graph)
+            hierarchy_score = self._calculate_hierarchy_importance(file_path, module_hierarchy)
+
+            # 判断模块特征
             importance_score.is_core_module = self._is_core_module(file_path, project_context)
             importance_score.is_entry_point = self._is_entry_point(file_path, project_context)
 
-            # 计算依赖关系评分
+            # 计算依赖关系评分 (0-100)
             dependency_score = 0
 
-            # 被依赖数量权重最高
+            # 被依赖数量评分（权重最高：40分）
             dependency_score += min(40, importance_score.dependents_count * 5)
 
-            # 导入数量适中加分
+            # 导入数量评分（20分）
             if 1 <= importance_score.imports_count <= 10:
-                dependency_score += 20
-            elif importance_score.imports_count > 10:
-                dependency_score += 10
+                dependency_score += 20  # 适中依赖
+            elif 11 <= importance_score.imports_count <= 20:
+                dependency_score += 15  # 较多依赖
+            elif importance_score.imports_count > 20:
+                dependency_score += 10  # 很多依赖（可能过于复杂）
+            else:
+                dependency_score += 5   # 很少或无依赖
 
-            # 核心模块加分
+            # 网络中心性评分（20分）
+            dependency_score += min(20, centrality_score)
+
+            # 依赖稳定性评分（10分）
+            dependency_score += min(10, stability_score)
+
+            # 层次结构重要性评分（5分）
+            dependency_score += min(5, hierarchy_score)
+
+            # 模块特征加分（5分）
             if importance_score.is_core_module:
-                dependency_score += 30
-
-            # 入口点加分
+                dependency_score += 3
             if importance_score.is_entry_point:
-                dependency_score += 10
+                dependency_score += 2
 
-            importance_score.dependency_score = min(100, dependency_score)
+            # 特殊模块类型加分
+            if self._is_utility_module(file_path):
+                dependency_score += 5  # 工具模块通常被广泛依赖
+            if self._is_interface_module(file_path):
+                dependency_score += 3  # 接口模块重要性高
+
+            importance_score.dependency_score = min(100.0, round(dependency_score, 2))
+
+            self.logger.debug(f"依赖关系分析完成: {importance_score.file_name}",
+                            dependency_score=importance_score.dependency_score,
+                            imports_count=importance_score.imports_count,
+                            dependents_count=importance_score.dependents_count,
+                            is_core_module=importance_score.is_core_module,
+                            is_entry_point=importance_score.is_entry_point)
 
         except Exception as e:
             self.logger.error(f"分析依赖关系失败: {file_path}", error=str(e))
@@ -527,3 +694,258 @@ class FileImportanceAnalyzer:
     def get_current_weights(self) -> Dict[str, float]:
         """获取当前权重配置"""
         return self._weights.copy()
+
+    def _analyze_nesting_depth(self, file_path: str, content: str) -> int:
+        """分析代码嵌套深度"""
+        if file_path.endswith('.py'):
+            return self._analyze_python_nesting_depth(content)
+        else:
+            return self._analyze_generic_nesting_depth(content)
+
+    def _analyze_python_nesting_depth(self, content: str) -> int:
+        """分析Python代码的嵌套深度"""
+        try:
+            tree = ast.parse(content)
+
+            max_depth = 0
+
+            def calculate_depth(node, current_depth=0):
+                nonlocal max_depth
+                max_depth = max(max_depth, current_depth)
+
+                # 递增深度的节点类型
+                if isinstance(node, (ast.If, ast.For, ast.While, ast.With, ast.Try,
+                                  ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                    for child in ast.iter_child_nodes(node):
+                        calculate_depth(child, current_depth + 1)
+                else:
+                    for child in ast.iter_child_nodes(node):
+                        calculate_depth(child, current_depth)
+
+            calculate_depth(tree)
+            return max_depth
+
+        except SyntaxError:
+            return self._analyze_generic_nesting_depth(content)
+
+    def _analyze_generic_nesting_depth(self, content: str) -> int:
+        """通用嵌套深度分析"""
+        lines = content.splitlines()
+        max_depth = 0
+        current_depth = 0
+
+        # 简单的括号和缩进分析
+        for line in lines:
+            stripped = line.strip()
+            if not stripped or stripped.startswith('#'):
+                continue
+
+            # 计算缩进
+            indent = len(line) - len(line.lstrip())
+            estimated_depth = indent // 4  # 假设4个空格为一级缩进
+            current_depth = estimated_depth
+            max_depth = max(max_depth, current_depth)
+
+            # 基于括号的简单分析
+            open_brackets = stripped.count('{') + stripped.count('(') + stripped.count('[')
+            close_brackets = stripped.count('}') + stripped.count(')') + stripped.count(']')
+            current_depth += open_brackets - close_brackets
+            max_depth = max(max_depth, current_depth)
+
+        return max_depth
+
+    def _analyze_code_duplication(self, content: str) -> float:
+        """分析代码重复度"""
+        lines = content.splitlines()
+        non_empty_lines = [line.strip() for line in lines if line.strip() and not line.strip().startswith('#')]
+
+        if len(non_empty_lines) < 2:
+            return 0.0
+
+        # 简单的行重复检测
+        line_counts = {}
+        for line in non_empty_lines:
+            line_counts[line] = line_counts.get(line, 0) + 1
+
+        # 计算重复行比例
+        duplicated_lines = sum(count - 1 for count in line_counts.values() if count > 1)
+        total_lines = len(non_empty_lines)
+
+        duplication_ratio = duplicated_lines / total_lines if total_lines > 0 else 0.0
+        return round(duplication_ratio, 3)
+
+    def _analyze_parameter_complexity(self, file_path: str, content: str) -> float:
+        """分析参数复杂度"""
+        if file_path.endswith('.py'):
+            return self._analyze_python_parameter_complexity(content)
+        else:
+            return self._analyze_generic_parameter_complexity(content)
+
+    def _analyze_python_parameter_complexity(self, content: str) -> float:
+        """分析Python函数参数复杂度"""
+        try:
+            tree = ast.parse(content)
+
+            total_params = 0
+            function_count = 0
+
+            for node in ast.walk(tree):
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    function_count += 1
+                    # 不包括self参数
+                    params = len(node.args.args)
+                    if params > 0 and node.args.args[0].arg == 'self':
+                        params -= 1
+                    total_params += params
+
+            if function_count == 0:
+                return 0.0
+
+            avg_params = total_params / function_count
+            # 参数越多，复杂度越高
+            return min(10.0, avg_params * 2.0)
+
+        except SyntaxError:
+            return self._analyze_generic_parameter_complexity(content)
+
+    def _analyze_generic_parameter_complexity(self, content: str) -> float:
+        """通用参数复杂度分析"""
+        lines = content.splitlines()
+        total_params = 0
+        function_count = 0
+
+        # 简单的函数参数匹配
+        function_pattern = r'(?:function|def)\s+\w+\s*\(([^)]*)\)'
+
+        for line in lines:
+            match = re.search(function_pattern, line, re.IGNORECASE)
+            if match:
+                function_count += 1
+                params_str = match.group(1).strip()
+                if params_str:
+                    params = len([p.strip() for p in params_str.split(',')])
+                    total_params += params
+
+        if function_count == 0:
+            return 0.0
+
+        avg_params = total_params / function_count
+        return min(10.0, avg_params * 2.0)
+
+    def _calculate_size_adjustment(self, lines_of_code: int) -> float:
+        """计算基于文件大小的调整因子"""
+        if lines_of_code == 0:
+            return 0.0
+        elif lines_of_code < 10:
+            return 0.5  # 很小的文件分数减半
+        elif lines_of_code < 50:
+            return 0.8  # 小文件分数略微减少
+        elif lines_of_code < 200:
+            return 1.0  # 中等文件保持原分数
+        elif lines_of_code < 500:
+            return 1.1  # 较大文件略微加分
+        else:
+            return 1.2  # 大文件加分更多
+
+    def _calculate_dependency_centrality(self, file_path: str, dependency_graph: Dict[str, List[str]]) -> float:
+        """计算依赖网络中心性"""
+        if not dependency_graph:
+            return 0.0
+
+        # 简单的中心性计算：基于入度和出度的总和
+        in_degree = 0  # 被依赖数量
+        out_degree = 0  # 依赖数量
+
+        # 计算入度
+        for deps in dependency_graph.values():
+            if file_path in deps:
+                in_degree += 1
+
+        # 计算出度
+        out_degree = len(dependency_graph.get(file_path, []))
+
+        # 中心性评分
+        total_nodes = len(dependency_graph)
+        if total_nodes == 0:
+            return 0.0
+
+        # 归一化的中心性分数
+        centrality = (in_degree + out_degree) / (2 * total_nodes)
+        return centrality * 20  # 放大到0-20分
+
+    def _calculate_dependency_stability(self, file_path: str, imports: List[str], dependency_graph: Dict[str, List[str]]) -> float:
+        """计算依赖稳定性"""
+        if not imports:
+            return 5.0  # 无依赖，稳定性高
+
+        # 检查依赖的稳定性
+        stable_deps = 0
+        unstable_deps = 0
+
+        for dep in imports:
+            # 如果依赖是标准库或知名第三方库，认为是稳定的
+            if self._is_stable_dependency(dep):
+                stable_deps += 1
+            # 如果依赖是项目内部文件且被很多文件依赖，认为是稳定的
+            elif dep in dependency_graph and len(dependency_graph.get(dep, [])) > 3:
+                stable_deps += 1
+            else:
+                unstable_deps += 1
+
+        total_deps = len(imports)
+        if total_deps == 0:
+            return 5.0
+
+        stability_ratio = stable_deps / total_deps
+        return stability_ratio * 10  # 0-10分
+
+    def _calculate_hierarchy_importance(self, file_path: str, module_hierarchy: Dict[str, str]) -> float:
+        """计算层次结构重要性"""
+        if not module_hierarchy or file_path not in module_hierarchy:
+            return 2.5  # 默认分数
+
+        level = module_hierarchy[file_path]
+
+        # 基于模块层次的重要性评分
+        if level == 'core':
+            return 5.0
+        elif level == 'infrastructure':
+            return 4.0
+        elif level == 'business':
+            return 3.0
+        elif level == 'presentation':
+            return 2.0
+        else:
+            return 1.0
+
+    def _is_stable_dependency(self, dependency: str) -> bool:
+        """判断依赖是否稳定"""
+        # 标准库模块
+        stdlib_modules = {
+            'os', 'sys', 'json', 'datetime', 're', 'math', 'random',
+            'collections', 'itertools', 'functools', 'operator',
+            'pathlib', 'urllib', 'http', 'socket', 'threading',
+            'asyncio', 'logging', 'unittest', 'sqlite3'
+        }
+
+        # 知名稳定的第三方库
+        stable_third_party = {
+            'numpy', 'pandas', 'requests', 'flask', 'django',
+            'pytest', 'sqlalchemy', 'celery', 'redis', 'psycopg2'
+        }
+
+        dep_lower = dependency.lower()
+        return (dep_lower in stdlib_modules or
+                any(stable in dep_lower for stable in stable_third_party))
+
+    def _is_utility_module(self, file_path: str) -> bool:
+        """判断是否为工具模块"""
+        path_lower = file_path.lower()
+        utility_patterns = ['utils', 'tools', 'helpers', 'common', 'shared']
+        return any(pattern in path_lower for pattern in utility_patterns)
+
+    def _is_interface_module(self, file_path: str) -> bool:
+        """判断是否为接口模块"""
+        path_lower = file_path.lower()
+        interface_patterns = ['interface', 'api', 'protocol', 'abstract', 'base']
+        return any(pattern in path_lower for pattern in interface_patterns)
