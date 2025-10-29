@@ -1,630 +1,494 @@
-AI驱动的智能项目分析工作流 - 简化架构设计
+AI驱动的智能项目分析与修复工作流 - 多语言架构设计
 
 📋 项目概览
 
-采用**AI优先的架构设计**，将复杂逻辑简化为AI提示词处理，实现轻量级的智能项目分析系统。核心思路：将项目结构和重点信息发送给AI，让AI和用户决定分析哪些文件，AI返回固定格式的结果，解析后执行相应操作。
+采用**AI优先的架构设计**，将复杂逻辑简化为AI提示词处理，实现轻量级的智能项目分析与修复系统。核心思路：将项目结构和重点信息发送给AI，让AI和用户决定分析哪些文件，AI返回固定格式的结果，解析后执行相应操作，并支持完整的AI修复工作流。
 
 🎯 核心目标
 
-1. **AI驱动**: 将文件选择、问题分析、修复建议等复杂决策交给AI处理
+1. **AI驱动**: 将文件选择、问题分析、修复建议、自动修复等复杂决策交给AI处理
 2. **简化架构**: 最小化代码复杂度，最大化AI能力利用
-3. **用户协作**: AI提供分析建议，用户做出最终决策
-4. **固定格式**: AI返回结构化JSON结果，便于程序解析
+3. **用户协作**: AI提供分析建议，用户做出最终决策，支持反馈循环
+4. **固定格式**: AI返回结构化JSON结果，便于程序解析和自动化执行
 5. **交互式体验**: 支持实时对话和渐进式分析
 6. **成本控制**: 通过智能提示词设计优化token使用
+7. **多语言支持**: 支持Python、JavaScript、Java、Go、C++等多种编程语言
+8. **完整修复工作流**: 从问题发现到自动修复再到验证的完整闭环
 
 🏗️ 简化架构设计
+
 **核心理念**: AI能做的事情都交给AI，程序只负责：
 - 项目结构扫描和数据收集
 - 提示词构建和AI调用
 - 结果解析和执行
 - 用户交互和状态管理
 
-**工作流程**:
+**Phase 1-4 工作流程**:
 1. 扫描项目结构 → 2. 构建AI提示词 → 3. AI分析并返回JSON → 4. 解析结果 → 5. 用户确认 → 6. 执行操作
 
-🔄 交互式功能特性
+🔄 **Phase 5: AI修复工作流** (新增)
 
-1. **分析暂停与继续**: 用户可以在任意分析阶段暂停，输入补充信息
-2. **项目背景注入**: 支持用户输入项目背景、业务逻辑、特殊要求等
-3. **修复决策支持**: 每个修复建议都需要用户确认，支持修改和完善
-4. **实时对话交互**: 在分析过程中可以与AI进行实时对话交流
-5. **渐进式优化**: 基于用户反馈持续优化分析结果和修复建议
+**完整修复工作流设计**:
+```
+Phase 4完成后 → AI发现问题 → AI修复建议 → 用户反馈 → 自动修复 → 验证 → 循环/结束
+```
 
-  ---
-📊 详细任务分解
+**详细工作流程**:
+1. **AI问题发现**: 基于静态分析和AI选择的文件，结合用户建议，让AI深度发现问题
+2. **AI修复建议**: AI给出具体的修复建议和代码
+3. **用户审查**: 用户查看修复建议，给出自己的建议和修改
+4. **建议优化**: 结合用户反馈，让AI重新给出修复建议或确认建议
+5. **自动修复**: Agent自动解析固定格式的修复建议并执行修复
+6. **修复验证**: 修复完成后进行验证，确保问题解决且无新问题
+7. **循环处理**: 若仍有问题，返回AI发现问题步骤；若无问题，结束修复流程
 
-Phase 1: 基础数据结构和配置模块
+🔄 **交互式功能特性**
 
-T001: 创建项目分析数据结构
+1. **AI对话决策**: AI分析项目并建议分析哪些文件
+2. **用户最终确认**: 用户可以修改AI的建议或提供额外信息
+3. **实时对话**: 分析过程中可以与AI进行实时对话
+4. **渐进式分析**: 支持分步骤的分析和确认
+5. **修复反馈循环**: 用户可以对AI修复建议提出修改意见
+6. **多轮迭代**: 支持多轮AI-用户交互直到满意为止
 
+🌍 **多语言支持特性**
+
+**支持的编程语言**:
+- **Python**: 完整支持，包含AST分析、Pylint、Flake8、Bandit
+- **JavaScript/TypeScript**: ESLint、TypeScript编译器分析
+- **Java**: SpotBugs、Checkstyle、PMD集成
+- **Go**: go vet、golint、staticcheck分析
+- **C/C++**: Clang-tidy、Cppcheck分析
+- **通用**: 文本模式分析，支持任意文本文件
+
+**语言特定功能**:
+- 语言特定的AST解析器
+- 语言感知的复杂度计算
+- 语言特定的静态分析工具集成
+- 多语言混合项目支持
+
+---
+
+📊 简化任务分解
+
+**Phase 1: 核心数据结构 (已完成)**
+
+T001: 项目分析数据结构 ✅
 - 文件: src/tools/project_analysis_types.py
-- 任务描述: 定义项目分析工作流中使用的所有数据类
-- 验收标准:
-    - ProjectInfo数据类包含项目基本信息（路径、文件数量、编程语言等）
-    - StaticAnalysisSummary数据类包含静态分析结果摘要
-    - AIAnalysisContext数据类包含AI分析所需的上下文信息
-    - FileImportanceScore数据类包含文件重要性评分
-    - FixSuggestion数据类包含修复建议结构
-    - ProjectAnalysisResult数据类包含最终分析结果
-    - 所有数据类都包含to_dict()和from_dict()方法
+- 状态: 已完成
+- 功能: 基础数据类定义
 
-T002: 创建项目分析配置管理
-
+T002: 项目分析配置管理 ✅
 - 文件: config/project_analysis_config.yaml
-- 任务描述: 创建项目分析工作流的配置文件
-- 验收标准:
-    - 配置文件包含文件选择策略参数（最大文件数、token限制等）
-    - 配置文件包含静态分析工具选择和阈值设置
-    - 配置文件包含AI分析参数（模型选择、temperature等）
-    - 配置文件包含修复策略配置（自动应用、验证要求等）
-    - 创建配置加载器ProjectAnalysisConfig类
+- 状态: 已完成
+- 功能: 配置文件和加载器
 
-T003: 扩展现有Logger模块
-
+T003: Logger模块扩展 ✅
 - 文件: src/utils/logger.py
-- 任务描述: 为项目分析工作流添加专门的日志配置
+- 状态: 已完成
+- 功能: 项目分析日志
+
+**Phase 2: AI驱动的智能文件选择器**
+
+T004: 创建AI驱动的项目扫描器
+
+- 文件: src/tools/ai_project_scanner.py
+- 任务描述: 扫描项目结构，为AI分析提供数据基础
 - 验收标准:
-    - 添加project_analysis日志通道
-    - 实现不同级别的日志输出（workflow、debug、performance）
-    - 支持分析进度跟踪日志
-    - 支持token使用统计日志
+    - 扫描项目文件结构和基本信息
+    - 统计文件类型、大小、语言分布
+    - 识别核心文件和潜在问题文件
+    - 生成项目概览报告
+    - 支持自定义扫描规则
 
-  ---
-Phase 2: 智能文件选择模块
+T005: 创建AI文件选择提示词
 
-T004: 创建文件重要性评估器
-
-- 文件: src/tools/file_importance_analyzer.py
-- 任务描述: 实现基于多种因素的文件重要性评估算法
+- 文件: src/prompts/ai_file_selection.py
+- 任务描述: 创建AI文件选择的提示词模板
 - 验收标准:
-    - FileImportanceAnalyzer类能够分析文件并计算重要性分数
-    - 实现基于静态分析问题密度的重要性评分算法
-    - 实现基于文件复杂度的重要性评分算法
-    - 实现基于文件依赖关系的重要性评分算法
-    - 支持自定义权重配置
-    - 单元测试覆盖所有评分算法
+    - 项目结构分析提示词
+    - 文件重要性评估提示词
+    - 用户需求理解提示词
+    - 固定JSON响应格式要求
+    - Token优化设计
 
-T005: 创建智能文件选择器
+T006: 创建AI响应解析器
 
-- 文件: src/tools/smart_file_selector.py
-- 任务描述: 实现智能选择需要AI分析的重点文件
+- 文件: src/tools/ai_response_parser.py
+- 任务描述: 解析AI返回的JSON格式响应
 - 验收标准:
-    - SmartFileSelector类能够从项目文件中选择重点文件
-    - 实现基于重要性分数的文件排序功能
-    - 实现token限制下的文件数量优化算法
-    - 实现模块化文件选择（确保相关文件同时被选中）
-    - 支持用户自定义选择策略
-    - 集成测试验证选择结果合理性
+    - JSON格式验证和解析
+    - 文件选择结果结构化
+    - 错误处理和重试机制
+    - 响应置信度评估
 
-T006: 集成现有的FileManager功能
+**Phase 3: AI分析执行器**
 
-- 文件: src/tools/project_file_manager.py
-- 任务描述: 扩展FileManager以支持项目级别的文件操作
+T007: 创建AI分析执行器
+
+- 文件: src/tools/ai_analysis_executor.py
+- 任务描述: 执行AI分析任务并管理对话
 - 验收标准:
-    - ProjectFileManager类继承并扩展现有FileManager
-    - 实现项目文件结构扫描和分类功能
-    - 实现基于文件类型的过滤功能
-    - 实现文件大小统计和token估算功能
-    - 支持递归文件扫描和排除规则
-    - 利用现有的analyze_project_structure()方法
+    - 调用AI进行文件分析
+    - 管理多轮对话上下文
+    - 处理用户输入和反馈
+    - 生成分析结果和建议
+    - 支持分析过程中断和继续
 
-  ---
-Phase 3: 静态分析集成模块
+T008: 创建静态分析集成
 
-T007: 创建静态分析结果聚合器
-
-- 文件: src/tools/static_analysis_aggregator.py
-- 任务描述: 集成现有的StaticAnalysisCoordinator并聚合分析结果
+- 文件: src/tools/static_analysis_integration.py
+- 任务描述: 集成现有静态分析工具，为AI提供数据
 - 验收标准:
-    - StaticAnalysisAggregator类能够调用现有的StaticAnalysisCoordinator
-    - 实现多工具分析结果的统一格式转换
-    - 实现问题严重程度标准化算法
-    - 实现问题类型分类和统计功能
-    - 实现文件级别的问题汇总功能
-    - 复用现有的AnalysisIssue数据结构
+    - 调用StaticAnalysisCoordinator
+    - 聚合静态分析结果
+    - 格式化分析数据供AI使用
+    - 生成问题摘要和统计
 
-T008: 实现静态分析结果过滤器
+**Phase 4: 交互式工作流**
 
-- 文件: src/tools/static_analysis_filter.py
-- 任务描述: 根据配置过滤和优先级排序静态分析问题
-- 验收标准:
-    - StaticAnalysisFilter类能够根据严重程度过滤问题
-    - 实现基于问题类型的过滤功能
-    - 实现基于文件路径的过滤功能
-    - 实现问题去重和合并功能
-    - 支持用户自定义过滤规则
-    - 性能测试确保大数据量下的过滤效率
+T009: 创建交互式会话管理器
 
-T009: 创建问题密度分析器
-
-- 文件: src/tools/issue_density_analyzer.py
-- 任务描述: 分析项目中问题的分布密度和热点区域
-- 验收标准:
-    - IssueDensityAnalyzer类能够计算文件和模块的问题密度
-    - 实现问题热点检测算法
-    - 实现问题趋势分析功能
-    - 生成问题分布统计报告
-    - 可视化支持（生成问题密度图表数据）
-    - 集成测试验证分析结果准确性
-
-  ---
-Phase 4: 上下文构建模块
-
-T010: 创建代码片段提取器
-
-- 文件: src/tools/code_snippet_extractor.py
-- 任务描述: 从文件中提取与问题相关的代码片段
-- 验收标准:
-    - CodeSnippetExtractor类能够基于问题位置提取代码片段
-    - 实现包含上下文的代码片段提取（前后行数可配置）
-    - 实现函数/类级别的完整代码提取
-    - 实现依赖关系代码提取
-    - 支持多种代码片段格式（纯文本、带行号、markdown格式）
-    - 单元测试覆盖各种提取场景
-
-T011: 创建问题上下文构建器
-
-- 文件: src/tools/issue_context_builder.py
-- 任务描述: 构建AI分析所需的完整问题上下文
-- 验收标准:
-    - IssueContextBuilder类能够整合静态分析结果和代码片段
-    - 实现上下文信息的优先级排序
-    - 实现上下文长度控制算法（token限制）
-    - 实现上下文信息压缩和摘要功能
-    - 支持不同分析类型的上下文模板
-    - 集成测试验证上下文完整性
-
-T012: 创建依赖关系分析器
-
-- 文件: src/tools/dependency_analyzer.py
-- 任务描述: 分析文件间的依赖关系和调用图
-- 验收标准:
-    - DependencyAnalyzer类能够分析Python文件的import依赖
-    - 实现函数调用关系分析
-    - 实现类继承关系分析
-    - 生成依赖关系图数据结构
-    - 实现循环依赖检测功能
-    - 性能测试确保大型项目的分析效率
-
-  ---
-Phase 5: AI分析集成模块
-
-T013: 扩展现有DeepAnalyzer
-
-- 文件: src/tools/deep_analyzer.py (修改现有文件)
-- 任务描述: 扩展DeepAnalyzer以支持项目级别的上下文分析
-- 验收标准:
-    - 在DeepAnalyzer中添加analyze_project_context()方法
-    - 实现基于上下文的多文件分析功能
-    - 扩展现有的_construct_prompt()方法支持项目上下文
-    - 实现分析结果的结构化解析
-    - 复用现有的异步执行和错误处理机制
-    - 向后兼容现有的单文件分析功能
-
-T014: 创建项目分析提示模板
-
-- 文件: src/prompts/project_analysis_templates.py
-- 任务描述: 创建专门用于项目分析的提示模板
-- 验收标准:
-    - 创建项目概览分析模板
-    - 创建问题根因分析模板
-    - 创建修复建议生成模板
-    - 创建代码质量评估模板
-    - 创建安全漏洞分析模板
-    - 所有模板都支持变量替换和动态内容生成
-
-T015: 创建AI分析结果解析器
-
-- 文件: src/tools/ai_analysis_parser.py
-- 任务描述: 解析AI返回的分析结果并转换为结构化数据
-- 验收标准:
-    - AIAnalysisParser类能够解析不同格式的AI响应
-    - 实现JSON格式的结构化结果解析
-    - 实现Markdown格式的结果解析
-    - 实现自然语言结果的智能提取
-    - 实现解析结果置信度评估
-    - 错误处理和异常恢复机制
-
-  ---
-Phase 6: 修复建议生成模块
-
-T016: 创建修复建议生成器
-
-- 文件: src/tools/fix_suggestion_generator.py
-- 任务描述: 基于AI分析结果生成具体的修复建议
-- 验收标准:
-    - FixSuggestionGenerator类能够生成详细的修复建议
-    - 实现基于问题类型的修复策略选择
-    - 实现代码级别的修复步骤生成
-    - 实现修复优先级排序算法
-    - 实现修复依赖关系分析
-    - 支持自定义修复模板
-
-T017: 创建代码补丁生成器
-
-- 文件: src/tools/code_patch_generator.py
-- 任务描述: 生成可直接应用的代码补丁
-- 验收标准:
-    - CodePatchGenerator类能够生成准确的代码补丁
-    - 实现基于AST的代码修改功能
-    - 实现补丁安全性检查机制
-    - 实现补丁冲突检测和解决
-    - 支持回滚操作
-    - 单元测试验证补丁正确性
-
-T018: 创建修复应用管理器
-
-- 文件: src/tools/fix_application_manager.py
-- 任务描述: 管理修复建议的应用和执行
-- 验收标准:
-    - FixApplicationManager类能够管理修复的完整生命周期
-    - 实现修复前的备份机制
-    - 实现批量修复应用功能
-    - 实现修复进度跟踪
-    - 实现修复失败时的回滚功能
-    - 集成测试验证修复流程完整性
-
-  ---
-Phase 7: 修复验证模块
-
-T019: 创建静态分析验证器
-
-- 文件: src/tools/static_analysis_validator.py
-- 任务描述: 使用静态分析工具验证修复效果
-- 验收标准:
-    - StaticAnalysisValidator类能够对比修复前后的静态分析结果
-    - 实现问题解决状态验证
-    - 实现新问题引入检测（回归测试）
-    - 生成修复效果统计报告
-    - 复用现有的StaticAnalysisCoordinator
-    - 性能测试确保验证效率
-
-T020: 创建AI修复验证器
-
-- 文件: src/tools/ai_fix_validator.py
-- 任务描述: 使用AI验证修复的正确性和质量
-- 验收标准:
-    - AIFixValidator类能够评估修复质量
-    - 实现修复代码的正确性验证
-    - 实现修复代码的最佳实践检查
-    - 实现修复影响范围评估
-    - 生成修复质量评分
-    - 利用现有的DeepAnalyzer进行验证分析
-
-T021: 创建修复报告生成器
-
-- 文件: src/tools/fix_report_generator.py
-- 任务描述: 生成详细的修复前后对比报告
-- 验收标准:
-    - FixReportGenerator类能够生成完整的修复报告
-    - 实现Markdown格式的报告生成
-    - 实现HTML格式的报告生成
-    - 实现JSON格式的结构化报告
-    - 包含修复前后的代码对比
-    - 包含修复效果统计数据
-
-  ---
-Phase 8: 交互式分析引擎
-
-T022: 创建交互式分析会话管理器
-
-- 文件: src/tools/interactive_session_manager.py
+- 文件: src/tools/interactive_session.py
 - 任务描述: 管理用户与AI的交互式分析会话
 - 验收标准:
-    - InteractiveSessionManager类能够管理完整的交互会话生命周期
-    - 实现会话状态的持久化和恢复
-    - 支持用户在任何阶段暂停和继续分析
-    - 实现用户输入的实时处理和响应
-    - 支持多轮对话的上下文保持
-    - 集成现有的LLM客户端进行对话交互
+    - 会话状态管理
+    - 用户输入处理
+    - AI响应展示
+    - 对话历史记录
+    - 会话持久化
 
-T023: 创建用户意图理解器
+T010: 创建用户决策支持
 
-- 文件: src/tools/user_intent_analyzer.py
-- 任务描述: 分析和理解用户在分析过程中的输入意图
+- 文件: src/tools/user_decision_support.py
+- 任务描述: 支持用户对AI建议的决策
 - 验收标准:
-    - UserIntentAnalyzer类能够解析用户的自然语言输入
-    - 实现意图分类（询问、确认、修改、跳过等）
-    - 实现项目背景信息提取和结构化
-    - 实现用户反馈的情感分析和优先级判断
-    - 支持多语言输入处理
-    - 与AI分析结果融合生成改进建议
+    - AI建议展示
+    - 用户确认界面
+    - 修改和反馈机制
+    - 决策历史记录
 
-T024: 实现协同决策引擎
+**Phase 5: AI修复工作流**
 
-- 文件: src/tools/collaborative_decision_engine.py
-- 任务描述: 实现用户与AI的协同决策机制
+T011: 创建AI修复工作流协调器
+
+- 文件: src/tools/ai_fix_workflow_coordinator.py
+- 任务描述: 协调整个AI修复工作流程，管理状态转换和数据流
 - 验收标准:
-    - CollaborativeDecisionEngine类能够管理修复决策流程
-    - 实现修复建议的用户确认机制
-    - 支持用户修改和完善修复方案
-    - 实现决策历史的记录和追溯
-    - 支持批量决策和单独决策模式
-    - 提供决策建议和风险评估
+    - 工作流状态管理（问题发现→修复建议→用户反馈→自动修复→验证）
+    - 多轮迭代支持，允许修复失败时重新开始
+    - 会话持久化和恢复
+    - 错误处理和回滚机制
+    - 进度跟踪和日志记录
 
-T025: 创建实时对话接口
+T012: 创建多语言静态分析协调器
 
-- 文件: src/tools/real_time_dialogue_interface.py
-- 任务描述: 提供分析过程中的实时对话能力
+- 文件: src/tools/multilang_static_coordinator.py
+- 任务描述: 扩展静态分析支持多种编程语言
 - 验收标准:
-    - RealTimeDialogueInterface类支持实时双向通信
-    - 实现WebSocket或长轮询的实时消息传递
-    - 支持消息队列和异步处理
-    - 实现对话历史的实时保存
-    - 支持多用户并发会话管理
-    - 提供对话中断和重连机制
+    - Python: AST、Pylint、Flake8、Bandit集成
+    - JavaScript/TypeScript: ESLint、TypeScript编译器
+    - Java: SpotBugs、Checkstyle、PMD集成
+    - Go: go vet、golint、staticcheck
+    - C/C++: Clang-tidy、Cppcheck
+    - 语言自动检测和工具选择
+    - 统一的问题格式输出
 
-T026: 实现上下文感知分析器
+T013: 创建AI问题检测器
 
-- 文件: src/tools/context_aware_analyzer.py
-- 任务描述: 结合用户输入进行上下文感知的AI分析
+- 文件: src/tools/ai_problem_detector.py
+- 任务描述: 基于静态分析结果和文件内容，让AI深度发现问题
 - 验收标准:
-    - ContextAwareAnalyzer类能够融合用户背景信息
-    - 实现动态上下文更新和优先级调整
-    - 支持用户指定的分析重点和忽略项
-    - 实现基于用户反馈的分析策略调整
-    - 支持分析结果的实时优化
-    - 提供上下文相关性和重要性评分
+    - 结合静态分析结果和文件重要性进行AI分析
+    - 支持用户需求输入和偏好设置
+    - 多语言代码理解能力
+    - 返回结构化的问题检测结果
+    - 置信度和优先级评估
 
-T027: 创建分析中断与恢复机制
+T014: 创建AI修复建议生成器
 
-- 文件: src/tools/analysis_interruption_manager.py
-- 任务描述: 实现分析过程的优雅中断和状态恢复
+- 文件: src/tools/ai_fix_suggestion_generator.py
+- 任务描述: 为检测到的问题生成具体的修复建议和代码
 - 验收标准:
-    - AnalysisInterruptionManager类支持任意阶段的中断
-    - 实现分析状态的完整保存和恢复
-    - 支持中断后的增量分析继续
-    - 实现中断原因的分类和处理
-    - 支持用户自定义中断点和恢复策略
-    - 提供中断历史的查询和管理
+    - 基于问题描述生成修复代码
+    - 提供修复说明和推理过程
+    - 评估修复风险和副作用
+    - 支持多种修复方案对比
+    - 固定JSON格式输出便于解析
 
-  ---
-Phase 9: 工作流编排引擎
+T015: 创建用户反馈处理器
 
-T028: 创建项目分析工作流引擎
-
-- 文件: src/tools/project_analysis_workflow.py
-- 任务描述: 编排整个项目分析工作流的执行
+- 文件: src/tools/user_feedback_processor.py
+- 任务描述: 处理用户对修复建议的反馈和修改意见
 - 验收标准:
-    - ProjectAnalysisWorkflow类能够协调整个分析流程
-    - 实现状态机模式的工作流控制
-    - 实现工作流进度跟踪和断点续传
-    - 实现异步任务执行和并发控制
-    - 实现工作流配置和自定义
-    - 错误处理和异常恢复机制
-    - **集成交互式会话管理器支持用户参与**
+    - 支持用户接受、拒绝、修改修复建议
+    - 记录用户反馈历史和偏好
+    - 将用户修改整合到新的AI请求中
+    - 支持批量反馈处理
+    - 反馈效果统计和分析
 
-T029: 实现工作流状态管理
+T016: 创建自动修复执行器
 
-- 文件: src/tools/workflow_state_manager.py
-- 任务描述: 管理工作流的执行状态和中间结果
+- 文件: src/tools/auto_fix_executor.py
+- 任务描述: 解析AI修复建议并自动应用到代码文件
 - 验收标准:
-    - WorkflowStateManager类能够持久化工作流状态
-    - 实现工作流进度的实时更新
-    - 实现中间结果的缓存机制
-    - 实现工作流的暂停、恢复、取消功能
-    - 支持多个并发工作流的管理
-    - 数据库集成测试
-    - **支持交互式状态和用户输入的保存**
+    - 解析固定格式的修复建议
+    - 安全的代码修改（创建备份）
+    - 精确的行级代码替换
+    - 修改前后对比记录
+    - 回滚机制支持
 
-T030: 创建工作流监控器
+T017: 创建修复验证器
 
-- 文件: src/tools/workflow_monitor.py
-- 任务描述: 监控工作流执行性能和资源使用
+- 文件: src/tools/fix_verifier.py
+- 任务描述: 验证修复效果，确保问题解决且无新问题
 - 验收标准:
-    - WorkflowMonitor类能够监控工作流的各项指标
-    - 实现执行时间统计和分析
-    - 实现Token使用量统计和成本控制
-    - 实现资源使用监控（CPU、内存）
-    - 实现性能瓶颈检测
-    - 生成监控报告和优化建议
-    - **监控用户交互频率和响应时间**
+    - 重新运行静态分析验证原问题是否解决
+    - 检测修复是否引入新问题
+    - 代码质量改进评估
+    - 修复成功率统计
+    - 失败修复的重新分析触发
 
-  ---
-Phase 9: 用户接口模块
+**Phase 6: 用户接口**
 
-T031: 扩展CLI命令接口
+T018: 创建CLI交互式接口
 
-- 文件: src/interfaces/cli.py (修改现有文件)
-- 任务描述: 在现有CLI中添加交互式项目分析工作流命令
+- 文件: src/interfaces/interactive_cli.py
+- 任务描述: 提供命令行的交互式分析和修复接口
 - 验收标准:
-    - 添加analyze-project命令支持完整工作流
-    - 添加--interactive参数支持交互式分析模式
-    - 添加--workflow参数支持智能分析模式
-    - 添加--focus参数支持特定类型问题分析
-    - 实现实时用户输入和确认机制
-    - 支持分析过程中的暂停和继续功能
-    - 保持与现有CLI命令的兼容性
+    - 交互式命令行界面
+    - 实时对话显示
+    - 进度指示器
+    - 结果输出格式化
+    - 修复工作流命令支持
 
-T032: 添加Web API接口
+T019: 创建Web交互式界面
 
-- 文件: src/interfaces/web.py (修改现有文件)
-- 任务描述: 在现有Web界面中添加交互式项目分析功能
+- 文件: web/templates/interactive_analysis.html, web/static/js/interactive_analysis.js
+- 任务描述: 提供Web界面的交互式分析和修复
 - 验收标准:
-    - 添加/api/project/analyzePOST接口启动分析
-    - 添加/api/project/analyze/interactivePOST接口处理用户交互
-    - 添加/api/project/analyze/status/<task_id>GET接口查询状态
-    - 添加/api/project/analyze/results/<task_id>GET接口获取结果
-    - 添加WebSocket支持实时进度和对话推送
-    - 复用现有的文件上传和项目管理功能
-    - 集成测试验证API完整性和实时性
+    - 实时对话界面
+    - 项目结构可视化
+    - 分析进度展示
+    - 决策确认界面
+    - 修复建议编辑器
+    - 修复结果对比显示
 
-T033: 创建交互式Web前端界面
+---
 
-- 文件: web/templates/interactive_project_analysis.html, web/static/js/interactive_project_analysis.js
-- 任务描述: 创建支持交互式项目分析的Web前端界面
-- 验收标准:
-    - 创建项目分析配置和交互界面
-    - 实现分析进度实时显示和用户输入区域
-    - 实现分析结果的可视化展示
-    - 实现修复建议的交互式确认界面
-    - 支持实时对话聊天窗口
-    - 实现修复报告的下载功能
-    - 响应式设计适配不同屏幕尺寸
+🎯 核心组件设计
 
-T034: 创建实时通信组件
+**AI文件选择流程**:
+```python
+# 1. 项目扫描
+scanner = AIProjectScanner()
+project_info = scanner.scan_project(project_path)
 
-- 文件: web/static/js/realtime_communication.js, src/interfaces/websocket_handler.py
-- 任务描述: 实现前后端实时通信组件
-- 验收标准:
-    - WebSocket服务器端处理器
-    - 前端实时通信客户端
-    - 消息队列和重连机制
-    - 支持多用户并发通信
-    - 实现消息类型分类和处理
-    - 通信状态管理和错误处理
+# 2. 构建AI提示
+prompt_builder = FileSelectionPromptBuilder()
+prompt = prompt_builder.build_prompt(project_info, user_requirements)
 
-  ---
-Phase 10: 测试和文档
+# 3. AI分析
+ai_executor = AIAnalysisExecutor()
+ai_response = ai_executor.analyze(prompt)
 
-T028: 创建单元测试套件
+# 4. 解析结果
+parser = AIResponseParser()
+file_selections = parser.parse_file_selections(ai_response)
 
-- 文件: tests/test_project_analysis/
-- 任务描述: 为所有新增组件创建完整的单元测试
-- 验收标准:
-    - 每个新类都有对应的单元测试文件
-    - 测试覆盖率达到90%以上
-    - 包含正常流程和异常情况的测试
-    - 包含性能测试和边界条件测试
-    - 集成现有的测试框架
-    - 自动化测试和持续集成
+# 5. 用户确认
+decision_support = UserDecisionSupport()
+final_selections = decision_support.get_user_confirmation(file_selections)
+```
 
-T029: 创建集成测试
+**AI修复工作流流程**:
+```python
+# Phase 5: AI修复工作流
+workflow = AIFixWorkflowCoordinator()
 
-- 文件: tests/integration/test_project_analysis_workflow.py
-- 任务描述: 创建端到端的项目分析工作流测试
-- 验收标准:
-    - 创建完整工作流的集成测试
-    - 使用真实项目数据进行测试
-    - 测试不同规模项目的处理能力
-    - 测试各种异常情况的处理
-    - 性能基准测试
-    - 回归测试确保功能稳定
+# 1. 启动修复工作流
+session = await workflow.start_fix_workflow(
+    project_path="/path/to/project",
+    user_requirements="优化代码质量，修复安全漏洞",
+    selected_files=["src/services/user.py", "src/utils/helpers.js"]
+)
 
-T030: 创建用户文档
+# 2. AI问题检测
+findings = await workflow.get_ai_findings()
+# 返回发现的问题列表
 
-- 文件: docs/PROJECT_ANALYSIS_GUIDE.md
-- 任务描述: 创建详细的使用文档和API文档
-- 验收标准:
-    - 创建功能概述和使用指南
-    - 创建CLI命令详细文档
-    - 创建Web界面使用说明
-    - 创建API接口文档
-    - 创建配置文件说明
-    - 创建故障排除指南
+# 3. 生成修复建议
+suggestions = await workflow.generate_fix_suggestions(
+    selected_findings=["finding_1", "finding_2"]
+)
+# 返回具体的修复建议
 
-T031: 创建开发者文档
+# 4. 处理用户反馈
+user_feedbacks = [
+    {
+        "suggestion_id": "suggestion_1",
+        "decision": "approve",  # approve/reject/modify
+        "comment": "这个修复很好",
+        "modified_suggestion": {...}  # 如果decision为modify
+    }
+]
+result = await workflow.process_user_feedback(user_feedbacks)
 
-- 文件: docs/PROJECT_ANALYSIS_DEVELOPER.md
-- 任务描述: 创建开发者扩展和维护文档
-- 验收标准:
-    - 创建架构设计文档
-    - 创建代码结构和模块说明
-    - 创建扩展开发指南
-    - 创建性能优化建议
-    - 创建最佳实践指南
-    - 代码示例和案例研究
+# 5. 自动修复和验证
+# 自动执行修复建议并验证结果
+```
 
-  ---
-Phase 11: 优化和部署
+**AI响应JSON格式 - 文件选择**:
+```json
+{
+  "analysis_summary": "项目包含15个Python文件，主要集中在业务逻辑层...",
+  "recommended_files": [
+    {
+      "file_path": "src/services/user_service.py",
+      "priority": "high",
+      "reason": "核心业务逻辑，包含多个复杂函数",
+      "estimated_tokens": 2500
+    }
+  ],
+  "analysis_focus": [
+    "代码复杂度分析",
+    "潜在bug检测"
+  ],
+  "confidence": 0.85
+}
+```
 
-T032: 性能优化
+**AI响应JSON格式 - 问题检测**:
+```json
+{
+  "detected_issues": [
+    {
+      "issue_id": "issue_001",
+      "file_path": "src/services/user_service.py",
+      "line": 45,
+      "issue_type": "security_vulnerability",
+      "severity": "high",
+      "description": "SQL注入漏洞风险",
+      "code_snippet": "query = f'SELECT * FROM users WHERE id = {user_id}'",
+      "confidence": 0.92,
+      "reasoning": "使用字符串格式化构建SQL查询存在注入风险"
+    }
+  ],
+  "overall_confidence": 0.88,
+  "analysis_summary": "发现3个高风险安全问题，建议立即修复"
+}
+```
 
-- 文件: 多个现有文件的优化
-- 任务描述: 优化系统性能和资源使用
-- 验收标准:
-    - 优化文件选择算法的性能
-    - 优化AI分析的Token使用效率
-    - 实现分析结果缓存机制
-    - 优化并发处理能力
-    - 内存使用优化
-    - 性能基准测试验证
+**AI响应JSON格式 - 修复建议**:
+```json
+{
+  "fix_suggestions": [
+    {
+      "suggestion_id": "fix_001",
+      "issue_id": "issue_001",
+      "file_path": "src/services/user_service.py",
+      "line": 45,
+      "original_code": "query = f'SELECT * FROM users WHERE id = {user_id}'",
+      "suggested_code": "query = 'SELECT * FROM users WHERE id = %s'",
+      "explanation": "使用参数化查询防止SQL注入",
+      "reasoning": "参数化查询是防止SQL注入的标准做法",
+      "confidence": 0.95,
+      "side_effects": [
+        "需要确保数据库连接器支持参数化查询"
+      ],
+      "alternatives": [
+        {
+          "approach": "使用ORM",
+          "code": "User.objects.get(id=user_id)",
+          "pros": "更安全，更易维护",
+          "cons": "需要引入ORM依赖"
+        }
+      ]
+    }
+  ]
+}
+```
 
-T033: 错误处理和日志完善
+---
 
-- 文件: 多个现有文件的错误处理完善
-- 任务描述: 完善错误处理机制和日志记录
-- 验收标准:
-    - 完善所有模块的异常处理
-    - 实现统一的错误码和错误信息
-    - 完善日志记录和调试信息
-    - 实现错误恢复机制
-    - 用户友好的错误提示
-    - 故障诊断工具
+🎯 任务优先级
 
-T034: 配置管理和部署脚本
+**高优先级 (核心功能)**:
+- T004-T006: AI文件选择器
+- T007-T008: AI分析执行器
+- T009-T010: 交互式工作流
+- T011-T017: AI修复工作流 (新增重点)
 
-- 文件: scripts/deploy_project_analysis.sh
-- 任务描述: 创建部署和配置管理脚本
-- 验收标准:
-    - 创建自动化部署脚本
-    - 创建配置文件模板
-    - 创建环境检查脚本
-    - 创建数据库迁移脚本
-    - 创建服务启动脚本
-    - 部署文档和运维指南
+**中优先级 (用户界面)**:
+- T018: CLI交互式接口
+- T019: Web交互式界面
 
-  ---
-🎯 任务优先级和依赖关系
+**低优先级 (增强功能)**:
+- 测试、文档、优化
 
-高优先级任务 (核心功能)
+**特殊说明**: T011-T017 (AI修复工作流) 是本次迭代的核心重点，实现了完整的从问题发现到自动修复的闭环。
 
-- T001-T003: 基础设施
-- T004-T006: 文件选择
-- T007-T009: 静态分析集成
-- T013-T015: AI分析集成
-- **T022-T027: 交互式分析引擎 (新增)**
-- T028-T030: 工作流编排引擎
+---
 
-中优先级任务 (增强功能)
+🔄 **完整的AI修复工作流架构图**
 
-- T010-T012: 上下文构建
-- T016-T018: 修复建议
-- T019-T021: 修复验证
-- T031-T034: 用户接口
+```mermaid
+graph TD
+    A[Phase 1-4: 项目分析与文件选择] --> B[AI问题检测]
+    B --> C[AI修复建议生成]
+    C --> D[用户审查与反馈]
+    D --> E{用户决策}
+    E -->|批准| F[自动修复执行]
+    E -->|修改建议| C
+    E -->|拒绝| G[跳过此问题]
+    F --> H[修复验证]
+    H --> I{验证结果}
+    I -->|成功| J[问题解决]
+    I -->|失败| K[重新分析]
+    K --> B
+    G --> L{还有问题?}
+    J --> L
+    L -->|是| B
+    L -->|否| M[工作流完成]
+```
 
-低优先级任务 (完善功能)
-
-- T035-T042: 测试、文档、优化
-
-依赖关系
-
-T001-T003 → T004-T006 → T007-T009 → T010-T012 → T013-T015 → T016-T018 → T019-T021 → **T022-T027(交互式)** → T028-T030 → T031-T034 → T035-T042
+---
 
 📊 预期交付成果
 
-1. **完整的交互式智能项目分析Agent系统**
-2. **支持实时交互的CLI和Web用户界面**
-3. **包含实时通信和协同决策的用户体验**
-4. 详细的测试套件和开发者文档
-5. 可扩展的交互式架构设计
-6. 性能优化的实时分析引擎
+1. **AI驱动的智能项目分析与修复系统**
+   - 完整的Phase 1-4项目分析功能
+   - 新增Phase 5 AI修复工作流
 
-这个任务清单将项目扩展为**42个原子级别的任务**，新增了完整的交互式分析功能模块，每个任务都有明确的验收标准，确保实现的每一步都是可验证和可测试的。整个实现过程充分利用了现有的代码组件，最大化代码复用，同时保持架构的清晰性和可扩展性。
+2. **多语言支持的分析引擎**
+   - Python、JavaScript、Java、Go、C++支持
+   - 语言特定的静态分析工具集成
+   - 统一的问题格式和修复建议
 
-⏺ 我已经为您创建了一份详细的智能项目分析工作流任务清单，包含34个原子级别的任务，分为11个阶段：
+3. **交互式用户界面 (CLI + Web)**
+   - 实时AI对话界面
+   - 修复建议编辑器
+   - 修复结果对比显示
+   - 工作流进度跟踪
 
-📋 任务清单概览
+4. **完整的AI修复闭环系统**
+   - AI问题检测与修复建议
+   - 用户反馈与多轮迭代
+   - 自动修复执行与验证
+   - 失败回滚与重新分析
 
-核心特点：
-- 原子化设计: 每个任务都可独立完成和测试
-- 现有组件复用: 最大化利用StaticAnalysisCoordinator、DeepAnalyzer、FileManager等现有功能
-- 渐进式实现: 从基础数据结构到完整用户界面，逐步构建
-- 明确验收标准: 每个任务都有具体的完成要求
+5. **用户决策支持系统**
+   - AI建议的可视化展示
+   - 用户偏好学习与记忆
+   - 批量操作与历史记录
 
-🎯 关键亮点
+**架构优势**:
+- **AI优先**: 将复杂决策交给AI，程序负责执行
+- **用户控制**: 关键决策点由用户确认，保证安全性
+- **多轮迭代**: 支持反馈循环，直到满意为止
+- **多语言**: 统一接口支持多种编程语言
+- **自动化**: 从检测到修复的全流程自动化
+- **可验证**: 每个修复都有验证机制
+- **可回滚**: 支持备份和回滚，确保安全性
 
-1. Phase 1-3: 基础设施（数据结构、文件选择、静态分析集成）
-2. Phase 4-5: 上下文构建和AI分析集成
-3. Phase 6-7: 修复建议生成和验证
-4. Phase 8: 工作流编排引擎
-5. Phase 9: 用户接口（CLI + Web）
-6. Phase 10-11: 测试、文档、优化
-
-💡 实现优势
-
-- 充分利用现有代码: 复用StaticAnalysisCoordinator、DeepAnalyzer、AgentOrchestrator等组件
-- 模块化设计: 每个组件职责单一，易于测试和维护
-- 智能化特性: 文件智能选择、上下文感知分析、渐进式修复
-- 用户友好: 支持CLI和Web两种界面，进度跟踪和详细报告
+这个设计将复杂的逻辑交给AI处理，程序主要负责数据收集、提示词构建、结果解析、用户交互和自动化执行，大大降低了代码复杂度，提高了系统的灵活性和智能化程度，同时实现了完整的代码修复闭环。
