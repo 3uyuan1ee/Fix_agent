@@ -1,6 +1,7 @@
 """
 日志系统模块
 实现统一的日志记录系统，支持不同级别日志输出和文件轮转
+支持工作流特定的日志功能
 """
 
 import os
@@ -9,6 +10,171 @@ from pathlib import Path
 from typing import Optional, Dict, Any
 from loguru import logger as loguru_logger
 from .config import get_config_manager
+
+
+class WorkflowLogger:
+    """工作流日志管理器 - 专门用于工作流相关日志"""
+
+    def __init__(self, session_id: str, base_logger=None):
+        """
+        初始化工作流日志管理器
+
+        Args:
+            session_id: 工作流会话ID
+            base_logger: 基础日志管理器
+        """
+        self.session_id = session_id
+        self.base_logger = base_logger or get_logger()
+        self.workflow_logs = []
+
+    def log_workflow_transition(self, from_node: str, to_node: str,
+                               reason: str = "", metadata: Dict[str, Any] = None):
+        """
+        记录工作流状态转换
+
+        Args:
+            from_node: 源节点
+            to_node: 目标节点
+            reason: 转换原因
+            metadata: 转换元数据
+        """
+        log_data = {
+            "session_id": self.session_id,
+            "event_type": "workflow_transition",
+            "from_node": from_node,
+            "to_node": to_node,
+            "reason": reason,
+            "metadata": metadata or {},
+            "timestamp": loguru_logger._core.now
+        }
+
+        self.workflow_logs.append(log_data)
+        self.base_logger.info(f"工作流转换: {from_node} → {to_node} - {reason}")
+
+    def log_user_decision(self, node: str, decision_type: str,
+                         decision_id: str, details: Dict[str, Any]):
+        """
+        记录用户决策
+
+        Args:
+            node: 决策节点
+            decision_type: 决策类型
+            decision_id: 决策ID
+            details: 决策详情
+        """
+        log_data = {
+            "session_id": self.session_id,
+            "event_type": "user_decision",
+            "node": node,
+            "decision_type": decision_type,
+            "decision_id": decision_id,
+            "details": details,
+            "timestamp": loguru_logger._core.now
+        }
+
+        self.workflow_logs.append(log_data)
+        self.base_logger.info(f"用户决策 [{node}]: {decision_type} - {decision_id}")
+
+    def log_ai_interaction(self, interaction_type: str, node: str,
+                          request_data: Dict[str, Any],
+                          response_data: Dict[str, Any] = None):
+        """
+        记录AI交互
+
+        Args:
+            interaction_type: 交互类型
+            node: 工作流节点
+            request_data: 请求数据
+            response_data: 响应数据
+        """
+        log_data = {
+            "session_id": self.session_id,
+            "event_type": "ai_interaction",
+            "interaction_type": interaction_type,
+            "node": node,
+            "request_data": request_data,
+            "response_data": response_data,
+            "timestamp": loguru_logger._core.now
+        }
+
+        self.workflow_logs.append(log_data)
+        self.base_logger.info(f"AI交互 [{node}]: {interaction_type}")
+
+    def log_fix_execution(self, operation_id: str, file_path: str,
+                          operation_type: str, success: bool,
+                          details: Dict[str, Any] = None):
+        """
+        记录修复执行
+
+        Args:
+            operation_id: 操作ID
+            file_path: 文件路径
+            operation_type: 操作类型
+            success: 执行是否成功
+            details: 执行详情
+        """
+        log_data = {
+            "session_id": self.session_id,
+            "event_type": "fix_execution",
+            "operation_id": operation_id,
+            "file_path": file_path,
+            "operation_type": operation_type,
+            "success": success,
+            "details": details or {},
+            "timestamp": loguru_logger._core.now
+        }
+
+        self.workflow_logs.append(log_data)
+        status = "成功" if success else "失败"
+        self.base_logger.info(f"修复执行 [{operation_id}]: {operation_type} - {status}")
+
+    def log_error(self, error_type: str, node: str, error_message: str,
+                   details: Dict[str, Any] = None):
+        """
+        记录工作流错误
+
+        Args:
+            error_type: 错误类型
+            node: 发生错误的节点
+            error_message: 错误消息
+            details: 错误详情
+        """
+        log_data = {
+            "session_id": self.session_id,
+            "event_type": "error",
+            "error_type": error_type,
+            "node": node,
+            "error_message": error_message,
+            "details": details or {},
+            "timestamp": loguru_logger._core.now
+        }
+
+        self.workflow_logs.append(log_data)
+        self.base_logger.error(f"工作流错误 [{node}]: {error_type} - {error_message}")
+
+    def get_workflow_logs(self) -> list:
+        """获取工作流日志"""
+        return self.workflow_logs.copy()
+
+    def export_workflow_logs(self, file_path: str) -> bool:
+        """
+        导出工作流日志到文件
+
+        Args:
+            file_path: 导出文件路径
+
+        Returns:
+            bool: 导出是否成功
+        """
+        try:
+            import json
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(self.workflow_logs, f, ensure_ascii=False, indent=2)
+            self.base_logger.info(f"工作流日志已导出到: {file_path}")
+            return True
+        except Exception as e:
+            self.base_logger.error(f"导出工作流日志失败: {e}")
+            return False
 
 
 class Logger:
@@ -48,6 +214,28 @@ class Logger:
         # 添加文件处理器
         rotation = log_config.get('max_size', '10 MB')
         retention = log_config.get('backup_count', 5)
+
+        loguru_logger.add(
+            log_file,
+            level=level,
+            format=format_str,
+            rotation=rotation,
+            retention=retention,
+            compression="zip",
+            encoding="utf-8"
+        )
+
+        # 添加控制台处理器（如果启用）
+        if log_config.get('enable_console', True):
+            console_format = log_config.get('console_format', format_str)
+            loguru_logger.add(
+                sys.stdout,
+                level=level,
+                format=console_format,
+                colorize=True
+            )
+
+        self._logger = loguru_logger
 
         loguru_logger.add(
             log_file,

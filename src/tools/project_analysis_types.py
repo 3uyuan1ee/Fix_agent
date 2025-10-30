@@ -1,6 +1,7 @@
 """
 项目分析工作流数据类型定义
 定义项目分析过程中使用的所有数据结构和枚举类型
+与新的工作流数据结构兼容
 """
 
 from typing import Dict, List, Any, Optional, Set, Union
@@ -9,11 +10,87 @@ from enum import Enum
 from datetime import datetime
 import json
 
-from .static_coordinator import AnalysisIssue, SeverityLevel
+# 导入新的工作流数据结构
+try:
+    from .static_coordinator import AnalysisIssue, SeverityLevel
+except ImportError:
+    # 如果static_coordinator不可用，定义基本类型
+    class SeverityLevel(Enum):
+        LOW = "low"
+        MEDIUM = "medium"
+        HIGH = "high"
+        CRITICAL = "critical"
+
+    @dataclass
+    class AnalysisIssue:
+        file_path: str
+        line: int
+        severity: SeverityLevel
+        message: str
+        rule_id: str = ""
+        tool_name: str = ""
+
+# 导入工作流特定数据结构
+try:
+    from .workflow_data_types import (
+        ProblemType, RiskLevel, FixType,
+        AIDetectedProblem, AIFixSuggestion, FixVerificationResult
+    )
+    from .workflow_user_interaction_types import (
+        DecisionType, UserReviewDecision, UserFixDecision, UserVerificationDecision
+    )
+    from .workflow_flow_state_manager import WorkflowNode
+except ImportError:
+    # 如果工作流数据结构不可用，定义基本类型
+    class ProblemType(Enum):
+        SECURITY = "security"
+        PERFORMANCE = "performance"
+        LOGIC = "logic"
+        STYLE = "style"
+        MAINTAINABILITY = "maintainability"
+        RELIABILITY = "reliability"
+        COMPATIBILITY = "compatibility"
+        DOCUMENTATION = "documentation"
+
+    class RiskLevel(Enum):
+        LOW = "low"
+        MEDIUM = "medium"
+        HIGH = "high"
+
+    class FixType(Enum):
+        CODE_REPLACEMENT = "code_replacement"
+        CODE_INSERTION = "code_insertion"
+        CODE_DELETION = "code_deletion"
+        REFACTORING = "refactoring"
+        CONFIGURATION = "configuration"
+        DEPENDENCY_UPDATE = "dependency_update"
+
+    class DecisionType(Enum):
+        APPROVE = "approve"
+        MODIFY = "modify"
+        REJECT = "reject"
+        SUCCESS = "success"
+        FAILED = "failed"
+        SKIP = "skip"
+
+    class WorkflowNode(Enum):
+        PHASE_A_COMPLETE = "phase_a_complete"
+        PROBLEM_DETECTION = "problem_detection"
+        FIX_SUGGESTION = "fix_suggestion"
+        USER_REVIEW = "user_review"
+        USER_DECISION = "user_decision"
+        AUTO_FIX = "auto_fix"
+        SKIP_PROBLEM = "skip_problem"
+        FIX_VERIFICATION = "fix_verification"
+        VERIFICATION_DECISION = "verification_decision"
+        PROBLEM_SOLVED = "problem_solved"
+        REANALYSIS = "reanalysis"
+        CHECK_REMAINING = "check_remaining"
+        WORKFLOW_COMPLETE = "workflow_complete"
 
 
 class AnalysisPhase(Enum):
-    """分析阶段枚举"""
+    """分析阶段枚举 - 与工作流节点对应"""
     INITIALIZATION = "initialization"
     STATIC_ANALYSIS = "static_analysis"
     FILE_SELECTION = "file_selection"
@@ -23,6 +100,21 @@ class AnalysisPhase(Enum):
     FIX_VALIDATION = "fix_validation"
     COMPLETED = "completed"
     FAILED = "failed"
+
+    # 新增工作流特定阶段
+    PHASE_A_COMPLETE = "phase_a_complete"  # Phase 1-4完成
+    PROBLEM_DETECTION = "problem_detection"  # 节点B: AI问题检测
+    FIX_SUGGESTION = "fix_suggestion"  # 节点C: AI修复建议生成
+    USER_REVIEW = "user_review"  # 节点D: 用户审查
+    USER_DECISION = "user_decision"  # 节点E: 用户决策
+    AUTO_FIX = "auto_fix"  # 节点F: 执行自动修复
+    SKIP_PROBLEM = "skip_problem"  # 节点G: 跳过此问题
+    FIX_VERIFICATION = "fix_verification"  # 节点H: 修复验证
+    VERIFICATION_DECISION = "verification_decision"  # 节点I: 用户验证决策
+    PROBLEM_SOLVED = "problem_solved"  # 节点J: 问题解决
+    REANALYSIS = "reanalysis"  # 节点K: 重新分析
+    CHECK_REMAINING = "check_remaining"  # 节点L: 检查剩余问题
+    WORKFLOW_COMPLETE = "workflow_complete"  # 节点M: 工作流完成
 
 
 class FixStrategy(Enum):
