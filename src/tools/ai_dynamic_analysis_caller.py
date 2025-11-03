@@ -16,7 +16,8 @@ from ..utils.logger import get_logger
 from ..utils.config import get_config_manager
 from ..llm.client import LLMClient
 from .verification_static_analyzer import StaticVerificationReport, FixComparison
-from .workflow_data_types import WorkflowSession, AIFixSuggestion
+from .workflow_flow_state_manager import WorkflowSession
+from .workflow_data_types import AIFixSuggestion
 from .project_analysis_types import StaticAnalysisResult
 
 logger = get_logger()
@@ -104,7 +105,7 @@ class AIDynamicAnalysisCaller:
         self.logger = get_logger()
 
         # 获取配置
-        self.config = self.config_manager.get_config("project_analysis", {})
+        self.config = self.config_manager.get("project_analysis", {})
         self.llm_config = self.config.get("ai_analysis", {})
 
         # 初始化LLM客户端

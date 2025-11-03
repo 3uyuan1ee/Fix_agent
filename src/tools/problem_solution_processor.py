@@ -14,7 +14,8 @@ from enum import Enum
 
 from ..utils.logger import get_logger
 from ..utils.config import get_config_manager
-from .workflow_data_types import WorkflowSession, AIDetectedProblem, AIFixSuggestion
+from .workflow_flow_state_manager import WorkflowSession
+from .workflow_data_types import AIDetectedProblem, AIFixSuggestion
 from .workflow_user_interaction_types import UserDecision
 from .workflow_flow_state_manager import WorkflowNode, WorkflowFlowStateManager
 
@@ -94,7 +95,7 @@ class ProblemSolutionProcessor:
         self.state_manager = WorkflowFlowStateManager()
 
         # 获取配置
-        self.config = self.config_manager.get_config("project_analysis", {})
+        self.config = self.config_manager.get("project_analysis", {})
 
         # 解决方案存储目录
         self.solutions_dir = Path(self.config.get("solutions_dir", ".fix_backups/solutions"))

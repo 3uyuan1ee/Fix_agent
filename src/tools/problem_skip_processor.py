@@ -14,7 +14,8 @@ from enum import Enum
 
 from ..utils.logger import get_logger
 from ..utils.config import get_config_manager
-from .workflow_data_types import WorkflowSession, AIDetectedProblem
+from .workflow_flow_state_manager import WorkflowSession
+from .workflow_data_types import AIDetectedProblem
 from .workflow_user_interaction_types import UserDecision, DecisionType
 from .workflow_flow_state_manager import WorkflowNode, WorkflowFlowStateManager
 
@@ -96,7 +97,7 @@ class ProblemSkipProcessor:
         self.logger = get_logger()
 
         # 获取配置
-        self.config = self.config_manager.get_config("project_analysis", {})
+        self.config = self.config_manager.get("project_analysis", {})
         self.skip_records_dir = Path(self.config.get("skip_records_dir", ".fix_backups/skip_records"))
         self.skip_records_dir.mkdir(parents=True, exist_ok=True)
 
@@ -184,8 +185,30 @@ class ProblemSkipProcessor:
 
     def _get_problem_by_id(self, session: WorkflowSession, issue_id: str) -> Optional[AIDetectedProblem]:
         """根据ID获取问题信息"""
+        # 先从detected_problems列表中查找
+        for problem_dict in session.problems_detected:
+            if problem_dict.get("problem_id") == issue_id:
+                # 转换为AIDetectedProblem对象
+                from .workflow_data_types import AIDetectedProblem
+                try:
+                    return AIDetectedProblem.from_dict(problem_dict)
+                except:
+                    # 如果转换失败，创建一个基本的对象
+                    return AIDetectedProblem(
+                        problem_id=problem_dict.get("problem_id", issue_id),
+                        file_path=problem_dict.get("file_path", ""),
+                        line_number=problem_dict.get("line_number", 0),
+                        problem_type=problem_dict.get("problem_type", "SECURITY"),
+                        severity=problem_dict.get("severity", "HIGH"),
+                        description=problem_dict.get("description", ""),
+                        code_snippet=problem_dict.get("code_snippet", ""),
+                        confidence=problem_dict.get("confidence", 0.5),
+                        reasoning=problem_dict.get("reasoning", "")
+                    )
+
+        # 如果没找到，再从detected_problems列表中查找
         for problem in session.detected_problems:
-            if problem.issue_id == issue_id:
+            if problem.problem_id == issue_id:
                 return problem
         return None
 
@@ -199,10 +222,10 @@ class ProblemSkipProcessor:
         """创建跳过记录"""
         return SkipRecord(
             skip_id=str(uuid.uuid4()),
-            issue_id=problem.issue_id,
+            issue_id=problem.problem_id,
             file_path=problem.file_path,
-            line_number=problem.line,
-            problem_type=problem.issue_type.value,
+            line_number=problem.line_number,
+            problem_type=problem.problem_type.value,
             severity=problem.severity.value,
             skip_reason=skip_reason.value,
             user_comment=user_comment,
@@ -239,7 +262,7 @@ class ProblemSkipProcessor:
         # 从检测到的问题列表中移除
         session.detected_problems = [
             problem for problem in session.detected_problems
-            if problem.issue_id != issue_id
+            if problem.problem_id != issue_id
         ]
 
         # 从待处理问题列表中移除

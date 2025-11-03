@@ -76,10 +76,15 @@ class WorkflowSession:
     # 会话数据
     problems_detected: List[Dict[str, Any]] = field(default_factory=list)
     current_problem_index: int = 0
+    pending_problems: List[str] = field(default_factory=list)
     fix_suggestions: List[Dict[str, Any]] = field(default_factory=list)
     applied_fixes: List[Dict[str, Any]] = field(default_factory=list)
     skipped_problems: List[str] = field(default_factory=list)
     solved_problems: List[str] = field(default_factory=list)
+    skip_history: List[str] = field(default_factory=list)
+    problem_processing_status: Dict[str, str] = field(default_factory=dict)
+    detected_problems: List['AIDetectedProblem'] = field(default_factory=list)
+    verification_decisions: List[Dict[str, Any]] = field(default_factory=list)
 
     # 元数据
     metadata: Dict[str, Any] = field(default_factory=dict)
@@ -379,6 +384,14 @@ class WorkflowFlowStateManager:
         try:
             session_file = self.storage_path / f"{session.session_id}.json"
 
+            # 处理detected_problems序列化
+            detected_problems_serializable = []
+            for problem in session.detected_problems:
+                if hasattr(problem, 'to_dict'):
+                    detected_problems_serializable.append(problem.to_dict())
+                else:
+                    detected_problems_serializable.append(problem)
+
             data = {
                 "session_id": session.session_id,
                 "project_path": session.project_path,
@@ -389,10 +402,14 @@ class WorkflowFlowStateManager:
                 "workflow_history": [trans.to_dict() for trans in session.workflow_history],
                 "problems_detected": session.problems_detected,
                 "current_problem_index": session.current_problem_index,
+                "pending_problems": session.pending_problems,
                 "fix_suggestions": session.fix_suggestions,
                 "applied_fixes": session.applied_fixes,
                 "skipped_problems": session.skipped_problems,
                 "solved_problems": session.solved_problems,
+                "skip_history": session.skip_history,
+                "problem_processing_status": session.problem_processing_status,
+                "detected_problems": detected_problems_serializable,
                 "metadata": session.metadata
             }
 
@@ -401,6 +418,17 @@ class WorkflowFlowStateManager:
 
         except Exception as e:
             self.logger.error(f"保存会话失败 {session.session_id}: {e}")
+
+    def save_session(self, session: WorkflowSession):
+        """
+        保存会话（公共方法）
+
+        Args:
+            session: 工作流会话对象
+        """
+        # 添加到活跃会话
+        self.active_sessions[session.session_id] = session
+        self._save_session(session)
 
     def delete_session(self, session_id: str) -> bool:
         """

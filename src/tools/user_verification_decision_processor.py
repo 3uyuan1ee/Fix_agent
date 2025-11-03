@@ -14,7 +14,7 @@ from enum import Enum
 
 from ..utils.logger import get_logger
 from ..utils.config import get_config_manager
-from .workflow_data_types import WorkflowSession
+from .workflow_flow_state_manager import WorkflowSession
 from .workflow_user_interaction_types import UserDecision, DecisionType
 from .workflow_flow_state_manager import WorkflowNode, WorkflowFlowStateManager
 from .fix_verification_aggregator import ComprehensiveVerificationReport
@@ -87,7 +87,7 @@ class UserVerificationDecisionProcessor:
         self.state_manager = WorkflowFlowStateManager()
 
         # 获取配置
-        self.config = self.config_manager.get_config("project_analysis", {})
+        self.config = self.config_manager.get("project_analysis", {})
 
         # 决策记录存储目录
         self.decisions_dir = Path(self.config.get("verification_decisions_dir", ".fix_backups/verification_decisions"))

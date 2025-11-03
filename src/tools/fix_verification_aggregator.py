@@ -16,7 +16,7 @@ from ..utils.logger import get_logger
 from ..utils.config import get_config_manager
 from .verification_static_analyzer import StaticVerificationReport
 from .ai_dynamic_analysis_caller import AIDynamicAnalysisResult
-from .workflow_data_types import WorkflowSession, FixVerificationResult
+from .workflow_flow_state_manager import WorkflowSession
 
 logger = get_logger()
 
@@ -137,7 +137,7 @@ class FixVerificationAggregator:
         self.logger = get_logger()
 
         # 获取配置
-        self.config = self.config_manager.get_config("project_analysis", {})
+        self.config = self.config_manager.get("project_analysis", {})
 
         # 验证报告存储目录
         self.reports_dir = Path(self.config.get("verification_reports_dir", ".fix_backups/verification_reports"))

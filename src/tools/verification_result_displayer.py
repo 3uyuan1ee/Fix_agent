@@ -75,7 +75,7 @@ class VerificationResultDisplayer:
         self.logger = get_logger()
 
         # 获取配置
-        self.config = self.config_manager.get_config("project_analysis", {})
+        self.config = self.config_manager.get("project_analysis", {})
 
         # 展示配置
         self.display_config = self.config.get("verification_display", {
@@ -161,6 +161,13 @@ class VerificationResultDisplayer:
         metrics = report.verification_metrics
         ai_analysis = report.ai_dynamic_analysis
 
+        # 处理AI分析为None的情况
+        if ai_analysis is None:
+            ai_analysis = type('MockAIAnalysis', (), {
+                'problem_resolution_status': 'unknown',
+                'fix_effectiveness_score': 0.5
+            })()
+
         return {
             "fix_success_rate": {
                 "value": f"{metrics.fix_success_rate:.1%}",
@@ -178,16 +185,22 @@ class VerificationResultDisplayer:
                 "level": self._get_score_level(ai_analysis.fix_effectiveness_score)
             },
             "static_analysis_score": {
-                "value": f"{report.static_verification.overall_quality_score:.2f}",
+                "value": f"{report.static_verification.overall_quality_score:.2f}" if report.static_verification else "N/A",
                 "description": "静态分析质量分数",
-                "level": self._get_score_level(report.static_verification.overall_quality_score)
+                "level": self._get_score_level(report.static_verification.overall_quality_score) if report.static_verification else "unknown"
             }
         }
 
     def _build_quality_impact(self, report: ComprehensiveVerificationReport) -> Dict[str, Any]:
         """构建质量影响信息"""
-        quality_impact = report.ai_dynamic_analysis.code_quality_impact
+        ai_analysis = report.ai_dynamic_analysis
         metrics = report.verification_metrics
+
+        # 处理AI分析为None的情况
+        if ai_analysis is None:
+            quality_impact = {}
+        else:
+            quality_impact = ai_analysis.code_quality_impact
 
         impact_display = {}
         for aspect, impact in quality_impact.items():
@@ -212,16 +225,22 @@ class VerificationResultDisplayer:
         static_report = report.static_verification
         ai_analysis = report.ai_dynamic_analysis
 
-        # 静态分析发现的新问题
-        static_new_issues = [
-            issue.to_dict() for issue in static_report.verification_issues if issue.is_new_issue
-        ]
+        # 处理静态验证为None的情况
+        if static_report is None:
+            static_new_issues = []
+            static_new_count = 0
+        else:
+            # 静态分析发现的新问题
+            static_new_issues = [
+                issue.to_dict() for issue in static_report.verification_issues if issue.is_new_issue
+            ]
+            static_new_count = static_report.new_issues_count
 
-        # AI分析发现的新问题
-        ai_new_issues = ai_analysis.new_issues_detected
+        # AI分析发现的新问题 - 处理AI分析为None的情况
+        ai_new_issues = ai_analysis.new_issues_detected if ai_analysis else []
 
         return {
-            "total_new_issues": static_report.new_issues_count + len(ai_new_issues),
+            "total_new_issues": static_new_count + len(ai_new_issues),
             "static_analysis_issues": {
                 "count": len(static_new_issues),
                 "issues": static_new_issues[:5],  # 只显示前5个
@@ -233,7 +252,7 @@ class VerificationResultDisplayer:
                 "has_more": len(ai_new_issues) > 5
             },
             "severity_distribution": self._analyze_issue_severity(static_new_issues + ai_new_issues),
-            "recommendation": self._get_new_issues_recommendation(static_report.new_issues_count + len(ai_new_issues))
+            "recommendation": self._get_new_issues_recommendation(static_new_count + len(ai_new_issues))
         }
 
     def _build_risk_assessment_display(self, report: ComprehensiveVerificationReport) -> Dict[str, Any]:
@@ -247,7 +266,7 @@ class VerificationResultDisplayer:
                 "color": self._get_risk_color(risk_assessment["overall_risk_level"])
             },
             "risk_factors": risk_assessment["risk_factors"],
-            "mitigation_strategies": risk_assessment["mitigation_strategies"],
+            "mitigation_strategies": risk_assessment.get("mitigation_strategies", []),
             "risk_score": self._calculate_risk_score(risk_assessment)
         }
 
@@ -267,6 +286,31 @@ class VerificationResultDisplayer:
     def _build_detailed_metrics(self, report: ComprehensiveVerificationReport) -> Dict[str, Any]:
         """构建详细指标"""
         metrics = report.verification_metrics
+        ai_analysis = report.ai_dynamic_analysis
+
+        # 处理AI分析为None的情况
+        if ai_analysis is None:
+            ai_analysis = type('MockAIAnalysis', (), {
+                'confidence_score': 0.5,
+                'new_issues_detected': [],
+                'recommendations': []
+            })()
+
+        # 处理静态验证为None的情况
+        if report.static_verification is None:
+            static_metrics = {
+                "original_issues_count": 0,
+                "fixed_issues_count": 0,
+                "remaining_issues_count": 0,
+                "new_issues_count": 0
+            }
+        else:
+            static_metrics = {
+                "original_issues_count": len(report.static_verification.fix_comparison.original_issues),
+                "fixed_issues_count": len(report.static_verification.fix_comparison.fixed_issues),
+                "remaining_issues_count": len(report.static_verification.fix_comparison.remaining_issues),
+                "new_issues_count": report.static_verification.new_issues_count
+            }
 
         return {
             "verification_metrics": {
@@ -276,16 +320,11 @@ class VerificationResultDisplayer:
                 "performance_impact_score": metrics.performance_impact_score,
                 "overall_verification_score": metrics.overall_verification_score
             },
-            "static_analysis_metrics": {
-                "original_issues_count": len(report.static_verification.fix_comparison.original_issues),
-                "fixed_issues_count": len(report.static_verification.fix_comparison.fixed_issues),
-                "remaining_issues_count": len(report.static_verification.fix_comparison.remaining_issues),
-                "new_issues_count": report.static_verification.new_issues_count
-            },
+            "static_analysis_metrics": static_metrics,
             "ai_analysis_metrics": {
-                "confidence_score": report.ai_dynamic_analysis.confidence_score,
-                "new_issues_detected_count": len(report.ai_dynamic_analysis.new_issues_detected),
-                "recommendations_count": len(report.ai_dynamic_analysis.recommendations)
+                "confidence_score": ai_analysis.confidence_score,
+                "new_issues_detected_count": len(ai_analysis.new_issues_detected),
+                "recommendations_count": len(ai_analysis.recommendations)
             }
         }
 

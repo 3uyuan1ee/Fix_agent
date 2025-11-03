@@ -14,7 +14,9 @@ from enum import Enum
 
 from ..utils.logger import get_logger
 from ..utils.config import get_config_manager
-from .workflow_data_types import WorkflowSession, AIFixSuggestion, FixVerificationResult
+from .workflow_flow_state_manager import WorkflowSession
+from .workflow_data_types import AIFixSuggestion
+from .project_analysis_types import StaticAnalysisResult
 from .static_coordinator import StaticAnalysisCoordinator
 from .project_analysis_types import StaticAnalysisResult, Issue, IssueSeverity, IssueType
 
@@ -123,7 +125,7 @@ class VerificationStaticAnalyzer:
         self.logger = get_logger()
 
         # 获取配置
-        self.config = self.config_manager.get_config("project_analysis", {})
+        self.config = self.config_manager.get("project_analysis", {})
         self.static_coordinator = StaticAnalysisCoordinator()
 
         # 验证结果存储目录

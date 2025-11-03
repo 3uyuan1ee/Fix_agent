@@ -98,23 +98,59 @@ class AnalysisPhase(Enum):
     AI_ANALYSIS = "ai_analysis"
     FIX_GENERATION = "fix_generation"
     FIX_VALIDATION = "fix_validation"
-    COMPLETED = "completed"
-    FAILED = "failed"
 
-    # 新增工作流特定阶段
-    PHASE_A_COMPLETE = "phase_a_complete"  # Phase 1-4完成
-    PROBLEM_DETECTION = "problem_detection"  # 节点B: AI问题检测
-    FIX_SUGGESTION = "fix_suggestion"  # 节点C: AI修复建议生成
-    USER_REVIEW = "user_review"  # 节点D: 用户审查
-    USER_DECISION = "user_decision"  # 节点E: 用户决策
-    AUTO_FIX = "auto_fix"  # 节点F: 执行自动修复
-    SKIP_PROBLEM = "skip_problem"  # 节点G: 跳过此问题
-    FIX_VERIFICATION = "fix_verification"  # 节点H: 修复验证
-    VERIFICATION_DECISION = "verification_decision"  # 节点I: 用户验证决策
-    PROBLEM_SOLVED = "problem_solved"  # 节点J: 问题解决
-    REANALYSIS = "reanalysis"  # 节点K: 重新分析
-    CHECK_REMAINING = "check_remaining"  # 节点L: 检查剩余问题
-    WORKFLOW_COMPLETE = "workflow_complete"  # 节点M: 工作流完成
+
+class IssueType(Enum):
+    """问题类型"""
+    SECURITY = "security"
+    PERFORMANCE = "performance"
+    LOGIC = "logic"
+    STYLE = "style"
+    MAINTAINABILITY = "maintainability"
+
+
+class IssueSeverity(Enum):
+    """问题严重程度"""
+    INFO = "info"
+    WARNING = "warning"
+    ERROR = "error"
+    CRITICAL = "critical"
+
+
+@dataclass
+class StaticAnalysisResult:
+    """静态分析结果"""
+    file_path: str
+    issues: List['Issue']
+    execution_time: float
+    summary: Dict[str, Any]
+    success: bool = True
+    error: Optional[str] = None
+
+
+@dataclass
+class Issue:
+    """问题"""
+    issue_id: str
+    file_path: str
+    line: int
+    issue_type: IssueType
+    severity: IssueSeverity
+    message: str
+    code_snippet: Optional[str] = None
+    tool_name: str = ""
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "issue_id": self.issue_id,
+            "file_path": self.file_path,
+            "line": self.line,
+            "issue_type": self.issue_type.value,
+            "severity": self.severity.value,
+            "message": self.message,
+            "code_snippet": self.code_snippet,
+            "tool_name": self.tool_name
+        }
 
 
 class FixStrategy(Enum):

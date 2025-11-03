@@ -14,7 +14,8 @@ from enum import Enum
 
 from ..utils.logger import get_logger
 from ..utils.config import get_config_manager
-from .workflow_data_types import WorkflowSession, AIDetectedProblem, AIFixSuggestion
+from .workflow_flow_state_manager import WorkflowSession
+from .workflow_data_types import AIDetectedProblem, AIFixSuggestion
 from .workflow_user_interaction_types import UserDecision
 from .workflow_flow_state_manager import WorkflowNode, WorkflowFlowStateManager
 
