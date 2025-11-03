@@ -92,7 +92,7 @@ class ProblemStatusChecker:
         self.state_manager = WorkflowFlowStateManager()
 
         # 获取配置
-        self.config = self.config_manager.get_config("project_analysis", {})
+        self.config = self.config_manager.get("project_analysis", {})
 
         # 检查报告存储目录
         self.reports_dir = Path(self.config.get("status_check_reports_dir", ".fix_backups/status_reports"))

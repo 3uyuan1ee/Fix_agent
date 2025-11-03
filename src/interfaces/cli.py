@@ -274,7 +274,7 @@ class CLIArgumentParser:
         analyze_subparsers = analyze_parser.add_subparsers(
             dest='analyze_command',
             help='分析模式',
-            metavar='{static,deep,fix}'
+            metavar='{static,deep,fix,workflow}'
         )
 
         # static子命令
@@ -393,6 +393,41 @@ class CLIArgumentParser:
             '--dry-run',
             action='store_true',
             help='模拟运行，只显示修复建议不实际应用'
+        )
+
+        # workflow子命令
+        workflow_parser = analyze_subparsers.add_parser(
+            'workflow',
+            help='执行AI工作流修复',
+            description='执行完整的AI缺陷检测与修复工作流程 B→C→D→E→F/G→H→I→J/K→L→B/M'
+        )
+
+        workflow_parser.add_argument(
+            'target',
+            help='目标文件或目录路径'
+        )
+
+        workflow_parser.add_argument(
+            '--output', '-o',
+            help='结果导出文件路径'
+        )
+
+        workflow_parser.add_argument(
+            '--verbose', '-v',
+            action='store_true',
+            help='显示详细输出信息'
+        )
+
+        workflow_parser.add_argument(
+            '--quiet', '-q',
+            action='store_true',
+            help='静默模式，最小化输出'
+        )
+
+        workflow_parser.add_argument(
+            '--dry-run',
+            action='store_true',
+            help='模拟运行，不执行实际的分析操作'
         )
 
     def _add_web_subcommand(self):
@@ -876,7 +911,7 @@ def main():
 def handle_analyze_command(parser: CLIArgumentParser, args: CLIArguments) -> int:
     """处理analyze子命令"""
     if not args.analyze_command:
-        parser.parser.error("请指定分析模式: static, deep, fix")
+        parser.parser.error("请指定分析模式: static, deep, fix, workflow")
         return 1
 
     if args.analyze_command == 'static':
@@ -885,6 +920,8 @@ def handle_analyze_command(parser: CLIArgumentParser, args: CLIArguments) -> int
         return execute_deep_analysis(args)
     elif args.analyze_command == 'fix':
         return execute_fix_analysis(args)
+    elif args.analyze_command == 'workflow':
+        return execute_workflow_analysis(args)
     else:
         parser.parser.error(f"未知的分析模式: {args.analyze_command}")
         return 1
@@ -1030,6 +1067,7 @@ def handle_interactive_mode(parser: CLIArgumentParser, args: CLIArguments) -> in
     print("  analyze static <path>  - 静态分析")
     print("  analyze deep <path>    - 深度分析")
     print("  analyze fix <path>     - 修复分析")
+    print("  analyze workflow <path> - AI工作流修复")
     print("  help                   - 显示帮助")
     print("  quit/exit              - 退出")
     print()
@@ -2013,4 +2051,71 @@ def execute_fix_analysis(args: CLIArguments) -> int:
         if args.verbose:
             import traceback
             traceback.print_exc()
+        return 1
+
+
+def execute_workflow_analysis(args: CLIArguments) -> int:
+    """执行AI工作流分析"""
+    try:
+        from src.interfaces.workflow_commands import WorkflowCommand
+    except ImportError as e:
+        print(f"❌ 工作流分析模块不可用: {e}")
+        print("💡 请确保Phase 5工作流模块已正确安装")
+        return 1
+
+    target = args.sub_target
+    if not target:
+        print("❌ 错误: 未指定目标文件或目录")
+        print("💡 使用示例: aidefect analyze workflow <file_or_directory>")
+        return 1
+
+    # 验证路径存在性
+    from pathlib import Path
+    target_path = Path(target)
+    if not target_path.exists():
+        print(f"❌ 错误: 目标路径不存在: {target}")
+        print("💡 请检查文件路径是否正确")
+        return 1
+
+    try:
+        # 创建工作流命令处理器
+        workflow_cmd = WorkflowCommand()
+
+        # 执行完整工作流
+        result = workflow_cmd.execute_workflow(
+            target=target,
+            output_file=args.sub_output,
+            verbose=args.sub_verbose or args.verbose,
+            quiet=args.sub_quiet or args.quiet,
+            dry_run=args.sub_dry_run or args.dry_run
+        )
+
+        if result.success:
+            return 0
+        else:
+            print(f"❌ 工作流执行失败")
+            return 1
+
+    except KeyboardInterrupt:
+        print("\n⏹️ 工作流被用户中断")
+        print("💡 已处理的问题和修复不会丢失")
+        return 0
+    except Exception as e:
+        print(f"❌ 工作流执行失败: {e}")
+
+        if args.verbose or args.sub_verbose:
+            print("📋 详细错误信息:")
+            import traceback
+            traceback.print_exc()
+        else:
+            print("💡 使用 --verbose 参数可查看详细错误信息")
+
+        # 提供故障排除建议
+        print("\n🔧 故障排除建议:")
+        print("  1. 检查目标文件路径是否正确")
+        print("  2. 确保有足够的磁盘空间用于备份")
+        print("  3. 检查网络连接正常（需要访问LLM API）")
+        print("  4. 检查API密钥配置是否正确")
+        print("  5. 尝试使用 --dry-run 参数进行模拟运行")
+
         return 1
