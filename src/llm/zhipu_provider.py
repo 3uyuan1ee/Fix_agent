@@ -129,13 +129,53 @@ class ZhipuProvider(LLMProvider):
         logger.info(f"  Top P: {kwargs['top_p']}")
         for i, msg in enumerate(kwargs['messages']):
             # kwargs['messages'] 已经转换为字典格式
-            content_preview = msg['content'][:100] + "..." if len(msg['content']) > 100 else msg['content']
+            content = msg['content']
+
+            # 对于包含重要信息的消息，显示更完整的内容
+            if "用户需求:" in content:
+                # 提取用户需求部分并完整显示
+                user_req_start = content.find("用户需求:")
+                user_req_end = content.find("\n", user_req_start)
+                if user_req_end == -1:
+                    user_req_end = len(content)
+
+                user_requirements_line = content[user_req_start:user_req_end]
+
+                # 显示消息开头和完整的用户需求行
+                if len(content) > 200:
+                    content_preview = content[:150] + "\n" + user_requirements_line + "\n" + "..." + content[-50:]
+                else:
+                    content_preview = content
+            else:
+                # 对于其他消息，正常截断
+                content_preview = content[:100] + "..." if len(content) > 100 else content
+
             logger.info(f"  Message {i+1}: {msg['role']} - {content_preview}")
 
         # 记录原始 Message 对象的信息
         logger.info(f"Original Message objects:")
         for i, msg in enumerate(request.messages):
-            content_preview = msg.content[:100] + "..." if len(msg.content) > 100 else msg.content
+            content = msg.content
+
+            # 对于包含重要信息的消息，显示更完整的内容
+            if "用户需求:" in content:
+                # 提取用户需求部分并完整显示
+                user_req_start = content.find("用户需求:")
+                user_req_end = content.find("\n", user_req_start)
+                if user_req_end == -1:
+                    user_req_end = len(content)
+
+                user_requirements_line = content[user_req_start:user_req_end]
+
+                # 显示消息开头和完整的用户需求行
+                if len(content) > 200:
+                    content_preview = content[:150] + "\n" + user_requirements_line + "\n" + "..." + content[-50:]
+                else:
+                    content_preview = content
+            else:
+                # 对于其他消息，正常截断
+                content_preview = content[:100] + "..." if len(content) > 100 else content
+
             logger.info(f"  Original Message {i+1}: {msg.role.value} - {content_preview}")
 
         # 重试机制

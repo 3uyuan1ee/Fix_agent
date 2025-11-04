@@ -215,28 +215,7 @@ class Logger:
         rotation = log_config.get('max_size', '10 MB')
         retention = log_config.get('backup_count', 5)
 
-        loguru_logger.add(
-            log_file,
-            level=level,
-            format=format_str,
-            rotation=rotation,
-            retention=retention,
-            compression="zip",
-            encoding="utf-8"
-        )
-
-        # 添加控制台处理器（如果启用）
-        if log_config.get('enable_console', True):
-            console_format = log_config.get('console_format', format_str)
-            loguru_logger.add(
-                sys.stdout,
-                level=level,
-                format=console_format,
-                colorize=True
-            )
-
-        self._logger = loguru_logger
-
+        # 添加文件处理器
         loguru_logger.add(
             log_file,
             level=level,
