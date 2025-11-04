@@ -123,8 +123,8 @@ class AIFileSelectionPromptBuilder:
                     )
 
                 # 计算严重程度
-                high_count = sum(1 for issue in issues if issue['severity'].upper() in ['HIGH', 'CRITICAL'])
-                medium_count = sum(1 for issue in issues if issue['severity'].upper() == 'MEDIUM')
+                high_count = sum(1 for issue in issues if str(issue['severity']).upper() in ['HIGH', 'CRITICAL'])
+                medium_count = sum(1 for issue in issues if str(issue['severity']).upper() == 'MEDIUM')
 
                 if high_count > 0:
                     user_prompt_parts.append(f"   ⚠️  包含 {high_count} 个高严重程度问题")

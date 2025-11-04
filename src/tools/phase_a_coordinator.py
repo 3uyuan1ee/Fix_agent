@@ -1122,6 +1122,20 @@ class PhaseACoordinator:
     ) -> AIFileSelectionResult:
         """执行AI智能文件筛选 - Phase 2"""
         try:
+            # Phase 2.1: 收集用户见解和需求（在AI文件选择前）
+            if verbose:
+                print("   正在收集用户对项目的见解和疑问...")
+
+            user_insights = self._collect_user_insights(project_context, verbose)
+
+            # 将用户见解合并到项目上下文中
+            if user_insights:
+                project_context.user_requirements = self._merge_user_insights_with_requirements(
+                    project_context.user_requirements, user_insights
+                )
+                if verbose:
+                    print(f"   ✅ 已收集用户见解: {len(user_insights)} 个要点")
+
             # 准备AI分析的输入数据
             analysis_input = self._prepare_ai_analysis_input(
                 project_context, static_results, runtime_errors
@@ -1446,3 +1460,113 @@ class PhaseACoordinator:
         except Exception as e:
             self.logger.error(f"获取阶段A结果失败: {e}")
             return None
+
+    def _collect_user_insights(self, project_context: ProjectContext, verbose: bool = False) -> Dict[str, Any]:
+        """收集用户对项目的见解和疑问"""
+        user_insights = {}
+
+        try:
+            print(f"\n💭 为了更好地进行文件选择，请分享您对项目的见解:（若没有请回车跳过）")
+            print("=" * 50)
+
+            # 1. 项目重点关注区域
+            focus_area = input("1. 您最关注项目的哪些方面？(安全/性能/代码质量/业务逻辑/其他): ").strip()
+            if focus_area:
+                user_insights['focus_area'] = focus_area
+
+            # 2. 主要担忧
+            concerns = input("2. 对项目有什么主要担忧或问题？(例如：内存泄漏、安全漏洞、性能瓶颈等): ").strip()
+            if concerns:
+                user_insights['concerns'] = concerns
+
+            # 3. 特定文件关注
+            specific_files = input("3. 有特定需要关注的文件或模块吗？(多个文件用逗号分隔): ").strip()
+            if specific_files:
+                user_insights['specific_files'] = [f.strip() for f in specific_files.split(',')]
+
+            # 4. 技术疑问
+            questions = input("4. 有什么技术疑问需要AI重点分析？(例如：某段代码的作用、潜在问题等): ").strip()
+            if questions:
+                user_insights['technical_questions'] = questions
+
+            # 5. 业务背景
+            business_context = input("5. 项目的业务背景或使用场景是什么？(可选): ").strip()
+            if business_context:
+                user_insights['business_context'] = business_context
+
+            # 6. 时间约束
+            time_constraint = input("6. 有什么时间约束或紧急程度吗？(低/中/高): ").strip()
+            if time_constraint:
+                user_insights['time_constraint'] = time_constraint
+
+            # 7. 质量标准
+            quality_standard = input("7. 对代码质量有什么特殊要求或标准吗？(可选): ").strip()
+            if quality_standard:
+                user_insights['quality_standard'] = quality_standard
+
+            # 8. 修复偏好
+            fix_preference = input("8. 希望AI提供什么样的修复建议？(保守/激进/最小改动): ").strip()
+            if fix_preference:
+                user_insights['fix_preference'] = fix_preference
+
+            if verbose and user_insights:
+                print(f"\n✅ 已收集到 {len(user_insights)} 个方面的见解")
+                for key, value in user_insights.items():
+                    if isinstance(value, list):
+                        print(f"   • {key}: {', '.join(value)}")
+                    else:
+                        print(f"   • {key}: {value}")
+
+            return user_insights
+
+        except KeyboardInterrupt:
+            print("\n⚠️ 用户取消了输入收集")
+            return {}
+        except Exception as e:
+            self.logger.error(f"收集用户见解失败: {e}")
+            if verbose:
+                print(f"   ⚠️ 收集用户见解时出错: {e}")
+            return {}
+
+    def _merge_user_insights_with_requirements(self, original_requirements: str, user_insights: Dict[str, Any]) -> str:
+        """将用户见解与原有需求合并"""
+        try:
+            # 构建用户见解文本
+            insights_text = "\n\n用户补充见解和需求:\n"
+
+            if 'focus_area' in user_insights:
+                insights_text += f"- 重点关注领域: {user_insights['focus_area']}\n"
+
+            if 'concerns' in user_insights:
+                insights_text += f"- 主要担忧: {user_insights['concerns']}\n"
+
+            if 'specific_files' in user_insights:
+                insights_text += f"- 特定关注文件: {', '.join(user_insights['specific_files'])}\n"
+
+            if 'technical_questions' in user_insights:
+                insights_text += f"- 技术疑问: {user_insights['technical_questions']}\n"
+
+            if 'business_context' in user_insights:
+                insights_text += f"- 业务背景: {user_insights['business_context']}\n"
+
+            if 'time_constraint' in user_insights:
+                insights_text += f"- 时间约束: {user_insights['time_constraint']}\n"
+
+            if 'quality_standard' in user_insights:
+                insights_text += f"- 质量标准: {user_insights['quality_standard']}\n"
+
+            if 'fix_preference' in user_insights:
+                insights_text += f"- 修复偏好: {user_insights['fix_preference']}\n"
+
+            # 合并原有需求和用户见解
+            if original_requirements:
+                merged_requirements = original_requirements + insights_text
+            else:
+                merged_requirements = insights_text.strip()
+
+            return merged_requirements
+
+        except Exception as e:
+            self.logger.error(f"合并用户见解失败: {e}")
+            # 如果合并失败，返回原始需求
+            return original_requirements
