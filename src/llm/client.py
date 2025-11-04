@@ -227,7 +227,24 @@ class LLMClient:
         for msg in messages:
             if isinstance(msg, str):
                 processed_messages.append(Message(role=MessageRole.USER, content=msg))
+            elif isinstance(msg, dict):
+                # 处理字典格式 {"role": "user", "content": "..."}
+                role = msg.get("role", "user")
+                content = msg.get("content", "")
+
+                # 转换role字符串到MessageRole枚举
+                if role in ["user", "User"]:
+                    msg_role = MessageRole.USER
+                elif role in ["assistant", "Assistant"]:
+                    msg_role = MessageRole.ASSISTANT
+                elif role in ["system", "System"]:
+                    msg_role = MessageRole.SYSTEM
+                else:
+                    msg_role = MessageRole.USER
+
+                processed_messages.append(Message(role=msg_role, content=content))
             else:
+                # 假设是Message对象
                 processed_messages.append(msg)
 
         # 获取默认配置
@@ -267,6 +284,71 @@ class LLMClient:
             "fallback_used": 0,
             "provider_usage": {}
         }
+
+    def chat_completion(self, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
+        """
+        同步聊天补全接口（兼容智谱AI和OpenAI格式）
+
+        Args:
+            messages: 消息列表 [{"role": "user", "content": "..."}]
+            **kwargs: 其他参数 (temperature, max_tokens, model等)
+
+        Returns:
+            Dict[str, Any]: 响应结果
+            {
+                "success": bool,
+                "content": str,
+                "error_message": str,
+                "usage": dict,
+                "model": str
+            }
+        """
+        try:
+            # 创建请求
+            request = self.create_request(messages, **kwargs)
+
+            # 异步执行
+            import asyncio
+            try:
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    # 如果事件循环正在运行，使用新的线程执行
+                    import concurrent.futures
+                    with concurrent.futures.ThreadPoolExecutor() as executor:
+                        future = executor.submit(asyncio.run, self.complete(request))
+                        response = future.result()
+                else:
+                    # 如果没有运行的事件循环，直接运行
+                    response = loop.run_until_complete(self.complete(request))
+            except RuntimeError:
+                # 创建新的事件循环
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                response = loop.run_until_complete(self.complete(request))
+
+            # LLMResponse对象总是成功的，除非有异常
+            # 构建兼容格式的响应
+            result = {
+                "success": True,
+                "content": response.content,
+                "model": response.model,
+                "finish_reason": response.finish_reason
+            }
+
+            # 添加使用情况
+            if response.usage:
+                result["usage"] = response.usage
+            else:
+                result["usage"] = {}
+
+            return result
+
+        except Exception as e:
+            self.logger.error(f"Chat completion failed: {e}")
+            return {
+                "success": False,
+                "error_message": str(e)
+            }
 
     async def test_connection(self, provider: Optional[str] = None) -> Dict[str, Any]:
         """

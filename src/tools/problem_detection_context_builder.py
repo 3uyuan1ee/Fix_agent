@@ -162,6 +162,9 @@ class ProblemDetectionContextBuilder:
 
         context = ProblemDetectionContext(
             context_id=self._generate_context_id(),
+            project_info={},  # 初始化为空，后面会填充
+            selected_files=[],  # 初始化为空，后面会填充
+            static_analysis_results=static_analysis_results or {},
             build_timestamp=datetime.now().isoformat()
         )
 

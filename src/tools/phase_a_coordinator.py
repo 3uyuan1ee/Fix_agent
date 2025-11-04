@@ -40,28 +40,39 @@ class ParsedAnalysisResult:
     selected_files: List[str] = field(default_factory=list)
     reasoning: str = ""
 
+# 尝试导入各组件，分别处理导入失败
+logger = get_logger()
+
+# 导入静态分析聚合器
 try:
     from .static_analysis_aggregator import StaticAnalysisAggregator
-    from .ai_file_selector import AIFileSelector, AIFileSelectionResult
-    from .user_decision_collector import UserDecisionCollector
-    from .ai_analysis_parser import AIAnalysisParser
 except ImportError as e:
-    logger = get_logger()
-    logger.warning(f"部分阶段A组件导入失败: {e}")
-    # 提供基本实现以确保系统可用
-
+    logger.warning(f"静态分析聚合器导入失败: {e}")
     class StaticAnalysisAggregator:
         def aggregate_results(self, results):
             return AggregatedAnalysisResult()
 
-    class AIFileSelector:
-        def select_files(self, project_path, analysis_results, **kwargs):
-            return AIFileSelectionResult()
+# 导入AI文件选择器（这是关键组件，必须导入成功）
+try:
+    from .ai_file_selector import AIFileSelector, AIFileSelectionResult
+except ImportError as e:
+    logger.error(f"AI文件选择器导入失败: {e}")
+    raise ImportError(f"AI文件选择器是必需组件，无法导入: {e}")
 
+# 导入用户决策收集器
+try:
+    from .user_decision_collector import UserDecisionCollector
+except ImportError as e:
+    logger.warning(f"用户决策收集器导入失败: {e}")
     class UserDecisionCollector:
         def collect_decisions(self, file_selections, **kwargs):
             return UserDecisionResult()
 
+# 导入AI分析解析器（可选组件）
+try:
+    from .ai_analysis_parser import AIAnalysisParser
+except ImportError as e:
+    logger.warning(f"AI分析解析器导入失败（可选组件）: {e}")
     class AIAnalysisParser:
         def parse_response(self, ai_response):
             return ParsedAnalysisResult()
@@ -355,13 +366,23 @@ class PhaseACoordinator:
         }
 
         language_counts = {}
-        for file_path in project_path.rglob("*"):
-            if file_path.is_file():
-                ext = file_path.suffix.lower()
-                for lang, extensions in language_extensions.items():
-                    if ext in extensions:
-                        language_counts[lang] = language_counts.get(lang, 0) + 1
-                        break
+
+        # 如果是单个文件，直接检测该文件的扩展名
+        if project_path.is_file():
+            ext = project_path.suffix.lower()
+            for lang, extensions in language_extensions.items():
+                if ext in extensions:
+                    language_counts[lang] = 1
+                    break
+        else:
+            # 如果是目录，遍历所有文件
+            for file_path in project_path.rglob("*"):
+                if file_path.is_file():
+                    ext = file_path.suffix.lower()
+                    for lang, extensions in language_extensions.items():
+                        if ext in extensions:
+                            language_counts[lang] = language_counts.get(lang, 0) + 1
+                            break
 
         return language_counts
 
@@ -373,10 +394,20 @@ class PhaseACoordinator:
         """执行静态项目分析 - Phase 1"""
         try:
             # 使用多语言静态分析器
-            static_results = self.static_analyzer.analyze_project(
-                project_context.project_path,
-                verbose=verbose
-            )
+            # 检查是单个文件还是目录
+            from pathlib import Path
+            project_path = Path(project_context.project_path)
+
+            if project_path.is_file():
+                # 如果是单个文件，获取文件所在目录
+                static_results = self.static_analyzer.analyze_files([str(project_path)], verbose=verbose)
+            else:
+                # 如果是目录，分析整个项目
+                static_results = self.static_analyzer.analyze_project(str(project_path), verbose=verbose)
+
+            # 转换为列表格式
+            if isinstance(static_results, dict):
+                static_results = list(static_results.values())
 
             return static_results if static_results else []
 
@@ -546,10 +577,20 @@ class PhaseACoordinator:
             if verbose:
                 print(f"   正在使用多语言静态分析器分析项目...")
 
-            static_results = self.static_analyzer.analyze_project(
-                project_context.project_path,
-                verbose=verbose
-            )
+            # 检查是单个文件还是目录
+            from pathlib import Path
+            project_path = Path(project_context.project_path)
+
+            if project_path.is_file():
+                # 如果是单个文件，获取文件所在目录
+                static_results = self.static_analyzer.analyze_files([str(project_path)], verbose=verbose)
+            else:
+                # 如果是目录，分析整个项目
+                static_results = self.static_analyzer.analyze_project(str(project_path), verbose=verbose)
+
+            # 转换为列表格式
+            if isinstance(static_results, dict):
+                static_results = list(static_results.values())
 
             if verbose and static_results:
                 for result in static_results:

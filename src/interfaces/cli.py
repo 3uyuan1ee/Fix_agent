@@ -1114,10 +1114,13 @@ def handle_interactive_mode(parser: CLIArgumentParser, args: CLIArguments) -> in
                     elif mode == 'fix':
                         args.sub_target = target
                         return execute_fix_analysis(args)
+                    elif mode == 'workflow':
+                        args.sub_target = target
+                        return execute_workflow_analysis(args)
                     else:
-                        print(f"❌ 未知模式: {mode}，请使用 static, deep 或 fix")
+                        print(f"❌ 未知模式: {mode}，请使用 static, deep, fix 或 workflow")
                 else:
-                    print("❌ 用法: analyze <static|deep|fix> <target>")
+                    print("❌ 用法: analyze <static|deep|fix|workflow> <target>")
             else:
                 print(f"❌ 未知命令: {user_input}，输入 'help' 查看帮助")
 

@@ -565,6 +565,35 @@ class MultilangStaticAnalyzer:
             ProgrammingLanguage.RUBY: {'.rb', '.rbw'},
         }
 
+    def analyze_project(self, project_path: str, **kwargs) -> List[StaticAnalysisResult]:
+        """
+        分析整个项目
+
+        Args:
+            project_path: 项目路径
+            **kwargs: 其他参数
+
+        Returns:
+            List[StaticAnalysisResult]: 分析结果列表
+        """
+        project_path = Path(project_path)
+        if not project_path.exists():
+            raise FileNotFoundError(f"项目路径不存在: {project_path}")
+
+        # 查找项目中的所有代码文件
+        code_files = []
+        for ext_set in self.language_extensions.values():
+            for ext in ext_set:
+                code_files.extend(project_path.rglob(f"*{ext}"))
+
+        file_paths = [str(f) for f in code_files if f.is_file()]
+
+        if not file_paths:
+            self.logger.warning(f"项目中未找到支持的代码文件: {project_path}")
+            return []
+
+        return self.analyze_files(file_paths, **kwargs)
+
     def analyze_files(self, file_paths: List[str], **kwargs) -> Dict[str, StaticAnalysisResult]:
         """
         批量分析文件

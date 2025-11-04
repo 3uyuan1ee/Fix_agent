@@ -9,34 +9,144 @@ from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime
 import threading
+from pathlib import Path
 
 from ..utils.logger import get_logger
+
+# 使用现有的LLM客户端
 try:
-    from ..prompts.ai_file_selection_prompt_builder import AIFileSelectionPromptBuilder, FileSelectionCriteria
-    from ..llm.unified_llm_client import UnifiedLLMClient
+    from ..llm.client import LLMClient
 except ImportError:
-    # 如果相关模块不可用，使用基本导入
-    try:
-        from ..prompts.ai_file_selection_prompt_builder import AIFileSelectionPromptBuilder, FileSelectionCriteria
-    except ImportError:
-        class AIFileSelectionPromptBuilder:
-            def __init__(self, *args, **kwargs):
-                pass
+    # 如果LLM客户端不可用，创建模拟客户端
+    class LLMClient:
+        def __init__(self, *args, **kwargs):
+            pass
 
-        class FileSelectionCriteria:
-            def __init__(self, *args, **kwargs):
-                pass
+        def chat_completion(self, *args, **kwargs):
+            return {"content": '{"selected_files": []}', "success": True}
 
-    try:
-        from ..llm.unified_llm_client import UnifiedLLMClient
-    except ImportError:
-        # 如果unified_llm_client不可用，创建一个模拟客户端
-        class UnifiedLLMClient:
-            def __init__(self, *args, **kwargs):
-                pass
+# AI文件选择提示词构建器
+class AIFileSelectionPromptBuilder:
+    def __init__(self, *args, **kwargs):
+        pass
 
-            def chat_completion(self, *args, **kwargs):
-                return {"content": '{"selected_files": []}', "success": True}
+    def build_prompt(self, project_path: str, analysis_results: List[Any] = None,
+                     user_requirements: str = "", analysis_focus: List[str] = None,
+                     runtime_errors: List[Dict[str, Any]] = None,
+                     project_structure: Dict[str, Any] = None):
+        """构建AI文件选择提示词"""
+
+        # 系统提示词
+        system_prompt = """
+你是一个专业的代码分析专家，擅长从项目中识别出最需要分析和改进的关键文件。
+
+你的任务是分析提供的项目信息，智能选择需要重点分析的文件。选择时请考虑：
+
+1. **问题严重性**: 优先选择有安全漏洞、严重错误或高风险问题的文件
+2. **代码质量**: 选择存在代码质量问题的文件，如复杂度过高、重复代码等
+3. **核心重要性**: 选择项目的核心组件、主要业务逻辑文件
+4. **用户需求**: 根据用户的特定需求优先选择相关文件
+
+请严格按照JSON格式输出，包含以下字段：
+```json
+{
+  "selected_files": [
+    {
+      "file_path": "文件路径（相对路径）",
+      "priority": "high|medium|low",
+      "reason": "选择此文件的详细理由",
+      "confidence": 0.8,
+      "key_issues": ["问题1", "问题2"]
+    }
+  ],
+  "selection_summary": {
+    "total_selected": 数量,
+    "selection_criteria_met": true,
+    "additional_notes": "额外说明"
+  }
+}
+```
+
+注意事项：
+- 选择5-15个最重要的文件
+- file_path使用相对路径
+- confidence范围为0.0-1.0
+- reason要具体说明选择理由
+- key_issues列出发现的主要问题
+"""
+
+        # 用户提示词
+        user_prompt_parts = [
+            "# 文件选择任务",
+            f"",
+            f"## 项目信息",
+            f"- 项目路径: {project_path}",
+            f"- 用户需求: {user_requirements}",
+            f"- 分析重点: {', '.join(analysis_focus or [])}",
+            f""
+        ]
+
+        # 添加静态分析结果
+        if analysis_results:
+            user_prompt_parts.extend([
+                "## 静态分析结果",
+                "发现以下问题和文件："
+            ])
+
+            for result in analysis_results:
+                if hasattr(result, 'issues') and result.issues:
+                    for issue in result.issues[:10]:  # 限制显示数量
+                        file_path = getattr(issue, 'file_path', 'unknown')
+                        message = getattr(issue, 'message', '未知问题')
+                        severity = getattr(issue, 'severity', 'unknown')
+                        user_prompt_parts.append(
+                            f"- {file_path}: {severity}级别 - {message[:100]}"
+                        )
+            user_prompt_parts.append("")
+
+        # 添加运行时错误
+        if runtime_errors:
+            user_prompt_parts.extend([
+                "## 运行时错误",
+                "发现以下运行时问题："
+            ])
+            for error in runtime_errors[:5]:
+                file_path = error.get('file', 'unknown')
+                message = error.get('message', '未知错误')
+                user_prompt_parts.append(f"- {file_path}: {message[:100]}")
+            user_prompt_parts.append("")
+
+        # 添加项目结构信息
+        if project_structure:
+            user_prompt_parts.extend([
+                "## 项目结构",
+                f"主要文件和目录："
+            ])
+            # 简化显示项目结构
+            if isinstance(project_structure, dict):
+                for key, value in list(project_structure.items())[:10]:
+                    user_prompt_parts.append(f"- {key}: {str(value)[:50]}")
+            user_prompt_parts.append("")
+
+        user_prompt_parts.extend([
+            "## 任务要求",
+            f"基于以上信息，请选择需要重点分析的文件。",
+            f"优先选择有安全风险、严重错误或核心业务逻辑的文件。",
+            f"确保选择的文件覆盖最重要的问题。",
+            f""
+        ])
+
+        user_prompt = "\n".join(user_prompt_parts)
+
+        # 返回提示词对象
+        return type('Prompt', (), {
+            'system_prompt': system_prompt.strip(),
+            'user_prompt': user_prompt.strip()
+        })()
+
+class FileSelectionCriteria:
+    def __init__(self, *args, **kwargs):
+        pass
 
 
 @dataclass
@@ -123,16 +233,22 @@ class AIFileSelector:
         }
 
     def select_files(self,
-                    project_report: Dict[str, Any],
-                    criteria: Optional[FileSelectionCriteria] = None,
-                    user_requirements: Optional[str] = None) -> AIFileSelectionResult:
+                    project_path: str,
+                    analysis_results: List[Any] = None,
+                    user_requirements: str = "",
+                    analysis_focus: List[str] = None,
+                    runtime_errors: List[Dict[str, Any]] = None,
+                    project_structure: Dict[str, Any] = None) -> AIFileSelectionResult:
         """
         执行AI文件选择
 
         Args:
-            project_report: 项目分析报告
-            criteria: 文件选择标准
-            user_requirements: 用户特定需求
+            project_path: 项目路径
+            analysis_results: 静态分析结果
+            user_requirements: 用户需求
+            analysis_focus: 分析重点
+            runtime_errors: 运行时错误
+            project_structure: 项目结构
 
         Returns:
             AIFileSelectionResult: AI选择结果
@@ -145,43 +261,71 @@ class AIFileSelector:
         )
 
         try:
-            # 构建提示词
+            # 使用AI进行文件选择
+            project_root = Path(project_path)
+
+            # 构建AI提示词
             prompt = self.prompt_builder.build_prompt(
-                project_report, criteria, user_requirements
+                project_path=project_path,
+                analysis_results=analysis_results,
+                user_requirements=user_requirements,
+                analysis_focus=analysis_focus or [],
+                runtime_errors=runtime_errors or [],
+                project_structure=project_structure or {}
             )
 
-            # 如果token过多，优化提示词
-            if prompt.token_estimate > 4000:
-                self.logger.info(f"提示词token数过多({prompt.token_estimate})，进行优化")
-                prompt = self.prompt_builder.optimize_prompt_for_tokens(prompt, 3500)
-
-            # 调用AI模型
+            # 调用AI进行文件选择
             ai_response = self._call_ai_with_retry(prompt)
 
-            if not ai_response.get("success", False):
-                result.execution_success = False
-                result.error_message = ai_response.get("error_message", "AI调用失败")
-                return result
+            selected_files = []
 
-            # 解析AI响应
-            ai_content = ai_response.get("content", "")
-            result.ai_response_raw = ai_content
-            result.token_usage = ai_response.get("token_usage", {})
+            if ai_response.get("success", False):
+                # 解析AI响应
+                try:
+                    ai_content = ai_response.get("content", "")
+                    self.logger.debug(f"AI响应内容: {ai_content[:200]}...")
 
-            # 解析选择结果
-            selection_data = self._parse_ai_response(ai_content)
-            if selection_data is None:
-                result.execution_success = False
-                result.error_message = "AI响应格式解析失败"
-                return result
+                    # 使用新的解析方法
+                    ai_data = self._parse_ai_response(ai_content)
 
-            # 处理选择结果
-            selected_files = selection_data.get("selected_files", [])
+                    if ai_data:
+                        # 从AI响应中提取选择的文件
+                        ai_selected = ai_data.get("selected_files", [])
+                        for file_data in ai_selected:
+                            selected_files.append({
+                                "file_path": file_data.get("file_path", ""),
+                                "priority": file_data.get("priority", "medium"),
+                                "reason": file_data.get("reason", "AI建议分析此文件"),
+                                "confidence": float(file_data.get("confidence", 0.7)),
+                                "key_issues": file_data.get("key_issues", [])
+                            })
+
+                        self.logger.info(f"AI成功选择了 {len(selected_files)} 个文件")
+                    else:
+                        self.logger.warning("AI响应解析为空，使用备用逻辑")
+                        selected_files = self._fallback_file_selection(
+                            project_root, analysis_results, runtime_errors
+                        )
+
+                except Exception as e:
+                    self.logger.warning(f"解析AI响应失败: {e}")
+                    # 如果解析失败，使用备用逻辑
+                    selected_files = self._fallback_file_selection(
+                        project_root, analysis_results, runtime_errors
+                    )
+            else:
+                self.logger.warning(f"AI调用失败: {ai_response.get('error_message', '未知错误')}")
+                # 如果AI调用失败，使用备用逻辑
+                selected_files = self._fallback_file_selection(
+                    project_root, analysis_results, runtime_errors
+                )
+
+            # 处理选择的文件
             result.selected_files = self._process_selected_files(selected_files)
 
             # 生成选择摘要
             result.selection_summary = self._generate_selection_summary(
-                result.selected_files, selection_data.get("selection_summary", {})
+                result.selected_files, {"confidence": 0.75, "criteria_met": True}
             )
 
             # 计算执行时间
@@ -219,8 +363,8 @@ class AIFileSelector:
                         {"role": "user", "content": prompt.user_prompt}
                     ],
                     "temperature": 0.3,  # 较低温度以获得更一致的结果
-                    "max_tokens": 2000,
-                    "response_format": {"type": "json_object"}  # 强制JSON响应
+                    "max_tokens": 2000
+                    # 注意：response_format暂不支持，在系统提示词中指定JSON格式
                 }
 
                 # 调用AI
@@ -250,8 +394,8 @@ class AIFileSelector:
     def _create_default_llm_client(self):
         """创建默认LLM客户端"""
         try:
-            from ..llm.unified_llm_client import UnifiedLLMClient
-            return UnifiedLLMClient()
+            from ..llm.client import LLMClient
+            return LLMClient()
         except Exception as e:
             self.logger.error(f"无法创建默认LLM客户端: {e}")
             raise
@@ -288,7 +432,22 @@ class AIFileSelector:
         """从响应中提取JSON内容"""
         import re
 
-        # 尝试匹配JSON对象
+        # 首先尝试移除markdown代码块标记
+        # 匹配 ```json...``` 或 ```...``` 格式
+        code_block_pattern = r'```(?:json)?\s*(\{.*?\})\s*```'
+        code_matches = re.findall(code_block_pattern, content, re.DOTALL | re.IGNORECASE)
+
+        if code_matches:
+            # 使用代码块中的内容
+            json_content = code_matches[0]
+            try:
+                json.loads(json_content)
+                self.logger.info("成功从markdown代码块中提取JSON")
+                return json_content
+            except json.JSONDecodeError:
+                self.logger.warning("markdown代码块中的JSON格式无效，尝试其他方法")
+
+        # 如果没有代码块或提取失败，尝试直接匹配JSON对象
         json_pattern = r'\{.*\}'
         matches = re.findall(json_pattern, content, re.DOTALL)
 
@@ -299,10 +458,12 @@ class AIFileSelector:
             # 尝试验证是否为有效JSON
             try:
                 json.loads(longest_match)
+                self.logger.info("成功从文本中提取JSON对象")
                 return longest_match
             except json.JSONDecodeError:
-                pass
+                self.logger.warning("提取的JSON对象格式无效")
 
+        self.logger.error("无法从响应中找到有效的JSON内容")
         return None
 
     def _validate_and_normalize_response(self, data: Dict[str, Any]) -> Dict[str, Any]:
@@ -573,6 +734,66 @@ class AIFileSelector:
         }
 
         return validation
+
+    def _fallback_file_selection(self, project_root: Path, analysis_results: List[Any] = None, runtime_errors: List[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+        """备用文件选择逻辑（基于规则）"""
+        selected_files = []
+
+        # 从静态分析结果中选择文件
+        if analysis_results:
+            for analysis_result in analysis_results:
+                if hasattr(analysis_result, 'issues') and analysis_result.issues:
+                    # 如果有问题的文件，优先选择
+                    for issue in analysis_result.issues[:5]:  # 限制数量
+                        file_path = getattr(issue, 'file_path', 'unknown')
+                        if file_path != 'unknown':
+                            selected_files.append({
+                                "file_path": file_path,
+                                "priority": "high",
+                                "reason": f"发现{getattr(issue, 'severity', 'unknown')}级别问题: {getattr(issue, 'message', '')[:50]}",
+                                "confidence": 0.8,
+                                "key_issues": [getattr(issue, 'message', '')]
+                            })
+                elif hasattr(analysis_result, 'file_path'):
+                    # 如果没有问题记录但有文件路径，也选择一些重要文件
+                    file_path = analysis_result.file_path
+                    selected_files.append({
+                        "file_path": file_path,
+                        "priority": "medium",
+                        "reason": "重要文件，需要进一步分析",
+                        "confidence": 0.6,
+                        "key_issues": []
+                    })
+
+        # 从运行时错误中选择文件
+        if runtime_errors:
+            for error in runtime_errors:
+                file_path = error.get('file', '')
+                if file_path:
+                    selected_files.append({
+                        "file_path": file_path,
+                        "priority": "high",
+                        "reason": f"运行时错误: {error.get('message', '')[:50]}",
+                        "confidence": 0.9,
+                        "key_issues": [error.get('message', '')]
+                    })
+
+        # 如果没有其他文件，选择项目中的主要文件
+        if not selected_files and project_root.exists():
+            main_files = ['main.py', 'app.py', 'index.js', 'app.js', 'main.go', 'main.rs']
+            for main_file in main_files:
+                main_file_path = project_root / main_file
+                if main_file_path.exists():
+                    selected_files.append({
+                        "file_path": main_file,
+                        "priority": "medium",
+                        "reason": "项目主入口文件",
+                        "confidence": 0.7,
+                        "key_issues": []
+                    })
+                    break
+
+        return selected_files
 
 
 # 便捷函数

@@ -14,7 +14,7 @@ from ..utils.logger import get_logger
 try:
     from .problem_detection_context_builder import ProblemDetectionContext
     from .workflow_data_types import AIDetectedProblem, ProblemType, SeverityLevel, FixType, CodeContext
-    from ..llm.unified_llm_client import UnifiedLLMClient
+    from ..llm.client import LLMClient
 except ImportError:
     # 如果相关模块不可用，定义基本类型
     from enum import Enum
@@ -436,8 +436,8 @@ class AIProblemDetector:
                         {"role": "user", "content": user_prompt}
                     ],
                     "temperature": self.detection_config["temperature"],
-                    "max_tokens": self.detection_config["max_tokens"],
-                    "response_format": {"type": "json_object"}
+                    "max_tokens": self.detection_config["max_tokens"]
+                    # 注意：response_format暂不支持，在系统提示词中指定JSON格式
                 }
 
                 # 调用AI
@@ -465,8 +465,8 @@ class AIProblemDetector:
     def _create_default_llm_client(self):
         """创建默认LLM客户端"""
         try:
-            from ..llm.unified_llm_client import UnifiedLLMClient
-            return UnifiedLLMClient()
+            from ..llm.client import LLMClient
+            return LLMClient()
         except Exception as e:
             self.logger.error(f"无法创建默认LLM客户端: {e}")
             raise

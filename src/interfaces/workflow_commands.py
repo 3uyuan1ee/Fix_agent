@@ -480,40 +480,61 @@ class WorkflowCommand:
         self.interface.progress.start("AI正在进行问题检测")
 
         try:
-            # 创建针对测试文件的模拟问题
-            target_path = Path(target)
-            mock_problems = [
-                AIDetectedProblem(
-                    problem_id="P001",
-                    file_path=target_path.name,
-                    line_number=10,
-                    problem_type=ProblemType.SECURITY,
-                    severity=SeverityLevel.HIGH,
-                    description="发现SQL注入漏洞风险",
-                    code_snippet="query = f\"SELECT * FROM users WHERE id = {user_id}\"",
-                    confidence=0.9,
-                    reasoning="字符串格式化构建SQL查询存在注入风险"
-                ),
-                AIDetectedProblem(
-                    problem_id="P002",
-                    file_path=target_path.name,
-                    line_number=19,
-                    problem_type=ProblemType.SECURITY,
-                    severity=SeverityLevel.HIGH,
-                    description="使用了不安全的eval函数",
-                    code_snippet="data = eval(user_input)",
-                    confidence=0.95,
-                    reasoning="eval函数可以执行任意代码，存在严重安全风险"
-                )
-            ]
+            # 使用AI问题检测器
+            from ..tools.ai_problem_detector import AIProblemDetector
+            from ..tools.problem_detection_context_builder import ProblemDetectionContextBuilder
+
+            # 构建检测上下文
+            context_builder = ProblemDetectionContextBuilder()
+
+            # 转换文件格式为字典列表
+            selected_files_dicts = []
+            for file_path in selected_files or []:
+                if isinstance(file_path, str):
+                    selected_files_dicts.append({
+                        "file_path": file_path,
+                        "selected": True,
+                        "selection_reason": "AI文件选择器推荐"
+                    })
+                elif isinstance(file_path, dict):
+                    selected_files_dicts.append(file_path)
+
+            detection_context = context_builder.build_context(
+                selected_files=selected_files_dicts,
+                static_analysis_results={},  # 可以为空，AI主要基于文件内容分析
+                user_preferences={
+                    "user_requirements": "优化代码质量，修复安全漏洞",
+                    "analysis_focus": ["安全漏洞", "代码质量", "性能优化"]
+                }
+            )
+
+            # 创建AI问题检测器
+            detector = AIProblemDetector()
+
+            # 执行AI问题检测
+            detection_result = detector.detect_problems(detection_context)
+
+            if not detection_result.execution_success:
+                self.interface.show_message(f"AI问题检测失败: {detection_result.error_message}", "❌")
+                return []
 
             self.interface.progress.stop()
-            return mock_problems
+
+            # 转换为工作流使用的格式
+            problems = detection_result.detected_problems
+
+            if not problems:
+                self.interface.show_message("AI未发现任何问题", "✅")
+                return []
+
+            self.interface.show_message(f"AI发现 {len(problems)} 个问题", "🔍")
+            return problems
 
         except Exception as e:
             self.interface.progress.stop()
             logger.error(f"问题检测失败: {e}")
-            raise
+            self.interface.show_message(f"问题检测失败: {e}", "❌")
+            return []
 
     def _execute_fix_suggestion_generation(self, problem: AIDetectedProblem) -> List[AIFixSuggestion]:
         """执行修复建议生成"""
@@ -521,26 +542,47 @@ class WorkflowCommand:
         self.interface.progress.start("AI正在生成修复建议")
 
         try:
-            # 这里应该调用实际的修复建议生成器
-            mock_suggestion = AIFixSuggestion(
-                suggestion_id=f"S{problem.problem_id}",
-                problem_id=problem.problem_id,
-                file_path=problem.file_path,
-                line_number=problem.line_number,
-                original_code=problem.code_snippet,
-                suggested_code="query = 'SELECT * FROM users WHERE id = %s'",
-                explanation="使用参数化查询防止SQL注入",
-                reasoning="参数化查询是防止SQL注入的标准做法",
-                confidence=0.95,
-                side_effects=["需要确保数据库连接器支持参数化查询"]
+            # 使用真正的AI修复建议生成器
+            from ..tools.ai_fix_suggestion_generator import AIFixSuggestionGenerator
+            from ..tools.fix_suggestion_context_builder import FixSuggestionContextBuilder
+
+            # 构建修复建议上下文
+            context_builder = FixSuggestionContextBuilder()
+            suggestion_context = context_builder.build_context(
+                detected_problems=[problem],
+                user_requirements="生成高质量的修复建议",
+                fix_preferences=["安全性", "可读性", "性能"]
             )
 
+            # 创建AI修复建议生成器
+            generator = AIFixSuggestionGenerator()
+
+            # 执行AI修复建议生成
+            suggestion_result = generator.generate_fix_suggestions(suggestion_context)
+
+            if not suggestion_result.execution_success:
+                self.interface.show_message(f"AI修复建议生成失败: {suggestion_result.error_message}", "❌")
+                return []
+
             self.interface.progress.stop()
-            return [mock_suggestion]
+
+            # 获取针对当前问题的建议
+            suggestions = []
+            for suggestion in suggestion_result.generated_suggestions:
+                if suggestion.problem_id == problem.problem_id:
+                    suggestions.append(suggestion)
+
+            if not suggestions:
+                self.interface.show_message("AI未生成修复建议", "⚠️")
+                return []
+
+            self.interface.show_message(f"AI生成 {len(suggestions)} 个修复建议", "💡")
+            return suggestions
 
         except Exception as e:
             self.interface.progress.stop()
             logger.error(f"修复建议生成失败: {e}")
+            self.interface.show_message(f"修复建议生成失败: {e}", "❌")
             return []
 
     def _execute_user_review(self, problem: AIDetectedProblem, suggestion: AIFixSuggestion) -> Tuple[WorkflowUserAction, Dict[str, Any]]:
