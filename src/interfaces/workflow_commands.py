@@ -528,7 +528,10 @@ class WorkflowCommand:
                         "language": language,
                         "selected": True,
                         "selection_reason": "AI文件选择器推荐",
-                        "priority": "medium"
+                        "priority": "medium",
+                        "project_context": {
+                            "project_path": os.path.dirname(target)  # 项目根目录
+                        }
                     })
                 elif isinstance(file_path, dict):
                     selected_files_dicts.append(file_path)

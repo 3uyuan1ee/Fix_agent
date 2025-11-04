@@ -317,11 +317,29 @@ class ProblemDetectionContextBuilder:
 
         for file_data in selected_files:
             file_path = file_data.get("file_path", "")
-            if not file_path or not os.path.exists(file_path):
+            if not file_path:
+                continue
+
+            # 处理文件路径 - 支持相对路径和绝对路径
+            abs_file_path = file_path
+            if not os.path.isabs(file_path):
+                # 如果是相对路径，需要相对于项目根目录解析
+                # 从selected_files中查找项目上下文信息
+                project_context = file_data.get("project_context", {})
+                project_root = project_context.get("project_path", "")
+                if project_root:
+                    abs_file_path = os.path.join(project_root, file_path)
+                else:
+                    # 尝试在当前工作目录中查找
+                    abs_file_path = os.path.abspath(file_path)
+
+            # 检查文件是否存在
+            if not os.path.exists(abs_file_path):
+                self.logger.warning(f"文件不存在: {abs_file_path}")
                 continue
 
             try:
-                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                with open(abs_file_path, 'r', encoding='utf-8', errors='ignore') as f:
                     lines = f.readlines()
 
                 # 限制读取的行数
@@ -332,10 +350,11 @@ class ProblemDetectionContextBuilder:
                 else:
                     content = ''.join(lines)
 
+                # 使用原始路径作为键，以保持一致性
                 file_contents[file_path] = content
 
             except Exception as e:
-                self.logger.warning(f"读取文件内容失败 {file_path}: {e}")
+                self.logger.warning(f"读取文件内容失败 {abs_file_path}: {e}")
                 file_contents[file_path] = f"# 文件读取失败: {e}"
 
         return file_contents
