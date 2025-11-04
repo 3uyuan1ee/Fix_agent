@@ -90,19 +90,57 @@ class AIFileSelectionPromptBuilder:
         if analysis_results:
             user_prompt_parts.extend([
                 "## 静态分析结果",
-                "发现以下问题和文件："
+                f"发现严重问题，需要重点关注："
             ])
 
+            problem_files = {}
+
+            # 收集所有问题，按文件分组
             for result in analysis_results:
                 if hasattr(result, 'issues') and result.issues:
-                    for issue in result.issues[:10]:  # 限制显示数量
+                    for issue in result.issues:
                         file_path = getattr(issue, 'file_path', 'unknown')
-                        message = getattr(issue, 'message', '未知问题')
-                        severity = getattr(issue, 'severity', 'unknown')
-                        user_prompt_parts.append(
-                            f"- {file_path}: {severity}级别 - {message[:100]}"
-                        )
+                        if file_path != 'unknown':
+                            if file_path not in problem_files:
+                                problem_files[file_path] = []
+
+                            message = getattr(issue, 'message', '未知问题')
+                            severity = getattr(issue, 'severity', 'unknown')
+                            line_num = getattr(issue, 'line_number', '?')
+
+                            problem_files[file_path].append({
+                                'severity': severity,
+                                'message': message,
+                                'line': line_num
+                            })
+
+            # 显示每个文件的问题
+            for file_path, issues in problem_files.items():
+                user_prompt_parts.append(f"\n📁 {file_path}")
+                for issue in issues[:5]:  # 每个文件最多显示5个问题
+                    user_prompt_parts.append(
+                        f"   • 行{issue['line']}: {issue['severity']} - {issue['message']}"
+                    )
+
+                # 计算严重程度
+                high_count = sum(1 for issue in issues if issue['severity'].upper() in ['HIGH', 'CRITICAL'])
+                medium_count = sum(1 for issue in issues if issue['severity'].upper() == 'MEDIUM')
+
+                if high_count > 0:
+                    user_prompt_parts.append(f"   ⚠️  包含 {high_count} 个高严重程度问题")
+                if medium_count > 0:
+                    user_prompt_parts.append(f"   ⚠️  包含 {medium_count} 个中等严重程度问题")
+
+            if not problem_files:
+                user_prompt_parts.append("   未发现具体的静态分析问题")
+
             user_prompt_parts.append("")
+        else:
+            user_prompt_parts.extend([
+                "## 静态分析结果",
+                "⚠️ 未收到静态分析结果，请基于项目结构进行文件选择",
+                ""
+            ])
 
         # 添加运行时错误
         if runtime_errors:
