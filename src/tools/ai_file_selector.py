@@ -302,6 +302,9 @@ class AIFileSelector:
             # 使用AI进行文件选择
             project_root = Path(project_path)
 
+            # 保存项目根目录路径，用于后续文件路径验证
+            self.current_project_root = project_root
+
             # 构建AI提示词
             prompt = self.prompt_builder.build_prompt(
                 project_path=project_path,
@@ -564,11 +567,19 @@ class AIFileSelector:
         processed_files = []
 
         for file_data in selected_files:
+            # 验证和修正文件路径
+            original_path = file_data.get("file_path", "")
+            validated_path = self._validate_and_fix_file_path(original_path)
+
+            if not validated_path:
+                self.logger.warning(f"跳过无效文件路径: {original_path}")
+                continue
+
             # 计算选择分数
             selection_score = self._calculate_selection_score(file_data)
 
             result = FileSelectionResult(
-                file_path=file_data["file_path"],
+                file_path=validated_path,
                 priority=file_data["priority"],
                 reason=file_data["reason"],
                 confidence=file_data["confidence"],
@@ -772,6 +783,72 @@ class AIFileSelector:
         }
 
         return validation
+
+    def _validate_and_fix_file_path(self, file_path: str) -> Optional[str]:
+        """验证和修正文件路径
+
+        Args:
+            file_path: AI返回的文件路径
+
+        Returns:
+            Optional[str]: 修正后的有效文件路径，如果无效则返回None
+        """
+        if not file_path or not isinstance(file_path, str):
+            return None
+
+        import os
+        from pathlib import Path
+
+        # 移除路径中的引号和其他特殊字符
+        clean_path = file_path.strip().strip('"\'')
+
+        # 如果路径以 / 开头，可能是绝对路径，尝试直接验证
+        if os.path.isabs(clean_path):
+            if os.path.exists(clean_path):
+                return clean_path
+            else:
+                self.logger.warning(f"绝对路径文件不存在: {clean_path}")
+                return None
+
+        # 使用保存的项目根目录作为基准
+        if hasattr(self, 'current_project_root') and self.current_project_root:
+            project_root = self.current_project_root
+        else:
+            # 如果没有保存项目根目录，使用当前工作目录作为备选
+            project_root = Path.cwd()
+
+        # 尝试几个可能的路径组合
+        possible_paths = [
+            # 相对于项目根目录
+            project_root / clean_path,
+            # 相对于项目根目录下的src目录
+            project_root / "src" / clean_path,
+            # 如果项目根目录是单文件，尝试在父目录中查找
+            project_root.parent / clean_path,
+            # 尝试在当前工作目录下查找（向后兼容）
+            Path.cwd() / clean_path,
+        ]
+
+        # 动态添加一些常见的子目录尝试
+        for subdir in ["src", "lib", "app", "code"]:
+            possible_paths.append(project_root / subdir / clean_path)
+
+        for path in possible_paths:
+            if path.exists() and path.is_file():
+                # 返回相对于项目根目录的路径
+                try:
+                    relative_path = str(path.relative_to(project_root))
+                    self.logger.info(f"修正文件路径: {clean_path} -> {relative_path}")
+                    return relative_path
+                except ValueError:
+                    # 如果无法计算相对路径，使用绝对路径
+                    abs_path = str(path.absolute())
+                    self.logger.info(f"使用绝对路径: {clean_path} -> {abs_path}")
+                    return abs_path
+
+        # 如果所有路径都无效，记录警告并返回None
+        self.logger.warning(f"无法找到有效文件路径: {clean_path}")
+        return None
 
     def _fallback_file_selection(self, project_root: Path, analysis_results: List[Any] = None, runtime_errors: List[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         """备用文件选择逻辑（基于规则）"""
