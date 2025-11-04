@@ -34,11 +34,6 @@ class UserDecisionResult:
     decision_type: str = ""
     confidence: float = 0.0
 
-@dataclass
-class ParsedAnalysisResult:
-    """解析的分析结果"""
-    selected_files: List[str] = field(default_factory=list)
-    reasoning: str = ""
 
 # 尝试导入各组件，分别处理导入失败
 logger = get_logger()
@@ -67,17 +62,6 @@ except ImportError as e:
     class UserDecisionCollector:
         def collect_decisions(self, file_selections, **kwargs):
             return UserDecisionResult()
-
-# 导入AI分析解析器（可选组件）
-try:
-    from .ai_analysis_parser import AIAnalysisParser
-except ImportError as e:
-    logger.warning(f"AI分析解析器导入失败（可选组件）: {e}")
-    class AIAnalysisParser:
-        def parse_response(self, ai_response):
-            return ParsedAnalysisResult()
-
-logger = get_logger()
 
 
 @dataclass
@@ -162,7 +146,6 @@ class PhaseACoordinator:
         self.static_aggregator = StaticAnalysisAggregator()
         self.ai_file_selector = AIFileSelector()
         self.user_decision_collector = UserDecisionCollector()
-        self.ai_parser = AIAnalysisParser()
 
         # 分析结果存储
         self.results_dir = Path(self.config.get("analysis_results_dir", ".fix_backups/phase_a_results"))
