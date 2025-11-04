@@ -491,10 +491,44 @@ class WorkflowCommand:
             selected_files_dicts = []
             for file_path in selected_files or []:
                 if isinstance(file_path, str):
+                    # 为文件路径添加更多元数据
+                    import os
+                    from pathlib import Path
+
+                    abs_path = os.path.abspath(file_path)
+                    rel_path = os.path.relpath(abs_path, os.path.dirname(target))
+
+                    # 检测编程语言
+                    language = "unknown"
+                    ext = Path(file_path).suffix.lower()
+                    if ext == '.py':
+                        language = "python"
+                    elif ext in ['.js', '.jsx']:
+                        language = "javascript"
+                    elif ext in ['.ts', '.tsx']:
+                        language = "typescript"
+                    elif ext == '.java':
+                        language = "java"
+                    elif ext == '.go':
+                        language = "go"
+                    elif ext in ['.cpp', '.cxx', '.cc']:
+                        language = "cpp"
+                    elif ext == '.c':
+                        language = "c"
+                    elif ext == '.rs':
+                        language = "rust"
+                    elif ext == '.php':
+                        language = "php"
+                    elif ext == '.rb':
+                        language = "ruby"
+
                     selected_files_dicts.append({
-                        "file_path": file_path,
+                        "file_path": abs_path,
+                        "relative_path": rel_path,
+                        "language": language,
                         "selected": True,
-                        "selection_reason": "AI文件选择器推荐"
+                        "selection_reason": "AI文件选择器推荐",
+                        "priority": "medium"
                     })
                 elif isinstance(file_path, dict):
                     selected_files_dicts.append(file_path)

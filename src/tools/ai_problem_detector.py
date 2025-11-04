@@ -327,21 +327,66 @@ class AIProblemDetector:
         # 解析AI响应
         try:
             response_content = ai_response.get("content", "")
-            detection_data = json.loads(response_content)
+            self.logger.debug(f"AI响应内容: {response_content[:200]}...")
 
-            # 转换为AIDetectedProblem对象
-            problems = self._parse_ai_problems(detection_data, file_path, detection_context)
+            # 使用专门的JSON解析方法
+            detection_data = self._extract_json_from_response(response_content)
 
-            # 限制每个文件的问题数量
-            if len(problems) > self.detection_config["max_problems_per_file"]:
-                problems = sorted(problems, key=lambda p: p.confidence, reverse=True)
-                problems = problems[:self.detection_config["max_problems_per_file"]]
+            if detection_data:
+                # 转换为AIDetectedProblem对象
+                problems = self._parse_ai_problems(detection_data, file_path, detection_context)
 
-            return problems
+                # 限制每个文件的问题数量
+                if len(problems) > self.detection_config["max_problems_per_file"]:
+                    problems = sorted(problems, key=lambda p: p.confidence, reverse=True)
+                    problems = problems[:self.detection_config["max_problems_per_file"]]
 
-        except json.JSONDecodeError as e:
+                return problems
+            else:
+                self.logger.warning(f"AI响应解析为空: {relative_path}")
+                return []
+
+        except Exception as e:
             self.logger.error(f"解析AI响应失败 {relative_path}: {e}")
             return []
+
+    def _extract_json_from_response(self, content: str) -> Optional[Dict[str, Any]]:
+        """从响应中提取JSON内容"""
+        import re
+
+        # 首先尝试移除markdown代码块标记
+        # 匹配 ```json...``` 或 ```...``` 格式
+        code_block_pattern = r'```(?:json)?\s*(\{.*?\})\s*```'
+        code_matches = re.findall(code_block_pattern, content, re.DOTALL | re.IGNORECASE)
+
+        if code_matches:
+            # 使用代码块中的内容
+            json_content = code_matches[0]
+            try:
+                json.loads(json_content)
+                self.logger.info("成功从markdown代码块中提取JSON")
+                return json.loads(json_content)
+            except json.JSONDecodeError:
+                self.logger.warning("markdown代码块中的JSON格式无效，尝试其他方法")
+
+        # 如果没有代码块或提取失败，尝试直接匹配JSON对象
+        json_pattern = r'\{.*\}'
+        matches = re.findall(json_pattern, content, re.DOTALL)
+
+        if matches:
+            # 选择最长的匹配（通常是最完整的JSON）
+            longest_match = max(matches, key=len)
+
+            # 尝试验证是否为有效JSON
+            try:
+                json.loads(longest_match)
+                self.logger.info("成功从文本中提取JSON对象")
+                return json.loads(longest_match)
+            except json.JSONDecodeError:
+                self.logger.warning("提取的JSON对象格式无效")
+
+        self.logger.error("无法从响应中找到有效的JSON内容")
+        return None
 
     def _build_file_analysis_prompt(self,
                                   file_data: Dict[str, Any],
