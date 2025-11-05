@@ -217,9 +217,14 @@ static/.webassets-cache/
 
 # Reports and analysis results
 reports/
-*.html
 *.pdf
 *.csv
+
+# Generated HTML reports (but keep templates)
+*_report.html
+*_analysis.html
+coverage_report.html
+test_report.html
 
 # AI/ML specific
 *.pkl
@@ -250,3 +255,6 @@ site/
 docker-compose.override.yml
 /archive/docs/
 /logs/
+/.fix_backups/
+/CLAUDE.md
+/example/
