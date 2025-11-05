@@ -367,31 +367,193 @@ class PhaseACoordinator:
         )
 
     def _scan_project_structure(self, project_path: Path) -> Dict[str, Any]:
-        """扫描项目结构"""
-        structure = {"directories": [], "files_by_extension": {}, "key_files": []}
+        """扫描项目结构 - 生成完整的树状结构"""
 
-        for item in project_path.rglob("*"):
-            if item.is_file():
-                ext = item.suffix.lower()
-                if ext not in structure["files_by_extension"]:
-                    structure["files_by_extension"][ext] = []
-                structure["files_by_extension"][ext].append(
-                    str(item.relative_to(project_path))
-                )
+        def build_tree_structure(root_path: Path, current_path: Path, max_depth: int = 3, current_depth: int = 0) -> Dict[str, Any]:
+            """递归构建目录树结构"""
+            if current_depth > max_depth:
+                return {"type": "directory", "truncated": True, "children": {}}
 
-                # 识别关键文件
-                if item.name.lower() in [
-                    "readme.md",
-                    "requirements.txt",
-                    "package.json",
-                    "setup.py",
-                    "dockerfile",
-                ]:
-                    structure["key_files"].append(str(item.relative_to(project_path)))
-            elif item.is_dir() and not item.name.startswith("."):
-                structure["directories"].append(str(item.relative_to(project_path)))
+            tree_node = {
+                "type": "directory",
+                "name": current_path.name,
+                "path": str(current_path.relative_to(root_path)),
+                "children": {},
+                "file_count": 0,
+                "subdir_count": 0,
+                "depth": current_depth
+            }
+
+            try:
+                items = []
+                for item in current_path.iterdir():
+                    # 跳过隐藏文件和特殊目录
+                    if item.name.startswith(".") and item.name not in {".gitignore", ".dockerignore"}:
+                        continue
+
+                    if item.name in {"__pycache__", "node_modules", ".git", ".venv", "venv", "env"}:
+                        continue
+
+                    items.append(item)
+
+                # 排序：目录在前，文件在后，然后按名称排序
+                items.sort(key=lambda x: (not x.is_dir(), x.name.lower()))
+
+                for item in items:
+                    rel_path = item.relative_to(root_path)
+
+                    if item.is_file():
+                        # 文件节点
+                        file_info = {
+                            "type": "file",
+                            "name": item.name,
+                            "path": str(rel_path),
+                            "extension": item.suffix.lower(),
+                            "size": item.stat().st_size if item.exists() else 0,
+                            "language": self._detect_file_language(item.suffix.lower()),
+                            "is_key_file": self._is_key_file(item.name.lower()),
+                            "depth": current_depth + 1
+                        }
+
+                        # 读取文件内容的预览（仅对小文件）
+                        if item.stat().st_size < 1024 * 10:  # 10KB以内的文件读取预览
+                            try:
+                                with open(item, 'r', encoding='utf-8', errors='ignore') as f:
+                                    lines = f.readlines()
+                                    file_info["preview_lines"] = len(lines)
+                                    file_info["content_preview"] = "".join(lines[:5])  # 前5行预览
+                            except Exception:
+                                file_info["content_preview"] = ""
+
+                        tree_node["children"][item.name] = file_info
+                        tree_node["file_count"] += 1
+
+                    elif item.is_dir():
+                        # 递归处理子目录
+                        child_tree = build_tree_structure(root_path, item, max_depth, current_depth + 1)
+                        tree_node["children"][item.name] = child_tree
+                        tree_node["subdir_count"] += 1
+                        tree_node["file_count"] += child_tree.get("file_count", 0)
+                        tree_node["subdir_count"] += child_tree.get("subdir_count", 0)
+
+            except PermissionError:
+                tree_node["error"] = "Permission denied"
+            except Exception as e:
+                tree_node["error"] = str(e)
+
+            return tree_node
+
+        # 构建完整的项目结构
+        project_root = project_path
+        tree_structure = build_tree_structure(project_root, project_root)
+
+        # 统计信息
+        total_files = 0
+        total_dirs = 0
+        files_by_extension = {}
+        key_files = []
+        language_distribution = {}
+
+        def analyze_tree(node):
+            nonlocal total_files, total_dirs, files_by_extension, key_files, language_distribution
+
+            if node.get("type") == "file":
+                total_files += 1
+                ext = node.get("extension", "")
+                if ext:
+                    files_by_extension[ext] = files_by_extension.get(ext, 0) + 1
+
+                lang = node.get("language", "")
+                if lang:
+                    language_distribution[lang] = language_distribution.get(lang, 0) + 1
+
+                if node.get("is_key_file", False):
+                    key_files.append(node.get("path", ""))
+
+            elif node.get("type") == "directory":
+                total_dirs += 1
+                for child in node.get("children", {}).values():
+                    analyze_tree(child)
+
+        analyze_tree(tree_structure)
+
+        # 生成完整的结构信息
+        structure = {
+            "tree": tree_structure,
+            "statistics": {
+                "total_files": total_files,
+                "total_directories": total_dirs,
+                "files_by_extension": files_by_extension,
+                "key_files": key_files,
+                "language_distribution": language_distribution,
+                "project_depth": self._calculate_max_depth(tree_structure)
+            },
+            "metadata": {
+                "project_name": project_path.name,
+                "project_path": str(project_path),
+                "scan_timestamp": datetime.now().isoformat(),
+                "scanner_version": "1.0"
+            }
+        }
 
         return structure
+
+    def _detect_file_language(self, extension: str) -> str:
+        """根据文件扩展名检测编程语言"""
+        language_map = {
+            ".py": "python",
+            ".js": "javascript", ".jsx": "javascript",
+            ".ts": "typescript", ".tsx": "typescript",
+            ".java": "java",
+            ".go": "go",
+            ".cpp": "cpp", ".cc": "cpp", ".cxx": "cpp", ".h": "cpp", ".hpp": "cpp",
+            ".c": "c",
+            ".cs": "csharp",
+            ".rs": "rust",
+            ".php": "php",
+            ".rb": "ruby",
+            ".swift": "swift",
+            ".kt": "kotlin",
+            ".scala": "scala",
+            ".html": "html", ".htm": "html",
+            ".css": "css", ".scss": "css", ".sass": "css",
+            ".json": "json",
+            ".yaml": "yaml", ".yml": "yaml",
+            ".xml": "xml",
+            ".md": "markdown", ".markdown": "markdown",
+            ".sh": "shell", ".bash": "shell", ".zsh": "shell",
+            ".sql": "sql",
+            ".dockerfile": "docker",
+            ".toml": "toml",
+            ".ini": "ini",
+            ".cfg": "config",
+            ".conf": "config"
+        }
+        return language_map.get(extension, "unknown")
+
+    def _is_key_file(self, filename: str) -> bool:
+        """判断是否为关键文件"""
+        key_patterns = [
+            "readme", "license", "changelog", "contributing", "install",
+            "requirements", "package", "setup", "dockerfile", "makefile",
+            "cmakelists", "build.gradle", "pom.xml", "go.mod", "cargo.toml",
+            "gitignore", "dockerignore", "eslintrc", "prettierrc", "babelrc",
+            "tsconfig", "webpack.config", "vite.config", "rollup.config",
+            "main.py", "index.js", "app.py", "server.py", "client.py"
+        ]
+        return any(pattern in filename for pattern in key_patterns)
+
+    def _calculate_max_depth(self, node: Dict[str, Any], current_depth: int = 0) -> int:
+        """计算目录树的最大深度"""
+        if node.get("type") == "file":
+            return current_depth
+
+        max_child_depth = current_depth
+        for child in node.get("children", {}).values():
+            child_depth = self._calculate_max_depth(child, current_depth + 1)
+            max_child_depth = max(max_child_depth, child_depth)
+
+        return max_child_depth
 
     def _detect_programming_languages(self, project_path: Path) -> Dict[str, int]:
         """检测项目使用的编程语言"""

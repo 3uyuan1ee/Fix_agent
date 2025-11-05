@@ -173,9 +173,137 @@ class AIFileSelectionPromptBuilder:
         # 添加项目结构信息
         if project_structure:
             user_prompt_parts.extend(["## 项目结构", f"完整的项目结构信息："])
-            # 详细显示项目结构
+
             if isinstance(project_structure, dict):
-                # 显示目录结构
+                # 新格式：使用完整的树状结构
+                if "tree" in project_structure:
+                    tree = project_structure["tree"]
+                    user_prompt_parts.append("### 🌳 完整目录树结构:")
+
+                    def format_tree_node(node, indent_level=0, is_last_child=True, prefix=""):
+                        """格式化树节点为ASCII艺术"""
+                        lines = []
+
+                        # 当前节点的信息
+                        node_type = node.get("type", "unknown")
+                        node_name = node.get("name", "")
+                        node_path = node.get("path", "")
+
+                        if node_type == "file":
+                            file_size = node.get("size", 0)
+                            language = node.get("language", "")
+                            is_key = node.get("is_key_file", False)
+
+                            # 文件图标
+                            icon = "🔑" if is_key else "📄"
+                            size_info = f" ({file_size}B)" if file_size > 0 else ""
+                            lang_info = f" [{language}]" if language else ""
+
+                            lines.append(f"{prefix}{icon} {node_name}{size_info}{lang_info}")
+
+                        elif node_type == "directory":
+                            file_count = node.get("file_count", 0)
+                            subdir_count = node.get("subdir_count", 0)
+
+                            # 目录图标
+                            icon = "📁" if subdir_count > 0 else "📂"
+                            count_info = f" ({file_count} 文件)" if file_count > 0 else ""
+
+                            lines.append(f"{prefix}{icon} {node_name}/{count_info}")
+
+                            # 处理子节点
+                            children = node.get("children", {})
+                            if children and indent_level < 3:  # 限制显示深度
+                                child_items = list(children.items())
+                                for i, (child_name, child_node) in enumerate(child_items):
+                                    is_last = (i == len(child_items) - 1)
+
+                                    # 计算前缀
+                                    if is_last_child:
+                                        child_prefix = prefix + "    "
+                                        connector = "└── "
+                                    else:
+                                        child_prefix = prefix + "│   "
+                                        connector = "├── "
+
+                                    lines.extend(format_tree_node(
+                                        child_node, indent_level + 1, is_last, prefix + connector
+                                    ))
+
+                            # 如果有更多子节点但被截断
+                            if "truncated" in node and node["truncated"]:
+                                lines.append(f"{prefix}    ... (更多子目录)")
+
+                        return lines
+
+                    # 格式化树结构
+                    tree_lines = format_tree_node(tree)
+                    for line in tree_lines[:50]:  # 限制行数
+                        user_prompt_parts.append(line)
+
+                    if len(tree_lines) > 50:
+                        user_prompt_parts.append(f"... (还有 {len(tree_lines) - 50} 行)")
+                    user_prompt_parts.append("")
+
+                # 显示统计信息
+                if "statistics" in project_structure:
+                    stats = project_structure["statistics"]
+                    user_prompt_parts.append("### 📊 项目统计:")
+
+                    # 基本统计
+                    total_files = stats.get("total_files", 0)
+                    total_dirs = stats.get("total_directories", 0)
+                    project_depth = stats.get("project_depth", 0)
+
+                    user_prompt_parts.append(f"- **总文件数**: {total_files}")
+                    user_prompt_parts.append(f"- **总目录数**: {total_dirs}")
+                    user_prompt_parts.append(f"- **项目深度**: {project_depth} 层")
+                    user_prompt_parts.append("")
+
+                    # 编程语言分布
+                    language_dist = stats.get("language_distribution", {})
+                    if language_dist:
+                        user_prompt_parts.append("### 💻 编程语言分布:")
+                        sorted_languages = sorted(language_dist.items(), key=lambda x: x[1], reverse=True)
+                        for language, count in sorted_languages:
+                            user_prompt_parts.append(f"- {language}: {count} 个文件")
+                        user_prompt_parts.append("")
+
+                    # 文件类型分布
+                    files_by_ext = stats.get("files_by_extension", {})
+                    if files_by_ext:
+                        user_prompt_parts.append("### 📄 文件类型分布:")
+                        sorted_exts = sorted(files_by_ext.items(), key=lambda x: x[1], reverse=True)
+                        for ext, count in sorted_exts[:10]:  # 限制显示前10个
+                            ext_name = ext if ext else "无扩展名"
+                            user_prompt_parts.append(f"- {ext_name}: {count} 个文件")
+
+                        if len(sorted_exts) > 10:
+                            user_prompt_parts.append(f"- ... 还有 {len(sorted_exts) - 10} 种文件类型")
+                        user_prompt_parts.append("")
+
+                    # 关键文件
+                    key_files = stats.get("key_files", [])
+                    if key_files:
+                        user_prompt_parts.append("### 🔑 关键文件:")
+                        for key_file in key_files[:15]:  # 限制显示数量
+                            user_prompt_parts.append(f"- {key_file}")
+
+                        if len(key_files) > 15:
+                            user_prompt_parts.append(f"- ... 还有 {len(key_files) - 15} 个关键文件")
+                        user_prompt_parts.append("")
+
+                # 显示元数据
+                if "metadata" in project_structure:
+                    metadata = project_structure["metadata"]
+                    user_prompt_parts.append("### ℹ️ 项目元数据:")
+                    user_prompt_parts.append(f"- **项目名称**: {metadata.get('project_name', 'Unknown')}")
+                    user_prompt_parts.append(f"- **扫描时间**: {metadata.get('scan_timestamp', 'Unknown')}")
+                    user_prompt_parts.append(f"- **扫描器版本**: {metadata.get('scanner_version', 'Unknown')}")
+                    user_prompt_parts.append("")
+
+            else:
+                # 兼容旧格式
                 if "directories" in project_structure:
                     user_prompt_parts.append("### 目录结构:")
                     for directory in sorted(
