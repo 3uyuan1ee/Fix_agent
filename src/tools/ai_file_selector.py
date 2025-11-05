@@ -123,7 +123,7 @@ class AIFileSelectionPromptBuilder:
 
             # 显示每个文件的问题
             for file_path, issues in problem_files.items():
-                user_prompt_parts.append(f"\n📁 {file_path}")
+                user_prompt_parts.append(f"\n {file_path}")
                 for issue in issues[:5]:  # 每个文件最多显示5个问题
                     user_prompt_parts.append(
                         f"   • 行{issue['line']}: {issue['severity']} - {issue['message']}"
@@ -141,11 +141,11 @@ class AIFileSelectionPromptBuilder:
 
                 if high_count > 0:
                     user_prompt_parts.append(
-                        f"   ⚠️  包含 {high_count} 个高严重程度问题"
+                        f"     包含 {high_count} 个高严重程度问题"
                     )
                 if medium_count > 0:
                     user_prompt_parts.append(
-                        f"   ⚠️  包含 {medium_count} 个中等严重程度问题"
+                        f"     包含 {medium_count} 个中等严重程度问题"
                     )
 
             if not problem_files:
@@ -156,7 +156,7 @@ class AIFileSelectionPromptBuilder:
             user_prompt_parts.extend(
                 [
                     "## 静态分析结果",
-                    "⚠️ 未收到静态分析结果，请基于项目结构和用户需求进行文件选择",
+                    "未收到静态分析结果，请基于项目结构和用户需求进行文件选择",
                     "",
                 ]
             )
@@ -178,10 +178,10 @@ class AIFileSelectionPromptBuilder:
                 # 新格式：使用完整的树状结构
                 if "tree" in project_structure:
                     tree = project_structure["tree"]
-                    user_prompt_parts.append("### 🌳 完整目录树结构:")
+                    user_prompt_parts.append("### 项目目录树结构:")
 
                     def format_tree_node(node, indent_level=0, is_last_child=True, prefix=""):
-                        """格式化树节点为ASCII艺术"""
+                        """格式化树节点为ASCII"""
                         lines = []
 
                         # 当前节点的信息
@@ -195,7 +195,7 @@ class AIFileSelectionPromptBuilder:
                             is_key = node.get("is_key_file", False)
 
                             # 文件图标
-                            icon = "🔑" if is_key else "📄"
+                            icon = "[KEY]" if is_key else "[FILE]"
                             size_info = f" ({file_size}B)" if file_size > 0 else ""
                             lang_info = f" [{language}]" if language else ""
 
@@ -204,12 +204,6 @@ class AIFileSelectionPromptBuilder:
                         elif node_type == "directory":
                             file_count = node.get("file_count", 0)
                             subdir_count = node.get("subdir_count", 0)
-
-                            # 目录图标
-                            icon = "📁" if subdir_count > 0 else "📂"
-                            count_info = f" ({file_count} 文件)" if file_count > 0 else ""
-
-                            lines.append(f"{prefix}{icon} {node_name}/{count_info}")
 
                             # 处理子节点
                             children = node.get("children", {})
@@ -248,7 +242,7 @@ class AIFileSelectionPromptBuilder:
                 # 显示统计信息
                 if "statistics" in project_structure:
                     stats = project_structure["statistics"]
-                    user_prompt_parts.append("### 📊 项目统计:")
+                    user_prompt_parts.append("### 项目统计:")
 
                     # 基本统计
                     total_files = stats.get("total_files", 0)
@@ -263,7 +257,7 @@ class AIFileSelectionPromptBuilder:
                     # 编程语言分布
                     language_dist = stats.get("language_distribution", {})
                     if language_dist:
-                        user_prompt_parts.append("### 💻 编程语言分布:")
+                        user_prompt_parts.append("### 编程语言分布:")
                         sorted_languages = sorted(language_dist.items(), key=lambda x: x[1], reverse=True)
                         for language, count in sorted_languages:
                             user_prompt_parts.append(f"- {language}: {count} 个文件")
@@ -272,7 +266,7 @@ class AIFileSelectionPromptBuilder:
                     # 文件类型分布
                     files_by_ext = stats.get("files_by_extension", {})
                     if files_by_ext:
-                        user_prompt_parts.append("### 📄 文件类型分布:")
+                        user_prompt_parts.append("### 文件类型分布:")
                         sorted_exts = sorted(files_by_ext.items(), key=lambda x: x[1], reverse=True)
                         for ext, count in sorted_exts[:10]:  # 限制显示前10个
                             ext_name = ext if ext else "无扩展名"
@@ -285,7 +279,7 @@ class AIFileSelectionPromptBuilder:
                     # 关键文件
                     key_files = stats.get("key_files", [])
                     if key_files:
-                        user_prompt_parts.append("### 🔑 关键文件:")
+                        user_prompt_parts.append("### 关键文件:")
                         for key_file in key_files[:15]:  # 限制显示数量
                             user_prompt_parts.append(f"- {key_file}")
 
@@ -296,7 +290,7 @@ class AIFileSelectionPromptBuilder:
                 # 显示元数据
                 if "metadata" in project_structure:
                     metadata = project_structure["metadata"]
-                    user_prompt_parts.append("### ℹ️ 项目元数据:")
+                    user_prompt_parts.append("### 项目元数据:")
                     user_prompt_parts.append(f"- **项目名称**: {metadata.get('project_name', 'Unknown')}")
                     user_prompt_parts.append(f"- **扫描时间**: {metadata.get('scan_timestamp', 'Unknown')}")
                     user_prompt_parts.append(f"- **扫描器版本**: {metadata.get('scanner_version', 'Unknown')}")
@@ -309,7 +303,7 @@ class AIFileSelectionPromptBuilder:
                     for directory in sorted(
                         project_structure["directories"][:20]
                     ):  # 限制显示数量
-                        user_prompt_parts.append(f"- 📁 {directory}/")
+                        user_prompt_parts.append(f"-  {directory}/")
                     user_prompt_parts.append("")
 
                 # 显示文件分布
@@ -326,7 +320,7 @@ class AIFileSelectionPromptBuilder:
                 if "key_files" in project_structure:
                     user_prompt_parts.append("### 关键文件:")
                     for key_file in project_structure["key_files"]:
-                        user_prompt_parts.append(f"- 📄 {key_file}")
+                        user_prompt_parts.append(f"-  {key_file}")
                     user_prompt_parts.append("")
 
                 # 显示编程语言统计
