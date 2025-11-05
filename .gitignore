@@ -186,18 +186,12 @@ config/user_*.yml
 *.tmp
 *.temp
 
-# IDE specific files (except .idea which user wants to keep)
-.idea/workspace.xml
-.idea/tasks.xml
-.idea/dictionaries
-.idea/shelf
-.idea/contentModel.xml
-.idea/dataSources.ids
-.idea/dataSources.local.xml
-.idea/sqlDataSources.xml
-.idea/dynamic.xml
-.idea/uiDesigner.xml
-idea/
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
 *.iml
 
 # Build artifacts

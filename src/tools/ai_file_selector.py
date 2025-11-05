@@ -140,9 +140,7 @@ class AIFileSelectionPromptBuilder:
                 )
 
                 if high_count > 0:
-                    user_prompt_parts.append(
-                        f"     包含 {high_count} 个高严重程度问题"
-                    )
+                    user_prompt_parts.append(f"     包含 {high_count} 个高严重程度问题")
                 if medium_count > 0:
                     user_prompt_parts.append(
                         f"     包含 {medium_count} 个中等严重程度问题"
@@ -180,7 +178,9 @@ class AIFileSelectionPromptBuilder:
                     tree = project_structure["tree"]
                     user_prompt_parts.append("### 项目目录树结构:")
 
-                    def format_tree_node(node, indent_level=0, is_last_child=True, prefix=""):
+                    def format_tree_node(
+                        node, indent_level=0, is_last_child=True, prefix=""
+                    ):
                         """格式化树节点为ASCII"""
                         lines = []
 
@@ -199,7 +199,9 @@ class AIFileSelectionPromptBuilder:
                             size_info = f" ({file_size}B)" if file_size > 0 else ""
                             lang_info = f" [{language}]" if language else ""
 
-                            lines.append(f"{prefix}{icon} {node_name}{size_info}{lang_info}")
+                            lines.append(
+                                f"{prefix}{icon} {node_name}{size_info}{lang_info}"
+                            )
 
                         elif node_type == "directory":
                             file_count = node.get("file_count", 0)
@@ -209,8 +211,10 @@ class AIFileSelectionPromptBuilder:
                             children = node.get("children", {})
                             if children and indent_level < 3:  # 限制显示深度
                                 child_items = list(children.items())
-                                for i, (child_name, child_node) in enumerate(child_items):
-                                    is_last = (i == len(child_items) - 1)
+                                for i, (child_name, child_node) in enumerate(
+                                    child_items
+                                ):
+                                    is_last = i == len(child_items) - 1
 
                                     # 计算前缀
                                     if is_last_child:
@@ -220,9 +224,14 @@ class AIFileSelectionPromptBuilder:
                                         child_prefix = prefix + "│   "
                                         connector = "├── "
 
-                                    lines.extend(format_tree_node(
-                                        child_node, indent_level + 1, is_last, prefix + connector
-                                    ))
+                                    lines.extend(
+                                        format_tree_node(
+                                            child_node,
+                                            indent_level + 1,
+                                            is_last,
+                                            prefix + connector,
+                                        )
+                                    )
 
                             # 如果有更多子节点但被截断
                             if "truncated" in node and node["truncated"]:
@@ -236,7 +245,9 @@ class AIFileSelectionPromptBuilder:
                         user_prompt_parts.append(line)
 
                     if len(tree_lines) > 50:
-                        user_prompt_parts.append(f"... (还有 {len(tree_lines) - 50} 行)")
+                        user_prompt_parts.append(
+                            f"... (还有 {len(tree_lines) - 50} 行)"
+                        )
                     user_prompt_parts.append("")
 
                 # 显示统计信息
@@ -258,7 +269,9 @@ class AIFileSelectionPromptBuilder:
                     language_dist = stats.get("language_distribution", {})
                     if language_dist:
                         user_prompt_parts.append("### 编程语言分布:")
-                        sorted_languages = sorted(language_dist.items(), key=lambda x: x[1], reverse=True)
+                        sorted_languages = sorted(
+                            language_dist.items(), key=lambda x: x[1], reverse=True
+                        )
                         for language, count in sorted_languages:
                             user_prompt_parts.append(f"- {language}: {count} 个文件")
                         user_prompt_parts.append("")
@@ -267,13 +280,17 @@ class AIFileSelectionPromptBuilder:
                     files_by_ext = stats.get("files_by_extension", {})
                     if files_by_ext:
                         user_prompt_parts.append("### 文件类型分布:")
-                        sorted_exts = sorted(files_by_ext.items(), key=lambda x: x[1], reverse=True)
+                        sorted_exts = sorted(
+                            files_by_ext.items(), key=lambda x: x[1], reverse=True
+                        )
                         for ext, count in sorted_exts[:10]:  # 限制显示前10个
                             ext_name = ext if ext else "无扩展名"
                             user_prompt_parts.append(f"- {ext_name}: {count} 个文件")
 
                         if len(sorted_exts) > 10:
-                            user_prompt_parts.append(f"- ... 还有 {len(sorted_exts) - 10} 种文件类型")
+                            user_prompt_parts.append(
+                                f"- ... 还有 {len(sorted_exts) - 10} 种文件类型"
+                            )
                         user_prompt_parts.append("")
 
                     # 关键文件
@@ -284,16 +301,24 @@ class AIFileSelectionPromptBuilder:
                             user_prompt_parts.append(f"- {key_file}")
 
                         if len(key_files) > 15:
-                            user_prompt_parts.append(f"- ... 还有 {len(key_files) - 15} 个关键文件")
+                            user_prompt_parts.append(
+                                f"- ... 还有 {len(key_files) - 15} 个关键文件"
+                            )
                         user_prompt_parts.append("")
 
                 # 显示元数据
                 if "metadata" in project_structure:
                     metadata = project_structure["metadata"]
                     user_prompt_parts.append("### 项目元数据:")
-                    user_prompt_parts.append(f"- **项目名称**: {metadata.get('project_name', 'Unknown')}")
-                    user_prompt_parts.append(f"- **扫描时间**: {metadata.get('scan_timestamp', 'Unknown')}")
-                    user_prompt_parts.append(f"- **扫描器版本**: {metadata.get('scanner_version', 'Unknown')}")
+                    user_prompt_parts.append(
+                        f"- **项目名称**: {metadata.get('project_name', 'Unknown')}"
+                    )
+                    user_prompt_parts.append(
+                        f"- **扫描时间**: {metadata.get('scan_timestamp', 'Unknown')}"
+                    )
+                    user_prompt_parts.append(
+                        f"- **扫描器版本**: {metadata.get('scanner_version', 'Unknown')}"
+                    )
                     user_prompt_parts.append("")
 
             else:

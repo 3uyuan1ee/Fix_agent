@@ -345,9 +345,7 @@ class ProjectStructureScanner:
 
         # 检查是否超出项目边界
         if not self._is_within_project_bounds(directory_path):
-            self.logger.warning(
-                f"目录超出项目边界，停止扫描: {directory_path}"
-            )
+            self.logger.warning(f"目录超出项目边界，停止扫描: {directory_path}")
             return
 
         try:
@@ -356,9 +354,7 @@ class ProjectStructureScanner:
 
                 # 检查是否超出项目边界
                 if not self._is_within_project_bounds(item_path):
-                    self.logger.debug(
-                        f"路径超出项目边界，跳过: {item_path}"
-                    )
+                    self.logger.debug(f"路径超出项目边界，跳过: {item_path}")
                     continue
 
                 # 检查是否应该忽略

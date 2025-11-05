@@ -369,7 +369,12 @@ class PhaseACoordinator:
     def _scan_project_structure(self, project_path: Path) -> Dict[str, Any]:
         """扫描项目结构 - 生成完整的树状结构"""
 
-        def build_tree_structure(root_path: Path, current_path: Path, max_depth: int = 3, current_depth: int = 0) -> Dict[str, Any]:
+        def build_tree_structure(
+            root_path: Path,
+            current_path: Path,
+            max_depth: int = 3,
+            current_depth: int = 0,
+        ) -> Dict[str, Any]:
             """递归构建目录树结构"""
             if current_depth > max_depth:
                 return {"type": "directory", "truncated": True, "children": {}}
@@ -381,17 +386,27 @@ class PhaseACoordinator:
                 "children": {},
                 "file_count": 0,
                 "subdir_count": 0,
-                "depth": current_depth
+                "depth": current_depth,
             }
 
             try:
                 items = []
                 for item in current_path.iterdir():
                     # 跳过隐藏文件和特殊目录
-                    if item.name.startswith(".") and item.name not in {".gitignore", ".dockerignore"}:
+                    if item.name.startswith(".") and item.name not in {
+                        ".gitignore",
+                        ".dockerignore",
+                    }:
                         continue
 
-                    if item.name in {"__pycache__", "node_modules", ".git", ".venv", "venv", "env"}:
+                    if item.name in {
+                        "__pycache__",
+                        "node_modules",
+                        ".git",
+                        ".venv",
+                        "venv",
+                        "env",
+                    }:
                         continue
 
                     items.append(item)
@@ -412,16 +427,20 @@ class PhaseACoordinator:
                             "size": item.stat().st_size if item.exists() else 0,
                             "language": self._detect_file_language(item.suffix.lower()),
                             "is_key_file": self._is_key_file(item.name.lower()),
-                            "depth": current_depth + 1
+                            "depth": current_depth + 1,
                         }
 
                         # 读取文件内容的预览（仅对小文件）
                         if item.stat().st_size < 1024 * 10:  # 10KB以内的文件读取预览
                             try:
-                                with open(item, 'r', encoding='utf-8', errors='ignore') as f:
+                                with open(
+                                    item, "r", encoding="utf-8", errors="ignore"
+                                ) as f:
                                     lines = f.readlines()
                                     file_info["preview_lines"] = len(lines)
-                                    file_info["content_preview"] = "".join(lines[:5])  # 前5行预览
+                                    file_info["content_preview"] = "".join(
+                                        lines[:5]
+                                    )  # 前5行预览
                             except Exception:
                                 file_info["content_preview"] = ""
 
@@ -430,7 +449,9 @@ class PhaseACoordinator:
 
                     elif item.is_dir():
                         # 递归处理子目录
-                        child_tree = build_tree_structure(root_path, item, max_depth, current_depth + 1)
+                        child_tree = build_tree_structure(
+                            root_path, item, max_depth, current_depth + 1
+                        )
                         tree_node["children"][item.name] = child_tree
                         tree_node["subdir_count"] += 1
                         tree_node["file_count"] += child_tree.get("file_count", 0)
@@ -486,14 +507,14 @@ class PhaseACoordinator:
                 "files_by_extension": files_by_extension,
                 "key_files": key_files,
                 "language_distribution": language_distribution,
-                "project_depth": self._calculate_max_depth(tree_structure)
+                "project_depth": self._calculate_max_depth(tree_structure),
             },
             "metadata": {
                 "project_name": project_path.name,
                 "project_path": str(project_path),
                 "scan_timestamp": datetime.now().isoformat(),
-                "scanner_version": "1.0"
-            }
+                "scanner_version": "1.0",
+            },
         }
 
         return structure
@@ -502,11 +523,17 @@ class PhaseACoordinator:
         """根据文件扩展名检测编程语言"""
         language_map = {
             ".py": "python",
-            ".js": "javascript", ".jsx": "javascript",
-            ".ts": "typescript", ".tsx": "typescript",
+            ".js": "javascript",
+            ".jsx": "javascript",
+            ".ts": "typescript",
+            ".tsx": "typescript",
             ".java": "java",
             ".go": "go",
-            ".cpp": "cpp", ".cc": "cpp", ".cxx": "cpp", ".h": "cpp", ".hpp": "cpp",
+            ".cpp": "cpp",
+            ".cc": "cpp",
+            ".cxx": "cpp",
+            ".h": "cpp",
+            ".hpp": "cpp",
             ".c": "c",
             ".cs": "csharp",
             ".rs": "rust",
@@ -515,31 +542,61 @@ class PhaseACoordinator:
             ".swift": "swift",
             ".kt": "kotlin",
             ".scala": "scala",
-            ".html": "html", ".htm": "html",
-            ".css": "css", ".scss": "css", ".sass": "css",
+            ".html": "html",
+            ".htm": "html",
+            ".css": "css",
+            ".scss": "css",
+            ".sass": "css",
             ".json": "json",
-            ".yaml": "yaml", ".yml": "yaml",
+            ".yaml": "yaml",
+            ".yml": "yaml",
             ".xml": "xml",
-            ".md": "markdown", ".markdown": "markdown",
-            ".sh": "shell", ".bash": "shell", ".zsh": "shell",
+            ".md": "markdown",
+            ".markdown": "markdown",
+            ".sh": "shell",
+            ".bash": "shell",
+            ".zsh": "shell",
             ".sql": "sql",
             ".dockerfile": "docker",
             ".toml": "toml",
             ".ini": "ini",
             ".cfg": "config",
-            ".conf": "config"
+            ".conf": "config",
         }
         return language_map.get(extension, "unknown")
 
     def _is_key_file(self, filename: str) -> bool:
         """判断是否为关键文件"""
         key_patterns = [
-            "readme", "license", "changelog", "contributing", "install",
-            "requirements", "package", "setup", "dockerfile", "makefile",
-            "cmakelists", "build.gradle", "pom.xml", "go.mod", "cargo.toml",
-            "gitignore", "dockerignore", "eslintrc", "prettierrc", "babelrc",
-            "tsconfig", "webpack.config", "vite.config", "rollup.config",
-            "main.py", "index.js", "app.py", "server.py", "client.py"
+            "readme",
+            "license",
+            "changelog",
+            "contributing",
+            "install",
+            "requirements",
+            "package",
+            "setup",
+            "dockerfile",
+            "makefile",
+            "cmakelists",
+            "build.gradle",
+            "pom.xml",
+            "go.mod",
+            "cargo.toml",
+            "gitignore",
+            "dockerignore",
+            "eslintrc",
+            "prettierrc",
+            "babelrc",
+            "tsconfig",
+            "webpack.config",
+            "vite.config",
+            "rollup.config",
+            "main.py",
+            "index.js",
+            "app.py",
+            "server.py",
+            "client.py",
         ]
         return any(pattern in filename for pattern in key_patterns)
 
