@@ -145,7 +145,6 @@ Thumbs.db
 
 # Project specific
 logs/
-*.log
 *.log.*
 uploads/
 temp/
@@ -157,7 +156,6 @@ tests-temp/
 
 # Cache directories
 .cache/
-.pytest_cache/
 pytest_cache/
 
 # Backup files
@@ -182,9 +180,6 @@ config/user_*.yml
 # Temporary files
 *.tmp
 *.temp
-*.swp
-*.swo
-*~
 
 # IDE specific files (except .idea which user wants to keep)
 .idea/workspace.xml
@@ -201,9 +196,6 @@ idea/
 *.iml
 
 # Build artifacts
-build/
-dist/
-target/
 bin/
 out/
 
@@ -244,7 +236,6 @@ development/
 test-results/
 test-output/
 coverage/
-.coverage
 
 # Profiling
 *.prof
@@ -252,9 +243,10 @@ coverage/
 
 # Documentation build
 docs/build/
-docs/_build/
 site/
 
 # Docker
 .dockerignore
 docker-compose.override.yml
+/archive/docs/
+/logs/
