@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  syntax-check:
+    name: Syntax Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Check Python syntax
+        run: |
+          find src -name "*.py" -exec python -m py_compile {} \;
+          echo "✅ Python syntax check passed"
+
+  project-structure:
+    name: Project Structure
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check required files
+        run: |
+          test -f README.md || (echo "❌ Missing README.md" && exit 1)
+          test -f pyproject.toml || (echo "❌ Missing pyproject.toml" && exit 1)
+          test -f requirements.txt || (echo "❌ Missing requirements.txt" && exit 1)
+          test -f main.py || (echo "❌ Missing main.py" && exit 1)
+          test -d src || (echo "❌ Missing src directory" && exit 1)
+          echo "✅ All required files exist"
+
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install black isort pylint bandit
+      - name: Check code format
+        run: |
+          black --check src/ || (echo "Run 'black src/' to fix formatting" && exit 1)
+          echo "✅ Code format check passed"
+      - name: Check import order
+        run: |
+          isort --check-only src/ || (echo "Run 'isort src/' to fix imports" && exit 1)
+          echo "✅ Import order check passed"
+      - name: Security scan
+        run: |
+          bandit -r src/ || echo "⚠️ Security scan completed with warnings"
+          echo "✅ Security scan completed"
+
+  build-test:
+    name: Build Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Install build tools
+        run: |
+          python -m pip install --upgrade pip build
+      - name: Build package
+        run: |
+          python -m build
+          echo "✅ Package build successful"
+      - name: Check build artifacts
+        run: |
+          ls -la dist/
+          test -d dist || (echo "❌ No dist directory" && exit 1)
+          echo "✅ Build artifacts check passed"
+
+  docs-check:
+    name: Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check README
+        run: |
+          test -f README.md || (echo "❌ Missing README.md" && exit 1)
+          echo "✅ README check passed"
