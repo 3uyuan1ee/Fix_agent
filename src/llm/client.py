@@ -155,8 +155,13 @@ class LLMClient:
 
         # 确定使用的提供者顺序
         if provider:
+            # 如果指定了provider，只尝试该provider和其fallback
             providers_to_try = [provider]
+            # 如果指定的provider失败，允许使用fallback providers
+            if self.config.enable_fallback and self.config.fallback_providers:
+                providers_to_try.extend(self.config.fallback_providers)
         else:
+            # 如果没有指定provider，使用默认provider和fallback
             providers_to_try = [self.config.default_provider]
             if self.config.enable_fallback and self.config.fallback_providers:
                 providers_to_try.extend(self.config.fallback_providers)
@@ -171,10 +176,10 @@ class LLMClient:
         for i, provider_name in enumerate(available_providers):
             try:
                 self.logger.debug(f"Trying provider: {provider_name}")
-                provider = self.providers[provider_name]
+                provider_obj = self.providers[provider_name]
 
                 # 发送请求
-                response = await provider.complete(request)
+                response = await provider_obj.complete(request)
 
                 # 更新统计信息
                 response_time = time.time() - start_time
@@ -382,7 +387,7 @@ class LLMClient:
 
         Args:
             messages: 消息列表 [{"role": "user", "content": "..."}]
-            **kwargs: 其他参数 (temperature, max_tokens, model等)
+            **kwargs: 其他参数 (temperature, max_tokens, model, provider等)
 
         Returns:
             Dict[str, Any]: 响应结果
@@ -395,11 +400,14 @@ class LLMClient:
             }
         """
         try:
+            # 提取provider参数
+            provider = kwargs.pop('provider', None)
+
             # 创建请求
             request = self.create_request(messages, **kwargs)
 
-            # 异步执行
-            response = await self.complete(request)
+            # 异步执行，传递provider参数
+            response = await self.complete(request, provider=provider)
 
             # 构建兼容格式的响应
             result = {
