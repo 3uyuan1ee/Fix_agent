@@ -406,8 +406,24 @@ class WorkflowCommand:
 
         self.interface.show_message(f"发现 {len(problems)} 个问题", "🔍")
 
+        # 阶段B+1: 用户自定义问题收集
+        user_problems = self._execute_user_problem_collection()
+        all_problems = problems + user_problems
+
+        if not all_problems:
+            self.interface.show_message("没有问题需要处理，工作流结束", "✅")
+            return {
+                "success": True,
+                "total_problems": 0,
+                "solved_problems": 0,
+                "skipped_problems": 0,
+                "message": "没有问题需要处理"
+            }
+
+        self.interface.show_message(f"总共 {len(all_problems)} 个问题需要处理 (AI检测: {len(problems)}, 用户自定义: {len(user_problems)})", "📋")
+
         # 处理每个问题
-        for i, problem in enumerate(problems):
+        for i, problem in enumerate(all_problems):
             session.current_problem_index = i
             self.interface.show_step(f"处理问题 {i+1}/{len(problems)}", f"文件: {problem.file_path}")
 
@@ -602,16 +618,65 @@ class WorkflowCommand:
         self.interface.progress.start("AI正在生成修复建议")
 
         try:
-            # 使用真正的AI修复建议生成器
+            # 先询问用户的修复建议
+            user_suggestion = self._get_user_fix_suggestion(problem)
+
+            # 使用AI修复建议生成器
             from ..tools.ai_fix_suggestion_generator import AIFixSuggestionGenerator
             from ..tools.fix_suggestion_context_builder import FixSuggestionContextBuilder
+            from ..utils.path_resolver import get_path_resolver
 
-            # 构建修复建议上下文
+            # 使用PathResolver确保路径解析一致性
+            path_resolver = get_path_resolver()
+
+            # 读取问题文件的完整内容
+            file_contents = self._read_file_content_for_suggestion(problem.file_path, path_resolver)
+
+            # 创建一个模拟的验证结果（适配现有API）
+            from ..tools.problem_detection_validator import ProblemValidationResult, ValidatedProblem
+
+            # 创建ValidatedProblem对象
+            validated_problem = ValidatedProblem(
+                original_problem=problem,
+                validation_score=problem.confidence,
+                severity_adjustment=0.0,
+                confidence_adjustment=0.0,
+                fix_priority="medium",
+                estimated_fix_time=15,
+                validation_reasons=[f"基于AI问题检测结果: {problem.description[:100]}"],
+                suggested_fix_types=[],
+                risk_factors=[]
+            )
+
+            # 创建ProblemValidationResult
+            validation_result = ProblemValidationResult(
+                validation_id=f"validation_{problem.problem_id}_{int(time.time())}",
+                original_problems=[problem],
+                filtered_problems=[validated_problem],
+                validation_summary={
+                    "total_problems": 1,
+                    "validated_problems": 1,
+                    "validation_success": True
+                }
+            )
+
+            # 构建修复建议上下文（使用正确的API）
             context_builder = FixSuggestionContextBuilder()
+            user_preferences = {
+                "user_requirements": "生成高质量的修复建议",
+                "fix_preferences": ["安全性", "可读性", "性能"],
+                "project_root": str(path_resolver.get_saved_project_root()) if path_resolver.get_saved_project_root() else ""
+            }
+
+            # 如果用户有建议，添加到偏好中
+            if user_suggestion:
+                user_preferences["user_suggestion"] = user_suggestion
+                user_preferences["has_user_input"] = True
+
             suggestion_context = context_builder.build_context(
-                detected_problems=[problem],
-                user_requirements="生成高质量的修复建议",
-                fix_preferences=["安全性", "可读性", "性能"]
+                validation_result=validation_result,
+                file_contents=file_contents,
+                user_preferences=user_preferences
             )
 
             # 创建AI修复建议生成器
@@ -644,6 +709,156 @@ class WorkflowCommand:
             logger.error(f"修复建议生成失败: {e}")
             self.interface.show_message(f"修复建议生成失败: {e}", "❌")
             return []
+
+    def _read_file_content_for_suggestion(self, file_path: str, path_resolver) -> Dict[str, str]:
+        """为修复建议生成读取文件内容"""
+        file_contents = {}
+
+        try:
+            # 使用PathResolver解析路径
+            resolved_path = path_resolver.resolve_path(file_path)
+
+            if not resolved_path or not resolved_path.exists():
+                # 尝试直接使用文件路径
+                from pathlib import Path
+                resolved_path = Path(file_path)
+
+                if not resolved_path.exists():
+                    logger.warning(f"无法找到文件进行修复建议生成: {file_path}")
+                    return {file_path: f"# 无法读取文件: {file_path}"}
+
+            # 读取文件内容
+            with open(resolved_path, 'r', encoding='utf-8', errors='ignore') as f:
+                content = f.read()
+
+            # 使用相对路径作为键
+            if path_resolver.get_saved_project_root():
+                try:
+                    relative_path = str(resolved_path.relative_to(path_resolver.get_saved_project_root()))
+                    file_contents[relative_path] = content
+                except ValueError:
+                    file_contents[file_path] = content
+            else:
+                file_contents[file_path] = content
+
+            logger.debug(f"为修复建议生成读取文件: {file_path} ({len(content)} 字符)")
+
+        except Exception as e:
+            logger.error(f"读取修复建议文件内容失败 {file_path}: {e}")
+            file_contents[file_path] = f"# 文件读取失败: {e}"
+
+        return file_contents
+
+    def _execute_user_problem_collection(self) -> List[AIDetectedProblem]:
+        """执行用户自定义问题收集"""
+        self.interface.show_step("阶段B+1: 用户自定义问题收集", "请输入您发现的问题")
+
+        if self.interface.quiet:
+            return []
+
+        user_problems = []
+        problem_counter = 1000  # 用户问题ID从1000开始，避免与AI检测的冲突
+
+        print("\n📝 请输入您发现的问题（输入 'no problem' 或 'no' 结束）:")
+        print("格式：文件路径:行号 问题描述")
+        print("示例: src/main.py:25 函数缺少错误处理")
+        print("示例: config.py:15 硬编码的密码应该移到环境变量")
+        print("示例: /Users/project/utils.py:100 函数效率可以优化")
+        print("示例: ./example/data.json:5 数据格式不统一")
+        print("-" * 60)
+
+        while True:
+            try:
+                user_input = input(f"问题 #{problem_counter}: ").strip()
+
+                if user_input.lower() in ['no problem', 'no', 'n', 'none', '']:
+                    break
+
+                # 解析用户输入
+                if ':' not in user_input:
+                    print("❌ 格式错误，请使用: 文件路径:行号 问题描述")
+                    continue
+
+                try:
+                    location_part, description = user_input.split(':', 1)
+                    if ':' in location_part:
+                        file_path, line_number = location_part.rsplit(':', 1)
+                    else:
+                        file_path = location_part
+                        line_number = "1"
+
+                    line_number = int(line_number.strip())
+                    description = description.strip()
+
+                    if not description:
+                        print("❌ 问题描述不能为空")
+                        continue
+
+                    # 创建用户自定义问题
+                    user_problem = AIDetectedProblem(
+                        problem_id=f"USER_{problem_counter}",
+                        file_path=file_path.strip(),
+                        line_number=line_number,
+                        problem_type=ProblemType.MAINTAINABILITY,  # 默认为可维护性问题
+                        severity=SeverityLevel.MEDIUM,  # 默认为中等严重程度
+                        description=description,
+                        code_snippet="",  # 用户问题可能没有代码片段
+                        confidence=1.0,  # 用户100%确信这是问题
+                        reasoning=f"用户自定义问题: {description}",
+                        context={"source": "user_input"}
+                    )
+
+                    user_problems.append(user_problem)
+                    print(f"✅ 已添加问题: {file_path}:{line_number} - {description[:50]}...")
+                    problem_counter += 1
+
+                except ValueError as e:
+                    print(f"❌ 解析失败: {e}")
+                    print("💡 请确保格式正确: 文件路径:行号 问题描述")
+                except Exception as e:
+                    print(f"❌ 处理失败: {e}")
+
+            except KeyboardInterrupt:
+                print("\n👋 用户输入已取消")
+                break
+            except EOFError:
+                print("\n👋 用户输入结束")
+                break
+
+        print(f"\n📋 用户总共输入了 {len(user_problems)} 个问题")
+        return user_problems
+
+    def _get_user_fix_suggestion(self, problem: AIDetectedProblem) -> Optional[str]:
+        """获取用户的修复建议"""
+        if self.interface.quiet:
+            return None
+
+        print(f"\n💭 对于问题 {problem.problem_id}，您有什么修复建议吗？")
+        print(f"📁 位置: {problem.file_path}:{problem.line_number}")
+        print(f"📝 描述: {problem.description}")
+        print("-" * 50)
+        print("请输入您的修复建议（可选，直接回车跳过）:")
+        print("示例:")
+        print("• 在函数中添加try-catch异常处理")
+        print("• 将硬编码的密钥移到环境变量中")
+        print("• 使用更高效的算法替换当前实现")
+        print("• 添加输入验证和边界检查")
+        print("-" * 50)
+
+        try:
+            user_input = input("您的建议: ").strip()
+            if user_input and user_input.lower() not in ['no', 'none', '跳过', '']:
+                print(f"✅ 已记录您的建议: {user_input[:100]}...")
+                return user_input
+            else:
+                print("ℹ️ 跳过用户建议，将完全依赖AI分析")
+                return None
+        except KeyboardInterrupt:
+            print("\nℹ️ 跳过用户建议")
+            return None
+        except EOFError:
+            print("\nℹ️ 跳过用户建议")
+            return None
 
     def _execute_user_review(self, problem: AIDetectedProblem, suggestion: AIFixSuggestion) -> Tuple[WorkflowUserAction, Dict[str, Any]]:
         """执行用户审查"""

@@ -165,7 +165,8 @@ class FixSuggestionContextBuilder:
         }
 
     def build_context(self,
-                     validation_result: ProblemValidationResult,
+                     detected_problems: Optional[List[AIDetectedProblem]] = None,
+                     validation_result: Optional[ProblemValidationResult] = None,
                      file_contents: Optional[Dict[str, str]] = None,
                      project_structure: Optional[ProjectStructure] = None,
                      user_preferences: Optional[Dict[str, Any]] = None) -> FixSuggestionContext:
@@ -173,7 +174,8 @@ class FixSuggestionContextBuilder:
         构建修复建议上下文
 
         Args:
-            validation_result: 问题验证结果
+            detected_problems: AI检测到的问题列表（与validation_result二选一）
+            validation_result: 问题验证结果（与detected_problems二选一）
             file_contents: 文件内容
             project_structure: 项目结构信息
             user_preferences: 用户偏好
@@ -181,13 +183,30 @@ class FixSuggestionContextBuilder:
         Returns:
             FixSuggestionContext: 构建的上下文
         """
-        self.logger.info(f"开始构建修复建议上下文，验证ID: {validation_result.validation_id}")
-
-        context = FixSuggestionContext(
-            context_id=self._generate_context_id(),
-            validation_result=validation_result,
-            build_timestamp=datetime.now().isoformat()
-        )
+        # 支持两种输入方式：detected_problems 或 validation_result
+        if detected_problems:
+            context_id = self._generate_context_id()
+            self.logger.info(f"开始构建修复建议上下文，问题数量: {len(detected_problems)}")
+            # 使用detected_problems创建上下文
+            context = FixSuggestionContext(
+                context_id=context_id,
+                build_timestamp=datetime.now().isoformat()
+            )
+            # 设置detected_problems并创建内部的validation_result
+            context.detected_problems = detected_problems
+            context.validation_result = self._create_validation_result_from_problems(detected_problems)
+        elif validation_result:
+            context_id = self._generate_context_id()
+            self.logger.info(f"开始构建修复建议上下文，验证ID: {validation_result.validation_id}")
+            # 使用validation_result创建上下文（保持向后兼容）
+            context = FixSuggestionContext(
+                context_id=context_id,
+                validation_result=validation_result,
+                build_timestamp=datetime.now().isoformat()
+            )
+            context.detected_problems = validation_result.original_problems
+        else:
+            raise ValueError("必须提供detected_problems或validation_result中的一个")
 
         try:
             # 处理文件内容
