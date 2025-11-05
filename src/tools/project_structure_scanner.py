@@ -97,6 +97,7 @@ class ProjectStructureScanner:
     def __init__(self, max_file_size_mb: int = 10, max_depth: int = 10):
         self.max_file_size_bytes = max_file_size_mb * 1024 * 1024
         self.max_depth = max_depth
+        self.project_root_path = None  # 用于记录项目根路径，防止扫描到项目边界之外
         self.logger = get_logger()
 
         # 编程语言文件扩展名映射
@@ -283,9 +284,13 @@ class ProjectStructureScanner:
         start_time = time.time()
         self.logger.info(f"开始扫描项目结构: {project_path}")
 
+        # 转换为绝对路径并规范化
+        project_path = os.path.abspath(project_path)
+        self.project_root_path = project_path
+
         # 初始化项目结构对象
         structure = ProjectStructure(
-            project_path=os.path.abspath(project_path),
+            project_path=project_path,
             scan_timestamp=datetime.now().isoformat(),
         )
 
@@ -293,6 +298,11 @@ class ProjectStructureScanner:
         if not os.path.exists(project_path):
             self.logger.error(f"项目路径不存在: {project_path}")
             raise ValueError(f"项目路径不存在: {project_path}")
+
+        # 检查是否为目录
+        if not os.path.isdir(project_path):
+            self.logger.error(f"项目路径不是目录: {project_path}")
+            raise ValueError(f"项目路径不是目录: {project_path}")
 
         # 执行扫描
         try:
@@ -333,9 +343,23 @@ class ProjectStructureScanner:
             )
             return
 
+        # 检查是否超出项目边界
+        if not self._is_within_project_bounds(directory_path):
+            self.logger.warning(
+                f"目录超出项目边界，停止扫描: {directory_path}"
+            )
+            return
+
         try:
             for item in os.listdir(directory_path):
                 item_path = os.path.join(directory_path, item)
+
+                # 检查是否超出项目边界
+                if not self._is_within_project_bounds(item_path):
+                    self.logger.debug(
+                        f"路径超出项目边界，跳过: {item_path}"
+                    )
+                    continue
 
                 # 检查是否应该忽略
                 if self._should_ignore(item, item_path):
@@ -456,6 +480,30 @@ class ProjectStructureScanner:
             return True
 
         return False
+
+    def _is_within_project_bounds(self, path: str) -> bool:
+        """
+        检查路径是否在项目边界内
+
+        Args:
+            path: 要检查的路径
+
+        Returns:
+            bool: 是否在项目边界内
+        """
+        if not self.project_root_path:
+            return True  # 如果项目根路径未设置，默认允许
+
+        # 转换为绝对路径
+        abs_path = os.path.abspath(path)
+        abs_project_root = os.path.abspath(self.project_root_path)
+
+        # 检查路径是否以项目根路径开头
+        # 使用os.path.commonpath来正确处理路径比较
+        common_path = os.path.commonpath([abs_project_root, abs_path])
+
+        # 如果公共路径就是项目根路径，说明路径在项目内
+        return common_path == abs_project_root
 
     def _is_binary_file(self, file_path: str, ext: str) -> bool:
         """
