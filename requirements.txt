@@ -57,35 +57,35 @@ chardet>=5.0.0                  # 字符编码检测
 python-dotenv>=1.0.0            # 环境变量管理
 
 # ============================================
-# 开发和测试工具
+# 开发和测试工具 - 使用 pip install -e .[dev] 安装
 # ============================================
-pytest>=7.4.0                   # 测试框架
-pytest-asyncio>=0.21.0          # 异步测试支持
-pytest-cov>=4.1.0               # 测试覆盖率
-
-# 代码质量工具
-black>=23.0.0                   # 代码格式化
-isort>=5.12.0                   # 导入排序
-mypy>=1.5.0                     # 类型检查
+# pytest>=7.4.0                   # 测试框架
+# pytest-asyncio>=0.21.0          # 异步测试支持
+# pytest-cov>=4.1.0               # 测试覆盖率
+# black>=23.0.0                   # 代码格式化
+# isort>=5.12.0                   # 导入排序
+# mypy>=1.5.0                     # 类型检查
 
 # ============================================
 # 可选依赖 - 根据需要安装
 # ============================================
 
-# Web界面增强（可选）
+# Web界面增强 - 使用 pip install -e .[web] 安装
 # jinja2>=3.0.0                  # 模板引擎
 # bootstrap-flask>=2.0.0        # Bootstrap集成
+# flask-socketio>=5.3.0          # WebSocket支持
+# python-socketio>=5.8.0         # SocketIO客户端
 
-# 数据库支持（可选）
+# 数据库支持 - 使用 pip install -e .[database] 安装
 # sqlalchemy>=2.0.0              # ORM框架
 # alembic>=1.8.0                 # 数据库迁移
 
-# 报告生成（可选）
+# 报告生成 - 使用 pip install -e .[reporting] 安装
 # matplotlib>=3.5.0              # 图表生成
 # plotly>=5.0.0                  # 交互式图表
 # jupyter>=1.0.0                 # Jupyter Notebook支持
 
-# 性能监控（可选）
+# 性能监控 - 使用 pip install -e .[monitoring] 安装
 # psutil>=5.8.0                  # 系统监控
 # memory-profiler>=0.60.0        # 内存分析
 
