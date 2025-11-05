@@ -702,6 +702,6 @@ python3 scripts/configure_llm.py --test zhipu
 
 **🚀 让AI成为您的代码质量守护者！**
 
-[⭐ 给我们一个Star](https://github.com/3uyuan1ee/AIDefectDetector) • [🐛 报告问题](https://github.com/your-repo/AIDefectDetector/issues) • [📖 查看文档](docs/)
+[⭐ 给我们一个Star](https://github.com/3uyuan1ee/Fix_agent) • [🐛 报告问题](https://github.com/3uyuan1ee/Fix_agent/issues) • [📖 查看文档](docs/)
 
 </div>
