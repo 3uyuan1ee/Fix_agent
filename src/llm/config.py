@@ -7,7 +7,7 @@ import json
 import yaml
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Union
-from dataclasses import asdict
+from dataclasses import asdict, dataclass
 
 from ..utils.logger import get_logger
 from ..utils.config import get_config_manager
@@ -484,3 +484,58 @@ class LLMConfigManager:
         except Exception as e:
             self.logger.error(f"Failed to import config: {e}")
             return False
+
+    def get_concurrency_config(self):
+        """
+        获取并发配置
+
+        Returns:
+            ConcurrencyConfig: 并发配置对象
+        """
+        # 先尝试从LLM配置文件中读取
+        try:
+            config_data = self._load_config_file_data()
+            if config_data and 'concurrency' in config_data:
+                concurrency_data = config_data['concurrency']
+                return ConcurrencyConfig(**concurrency_data)
+        except Exception as e:
+            self.logger.debug(f"Failed to load concurrency config from file: {e}")
+
+        # 然后尝试从环境变量读取
+        try:
+            if 'LLM_MAX_CONCURRENT_REQUESTS' in os.environ:
+                return ConcurrencyConfig(
+                    max_concurrent_requests=int(os.environ['LLM_MAX_CONCURRENT_REQUESTS']),
+                    request_timeout=int(os.environ.get('LLM_REQUEST_TIMEOUT', '300')),
+                    session_timeout=int(os.environ.get('LLM_SESSION_TIMEOUT', '600')),
+                    enable_session_pooling=os.environ.get('LLM_ENABLE_SESSION_POOLING', 'true').lower() == 'true',
+                    max_sessions_per_provider=int(os.environ.get('LLM_MAX_SESSIONS_PER_PROVIDER', '3'))
+                )
+        except Exception as e:
+            self.logger.debug(f"Failed to load concurrency config from environment: {e}")
+
+        # 最后返回默认配置
+        return ConcurrencyConfig()
+
+    def _load_config_file_data(self) -> Optional[Dict[str, Any]]:
+        """加载配置文件数据"""
+        if self.config_file and os.path.exists(self.config_file):
+            try:
+                with open(self.config_file, 'r', encoding='utf-8') as f:
+                    if self.config_file.endswith('.json'):
+                        return json.load(f)
+                    else:
+                        return yaml.safe_load(f)
+            except Exception as e:
+                self.logger.error(f"Failed to load config file {self.config_file}: {e}")
+        return None
+
+
+@dataclass
+class ConcurrencyConfig:
+    """并发控制配置"""
+    max_concurrent_requests: int = 5
+    request_timeout: int = 300
+    session_timeout: int = 600
+    enable_session_pooling: bool = True
+    max_sessions_per_provider: int = 3

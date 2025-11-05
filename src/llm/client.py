@@ -67,6 +67,15 @@ class LLMClient:
         self.providers: Dict[str, LLMProvider] = {}
         self._init_providers()
 
+        # 初始化全局并发管理器
+        concurrency_config = self.config_manager.get_concurrency_config()
+        if concurrency_config:
+            from .concurrency_manager import get_global_concurrency_manager
+            self.concurrency_manager = get_global_concurrency_manager(concurrency_config.max_concurrent_requests)
+        else:
+            from .concurrency_manager import get_global_concurrency_manager
+            self.concurrency_manager = get_global_concurrency_manager(5)
+
     def _init_providers(self):
         """初始化所有可用的提供者"""
         # 初始化智谱AI
@@ -115,7 +124,24 @@ class LLMClient:
     async def complete(self, request: LLMRequest,
                       provider: Optional[str] = None) -> LLMResponse:
         """
-        完成文本生成请求
+        完成文本生成请求（带全局并发控制）
+
+        Args:
+            request: LLM请求
+            provider: 指定的提供者，如果为None则使用默认提供者
+
+        Returns:
+            LLM响应
+        """
+        # 使用全局并发管理器执行请求
+        return await self.concurrency_manager.execute_request(
+            self._complete_with_providers, request, provider
+        )
+
+    async def _complete_with_providers(self, request: LLMRequest,
+                                     provider: Optional[str] = None) -> LLMResponse:
+        """
+        内部方法：使用指定提供者完成请求
 
         Args:
             request: LLM请求
@@ -345,6 +371,54 @@ class LLMClient:
 
         except Exception as e:
             self.logger.error(f"Chat completion failed: {e}")
+            return {
+                "success": False,
+                "error_message": str(e)
+            }
+
+    async def chat_completion_async(self, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
+        """
+        异步聊天补全接口
+
+        Args:
+            messages: 消息列表 [{"role": "user", "content": "..."}]
+            **kwargs: 其他参数 (temperature, max_tokens, model等)
+
+        Returns:
+            Dict[str, Any]: 响应结果
+            {
+                "success": bool,
+                "content": str,
+                "error_message": str,
+                "usage": dict,
+                "model": str
+            }
+        """
+        try:
+            # 创建请求
+            request = self.create_request(messages, **kwargs)
+
+            # 异步执行
+            response = await self.complete(request)
+
+            # 构建兼容格式的响应
+            result = {
+                "success": True,
+                "content": response.content,
+                "model": response.model,
+                "finish_reason": response.finish_reason
+            }
+
+            # 添加使用情况
+            if response.usage:
+                result["usage"] = response.usage
+            else:
+                result["usage"] = {}
+
+            return result
+
+        except Exception as e:
+            self.logger.error(f"Async chat completion failed: {e}")
             return {
                 "success": False,
                 "error_message": str(e)
