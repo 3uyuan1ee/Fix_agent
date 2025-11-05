@@ -32,13 +32,50 @@ class PathResolver:
     def set_project_root(self, project_root: Union[str, Path]):
         """
         设置并保存项目根目录的绝对路径
+        支持相对路径和绝对路径的自动解析
 
         Args:
-            project_root: 项目根目录路径
+            project_root: 项目根目录路径，可以是相对路径或绝对路径
         """
-        self.project_root = Path(project_root).resolve()
-        self._saved_project_root = self.project_root
+        # 标准化路径输入
+        project_path = Path(project_root)
+
+        # 清理路径字符串（移除前缀和后缀的空白字符）
+        if isinstance(project_root, str):
+            project_root = project_root.strip()
+            # 处理常见的相对路径前缀
+            if project_root.startswith('./'):
+                project_path = Path(project_root[2:])
+            elif project_root.startswith('.\\'):
+                project_path = Path(project_root[3:])
+
+        # 如果是相对路径，基于当前工作目录解析
+        if not project_path.is_absolute():
+            project_path = Path.cwd() / project_path
+
+        # 解析为绝对路径，处理 .. 和 .
+        resolved_path = project_path.resolve()
+
+        # 验证路径存在
+        if not resolved_path.exists():
+            # 尝试在当前目录下查找
+            alt_path = Path.cwd() / Path(project_root).name
+            if alt_path.exists():
+                resolved_path = alt_path.resolve()
+                logger.warning(f"在当前目录下找到项目: {resolved_path}")
+            else:
+                logger.error(f"项目路径不存在: {resolved_path}")
+                raise FileNotFoundError(f"项目路径不存在: {resolved_path}")
+
+        # 验证是目录
+        if not resolved_path.is_dir():
+            logger.error(f"项目路径不是目录: {resolved_path}")
+            raise NotADirectoryError(f"项目路径不是目录: {resolved_path}")
+
+        self.project_root = resolved_path
+        self._saved_project_root = resolved_path
         logger.info(f"项目根目录已设置并保存: {self.project_root}")
+        logger.info(f"路径类型: {'绝对路径' if resolved_path.is_absolute() else '相对路径'}")
 
     def get_saved_project_root(self) -> Path:
         """
@@ -67,15 +104,31 @@ class PathResolver:
                     search_dirs: Optional[List[str]] = None) -> Optional[Path]:
         """
         解析文件路径，支持相对路径和绝对路径
+        支持各种常见的路径格式：./file.py、../src/file.py、file.py等
 
         Args:
-            file_path: 要解析的文件路径
+            file_path: 要解析的文件路径，可以是各种格式
             search_dirs: 如果是相对路径，搜索的目录列表
 
         Returns:
             解析后的绝对路径，如果文件不存在则返回None
         """
-        file_path = Path(file_path)
+        # 处理字符串路径的标准化
+        if isinstance(file_path, str):
+            file_path_str = file_path.strip()
+
+            # 处理常见的相对路径前缀
+            if file_path_str.startswith('./'):
+                file_path = Path(file_path_str[2:])
+            elif file_path_str.startswith('.\\'):
+                file_path = Path(file_path_str[3:])
+            elif file_path_str.startswith('../') or file_path_str.startswith('..\\'):
+                # 保留上级目录引用，让Path.resolve()处理
+                file_path = Path(file_path_str)
+            else:
+                file_path = Path(file_path_str)
+        else:
+            file_path = Path(file_path)
 
         # 如果已经是绝对路径，直接检查存在性
         if file_path.is_absolute():
@@ -86,15 +139,44 @@ class PathResolver:
                 logger.warning(f"绝对路径文件不存在: {file_path}")
                 return None
 
-        # 处理相对路径
+        # 确保项目根目录已设置
+        if not self.project_root or not self.project_root.exists():
+            self.ensure_project_root_set()
+
+        # 处理相对路径 - 先尝试在项目根目录下直接查找
+        candidate = self.project_root / file_path
+        if candidate.exists():
+            resolved_path = candidate.resolve()
+            logger.debug(f"项目根目录直接查找成功: {file_path} -> {resolved_path}")
+            return resolved_path
+
+        # 如果直接查找失败，使用搜索目录列表
         if search_dirs is None:
-            # 默认搜索目录
+            # 扩展的默认搜索目录
             search_dirs = [
-                ".",  # 当前工作目录
+                ".",  # 项目根目录
                 "src",  # 源码目录
                 "example",  # 示例目录
+                "examples",  # 示例目录（复数形式）
                 "tests",  # 测试目录
+                "test",  # 测试目录（单数形式）
                 "config",  # 配置目录
+                "configs",  # 配置目录（复数形式）
+                "lib",  # 库目录
+                "libs",  # 库目录（复数形式）
+                "utils",  # 工具目录
+                "helpers",  # 辅助工具目录
+                "modules",  # 模块目录
+                "components",  # 组件目录
+                "services",  # 服务目录
+                "controllers",  # 控制器目录
+                "models",  # 模型目录
+                "views",  # 视图目录
+                "templates",  # 模板目录
+                "static",  # 静态资源目录
+                "assets",  # 资源目录
+                "docs",  # 文档目录
+                "documentation",  # 文档目录
             ]
 
         # 在各个搜索目录中查找文件
@@ -108,17 +190,33 @@ class PathResolver:
             # 检查文件是否存在
             if candidate.exists():
                 resolved_path = candidate.resolve()
-                logger.debug(f"相对路径解析成功: {file_path} -> {resolved_path}")
+                logger.debug(f"搜索目录查找成功: {file_path} -> {resolved_path} (在 {search_dir} 中)")
                 return resolved_path
 
-        # 如果都没找到，尝试直接在项目根目录下查找
-        candidate = self.project_root / file_path
-        if candidate.exists():
-            resolved_path = candidate.resolve()
-            logger.debug(f"项目根目录查找成功: {file_path} -> {resolved_path}")
-            return resolved_path
+        # 尝试使用glob模式匹配（处理通配符）
+        try:
+            import glob
+            pattern = str(self.project_root / "**" / file_path.name if file_path.name else file_path)
+            matches = glob.glob(pattern, recursive=True)
+            if matches:
+                # 返回第一个匹配项
+                resolved_path = Path(matches[0]).resolve()
+                logger.debug(f"通配符匹配成功: {file_path} -> {resolved_path}")
+                return resolved_path
+        except Exception as e:
+            logger.debug(f"通配符匹配失败: {e}")
 
-        logger.warning(f"无法找到文件: {file_path}")
+        # 最后尝试：从当前工作目录解析相对路径
+        try:
+            candidate = Path.cwd() / file_path
+            if candidate.exists():
+                resolved_path = candidate.resolve()
+                logger.debug(f"当前工作目录查找成功: {file_path} -> {resolved_path}")
+                return resolved_path
+        except Exception as e:
+            logger.debug(f"当前工作目录查找失败: {e}")
+
+        logger.warning(f"无法找到文件: {file_path} (已尝试项目根目录、搜索目录和当前工作目录)")
         return None
 
     def normalize_path(self, file_path: Union[str, Path]) -> Path:
