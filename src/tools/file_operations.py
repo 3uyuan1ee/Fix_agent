@@ -1,6 +1,7 @@
 """
 文件操作工具模块
 实现项目文件扫描、读取和基础操作功能
+集成PathResolver以提供统一的路径解析功能
 """
 
 import os
@@ -11,6 +12,7 @@ from typing import List, Optional, Dict, Any, Union
 
 from ..utils.logger import get_logger
 from ..utils.config import get_config_manager
+from ..utils.path_resolver import get_path_resolver
 
 
 class FileOperationError(Exception):
@@ -30,6 +32,9 @@ class FileOperations:
         """
         self.config_manager = config_manager or get_config_manager()
         self.logger = get_logger()
+
+        # 初始化PathResolver
+        self.path_resolver = get_path_resolver()
 
         # 获取配置
         file_ops_config = self.config_manager.get_section('file_operations')
@@ -56,7 +61,12 @@ class FileOperations:
         Raises:
             FileOperationError: 目录不存在或访问失败
         """
-        directory = Path(directory)
+        # 使用PathResolver解析目录路径
+        resolved_directory = self.path_resolver.resolve_path(directory)
+        if not resolved_directory:
+            raise FileOperationError(f"Cannot resolve directory path: {directory}")
+
+        directory = resolved_directory
 
         # 检查目录是否存在
         if not directory.exists():
@@ -122,7 +132,12 @@ class FileOperations:
         Raises:
             FileOperationError: 文件读取失败
         """
-        file_path = Path(file_path)
+        # 使用PathResolver解析文件路径
+        resolved_file_path = self.path_resolver.resolve_path(file_path)
+        if not resolved_file_path:
+            raise FileOperationError(f"Cannot resolve file path: {file_path}")
+
+        file_path = resolved_file_path
 
         # 检查文件是否存在
         if not file_path.exists():
@@ -317,7 +332,12 @@ class FileOperations:
         Returns:
             文件信息字典
         """
-        file_path = Path(file_path)
+        # 使用PathResolver解析文件路径
+        resolved_file_path = self.path_resolver.resolve_path(file_path)
+        if not resolved_file_path:
+            raise FileOperationError(f"Cannot resolve file path: {file_path}")
+
+        file_path = resolved_file_path
 
         if not file_path.exists():
             raise FileOperationError(f"File does not exist: {file_path}")
@@ -411,14 +431,14 @@ class FileOperations:
         Returns:
             相对路径
         """
-        file_path = Path(file_path).absolute()
-        base_path = Path(base_path).absolute()
-
-        try:
-            return str(file_path.relative_to(base_path))
-        except ValueError:
-            # 如果无法计算相对路径，返回绝对路径
+        # 使用PathResolver获取相对路径
+        resolved_file_path = self.path_resolver.resolve_path(file_path)
+        if not resolved_file_path:
+            # 如果解析失败，返回原始路径
             return str(file_path)
+
+        relative_path = self.path_resolver.get_relative_path(resolved_file_path, base_path)
+        return str(relative_path)
 
     def backup_file(self, file_path: Union[str, Path],
                    backup_dir: Optional[str] = None) -> str:
@@ -432,7 +452,12 @@ class FileOperations:
         Returns:
             备份文件路径
         """
-        file_path = Path(file_path)
+        # 使用PathResolver解析文件路径
+        resolved_file_path = self.path_resolver.resolve_path(file_path)
+        if not resolved_file_path:
+            raise FileOperationError(f"Cannot resolve file path: {file_path}")
+
+        file_path = resolved_file_path
 
         if not file_path.exists():
             raise FileOperationError(f"File does not exist: {file_path}")
@@ -441,7 +466,13 @@ class FileOperations:
         if backup_dir is None:
             backup_dir = self.backup_dir
 
-        backup_dir_path = Path(backup_dir)
+        # 使用PathResolver解析备份目录路径
+        resolved_backup_dir = self.path_resolver.resolve_path(backup_dir)
+        if not resolved_backup_dir:
+            # 如果备份目录路径解析失败，创建相对路径
+            resolved_backup_dir = Path.cwd() / backup_dir
+
+        backup_dir_path = resolved_backup_dir
         backup_dir_path.mkdir(parents=True, exist_ok=True)
 
         # 生成备份文件名

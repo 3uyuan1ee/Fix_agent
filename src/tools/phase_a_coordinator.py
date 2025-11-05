@@ -14,6 +14,7 @@ from datetime import datetime
 
 from ..utils.logger import get_logger
 from ..utils.config import get_config_manager
+from ..utils.path_resolver import get_path_resolver
 
 # 导入阶段A相关组件
 from .multilang_static_analyzer import MultilangStaticAnalyzer, StaticAnalysisResult
@@ -138,6 +139,9 @@ class PhaseACoordinator:
         self.config_manager = config_manager or get_config_manager()
         self.logger = get_logger()
 
+        # 初始化PathResolver
+        self.path_resolver = get_path_resolver()
+
         # 获取配置
         self.config = self.config_manager.get("project_analysis", {})
 
@@ -147,8 +151,13 @@ class PhaseACoordinator:
         self.ai_file_selector = AIFileSelector()
         self.user_decision_collector = UserDecisionCollector()
 
-        # 分析结果存储
-        self.results_dir = Path(self.config.get("analysis_results_dir", ".fix_backups/phase_a_results"))
+        # 分析结果存储（使用PathResolver解析）
+        results_dir_path = self.config.get("analysis_results_dir", ".fix_backups/phase_a_results")
+        resolved_results_dir = self.path_resolver.resolve_path(results_dir_path)
+        if not resolved_results_dir:
+            # 如果解析失败，使用当前工作目录下的路径
+            resolved_results_dir = Path.cwd() / results_dir_path
+        self.results_dir = resolved_results_dir
         self.results_dir.mkdir(parents=True, exist_ok=True)
 
     def execute_phase_a(
@@ -173,10 +182,19 @@ class PhaseACoordinator:
             PhaseAResult: 阶段A执行结果
         """
         start_time = time.time()
-        project_path = Path(project_path).resolve()
+
+        # 使用PathResolver解析项目路径
+        resolved_project_path = self.path_resolver.resolve_path(project_path)
+        if not resolved_project_path:
+            raise FileNotFoundError(f"无法解析项目路径: {project_path}")
+
+        project_path = resolved_project_path
 
         if not project_path.exists():
             raise FileNotFoundError(f"项目路径不存在: {project_path}")
+
+        # 设置项目根目录到PathResolver
+        self.path_resolver.set_project_root(project_path)
 
         if verbose:
             print(f"🚀 启动阶段A: 静态分析与AI分析结合用户决策进行文件选择")
@@ -376,10 +394,13 @@ class PhaseACoordinator:
     ) -> List[StaticAnalysisResult]:
         """执行静态项目分析 - Phase 1"""
         try:
-            # 使用多语言静态分析器
-            # 检查是单个文件还是目录
-            from pathlib import Path
-            project_path = Path(project_context.project_path)
+            # 使用PathResolver解析项目路径
+            resolved_project_path = self.path_resolver.resolve_path(project_context.project_path)
+            if not resolved_project_path:
+                self.logger.error(f"无法解析项目路径: {project_context.project_path}")
+                return []
+
+            project_path = resolved_project_path
 
             if project_path.is_file():
                 # 如果是单个文件，获取文件所在目录
@@ -560,9 +581,13 @@ class PhaseACoordinator:
             if verbose:
                 print(f"   正在使用多语言静态分析器分析项目...")
 
-            # 检查是单个文件还是目录
-            from pathlib import Path
-            project_path = Path(project_context.project_path)
+            # 使用PathResolver解析项目路径
+            resolved_project_path = self.path_resolver.resolve_path(project_context.project_path)
+            if not resolved_project_path:
+                self.logger.error(f"无法解析项目路径: {project_context.project_path}")
+                return []
+
+            project_path = resolved_project_path
 
             if project_path.is_file():
                 # 如果是单个文件，获取文件所在目录

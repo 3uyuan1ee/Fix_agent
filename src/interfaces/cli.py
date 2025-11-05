@@ -2072,11 +2072,27 @@ def execute_workflow_analysis(args: CLIArguments) -> int:
         print("💡 使用示例: aidefect analyze workflow <file_or_directory>")
         return 1
 
-    # 验证路径存在性
-    from pathlib import Path
-    target_path = Path(target)
-    if not target_path.exists():
-        print(f"❌ 错误: 目标路径不存在: {target}")
+    # 使用PathResolver验证和解析路径
+    try:
+        from src.utils.path_resolver import get_path_resolver
+        resolver = get_path_resolver()
+
+        # 解析目标路径（支持相对路径和绝对路径）
+        target_path = resolver.resolve_path(target)
+        if not target_path:
+            print(f"❌ 错误: 目标路径不存在或无法解析: {target}")
+            print("💡 请检查文件路径是否正确")
+            print("💡 支持的路径格式: 相对路径、绝对路径、带./或../前缀的路径")
+            return 1
+
+        # 设置项目根目录（如果是目录则作为项目根，如果是文件则使用其父目录）
+        if target_path.is_dir():
+            resolver.set_project_root(target_path)
+        else:
+            resolver.set_project_root(target_path.parent)
+
+    except Exception as e:
+        print(f"❌ 路径解析失败: {e}")
         print("💡 请检查文件路径是否正确")
         return 1
 

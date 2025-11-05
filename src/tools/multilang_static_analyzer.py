@@ -576,7 +576,15 @@ class MultilangStaticAnalyzer:
         Returns:
             List[StaticAnalysisResult]: 分析结果列表
         """
-        project_path = Path(project_path)
+        # 使用PathResolver解析项目路径
+        from ..utils.path_resolver import get_path_resolver
+        path_resolver = get_path_resolver()
+
+        resolved_project_path = path_resolver.resolve_path(project_path)
+        if not resolved_project_path:
+            raise FileNotFoundError(f"无法解析项目路径: {project_path}")
+
+        project_path = resolved_project_path
         if not project_path.exists():
             raise FileNotFoundError(f"项目路径不存在: {project_path}")
 
