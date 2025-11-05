@@ -150,7 +150,7 @@ python main.py analyze deep src/utils/config.py
 
 ## 📚 详细文档
 
-- 📖 [完整API配置指南](API_CONFIG_GUIDE.md)
+- 📖 [完整API配置指南](Guide/API_CONFIG_GUIDE.md)
 - 🔧 [项目架构文档](docs/)
 - 🚀 [使用示例](demos/)
 
@@ -167,4 +167,4 @@ python main.py analyze deep src/your_file.py
 # 在交互模式中提问具体问题
 ```
 
-祝您使用愉快！如有问题，请查看 [API_CONFIG_GUIDE.md](API_CONFIG_GUIDE.md) 获取详细帮助。
+祝您使用愉快！如有问题，请查看 [API_CONFIG_GUIDE.md](Guide/API_CONFIG_GUIDE.md) 获取详细帮助。

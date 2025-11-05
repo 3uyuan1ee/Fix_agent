@@ -356,10 +356,10 @@ rm -rf ~/.aidefect_venv
 
 ## 📚 更多资源
 
-- [快速开始指南](QUICKSTART.md) - 5分钟上手
-- [完整文档](README.md) - 详细使用说明
-- [演示指南](DEMO_GUIDE.md) - 功能演示
-- [项目概览](OVERVIEW.md) - 架构说明
+- [快速开始指南](../QUICKSTART.md) - 5分钟上手
+- [完整文档](../README.md) - 详细使用说明
+- [演示指南](../../Dev/DEMO_GUIDE.md) - 功能演示
+- [项目概览](../OVERVIEW.md) - 架构说明
 
 ---
 
