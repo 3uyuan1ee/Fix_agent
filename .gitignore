@@ -256,5 +256,7 @@ docker-compose.override.yml
 /archive/docs/
 /logs/
 /.fix_backups/
+/.workflow_sessions/
 /CLAUDE.md
 /example/
+/archive/
