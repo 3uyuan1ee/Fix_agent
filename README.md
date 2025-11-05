@@ -170,6 +170,33 @@ python3 main.py analyze workflow ./src
 python3 main.py web
 ```
 
+### 🔧 现代化构建方式 (pyproject.toml)
+
+项目支持现代 Python 项目构建标准，使用 `pyproject.toml` 配置文件：
+
+```bash
+# 安装构建依赖
+pip install build
+
+# 构建分发包
+python -m build
+
+# 生成的包位于 dist/ 目录：
+# - aidefect-1.0.0-py3-none-any.whl (wheel包)
+# - aidefect-1.0.0.tar.gz (源码包)
+
+# 安装构建的包
+pip install dist/aidefect-1.0.0-py3-none-any.whl
+
+# 开发模式安装
+pip install -e .
+
+# 安装特定功能组合
+pip install -e .[dev]          # 开发工具
+pip install -e .[web]          # Web界面增强
+pip install -e .[all]          # 完整功能
+```
+
 ## 📊 使用示例
 
 ### 静态分析模式
