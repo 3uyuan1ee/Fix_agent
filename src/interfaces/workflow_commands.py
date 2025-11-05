@@ -483,20 +483,43 @@ class WorkflowCommand:
             # 使用AI问题检测器
             from ..tools.ai_problem_detector import AIProblemDetector
             from ..tools.problem_detection_context_builder import ProblemDetectionContextBuilder
+            from ..utils.path_resolver import get_path_resolver
 
             # 构建检测上下文
             context_builder = ProblemDetectionContextBuilder()
+
+            # 使用PathResolver来确保路径解析的一致性
+            path_resolver = get_path_resolver()
+
+            # 确保项目根目录已设置
+            path_resolver.set_project_root(target)
 
             # 转换文件格式为字典列表
             selected_files_dicts = []
             for file_path in selected_files or []:
                 if isinstance(file_path, str):
-                    # 为文件路径添加更多元数据
-                    import os
+                    # 使用PathResolver解析文件路径
                     from pathlib import Path
+                    import os
 
-                    abs_path = os.path.abspath(file_path)
-                    rel_path = os.path.relpath(abs_path, os.path.dirname(target))
+                    # 尝试使用PathResolver解析路径
+                    resolved_path = path_resolver.resolve_path(file_path)
+
+                    if resolved_path and resolved_path.exists():
+                        abs_path = str(resolved_path.resolve())
+                        # 计算相对于项目根目录的路径
+                        project_root = path_resolver.get_saved_project_root()
+                        rel_path = str(resolved_path.relative_to(project_root))
+                    else:
+                        # 如果PathResolver解析失败，尝试直接解析
+                        abs_path = os.path.abspath(file_path)
+                        project_root = Path(target).resolve()
+                        if project_root.is_file():
+                            project_root = project_root.parent
+                        try:
+                            rel_path = str(Path(abs_path).relative_to(project_root))
+                        except ValueError:
+                            rel_path = file_path
 
                     # 检测编程语言
                     language = "unknown"
@@ -530,7 +553,7 @@ class WorkflowCommand:
                         "selection_reason": "AI文件选择器推荐",
                         "priority": "medium",
                         "project_context": {
-                            "project_path": os.path.dirname(target)  # 项目根目录
+                            "project_path": str(path_resolver.get_saved_project_root())
                         }
                     })
                 elif isinstance(file_path, dict):
