@@ -315,6 +315,13 @@ class ProblemDetectionContextBuilder:
         """读取文件内容"""
         file_contents = {}
 
+        # 导入PathResolver以获得更好的路径解析
+        try:
+            from ..utils.path_resolver import get_path_resolver
+            path_resolver = get_path_resolver()
+        except ImportError:
+            path_resolver = None
+
         for file_data in selected_files:
             file_path = file_data.get("file_path", "")
             if not file_path:
@@ -323,19 +330,38 @@ class ProblemDetectionContextBuilder:
             # 处理文件路径 - 支持相对路径和绝对路径
             abs_file_path = file_path
             if not os.path.isabs(file_path):
-                # 如果是相对路径，需要相对于项目根目录解析
-                # 从selected_files中查找项目上下文信息
-                project_context = file_data.get("project_context", {})
-                project_root = project_context.get("project_path", "")
-                if project_root:
-                    abs_file_path = os.path.join(project_root, file_path)
+                # 尝试使用PathResolver解析路径
+                if path_resolver:
+                    # 从selected_files中查找项目上下文信息
+                    project_context = file_data.get("project_context", {})
+                    project_root = project_context.get("project_path", "")
+
+                    if project_root:
+                        # 设置项目根目录
+                        path_resolver.set_project_root(project_root)
+
+                    # 使用PathResolver解析路径
+                    resolved_path = path_resolver.resolve_path(file_path)
+                    if resolved_path and resolved_path.exists():
+                        abs_file_path = str(resolved_path)
+                    else:
+                        # 备用方案：手动解析
+                        if project_root:
+                            abs_file_path = os.path.join(project_root, file_path)
+                        else:
+                            abs_file_path = os.path.abspath(file_path)
                 else:
-                    # 尝试在当前工作目录中查找
-                    abs_file_path = os.path.abspath(file_path)
+                    # 备用方案：使用原始逻辑
+                    project_context = file_data.get("project_context", {})
+                    project_root = project_context.get("project_path", "")
+                    if project_root:
+                        abs_file_path = os.path.join(project_root, file_path)
+                    else:
+                        abs_file_path = os.path.abspath(file_path)
 
             # 检查文件是否存在
             if not os.path.exists(abs_file_path):
-                self.logger.warning(f"文件不存在: {abs_file_path}")
+                self.logger.warning(f"文件不存在: {abs_file_path} (原始路径: {file_path})")
                 continue
 
             try:
@@ -352,6 +378,7 @@ class ProblemDetectionContextBuilder:
 
                 # 使用原始路径作为键，以保持一致性
                 file_contents[file_path] = content
+                self.logger.debug(f"成功读取文件内容: {file_path} ({len(content)} 字符)")
 
             except Exception as e:
                 self.logger.warning(f"读取文件内容失败 {abs_file_path}: {e}")

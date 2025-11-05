@@ -160,12 +160,43 @@ class AIFileSelectionPromptBuilder:
         if project_structure:
             user_prompt_parts.extend([
                 "## 项目结构",
-                f"主要文件和目录："
+                f"完整的项目结构信息："
             ])
-            # 简化显示项目结构
+            # 详细显示项目结构
             if isinstance(project_structure, dict):
-                for key, value in list(project_structure.items())[:10]:
-                    user_prompt_parts.append(f"- {key}: {str(value)[:50]}")
+                # 显示目录结构
+                if "directories" in project_structure:
+                    user_prompt_parts.append("### 目录结构:")
+                    for directory in sorted(project_structure["directories"][:20]):  # 限制显示数量
+                        user_prompt_parts.append(f"- 📁 {directory}/")
+                    user_prompt_parts.append("")
+
+                # 显示文件分布
+                if "files_by_extension" in project_structure:
+                    user_prompt_parts.append("### 文件类型分布:")
+                    for ext, files in project_structure["files_by_extension"].items():
+                        count = len(files)
+                        user_prompt_parts.append(f"- {ext or '无扩展名'}: {count} 个文件")
+                    user_prompt_parts.append("")
+
+                # 显示关键文件
+                if "key_files" in project_structure:
+                    user_prompt_parts.append("### 关键文件:")
+                    for key_file in project_structure["key_files"]:
+                        user_prompt_parts.append(f"- 📄 {key_file}")
+                    user_prompt_parts.append("")
+
+                # 显示编程语言统计
+                if "programming_languages" in project_structure:
+                    user_prompt_parts.append("### 编程语言:")
+                    for language, count in project_structure["programming_languages"].items():
+                        user_prompt_parts.append(f"- {language}: {count} 个文件")
+                    user_prompt_parts.append("")
+
+                # 显示总文件数
+                total_files = sum(len(files) for files in project_structure.get("files_by_extension", {}).values())
+                user_prompt_parts.append(f"**总计**: {total_files} 个文件，{len(project_structure.get('directories', []))} 个目录")
+
             user_prompt_parts.append("")
 
         user_prompt_parts.extend([
