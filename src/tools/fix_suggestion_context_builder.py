@@ -651,6 +651,78 @@ class FixSuggestionContextBuilder:
 
         return estimated_tokens
 
+    def _create_validation_result_from_problems(self, detected_problems: List[AIDetectedProblem]) -> 'ProblemValidationResult':
+        """
+        从检测到的问题创建验证结果
+
+        Args:
+            detected_problems: AI检测到的问题列表
+
+        Returns:
+            ProblemValidationResult: 创建的验证结果
+        """
+        try:
+            # 导入需要的类型
+            from .problem_detection_validator import ProblemValidationResult, ValidatedProblem, ValidationResult
+
+            # 创建ValidatedProblem列表
+            validated_problems = []
+            for problem in detected_problems:
+                # 创建ValidationResult
+                validation_result_inner = ValidationResult(
+                    is_valid=True,
+                    validation_score=problem.confidence,
+                    validation_issues=[],
+                    quality_metrics={
+                        "ai_confidence": problem.confidence,
+                        "problem_type": problem.problem_type.value,
+                        "severity": problem.severity.value
+                    },
+                    recommendations=["建议进行修复"]
+                )
+
+                # 创建ValidatedProblem
+                validated_problem = ValidatedProblem(
+                    original_problem=problem,
+                    validation_result=validation_result_inner,
+                    adjusted_confidence=problem.confidence,
+                    priority_rank=1,
+                    is_recommended=True
+                )
+                validated_problems.append(validated_problem)
+
+            # 创建ProblemValidationResult
+            problem_validation_result = ProblemValidationResult(
+                validation_id=f"validation_{int(datetime.now().timestamp())}",
+                original_problems=detected_problems,
+                filtered_problems=validated_problems,
+                validation_summary={
+                    "total_problems": len(detected_problems),
+                    "validated_problems": len(validated_problems),
+                    "validation_success": True,
+                    "auto_generated": True
+                }
+            )
+
+            return problem_validation_result
+
+        except ImportError:
+            # 如果无法导入相关类，创建一个简单的模拟对象
+            self.logger.warning("无法导入ProblemValidationResult，使用模拟对象")
+
+            class MockValidationResult:
+                def __init__(self):
+                    self.validation_id = f"mock_validation_{int(datetime.now().timestamp())}"
+                    self.original_problems = detected_problems
+                    self.filtered_problems = detected_problems
+                    self.validation_summary = {
+                        "total_problems": len(detected_problems),
+                        "validated_problems": len(detected_problems),
+                        "validation_success": True
+                    }
+
+            return MockValidationResult()
+
     def _generate_context_id(self) -> str:
         """生成上下文ID"""
         import uuid

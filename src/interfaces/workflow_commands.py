@@ -632,35 +632,7 @@ class WorkflowCommand:
             # 读取问题文件的完整内容
             file_contents = self._read_file_content_for_suggestion(problem.file_path, path_resolver)
 
-            # 创建一个模拟的验证结果（适配现有API）
-            from ..tools.problem_detection_validator import ProblemValidationResult, ValidatedProblem
-
-            # 创建ValidatedProblem对象
-            validated_problem = ValidatedProblem(
-                original_problem=problem,
-                validation_score=problem.confidence,
-                severity_adjustment=0.0,
-                confidence_adjustment=0.0,
-                fix_priority="medium",
-                estimated_fix_time=15,
-                validation_reasons=[f"基于AI问题检测结果: {problem.description[:100]}"],
-                suggested_fix_types=[],
-                risk_factors=[]
-            )
-
-            # 创建ProblemValidationResult
-            validation_result = ProblemValidationResult(
-                validation_id=f"validation_{problem.problem_id}_{int(time.time())}",
-                original_problems=[problem],
-                filtered_problems=[validated_problem],
-                validation_summary={
-                    "total_problems": 1,
-                    "validated_problems": 1,
-                    "validation_success": True
-                }
-            )
-
-            # 构建修复建议上下文（使用正确的API）
+            # 构建修复建议上下文（直接使用AIDetectedProblem）
             context_builder = FixSuggestionContextBuilder()
             user_preferences = {
                 "user_requirements": "生成高质量的修复建议",
@@ -673,8 +645,9 @@ class WorkflowCommand:
                 user_preferences["user_suggestion"] = user_suggestion
                 user_preferences["has_user_input"] = True
 
+            # 使用detected_problems参数，直接传递AIDetectedProblem
             suggestion_context = context_builder.build_context(
-                validation_result=validation_result,
+                detected_problems=[problem],  # 直接传递问题列表
                 file_contents=file_contents,
                 user_preferences=user_preferences
             )
