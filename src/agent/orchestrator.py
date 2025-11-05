@@ -3,23 +3,24 @@ Agent编排器模块
 负责协调和管理用户会话、对话历史和状态转换
 """
 
-import uuid
 import time
-from typing import Dict, List, Any, Optional, Callable, Union
+import uuid
 from dataclasses import dataclass, field
-from enum import Enum
 from datetime import datetime
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Union
 
-from ..utils.logger import get_logger
 from ..utils.config import get_config_manager
-from .planner import TaskPlanner, UserRequest, ExecutionPlan, AnalysisMode
+from ..utils.logger import get_logger
 from .execution_engine import ExecutionEngine, ExecutionResult
 from .mode_router import ModeRecognizer, RequestRouter, RouteRequest, RouteResult
-from .user_interaction import UserInteractionHandler, InputType, OutputFormat
+from .planner import AnalysisMode, ExecutionPlan, TaskPlanner, UserRequest
+from .user_interaction import InputType, OutputFormat, UserInteractionHandler
 
 
 class SessionState(Enum):
     """会话状态枚举"""
+
     CREATED = "created"
     ACTIVE = "active"
     WAITING_INPUT = "waiting_input"
@@ -31,6 +32,7 @@ class SessionState(Enum):
 
 class MessageRole(Enum):
     """消息角色枚举"""
+
     USER = "user"
     ASSISTANT = "assistant"
     SYSTEM = "system"
@@ -40,6 +42,7 @@ class MessageRole(Enum):
 @dataclass
 class ChatMessage:
     """聊天消息数据结构"""
+
     message_id: str
     role: MessageRole
     content: str
@@ -53,13 +56,14 @@ class ChatMessage:
             "role": self.role.value,
             "content": self.content,
             "timestamp": self.timestamp,
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }
 
 
 @dataclass
 class Session:
     """用户会话数据结构"""
+
     session_id: str
     user_id: str
     state: SessionState = SessionState.CREATED
@@ -71,7 +75,9 @@ class Session:
     execution_results: List[ExecutionResult] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
 
-    def update_state(self, new_state: SessionState, metadata: Optional[Dict[str, Any]] = None):
+    def update_state(
+        self, new_state: SessionState, metadata: Optional[Dict[str, Any]] = None
+    ):
         """更新会话状态"""
         old_state = self.state
         self.state = new_state
@@ -80,7 +86,7 @@ class Session:
         # 添加状态转换信息
         state_info = {
             "previous_state": old_state.value,
-            "state_transition_time": self.updated_at
+            "state_transition_time": self.updated_at,
         }
 
         if metadata:
@@ -89,13 +95,15 @@ class Session:
         else:
             self.metadata.update(state_info)
 
-    def add_message(self, role: MessageRole, content: str, metadata: Optional[Dict[str, Any]] = None):
+    def add_message(
+        self, role: MessageRole, content: str, metadata: Optional[Dict[str, Any]] = None
+    ):
         """添加消息到会话"""
         message = ChatMessage(
             message_id=f"msg_{uuid.uuid4().hex[:8]}",
             role=role,
             content=content,
-            metadata=metadata or {}
+            metadata=metadata or {},
         )
         self.messages.append(message)
         self.updated_at = time.time()
@@ -121,10 +129,12 @@ class Session:
             "created_at": self.created_at,
             "updated_at": self.updated_at,
             "message_count": len(self.messages),
-            "current_request": self.current_request.to_dict() if self.current_request else None,
+            "current_request": (
+                self.current_request.to_dict() if self.current_request else None
+            ),
             "current_plan": self.current_plan.plan_id if self.current_plan else None,
             "execution_results_count": len(self.execution_results),
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }
 
 
@@ -143,14 +153,16 @@ class AgentOrchestrator:
 
         # 获取配置
         try:
-            self.config = self.config_manager.get_section('orchestrator') or {}
+            self.config = self.config_manager.get_section("orchestrator") or {}
         except:
             self.config = {}
 
         # 会话管理配置
-        self.max_sessions = self.config.get('max_sessions', 1000)
-        self.session_timeout = self.config.get('session_timeout', 3600)  # 1小时
-        self.max_messages_per_session = self.config.get('max_messages_per_session', 1000)
+        self.max_sessions = self.config.get("max_sessions", 1000)
+        self.session_timeout = self.config.get("session_timeout", 3600)  # 1小时
+        self.max_messages_per_session = self.config.get(
+            "max_messages_per_session", 1000
+        )
 
         # 初始化组件
         self.task_planner = TaskPlanner(config_manager)
@@ -158,7 +170,9 @@ class AgentOrchestrator:
 
         # 初始化模式路由器
         self.mode_recognizer = ModeRecognizer(config_manager)
-        self.request_router = RequestRouter(config_manager, self.task_planner, self.execution_engine)
+        self.request_router = RequestRouter(
+            config_manager, self.task_planner, self.execution_engine
+        )
 
         # 初始化用户交互处理器
         self.user_interaction_handler = UserInteractionHandler(config_manager)
@@ -172,11 +186,13 @@ class AgentOrchestrator:
 
         # 会话清理任务
         self.last_cleanup_time = time.time()
-        self.cleanup_interval = self.config.get('cleanup_interval', 300)  # 5分钟
+        self.cleanup_interval = self.config.get("cleanup_interval", 300)  # 5分钟
 
         self.logger.info("AgentOrchestrator initialized")
 
-    def create_session(self, user_id: str, initial_metadata: Optional[Dict[str, Any]] = None) -> Session:
+    def create_session(
+        self, user_id: str, initial_metadata: Optional[Dict[str, Any]] = None
+    ) -> Session:
         """
         创建新的用户会话
 
@@ -196,7 +212,7 @@ class AgentOrchestrator:
         session = Session(
             session_id=f"session_{uuid.uuid4().hex[:12]}",
             user_id=user_id,
-            metadata=initial_metadata or {}
+            metadata=initial_metadata or {},
         )
 
         # 添加到存储
@@ -223,7 +239,9 @@ class AgentOrchestrator:
         """
         return self.sessions.get(session_id)
 
-    def get_user_sessions(self, user_id: str, include_expired: bool = False) -> List[Session]:
+    def get_user_sessions(
+        self, user_id: str, include_expired: bool = False
+    ) -> List[Session]:
         """
         获取用户的所有会话
 
@@ -246,7 +264,9 @@ class AgentOrchestrator:
 
         return sessions
 
-    def process_user_input(self, session_id: str, user_input: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def process_user_input(
+        self, session_id: str, user_input: str, context: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """
         处理用户输入（集成用户交互处理）
 
@@ -263,12 +283,14 @@ class AgentOrchestrator:
             return {
                 "success": False,
                 "error": f"Session {session_id} not found",
-                "error_type": "SessionNotFoundError"
+                "error_type": "SessionNotFoundError",
             }
 
         try:
             # 首先使用用户交互处理器处理输入
-            interaction_result = self.user_interaction_handler.process_user_input(user_input)
+            interaction_result = self.user_interaction_handler.process_user_input(
+                user_input
+            )
 
             # 检查是否是退出命令
             if interaction_result.get("input_type") == InputType.EXIT.value:
@@ -279,7 +301,7 @@ class AgentOrchestrator:
                     "success": True,
                     "session_id": session_id,
                     "action": "exit",
-                    "message": "会话已退出"
+                    "message": "会话已退出",
                 }
 
             # 检查是否是帮助命令
@@ -291,7 +313,7 @@ class AgentOrchestrator:
                     "success": True,
                     "session_id": session_id,
                     "action": "help",
-                    "response": help_message
+                    "response": help_message,
                 }
 
             # 检查是否是系统命令
@@ -307,7 +329,11 @@ class AgentOrchestrator:
                         "action": "command",
                         "command": command,
                         "response": response_message,
-                        **{k: v for k, v in interaction_result.items() if k in ["mode", "format"]}
+                        **{
+                            k: v
+                            for k, v in interaction_result.items()
+                            if k in ["mode", "format"]
+                        },
                     }
 
             # 检查会话状态
@@ -315,7 +341,7 @@ class AgentOrchestrator:
                 return {
                     "success": False,
                     "error": f"Cannot process input in state {session.state.value}",
-                    "error_type": "InvalidStateError"
+                    "error_type": "InvalidStateError",
                 }
 
             # 检查消息数量限制
@@ -323,7 +349,7 @@ class AgentOrchestrator:
                 return {
                     "success": False,
                     "error": "Session message limit exceeded",
-                    "error_type": "MessageLimitExceededError"
+                    "error_type": "MessageLimitExceededError",
                 }
 
             # 添加用户消息到会话
@@ -334,18 +360,21 @@ class AgentOrchestrator:
                 user_input=user_input,
                 session=session,
                 context=context or {},
-                options=context.get('options', {}) if context else {}
+                options=context.get("options", {}) if context else {},
             )
 
             # 使用路由器处理请求
             route_result = self.request_router.route_request(route_request)
 
             # 更新会话状态
-            session.update_state(route_result.next_state, {
-                "routing_completed": True,
-                "execution_method": route_result.execution_method,
-                "mode": route_result.mode.value
-            })
+            session.update_state(
+                route_result.next_state,
+                {
+                    "routing_completed": True,
+                    "execution_method": route_result.execution_method,
+                    "mode": route_result.mode.value,
+                },
+            )
 
             # 添加助手响应消息（如果有的话）
             if route_result.response_message:
@@ -355,18 +384,20 @@ class AgentOrchestrator:
                     {
                         "mode": route_result.mode.value,
                         "execution_method": route_result.execution_method,
-                        "routing_success": route_result.success
-                    }
+                        "routing_success": route_result.success,
+                    },
                 )
 
             # 记录执行结果
             if route_result.execution_plan:
                 session.current_plan = route_result.execution_plan
 
-            self.logger.info(f"Routed user input for session {session_id}: "
-                            f"mode={route_result.mode.value}, "
-                            f"method={route_result.execution_method}, "
-                            f"success={route_result.success}")
+            self.logger.info(
+                f"Routed user input for session {session_id}: "
+                f"mode={route_result.mode.value}, "
+                f"method={route_result.execution_method}, "
+                f"success={route_result.success}"
+            )
 
             # 转换为返回格式
             result = {
@@ -376,21 +407,24 @@ class AgentOrchestrator:
                 "execution_method": route_result.execution_method,
                 "response": route_result.response_message,
                 "next_state": route_result.next_state.value,
-                "metadata": route_result.metadata
+                "metadata": route_result.metadata,
             }
 
             if route_result.execution_plan:
-                result.update({
-                    "execution_plan": route_result.execution_plan.plan_id,
-                    "task_count": len(route_result.execution_plan.tasks),
-                    "estimated_duration": self._estimate_plan_duration(route_result.execution_plan)
-                })
+                result.update(
+                    {
+                        "execution_plan": route_result.execution_plan.plan_id,
+                        "task_count": len(route_result.execution_plan.tasks),
+                        "estimated_duration": self._estimate_plan_duration(
+                            route_result.execution_plan
+                        ),
+                    }
+                )
 
             if not route_result.success:
-                result.update({
-                    "error": route_result.error,
-                    "error_type": route_result.error_type
-                })
+                result.update(
+                    {"error": route_result.error, "error_type": route_result.error_type}
+                )
 
             # 添加交互处理的结果信息
             if interaction_result.get("warnings"):
@@ -399,17 +433,27 @@ class AgentOrchestrator:
             return result
 
         except Exception as e:
-            session.update_state(SessionState.ERROR, {"processing_error": str(e), "error_type": type(e).__name__})
-            self.logger.error(f"Failed to process user input for session {session_id}: {e}")
+            session.update_state(
+                SessionState.ERROR,
+                {"processing_error": str(e), "error_type": type(e).__name__},
+            )
+            self.logger.error(
+                f"Failed to process user input for session {session_id}: {e}"
+            )
 
             return {
                 "success": False,
                 "error": str(e),
                 "error_type": type(e).__name__,
-                "session_id": session_id
+                "session_id": session_id,
             }
 
-    def get_session_history(self, session_id: str, include_system_messages: bool = False, limit: Optional[int] = None) -> List[ChatMessage]:
+    def get_session_history(
+        self,
+        session_id: str,
+        include_system_messages: bool = False,
+        limit: Optional[int] = None,
+    ) -> List[ChatMessage]:
         """
         获取会话历史
 
@@ -437,7 +481,13 @@ class AgentOrchestrator:
 
         return messages
 
-    def transition_session_state(self, session_id: str, new_state: SessionState, reason: Optional[str] = None, metadata: Optional[Dict[str, Any]] = None) -> bool:
+    def transition_session_state(
+        self,
+        session_id: str,
+        new_state: SessionState,
+        reason: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> bool:
         """
         转换会话状态
 
@@ -459,18 +509,26 @@ class AgentOrchestrator:
 
         # 检查状态转换是否有效
         if new_state not in self.state_transitions.get(current_state, []):
-            self.logger.warning(f"Invalid state transition: {current_state.value} -> {new_state.value}")
+            self.logger.warning(
+                f"Invalid state transition: {current_state.value} -> {new_state.value}"
+            )
             return False
 
         # 执行转换
         old_state = session.state
-        session.update_state(new_state, {
-            "state_transition_reason": reason,
-            "previous_state": old_state.value,
-            **(metadata or {})
-        })
+        session.update_state(
+            new_state,
+            {
+                "state_transition_reason": reason,
+                "previous_state": old_state.value,
+                **(metadata or {}),
+            },
+        )
 
-        self.logger.info(f"Session {session_id} state transition: {old_state.value} -> {new_state.value}" + (f" ({reason})" if reason else ""))
+        self.logger.info(
+            f"Session {session_id} state transition: {old_state.value} -> {new_state.value}"
+            + (f" ({reason})" if reason else "")
+        )
         return True
 
     def close_session(self, session_id: str, reason: Optional[str] = None) -> bool:
@@ -489,20 +547,24 @@ class AgentOrchestrator:
             return False
 
         # 更新状态为已完成
-        session.update_state(SessionState.COMPLETED, {
-            "close_reason": reason or "user_initiated",
-            "closed_at": time.time()
-        })
+        session.update_state(
+            SessionState.COMPLETED,
+            {"close_reason": reason or "user_initiated", "closed_at": time.time()},
+        )
 
         # 从活跃会话列表中移除
         if session.user_id in self.user_sessions:
             if session_id in self.user_sessions[session.user_id]:
                 self.user_sessions[session.user_id].remove(session_id)
 
-        self.logger.info(f"Closed session {session_id}" + (f" ({reason})" if reason else ""))
+        self.logger.info(
+            f"Closed session {session_id}" + (f" ({reason})" if reason else "")
+        )
         return True
 
-    def get_session_statistics(self, session_id: Optional[str] = None, user_id: Optional[str] = None) -> Dict[str, Any]:
+    def get_session_statistics(
+        self, session_id: Optional[str] = None, user_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         获取会话统计信息
 
@@ -524,13 +586,17 @@ class AgentOrchestrator:
                 "user_id": session.user_id,
                 "state": session.state.value,
                 "message_count": len(session.messages),
-                "user_message_count": len([m for m in session.messages if m.role == MessageRole.USER]),
-                "assistant_message_count": len([m for m in session.messages if m.role == MessageRole.ASSISTANT]),
+                "user_message_count": len(
+                    [m for m in session.messages if m.role == MessageRole.USER]
+                ),
+                "assistant_message_count": len(
+                    [m for m in session.messages if m.role == MessageRole.ASSISTANT]
+                ),
                 "created_at": session.created_at,
                 "updated_at": session.updated_at,
                 "duration": session.updated_at - session.created_at,
                 "has_active_plan": session.current_plan is not None,
-                "execution_results_count": len(session.execution_results)
+                "execution_results_count": len(session.execution_results),
             }
 
         elif user_id:
@@ -538,15 +604,23 @@ class AgentOrchestrator:
             user_sessions = self.get_user_sessions(user_id)
 
             total_messages = sum(len(s.messages) for s in user_sessions)
-            active_sessions = len([s for s in user_sessions if s.state in [SessionState.ACTIVE, SessionState.PROCESSING]])
+            active_sessions = len(
+                [
+                    s
+                    for s in user_sessions
+                    if s.state in [SessionState.ACTIVE, SessionState.PROCESSING]
+                ]
+            )
 
             return {
                 "user_id": user_id,
                 "total_sessions": len(user_sessions),
                 "active_sessions": active_sessions,
                 "total_messages": total_messages,
-                "average_messages_per_session": total_messages / len(user_sessions) if user_sessions else 0,
-                "sessions_by_state": self._count_sessions_by_state(user_sessions)
+                "average_messages_per_session": (
+                    total_messages / len(user_sessions) if user_sessions else 0
+                ),
+                "sessions_by_state": self._count_sessions_by_state(user_sessions),
             }
 
         else:
@@ -557,27 +631,65 @@ class AgentOrchestrator:
             return {
                 "total_sessions": len(all_sessions),
                 "total_users": total_users,
-                "active_sessions": len([s for s in all_sessions if s.state in [SessionState.ACTIVE, SessionState.PROCESSING]]),
+                "active_sessions": len(
+                    [
+                        s
+                        for s in all_sessions
+                        if s.state in [SessionState.ACTIVE, SessionState.PROCESSING]
+                    ]
+                ),
                 "total_messages": sum(len(s.messages) for s in all_sessions),
                 "sessions_by_state": self._count_sessions_by_state(all_sessions),
-                "average_session_duration": self._calculate_average_session_duration(all_sessions)
+                "average_session_duration": self._calculate_average_session_duration(
+                    all_sessions
+                ),
             }
 
     def _init_state_transitions(self) -> Dict[SessionState, List[SessionState]]:
         """初始化状态转换规则"""
         return {
             SessionState.CREATED: [SessionState.ACTIVE, SessionState.ERROR],
-            SessionState.ACTIVE: [SessionState.WAITING_INPUT, SessionState.PROCESSING, SessionState.SUSPENDED, SessionState.COMPLETED, SessionState.ERROR],
-            SessionState.WAITING_INPUT: [SessionState.ACTIVE, SessionState.PROCESSING, SessionState.SUSPENDED, SessionState.COMPLETED, SessionState.ERROR],
-            SessionState.PROCESSING: [SessionState.ACTIVE, SessionState.WAITING_INPUT, SessionState.SUSPENDED, SessionState.COMPLETED, SessionState.ERROR],
-            SessionState.SUSPENDED: [SessionState.ACTIVE, SessionState.COMPLETED, SessionState.ERROR],
+            SessionState.ACTIVE: [
+                SessionState.WAITING_INPUT,
+                SessionState.PROCESSING,
+                SessionState.SUSPENDED,
+                SessionState.COMPLETED,
+                SessionState.ERROR,
+            ],
+            SessionState.WAITING_INPUT: [
+                SessionState.ACTIVE,
+                SessionState.PROCESSING,
+                SessionState.SUSPENDED,
+                SessionState.COMPLETED,
+                SessionState.ERROR,
+            ],
+            SessionState.PROCESSING: [
+                SessionState.ACTIVE,
+                SessionState.WAITING_INPUT,
+                SessionState.SUSPENDED,
+                SessionState.COMPLETED,
+                SessionState.ERROR,
+            ],
+            SessionState.SUSPENDED: [
+                SessionState.ACTIVE,
+                SessionState.COMPLETED,
+                SessionState.ERROR,
+            ],
             SessionState.COMPLETED: [],  # 终态
-            SessionState.ERROR: [SessionState.ACTIVE, SessionState.SUSPENDED, SessionState.COMPLETED]  # 错误恢复
+            SessionState.ERROR: [
+                SessionState.ACTIVE,
+                SessionState.SUSPENDED,
+                SessionState.COMPLETED,
+            ],  # 错误恢复
         }
 
     def _can_process_input(self, state: SessionState) -> bool:
         """检查当前状态是否可以处理用户输入"""
-        return state in [SessionState.ACTIVE, SessionState.WAITING_INPUT, SessionState.CREATED]
+        return state in [
+            SessionState.ACTIVE,
+            SessionState.WAITING_INPUT,
+            SessionState.CREATED,
+        ]
 
     def _is_session_expired(self, session: Session) -> bool:
         """检查会话是否过期"""
@@ -591,7 +703,10 @@ class AgentOrchestrator:
 
         expired_sessions = []
         for session_id, session in self.sessions.items():
-            if self._is_session_expired(session) and session.state != SessionState.COMPLETED:
+            if (
+                self._is_session_expired(session)
+                and session.state != SessionState.COMPLETED
+            ):
                 expired_sessions.append(session_id)
 
         for session_id in expired_sessions:
@@ -605,10 +720,7 @@ class AgentOrchestrator:
     def _remove_oldest_sessions(self, count: int = 10):
         """移除最旧的会话以释放空间"""
         # 按更新时间排序，移除最旧的会话
-        sorted_sessions = sorted(
-            self.sessions.items(),
-            key=lambda x: x[1].updated_at
-        )
+        sorted_sessions = sorted(self.sessions.items(), key=lambda x: x[1].updated_at)
 
         removed_count = 0
         for session_id, session in sorted_sessions:
@@ -622,7 +734,9 @@ class AgentOrchestrator:
         if removed_count > 0:
             self.logger.info(f"Removed {removed_count} oldest sessions for cleanup")
 
-    def _generate_assistant_response(self, session: Session, plan: ExecutionPlan) -> str:
+    def _generate_assistant_response(
+        self, session: Session, plan: ExecutionPlan
+    ) -> str:
         """生成助手响应"""
         if plan.mode.value == "static":
             return f"已创建静态分析计划 {plan.plan_id}，包含 {len(plan.tasks)} 个任务。将使用AST、Pylint、Flake8和Bandit工具进行代码质量检查。"
@@ -644,7 +758,7 @@ class AgentOrchestrator:
             "flake8_analysis": 3.0,
             "bandit_analysis": 4.0,
             "llm_analysis": 10.0,
-            "report_generation": 1.0
+            "report_generation": 1.0,
         }
 
         total_time = base_time
@@ -669,7 +783,9 @@ class AgentOrchestrator:
         total_duration = sum(s.updated_at - s.created_at for s in sessions)
         return total_duration / len(sessions)
 
-    def recognize_mode(self, user_input: str, session_id: Optional[str] = None) -> Dict[str, Any]:
+    def recognize_mode(
+        self, user_input: str, session_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         识别用户输入的分析模式
 
@@ -689,18 +805,16 @@ class AgentOrchestrator:
             return {
                 "mode": mode.value,
                 "confidence": confidence,
-                "suggestions": self.mode_recognizer.get_mode_suggestions(user_input, 3)
+                "suggestions": self.mode_recognizer.get_mode_suggestions(user_input, 3),
             }
 
         except Exception as e:
             self.logger.error(f"Failed to recognize mode: {e}")
-            return {
-                "mode": "static",
-                "confidence": 0.0,
-                "error": str(e)
-            }
+            return {"mode": "static", "confidence": 0.0, "error": str(e)}
 
-    def switch_mode(self, session_id: str, target_mode: AnalysisMode, reason: Optional[str] = None) -> bool:
+    def switch_mode(
+        self, session_id: str, target_mode: AnalysisMode, reason: Optional[str] = None
+    ) -> bool:
         """
         切换会话的分析模式
 
@@ -718,14 +832,20 @@ class AgentOrchestrator:
 
         try:
             # 更新会话元数据
-            session.metadata.update({
-                "mode_switch": {
-                    "target_mode": target_mode.value,
-                    "previous_mode": session.current_request.mode.value if session.current_request else "none",
-                    "reason": reason or "manual_switch",
-                    "timestamp": time.time()
+            session.metadata.update(
+                {
+                    "mode_switch": {
+                        "target_mode": target_mode.value,
+                        "previous_mode": (
+                            session.current_request.mode.value
+                            if session.current_request
+                            else "none"
+                        ),
+                        "reason": reason or "manual_switch",
+                        "timestamp": time.time(),
+                    }
                 }
-            })
+            )
 
             # 如果有当前请求，更新其模式
             if session.current_request:
@@ -733,17 +853,25 @@ class AgentOrchestrator:
 
                 # 重新创建执行计划
                 try:
-                    new_plan = self.task_planner.create_execution_plan(session.current_request)
+                    new_plan = self.task_planner.create_execution_plan(
+                        session.current_request
+                    )
                     session.current_plan = new_plan
 
-                    self.logger.info(f"Switched session {session_id} mode to {target_mode.value} with new plan {new_plan.plan_id}")
+                    self.logger.info(
+                        f"Switched session {session_id} mode to {target_mode.value} with new plan {new_plan.plan_id}"
+                    )
                     return True
 
                 except Exception as e:
-                    self.logger.error(f"Failed to create new plan after mode switch: {e}")
+                    self.logger.error(
+                        f"Failed to create new plan after mode switch: {e}"
+                    )
                     return False
 
-            self.logger.info(f"Switched session {session_id} mode to {target_mode.value}")
+            self.logger.info(
+                f"Switched session {session_id} mode to {target_mode.value}"
+            )
             return True
 
         except Exception as e:
@@ -767,7 +895,9 @@ class AgentOrchestrator:
         """
         return self.user_interaction_handler.check_interruption()
 
-    def format_response(self, data: Any, format_type: Union[str, OutputFormat] = None) -> str:
+    def format_response(
+        self, data: Any, format_type: Union[str, OutputFormat] = None
+    ) -> str:
         """
         格式化响应输出
 
@@ -780,7 +910,9 @@ class AgentOrchestrator:
         """
         return self.user_interaction_handler.format_response(data, format_type)
 
-    def handle_confirmation(self, session_id: str, user_response: str) -> Dict[str, Any]:
+    def handle_confirmation(
+        self, session_id: str, user_response: str
+    ) -> Dict[str, Any]:
         """
         处理用户确认输入
 
@@ -797,14 +929,16 @@ class AgentOrchestrator:
                 return {
                     "success": False,
                     "error": f"Session {session_id} not found",
-                    "error_type": "SessionNotFoundError"
+                    "error_type": "SessionNotFoundError",
                 }
 
             # 添加用户确认消息
             session.add_message(MessageRole.USER, user_response)
 
             # 使用交互处理器处理确认
-            interaction_result = self.user_interaction_handler.process_user_input(user_response)
+            interaction_result = self.user_interaction_handler.process_user_input(
+                user_response
+            )
 
             if interaction_result.get("input_type") == InputType.CONFIRMATION.value:
                 response = interaction_result.get("response", False)
@@ -813,21 +947,21 @@ class AgentOrchestrator:
                 session.add_message(
                     MessageRole.ASSISTANT,
                     response_text,
-                    {"confirmation_response": response}
+                    {"confirmation_response": response},
                 )
 
                 return {
                     "success": True,
                     "session_id": session_id,
                     "confirmed": response,
-                    "response": response_text
+                    "response": response_text,
                 }
             else:
                 return {
                     "success": False,
                     "session_id": session_id,
                     "error": "无效的确认输入",
-                    "error_type": "InvalidConfirmationError"
+                    "error_type": "InvalidConfirmationError",
                 }
 
         except Exception as e:
@@ -836,7 +970,7 @@ class AgentOrchestrator:
                 "success": False,
                 "session_id": session_id,
                 "error": str(e),
-                "error_type": type(e).__name__
+                "error_type": type(e).__name__,
             }
 
     def execute_plan_directly(self, session_id: str) -> Dict[str, Any]:
@@ -854,14 +988,14 @@ class AgentOrchestrator:
             return {
                 "success": False,
                 "error": f"Session {session_id} not found",
-                "error_type": "SessionNotFoundError"
+                "error_type": "SessionNotFoundError",
             }
 
         if not session.current_plan:
             return {
                 "success": False,
                 "error": "No execution plan found in session",
-                "error_type": "NoPlanError"
+                "error_type": "NoPlanError",
             }
 
         try:
@@ -875,11 +1009,17 @@ class AgentOrchestrator:
             # 生成响应
             if session.current_request and session.current_request.mode:
                 if session.current_request.mode == AnalysisMode.STATIC:
-                    response = self._generate_static_response(session.current_plan, execution_results)
+                    response = self._generate_static_response(
+                        session.current_plan, execution_results
+                    )
                 elif session.current_request.mode == AnalysisMode.DEEP:
-                    response = self._generate_deep_response(session.current_plan, execution_results)
+                    response = self._generate_deep_response(
+                        session.current_plan, execution_results
+                    )
                 elif session.current_request.mode == AnalysisMode.FIX:
-                    response = self._generate_fix_response(session.current_plan, execution_results)
+                    response = self._generate_fix_response(
+                        session.current_plan, execution_results
+                    )
                 else:
                     response = f"执行计划 {session.current_plan.plan_id} 完成"
             else:
@@ -889,21 +1029,21 @@ class AgentOrchestrator:
             session.add_message(
                 MessageRole.ASSISTANT,
                 response,
-                {"direct_execution": True, "results_count": len(execution_results)}
+                {"direct_execution": True, "results_count": len(execution_results)},
             )
 
             # 更新状态
-            session.update_state(SessionState.ACTIVE, {
-                "execution_completed": True,
-                "results_count": len(execution_results)
-            })
+            session.update_state(
+                SessionState.ACTIVE,
+                {"execution_completed": True, "results_count": len(execution_results)},
+            )
 
             return {
                 "success": True,
                 "session_id": session_id,
                 "execution_plan": session.current_plan.plan_id,
                 "results_count": len(execution_results),
-                "response": response
+                "response": response,
             }
 
         except Exception as e:
@@ -912,5 +1052,5 @@ class AgentOrchestrator:
                 "success": False,
                 "error": str(e),
                 "error_type": type(e).__name__,
-                "session_id": session_id
+                "session_id": session_id,
             }

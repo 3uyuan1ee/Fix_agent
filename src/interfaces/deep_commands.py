@@ -4,18 +4,18 @@
 实现`analyze deep`命令的处理逻辑，提供交互式对话界面
 """
 
-import sys
-import time
 import json
-from pathlib import Path
-from typing import List, Dict, Any, Optional
+import sys
+import threading
+import time
 from dataclasses import dataclass, field
 from datetime import datetime
-import threading
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from ..utils.logger import get_logger
-from ..utils.config import ConfigManager
 from ..agent.orchestrator import AgentOrchestrator
+from ..utils.config import ConfigManager
+from ..utils.logger import get_logger
 
 logger = get_logger()
 
@@ -23,6 +23,7 @@ logger = get_logger()
 @dataclass
 class ConversationMessage:
     """对话消息数据类"""
+
     role: str  # 'user' 或 'assistant'
     content: str
     timestamp: datetime = field(default_factory=datetime.now)
@@ -32,6 +33,7 @@ class ConversationMessage:
 @dataclass
 class DeepAnalysisResult:
     """深度分析结果数据类"""
+
     success: bool
     target: str
     conversation: List[ConversationMessage]
@@ -51,13 +53,13 @@ class ConversationManager:
         self.start_time = time.time()
         self._lock = threading.Lock()
 
-    def add_message(self, role: str, content: str, metadata: Optional[Dict[str, Any]] = None):
+    def add_message(
+        self, role: str, content: str, metadata: Optional[Dict[str, Any]] = None
+    ):
         """添加对话消息"""
         with self._lock:
             message = ConversationMessage(
-                role=role,
-                content=content,
-                metadata=metadata or {}
+                role=role, content=content, metadata=metadata or {}
             )
             self.conversation.append(message)
 
@@ -69,7 +71,7 @@ class ConversationManager:
                     "role": msg.role,
                     "content": msg.content,
                     "timestamp": msg.timestamp.isoformat(),
-                    "metadata": msg.metadata
+                    "metadata": msg.metadata,
                 }
                 for msg in self.conversation
             ]
@@ -82,10 +84,10 @@ class ConversationManager:
                 "start_time": datetime.fromtimestamp(self.start_time).isoformat(),
                 "export_time": datetime.now().isoformat(),
                 "conversation": self.get_conversation_history(),
-                "message_count": len(self.conversation)
+                "message_count": len(self.conversation),
             }
 
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(export_data, f, indent=2, ensure_ascii=False)
 
             return True
@@ -131,13 +133,13 @@ class ProgressIndicator:
 
         while not self._stop_event.is_set():
             symbol = symbols[idx % len(symbols)]
-            sys.stdout.write(f'\r{symbol} {message}...')
+            sys.stdout.write(f"\r{symbol} {message}...")
             sys.stdout.flush()
             idx += 1
             time.sleep(0.1)
 
         # 清除进度行
-        sys.stdout.write('\r' + ' ' * (len(message) + 10) + '\r')
+        sys.stdout.write("\r" + " " * (len(message) + 10) + "\r")
         sys.stdout.flush()
 
 
@@ -155,7 +157,7 @@ class DeepAnalysisCommand:
         target: str,
         output_file: Optional[str] = None,
         verbose: bool = False,
-        quiet: bool = False
+        quiet: bool = False,
     ) -> DeepAnalysisResult:
         """
         执行深度分析
@@ -182,7 +184,7 @@ class DeepAnalysisCommand:
                 target=target,
                 conversation=[],
                 analysis_summary="目标路径不是有效的Python文件或目录",
-                execution_time=0
+                execution_time=0,
             )
 
         if not quiet:
@@ -200,8 +202,12 @@ class DeepAnalysisCommand:
 
         try:
             # 添加初始消息（内部使用，不显示给用户）
-            initial_prompt = f"请对 {target} 进行深度分析，找出潜在的代码问题、改进建议和最佳实践。"
-            conversation_manager.add_message("user", initial_prompt, metadata={"internal": True})
+            initial_prompt = (
+                f"请对 {target} 进行深度分析，找出潜在的代码问题、改进建议和最佳实践。"
+            )
+            conversation_manager.add_message(
+                "user", initial_prompt, metadata={"internal": True}
+            )
 
             # 执行初始分析
             if not quiet:
@@ -209,20 +215,24 @@ class DeepAnalysisCommand:
                 self.progress.start("AI正在进行深度代码分析")
 
             try:
-                result = self.orchestrator.process_user_input(session.session_id, initial_prompt)
+                result = self.orchestrator.process_user_input(
+                    session.session_id, initial_prompt
+                )
 
                 self.progress.stop()
 
-                if result.get('success', False):
-                    response = result.get('message', '分析完成')
+                if result.get("success", False):
+                    response = result.get("message", "分析完成")
                     conversation_manager.add_message("assistant", response)
 
                     if not quiet:
                         print(f"\n📊 分析结果:")
                         print(f"{response}")
                 else:
-                    error_msg = result.get('message', '分析失败')
-                    conversation_manager.add_message("assistant", f"分析失败: {error_msg}")
+                    error_msg = result.get("message", "分析失败")
+                    conversation_manager.add_message(
+                        "assistant", f"分析失败: {error_msg}"
+                    )
 
                     if not quiet:
                         print(f"\n❌ 分析失败: {error_msg}")
@@ -264,23 +274,20 @@ class DeepAnalysisCommand:
             conversation=conversation_manager.conversation,
             analysis_summary=summary,
             execution_time=execution_time,
-            export_file=export_file
+            export_file=export_file,
         )
 
     def _validate_target(self, target_path: Path) -> bool:
         """验证目标路径"""
         if target_path.is_file():
-            return target_path.suffix == '.py'
+            return target_path.suffix == ".py"
         elif target_path.is_dir():
             # 检查目录中是否包含Python文件
-            return any(target_path.rglob('*.py'))
+            return any(target_path.rglob("*.py"))
         return False
 
     def _interactive_conversation(
-        self,
-        conversation_manager: ConversationManager,
-        quiet: bool,
-        verbose: bool
+        self, conversation_manager: ConversationManager, quiet: bool, verbose: bool
     ):
         """交互式对话"""
         session = conversation_manager.session
@@ -297,8 +304,10 @@ class DeepAnalysisCommand:
                     continue
 
                 # 处理特殊命令
-                if user_input.startswith('/'):
-                    if self._handle_special_command(user_input, conversation_manager, quiet):
+                if user_input.startswith("/"):
+                    if self._handle_special_command(
+                        user_input, conversation_manager, quiet
+                    ):
                         break
                     continue
 
@@ -311,19 +320,23 @@ class DeepAnalysisCommand:
 
                 try:
                     # 处理用户输入
-                    result = self.orchestrator.process_user_input(session.session_id, user_input)
+                    result = self.orchestrator.process_user_input(
+                        session.session_id, user_input
+                    )
 
                     self.progress.stop()
 
-                    if result.get('success', False):
-                        response = result.get('message', '处理完成')
+                    if result.get("success", False):
+                        response = result.get("message", "处理完成")
                         conversation_manager.add_message("assistant", response)
 
                         if not quiet:
                             print(f"🤖 {response}")
                     else:
-                        error_msg = result.get('message', '处理失败')
-                        conversation_manager.add_message("assistant", f"处理失败: {error_msg}")
+                        error_msg = result.get("message", "处理失败")
+                        conversation_manager.add_message(
+                            "assistant", f"处理失败: {error_msg}"
+                        )
 
                         if not quiet:
                             print(f"❌ {error_msg}")
@@ -344,23 +357,20 @@ class DeepAnalysisCommand:
                 break
 
     def _handle_special_command(
-        self,
-        command: str,
-        conversation_manager: ConversationManager,
-        quiet: bool
+        self, command: str, conversation_manager: ConversationManager, quiet: bool
     ) -> bool:
         """处理特殊命令"""
         cmd = command.lower()
 
-        if cmd == '/exit':
+        if cmd == "/exit":
             if not quiet:
                 print("👋 退出深度分析模式")
             return True
-        elif cmd == '/help':
+        elif cmd == "/help":
             self._show_help(quiet)
-        elif cmd == '/history':
+        elif cmd == "/history":
             self._show_history(conversation_manager, quiet)
-        elif cmd.startswith('/export'):
+        elif cmd.startswith("/export"):
             parts = cmd.split(maxsplit=1)
             if len(parts) == 2:
                 file_path = parts[1]
@@ -373,7 +383,7 @@ class DeepAnalysisCommand:
             else:
                 if not quiet:
                     print("用法: /export <文件路径>")
-        elif cmd == '/summary':
+        elif cmd == "/summary":
             summary = self._generate_summary(conversation_manager)
             if not quiet:
                 print(f"📋 分析摘要:\n{summary}")
@@ -418,7 +428,9 @@ class DeepAnalysisCommand:
         for i, msg in enumerate(conversation_manager.conversation, 1):
             role_icon = "👤" if msg.role == "user" else "🤖"
             timestamp = msg.timestamp.strftime("%H:%M:%S")
-            content_preview = msg.content[:100] + "..." if len(msg.content) > 100 else msg.content
+            content_preview = (
+                msg.content[:100] + "..." if len(msg.content) > 100 else msg.content
+            )
 
             print(f"{role_icon} [{timestamp}] {content_preview}")
 
@@ -430,7 +442,9 @@ class DeepAnalysisCommand:
             return "无对话记录"
 
         # 获取AI的回复
-        ai_messages = [msg for msg in conversation_manager.conversation if msg.role == "assistant"]
+        ai_messages = [
+            msg for msg in conversation_manager.conversation if msg.role == "assistant"
+        ]
 
         if not ai_messages:
             return "分析未完成"

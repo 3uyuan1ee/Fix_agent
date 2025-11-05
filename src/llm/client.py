@@ -4,23 +4,30 @@
 """
 
 import asyncio
-from typing import Dict, Any, List, Optional, Union, AsyncGenerator
-from dataclasses import dataclass
 import time
+from dataclasses import dataclass
+from typing import Any, AsyncGenerator, Dict, List, Optional, Union
 
-from .base import LLMProvider, LLMConfig, LLMRequest, LLMResponse, Message, MessageRole
-from .exceptions import LLMError, LLMTimeoutError, LLMRateLimitError, LLMAuthenticationError, LLMQuotaExceededError
-from .openai_provider import OpenAIProvider
-from .anthropic_provider import AnthropicProvider
-from .zhipu_provider import ZhipuProvider
-from .mock_provider import MockLLMProvider
-from .config import LLMConfigManager
 from ..utils.logger import get_logger
+from .anthropic_provider import AnthropicProvider
+from .base import LLMConfig, LLMProvider, LLMRequest, LLMResponse, Message, MessageRole
+from .config import LLMConfigManager
+from .exceptions import (
+    LLMAuthenticationError,
+    LLMError,
+    LLMQuotaExceededError,
+    LLMRateLimitError,
+    LLMTimeoutError,
+)
+from .mock_provider import MockLLMProvider
+from .openai_provider import OpenAIProvider
+from .zhipu_provider import ZhipuProvider
 
 
 @dataclass
 class LLMClientConfig:
     """LLM客户端配置"""
+
     default_provider: str = "zhipu"  # 默认使用智谱AI (国内稳定)
     fallback_providers: List[str] = None
     enable_fallback: bool = True
@@ -29,14 +36,21 @@ class LLMClientConfig:
 
     def __post_init__(self):
         if self.fallback_providers is None:
-            self.fallback_providers = ["openai", "anthropic", "mock"]  # 回退到其他provider
+            self.fallback_providers = [
+                "openai",
+                "anthropic",
+                "mock",
+            ]  # 回退到其他provider
 
 
 class LLMClient:
     """统一的LLM客户端"""
 
-    def __init__(self, config: Optional[Union[LLMClientConfig, Dict[str, Any]]] = None,
-                 config_manager: Optional[LLMConfigManager] = None):
+    def __init__(
+        self,
+        config: Optional[Union[LLMClientConfig, Dict[str, Any]]] = None,
+        config_manager: Optional[LLMConfigManager] = None,
+    ):
         """
         初始化LLM客户端
 
@@ -60,7 +74,7 @@ class LLMClient:
             "successful_requests": 0,
             "failed_requests": 0,
             "fallback_used": 0,
-            "provider_usage": {}
+            "provider_usage": {},
         }
 
         # 初始化提供者
@@ -71,9 +85,13 @@ class LLMClient:
         concurrency_config = self.config_manager.get_concurrency_config()
         if concurrency_config:
             from .concurrency_manager import get_global_concurrency_manager
-            self.concurrency_manager = get_global_concurrency_manager(concurrency_config.max_concurrent_requests)
+
+            self.concurrency_manager = get_global_concurrency_manager(
+                concurrency_config.max_concurrent_requests
+            )
         else:
             from .concurrency_manager import get_global_concurrency_manager
+
             self.concurrency_manager = get_global_concurrency_manager(5)
 
     def _init_providers(self):
@@ -121,8 +139,9 @@ class LLMClient:
         if not self.providers:
             raise LLMError("No LLM providers available")
 
-    async def complete(self, request: LLMRequest,
-                      provider: Optional[str] = None) -> LLMResponse:
+    async def complete(
+        self, request: LLMRequest, provider: Optional[str] = None
+    ) -> LLMResponse:
         """
         完成文本生成请求（带全局并发控制）
 
@@ -138,8 +157,9 @@ class LLMClient:
             self._complete_with_providers, request, provider
         )
 
-    async def _complete_with_providers(self, request: LLMRequest,
-                                     provider: Optional[str] = None) -> LLMResponse:
+    async def _complete_with_providers(
+        self, request: LLMRequest, provider: Optional[str] = None
+    ) -> LLMResponse:
         """
         内部方法：使用指定提供者完成请求
 
@@ -184,11 +204,15 @@ class LLMClient:
                 # 更新统计信息
                 response_time = time.time() - start_time
                 self.stats["successful_requests"] += 1
-                self.stats["provider_usage"][provider_name] = self.stats["provider_usage"].get(provider_name, 0) + 1
+                self.stats["provider_usage"][provider_name] = (
+                    self.stats["provider_usage"].get(provider_name, 0) + 1
+                )
 
                 if i > 0:  # 使用了回退
                     self.stats["fallback_used"] += 1
-                    self.logger.info(f"Fallback to {provider_name} succeeded after {response_time:.2f}s")
+                    self.logger.info(
+                        f"Fallback to {provider_name} succeeded after {response_time:.2f}s"
+                    )
 
                 return response
 
@@ -199,7 +223,10 @@ class LLMClient:
                 # 如果是最后一个提供者，或者是不应该重试的错误，直接抛出
                 if i == len(available_providers) - 1:
                     break
-                elif isinstance(e, (LLMRateLimitError, LLMAuthenticationError, LLMQuotaExceededError)):
+                elif isinstance(
+                    e,
+                    (LLMRateLimitError, LLMAuthenticationError, LLMQuotaExceededError),
+                ):
                     # 这些错误不应该重试其他提供者
                     raise e
 
@@ -207,8 +234,9 @@ class LLMClient:
         self.stats["failed_requests"] += 1
         raise last_error or LLMError("All providers failed")
 
-    async def stream_complete(self, request: LLMRequest,
-                           provider: Optional[str] = None) -> AsyncGenerator[LLMResponse, None]:
+    async def stream_complete(
+        self, request: LLMRequest, provider: Optional[str] = None
+    ) -> AsyncGenerator[LLMResponse, None]:
         """
         流式完成文本生成请求
 
@@ -234,15 +262,20 @@ class LLMClient:
                 yield response
 
             self.stats["successful_requests"] += 1
-            self.stats["provider_usage"][provider_name] = self.stats["provider_usage"].get(provider_name, 0) + 1
+            self.stats["provider_usage"][provider_name] = (
+                self.stats["provider_usage"].get(provider_name, 0) + 1
+            )
 
         except Exception as e:
             self.stats["failed_requests"] += 1
-            self.logger.error(f"Stream completion failed with provider {provider_name}: {e}")
+            self.logger.error(
+                f"Stream completion failed with provider {provider_name}: {e}"
+            )
             raise
 
-    def create_request(self, messages: List[Union[str, Message]],
-                      **kwargs) -> LLMRequest:
+    def create_request(
+        self, messages: List[Union[str, Message]], **kwargs
+    ) -> LLMRequest:
         """
         创建LLM请求
 
@@ -298,12 +331,14 @@ class LLMClient:
             **self.stats,
             "success_rate": (
                 self.stats["successful_requests"] / self.stats["total_requests"]
-                if self.stats["total_requests"] > 0 else 0
+                if self.stats["total_requests"] > 0
+                else 0
             ),
             "fallback_rate": (
                 self.stats["fallback_used"] / self.stats["total_requests"]
-                if self.stats["total_requests"] > 0 else 0
-            )
+                if self.stats["total_requests"] > 0
+                else 0
+            ),
         }
 
     def reset_stats(self):
@@ -313,10 +348,12 @@ class LLMClient:
             "successful_requests": 0,
             "failed_requests": 0,
             "fallback_used": 0,
-            "provider_usage": {}
+            "provider_usage": {},
         }
 
-    def chat_completion(self, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
+    def chat_completion(
+        self, messages: List[Dict[str, str]], **kwargs
+    ) -> Dict[str, Any]:
         """
         同步聊天补全接口（兼容智谱AI和OpenAI格式）
 
@@ -340,11 +377,13 @@ class LLMClient:
 
             # 异步执行
             import asyncio
+
             try:
                 loop = asyncio.get_event_loop()
                 if loop.is_running():
                     # 如果事件循环正在运行，使用新的线程执行
                     import concurrent.futures
+
                     with concurrent.futures.ThreadPoolExecutor() as executor:
                         future = executor.submit(asyncio.run, self.complete(request))
                         response = future.result()
@@ -363,7 +402,7 @@ class LLMClient:
                 "success": True,
                 "content": response.content,
                 "model": response.model,
-                "finish_reason": response.finish_reason
+                "finish_reason": response.finish_reason,
             }
 
             # 添加使用情况
@@ -376,12 +415,11 @@ class LLMClient:
 
         except Exception as e:
             self.logger.error(f"Chat completion failed: {e}")
-            return {
-                "success": False,
-                "error_message": str(e)
-            }
+            return {"success": False, "error_message": str(e)}
 
-    async def chat_completion_async(self, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
+    async def chat_completion_async(
+        self, messages: List[Dict[str, str]], **kwargs
+    ) -> Dict[str, Any]:
         """
         异步聊天补全接口
 
@@ -401,7 +439,7 @@ class LLMClient:
         """
         try:
             # 提取provider参数
-            provider = kwargs.pop('provider', None)
+            provider = kwargs.pop("provider", None)
 
             # 创建请求
             request = self.create_request(messages, **kwargs)
@@ -414,7 +452,7 @@ class LLMClient:
                 "success": True,
                 "content": response.content,
                 "model": response.model,
-                "finish_reason": response.finish_reason
+                "finish_reason": response.finish_reason,
             }
 
             # 添加使用情况
@@ -427,10 +465,7 @@ class LLMClient:
 
         except Exception as e:
             self.logger.error(f"Async chat completion failed: {e}")
-            return {
-                "success": False,
-                "error_message": str(e)
-            }
+            return {"success": False, "error_message": str(e)}
 
     async def test_connection(self, provider: Optional[str] = None) -> Dict[str, Any]:
         """
@@ -450,7 +485,7 @@ class LLMClient:
             if provider_name not in self.providers:
                 results[provider_name] = {
                     "status": "unavailable",
-                    "error": "Provider not initialized"
+                    "error": "Provider not initialized",
                 }
                 continue
 
@@ -458,7 +493,7 @@ class LLMClient:
                 test_request = self.create_request(
                     ["Hello, this is a connection test."],
                     max_tokens=10,
-                    temperature=0.1
+                    temperature=0.1,
                 )
 
                 start_time = time.time()
@@ -469,13 +504,10 @@ class LLMClient:
                     "status": "success",
                     "response_time": response_time,
                     "model": response.model,
-                    "provider": response.provider
+                    "provider": response.provider,
                 }
 
             except Exception as e:
-                results[provider_name] = {
-                    "status": "failed",
-                    "error": str(e)
-                }
+                results[provider_name] = {"status": "failed", "error": str(e)}
 
         return results

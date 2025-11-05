@@ -4,11 +4,11 @@
 与新的工作流数据结构兼容
 """
 
-from typing import Dict, List, Any, Optional, Set, Union
-from dataclasses import dataclass, field
-from enum import Enum
-from datetime import datetime
 import json
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional, Set, Union
 
 # 导入新的工作流数据结构
 try:
@@ -30,16 +30,24 @@ except ImportError:
         rule_id: str = ""
         tool_name: str = ""
 
+
 # 导入工作流特定数据结构
 try:
     from .workflow_data_types import (
-        ProblemType, RiskLevel, FixType,
-        AIDetectedProblem, AIFixSuggestion, FixVerificationResult
-    )
-    from .workflow_user_interaction_types import (
-        DecisionType, UserReviewDecision, UserFixDecision, UserVerificationDecision
+        AIDetectedProblem,
+        AIFixSuggestion,
+        FixType,
+        FixVerificationResult,
+        ProblemType,
+        RiskLevel,
     )
     from .workflow_flow_state_manager import WorkflowNode
+    from .workflow_user_interaction_types import (
+        DecisionType,
+        UserFixDecision,
+        UserReviewDecision,
+        UserVerificationDecision,
+    )
 except ImportError:
     # 如果工作流数据结构不可用，定义基本类型
     class ProblemType(Enum):
@@ -91,6 +99,7 @@ except ImportError:
 
 class AnalysisPhase(Enum):
     """分析阶段枚举 - 与工作流节点对应"""
+
     INITIALIZATION = "initialization"
     STATIC_ANALYSIS = "static_analysis"
     FILE_SELECTION = "file_selection"
@@ -102,6 +111,7 @@ class AnalysisPhase(Enum):
 
 class IssueType(Enum):
     """问题类型"""
+
     SECURITY = "security"
     PERFORMANCE = "performance"
     LOGIC = "logic"
@@ -111,6 +121,7 @@ class IssueType(Enum):
 
 class IssueSeverity(Enum):
     """问题严重程度"""
+
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
@@ -120,8 +131,9 @@ class IssueSeverity(Enum):
 @dataclass
 class StaticAnalysisResult:
     """静态分析结果"""
+
     file_path: str
-    issues: List['Issue']
+    issues: List["Issue"]
     execution_time: float
     summary: Dict[str, Any]
     success: bool = True
@@ -131,6 +143,7 @@ class StaticAnalysisResult:
 @dataclass
 class Issue:
     """问题"""
+
     issue_id: str
     file_path: str
     line: int
@@ -149,12 +162,13 @@ class Issue:
             "severity": self.severity.value,
             "message": self.message,
             "code_snippet": self.code_snippet,
-            "tool_name": self.tool_name
+            "tool_name": self.tool_name,
         }
 
 
 class FixStrategy(Enum):
     """修复策略枚举"""
+
     AUTOMATIC = "automatic"  # 自动应用
     INTERACTIVE = "interactive"  # 交互确认
     SUGGESTION_ONLY = "suggestion_only"  # 仅建议
@@ -163,6 +177,7 @@ class FixStrategy(Enum):
 
 class FileCategory(Enum):
     """文件分类枚举"""
+
     SOURCE = "source"  # 源代码文件
     CONFIG = "config"  # 配置文件
     TEST = "test"  # 测试文件
@@ -178,6 +193,7 @@ class ProjectInfo:
 
     包含项目的基本元数据、文件统计、技术栈信息等
     """
+
     # 基本信息
     project_path: str
     project_name: str
@@ -201,7 +217,9 @@ class ProjectInfo:
 
     # 依赖信息
     dependencies: Dict[str, str] = field(default_factory=dict)  # 包名 -> 版本
-    dependency_files: List[str] = field(default_factory=list)  # requirements.txt, package.json等
+    dependency_files: List[str] = field(
+        default_factory=list
+    )  # requirements.txt, package.json等
 
     # 项目配置
     config_files_found: List[str] = field(default_factory=list)
@@ -246,14 +264,14 @@ class ProjectInfo:
             "git_branch": self.git_branch,
             "git_commit": self.git_commit,
             "has_tests": self.has_tests,
-            "has_ci_cd": self.has_ci_cd
+            "has_ci_cd": self.has_ci_cd,
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'ProjectInfo':
+    def from_dict(cls, data: Dict[str, Any]) -> "ProjectInfo":
         """从字典创建实例"""
         # 处理日期时间字段
-        datetime_fields = ['created_at', 'last_modified', 'analyzed_at']
+        datetime_fields = ["created_at", "last_modified", "analyzed_at"]
         for field_name in datetime_fields:
             if field_name in data and isinstance(data[field_name], str):
                 data[field_name] = datetime.fromisoformat(data[field_name])
@@ -267,6 +285,7 @@ class StaticAnalysisSummary:
 
     汇总多个静态分析工具的结果，提供整体质量评估
     """
+
     # 基本统计
     total_issues: int = 0
     files_analyzed: int = 0
@@ -280,10 +299,14 @@ class StaticAnalysisSummary:
     low_count: int = 0
 
     # 按工具统计
-    tool_results: Dict[str, Dict[str, int]] = field(default_factory=dict)  # 工具名 -> {severity: count}
+    tool_results: Dict[str, Dict[str, int]] = field(
+        default_factory=dict
+    )  # 工具名 -> {severity: count}
 
     # 按文件统计
-    file_issue_counts: Dict[str, int] = field(default_factory=dict)  # 文件路径 -> 问题数量
+    file_issue_counts: Dict[str, int] = field(
+        default_factory=dict
+    )  # 文件路径 -> 问题数量
     most_problematic_files: List[str] = field(default_factory=list)  # 问题最多的文件
 
     # 按问题类型统计
@@ -297,7 +320,9 @@ class StaticAnalysisSummary:
     maintainability_score: float = 0.0  # 可维护性评分
 
     # 问题分布
-    severity_distribution: Dict[str, float] = field(default_factory=dict)  # 严重程度分布百分比
+    severity_distribution: Dict[str, float] = field(
+        default_factory=dict
+    )  # 严重程度分布百分比
     file_distribution: Dict[str, int] = field(default_factory=dict)  # 文件问题数量分布
 
     # 详细问题列表（可选，用于深入分析）
@@ -333,36 +358,38 @@ class StaticAnalysisSummary:
             "sample_issues": [issue.to_dict() for issue in self.sample_issues],
             "analysis_timestamp": self.analysis_timestamp.isoformat(),
             "analyzer_version": self.analyzer_version,
-            "configuration_hash": self.configuration_hash
+            "configuration_hash": self.configuration_hash,
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'StaticAnalysisSummary':
+    def from_dict(cls, data: Dict[str, Any]) -> "StaticAnalysisSummary":
         """从字典创建实例"""
         # 处理日期时间字段
-        if 'analysis_timestamp' in data and isinstance(data['analysis_timestamp'], str):
-            data['analysis_timestamp'] = datetime.fromisoformat(data['analysis_timestamp'])
+        if "analysis_timestamp" in data and isinstance(data["analysis_timestamp"], str):
+            data["analysis_timestamp"] = datetime.fromisoformat(
+                data["analysis_timestamp"]
+            )
 
         # 处理样本问题
-        if 'sample_issues' in data:
+        if "sample_issues" in data:
             sample_issues = []
-            for issue_data in data['sample_issues']:
+            for issue_data in data["sample_issues"]:
                 # 手动创建AnalysisIssue实例，因为没有from_dict方法
-                severity = SeverityLevel(issue_data.get('severity', 'info'))
+                severity = SeverityLevel(issue_data.get("severity", "info"))
                 issue = AnalysisIssue(
-                    tool_name=issue_data.get('tool_name', ''),
-                    file_path=issue_data.get('file_path', ''),
-                    line=issue_data.get('line', 0),
-                    column=issue_data.get('column', 0),
-                    message=issue_data.get('message', ''),
+                    tool_name=issue_data.get("tool_name", ""),
+                    file_path=issue_data.get("file_path", ""),
+                    line=issue_data.get("line", 0),
+                    column=issue_data.get("column", 0),
+                    message=issue_data.get("message", ""),
                     severity=severity,
-                    issue_type=issue_data.get('issue_type', ''),
-                    code=issue_data.get('code', ''),
-                    confidence=issue_data.get('confidence', ''),
-                    source_code=issue_data.get('source_code', '')
+                    issue_type=issue_data.get("issue_type", ""),
+                    code=issue_data.get("code", ""),
+                    confidence=issue_data.get("confidence", ""),
+                    source_code=issue_data.get("source_code", ""),
                 )
                 sample_issues.append(issue)
-            data['sample_issues'] = sample_issues
+            data["sample_issues"] = sample_issues
 
         return cls(**data)
 
@@ -398,6 +425,7 @@ class AIAnalysisContext:
 
     为AI分析提供完整的上下文信息，包括项目背景、静态分析结果、代码片段等
     """
+
     # 基本信息
     target_file_path: str
     file_category: FileCategory = FileCategory.SOURCE
@@ -412,7 +440,9 @@ class AIAnalysisContext:
     # 静态分析上下文
     static_issues: List[AnalysisIssue] = field(default_factory=list)
     issue_summary: str = ""  # 当前文件的问题摘要
-    related_files_issues: Dict[str, List[AnalysisIssue]] = field(default_factory=dict)  # 相关文件的问题
+    related_files_issues: Dict[str, List[AnalysisIssue]] = field(
+        default_factory=dict
+    )  # 相关文件的问题
 
     # 代码上下文
     file_content: str = ""  # 完整文件内容（可选）
@@ -481,65 +511,65 @@ class AIAnalysisContext:
             "analysis_depth": self.analysis_depth,
             "context_id": self.context_id,
             "created_at": self.created_at.isoformat(),
-            "expires_at": self.expires_at.isoformat() if self.expires_at else None
+            "expires_at": self.expires_at.isoformat() if self.expires_at else None,
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'AIAnalysisContext':
+    def from_dict(cls, data: Dict[str, Any]) -> "AIAnalysisContext":
         """从字典创建实例"""
         # 处理枚举类型
-        if 'file_category' in data:
-            data['file_category'] = FileCategory(data['file_category'])
+        if "file_category" in data:
+            data["file_category"] = FileCategory(data["file_category"])
 
         # 处理ProjectInfo
-        if 'project_info' in data and data['project_info']:
-            data['project_info'] = ProjectInfo.from_dict(data['project_info'])
+        if "project_info" in data and data["project_info"]:
+            data["project_info"] = ProjectInfo.from_dict(data["project_info"])
 
         # 处理静态分析问题
-        if 'static_issues' in data:
+        if "static_issues" in data:
             static_issues = []
-            for issue_data in data['static_issues']:
-                severity = SeverityLevel(issue_data.get('severity', 'info'))
+            for issue_data in data["static_issues"]:
+                severity = SeverityLevel(issue_data.get("severity", "info"))
                 issue = AnalysisIssue(
-                    tool_name=issue_data.get('tool_name', ''),
-                    file_path=issue_data.get('file_path', ''),
-                    line=issue_data.get('line', 0),
-                    column=issue_data.get('column', 0),
-                    message=issue_data.get('message', ''),
+                    tool_name=issue_data.get("tool_name", ""),
+                    file_path=issue_data.get("file_path", ""),
+                    line=issue_data.get("line", 0),
+                    column=issue_data.get("column", 0),
+                    message=issue_data.get("message", ""),
                     severity=severity,
-                    issue_type=issue_data.get('issue_type', ''),
-                    code=issue_data.get('code', ''),
-                    confidence=issue_data.get('confidence', ''),
-                    source_code=issue_data.get('source_code', '')
+                    issue_type=issue_data.get("issue_type", ""),
+                    code=issue_data.get("code", ""),
+                    confidence=issue_data.get("confidence", ""),
+                    source_code=issue_data.get("source_code", ""),
                 )
                 static_issues.append(issue)
-            data['static_issues'] = static_issues
+            data["static_issues"] = static_issues
 
         # 处理相关文件问题
-        if 'related_files_issues' in data:
+        if "related_files_issues" in data:
             related_files_issues = {}
-            for file_path, issues_data in data['related_files_issues'].items():
+            for file_path, issues_data in data["related_files_issues"].items():
                 issues = []
                 for issue_data in issues_data:
-                    severity = SeverityLevel(issue_data.get('severity', 'info'))
+                    severity = SeverityLevel(issue_data.get("severity", "info"))
                     issue = AnalysisIssue(
-                        tool_name=issue_data.get('tool_name', ''),
-                        file_path=issue_data.get('file_path', ''),
-                        line=issue_data.get('line', 0),
-                        column=issue_data.get('column', 0),
-                        message=issue_data.get('message', ''),
+                        tool_name=issue_data.get("tool_name", ""),
+                        file_path=issue_data.get("file_path", ""),
+                        line=issue_data.get("line", 0),
+                        column=issue_data.get("column", 0),
+                        message=issue_data.get("message", ""),
                         severity=severity,
-                        issue_type=issue_data.get('issue_type', ''),
-                        code=issue_data.get('code', ''),
-                        confidence=issue_data.get('confidence', ''),
-                        source_code=issue_data.get('source_code', '')
+                        issue_type=issue_data.get("issue_type", ""),
+                        code=issue_data.get("code", ""),
+                        confidence=issue_data.get("confidence", ""),
+                        source_code=issue_data.get("source_code", ""),
                     )
                     issues.append(issue)
                 related_files_issues[file_path] = issues
-            data['related_files_issues'] = related_files_issues
+            data["related_files_issues"] = related_files_issues
 
         # 处理日期时间字段
-        datetime_fields = ['created_at', 'expires_at']
+        datetime_fields = ["created_at", "expires_at"]
         for field_name in datetime_fields:
             if field_name in data and isinstance(data[field_name], str):
                 data[field_name] = datetime.fromisoformat(data[field_name])
@@ -553,6 +583,7 @@ class FileImportanceScore:
 
     基于多种因素评估文件在项目中的重要性，用于优先级排序和智能选择
     """
+
     # 基本信息
     file_path: str
     file_name: str
@@ -595,13 +626,15 @@ class FileImportanceScore:
     authors_count: int = 0  # 作者数量
 
     # 评分权重配置
-    weights: Dict[str, float] = field(default_factory=lambda: {
-        'complexity': 0.2,
-        'issue_density': 0.25,
-        'dependency': 0.2,
-        'change_frequency': 0.15,
-        'business_logic': 0.2
-    })
+    weights: Dict[str, float] = field(
+        default_factory=lambda: {
+            "complexity": 0.2,
+            "issue_density": 0.25,
+            "dependency": 0.2,
+            "change_frequency": 0.15,
+            "business_logic": 0.2,
+        }
+    )
 
     # 元数据
     scored_at: datetime = field(default_factory=datetime.now)
@@ -641,18 +674,18 @@ class FileImportanceScore:
             "weights": self.weights,
             "scored_at": self.scored_at.isoformat(),
             "scoring_algorithm": self.scoring_algorithm,
-            "notes": self.notes
+            "notes": self.notes,
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'FileImportanceScore':
+    def from_dict(cls, data: Dict[str, Any]) -> "FileImportanceScore":
         """从字典创建实例"""
         # 处理枚举类型
-        if 'file_category' in data:
-            data['file_category'] = FileCategory(data['file_category'])
+        if "file_category" in data:
+            data["file_category"] = FileCategory(data["file_category"])
 
         # 处理日期时间字段
-        datetime_fields = ['last_modified', 'scored_at']
+        datetime_fields = ["last_modified", "scored_at"]
         for field_name in datetime_fields:
             if field_name in data and isinstance(data[field_name], str):
                 data[field_name] = datetime.fromisoformat(data[field_name])
@@ -666,11 +699,11 @@ class FileImportanceScore:
 
         # 标准化各子评分到0-100范围
         scores = {
-            'complexity': self._normalize_complexity(),
-            'issue_density': self._normalize_issue_density(),
-            'dependency': self._normalize_dependency(),
-            'change_frequency': self._normalize_change_frequency(),
-            'business_logic': self.business_logic_score
+            "complexity": self._normalize_complexity(),
+            "issue_density": self._normalize_issue_density(),
+            "dependency": self._normalize_dependency(),
+            "change_frequency": self._normalize_change_frequency(),
+            "business_logic": self.business_logic_score,
         }
 
         # 加权计算综合评分
@@ -688,7 +721,9 @@ class FileImportanceScore:
             return 0.0
 
         # 基于圈复杂度和代码行数的复杂度评分
-        complexity_ratio = self.cyclomatic_complexity / max(1, self.lines_of_code / 10)  # 每10行的复杂度
+        complexity_ratio = self.cyclomatic_complexity / max(
+            1, self.lines_of_code / 10
+        )  # 每10行的复杂度
 
         # 映射到0-100分
         if complexity_ratio <= 0.1:
@@ -705,7 +740,9 @@ class FileImportanceScore:
         if self.lines_of_code == 0:
             return 0.0
 
-        issues_per_line = self.total_issues / max(1, self.lines_of_code / 100)  # 每100行的问题数
+        issues_per_line = self.total_issues / max(
+            1, self.lines_of_code / 100
+        )  # 每100行的问题数
 
         # 问题越多，重要性越高（需要优先修复）
         if issues_per_line <= 1:
@@ -762,6 +799,7 @@ class FixSuggestion:
 
     包含针对检测到的问题的详细修复建议和实施步骤
     """
+
     # 基本信息
     issue_id: str  # 问题唯一标识
     file_path: str  # 目标文件路径
@@ -803,7 +841,9 @@ class FixSuggestion:
     regression_tests: List[str] = field(default_factory=list)  # 回归测试
 
     # 替代方案
-    alternative_fixes: List[Dict[str, Any]] = field(default_factory=list)  # 替代修复方案
+    alternative_fixes: List[Dict[str, Any]] = field(
+        default_factory=list
+    )  # 替代修复方案
     workarounds: List[str] = field(default_factory=list)  # 临时解决方案
 
     # 风险评估
@@ -872,20 +912,20 @@ class FixSuggestion:
             "status": self.status,
             "applied_at": self.applied_at.isoformat() if self.applied_at else None,
             "applied_by": self.applied_by,
-            "verification_result": self.verification_result
+            "verification_result": self.verification_result,
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'FixSuggestion':
+    def from_dict(cls, data: Dict[str, Any]) -> "FixSuggestion":
         """从字典创建实例"""
         # 处理枚举类型
-        if 'severity' in data:
-            data['severity'] = SeverityLevel(data['severity'])
-        if 'fix_strategy' in data:
-            data['fix_strategy'] = FixStrategy(data['fix_strategy'])
+        if "severity" in data:
+            data["severity"] = SeverityLevel(data["severity"])
+        if "fix_strategy" in data:
+            data["fix_strategy"] = FixStrategy(data["fix_strategy"])
 
         # 处理日期时间字段
-        datetime_fields = ['created_at', 'applied_at']
+        datetime_fields = ["created_at", "applied_at"]
         for field_name in datetime_fields:
             if field_name in data and isinstance(data[field_name], str):
                 data[field_name] = datetime.fromisoformat(data[field_name])
@@ -899,26 +939,21 @@ class FixSuggestion:
             f"位置: {self.file_path}:{self.line_number}",
             f"建议: {self.fix_title}",
             f"风险: {self.fix_risk}",
-            f"预估工作量: {self.estimated_effort}"
+            f"预估工作量: {self.estimated_effort}",
         ]
         return "\n".join(summary_parts)
 
     def is_applicable(self) -> bool:
         """判断修复建议是否适用"""
         return (
-            self.confidence >= 0.5 and
-            self.status == "suggested" and
-            self.fixed_code != self.original_code
+            self.confidence >= 0.5
+            and self.status == "suggested"
+            and self.fixed_code != self.original_code
         )
 
     def get_priority_score(self) -> int:
         """获取修复优先级评分"""
-        priority_scores = {
-            "low": 1,
-            "medium": 2,
-            "high": 3,
-            "critical": 4
-        }
+        priority_scores = {"low": 1, "medium": 2, "high": 3, "critical": 4}
         return priority_scores.get(self.fix_priority, 2)
 
 
@@ -928,6 +963,7 @@ class ProjectAnalysisResult:
 
     汇总整个项目分析工作流的最终结果，包含所有分析阶段的数据和建议
     """
+
     # 基本信息
     project_info: ProjectInfo
     analysis_id: str = ""
@@ -1009,12 +1045,22 @@ class ProjectAnalysisResult:
             "completed_phases": [phase.value for phase in self.completed_phases],
             "failed_phases": [phase.value for phase in self.failed_phases],
             "started_at": self.started_at.isoformat(),
-            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "completed_at": (
+                self.completed_at.isoformat() if self.completed_at else None
+            ),
             "total_duration": self.total_duration,
-            "static_analysis_summary": self.static_analysis_summary.to_dict() if self.static_analysis_summary else None,
-            "file_importance_scores": [score.to_dict() for score in self.file_importance_scores],
+            "static_analysis_summary": (
+                self.static_analysis_summary.to_dict()
+                if self.static_analysis_summary
+                else None
+            ),
+            "file_importance_scores": [
+                score.to_dict() for score in self.file_importance_scores
+            ],
             "selected_files_for_ai": self.selected_files_for_ai,
-            "ai_analysis_contexts": [context.to_dict() for context in self.ai_analysis_contexts],
+            "ai_analysis_contexts": [
+                context.to_dict() for context in self.ai_analysis_contexts
+            ],
             "ai_analysis_results": self.ai_analysis_results,
             "fix_suggestions": [fix.to_dict() for fix in self.fix_suggestions],
             "applied_fixes": [fix.to_dict() for fix in self.applied_fixes],
@@ -1042,44 +1088,50 @@ class ProjectAnalysisResult:
             "next_analysis_suggestions": self.next_analysis_suggestions,
             "analysis_status": self.analysis_status,
             "validation_status": self.validation_status,
-            "final_assessment": self.final_assessment
+            "final_assessment": self.final_assessment,
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'ProjectAnalysisResult':
+    def from_dict(cls, data: Dict[str, Any]) -> "ProjectAnalysisResult":
         """从字典创建实例"""
         # 处理枚举类型
-        if 'current_phase' in data:
-            data['current_phase'] = AnalysisPhase(data['current_phase'])
-        if 'completed_phases' in data:
-            data['completed_phases'] = [AnalysisPhase(phase) for phase in data['completed_phases']]
-        if 'failed_phases' in data:
-            data['failed_phases'] = [AnalysisPhase(phase) for phase in data['failed_phases']]
+        if "current_phase" in data:
+            data["current_phase"] = AnalysisPhase(data["current_phase"])
+        if "completed_phases" in data:
+            data["completed_phases"] = [
+                AnalysisPhase(phase) for phase in data["completed_phases"]
+            ]
+        if "failed_phases" in data:
+            data["failed_phases"] = [
+                AnalysisPhase(phase) for phase in data["failed_phases"]
+            ]
 
         # 处理ProjectInfo
-        if 'project_info' in data and data['project_info']:
-            data['project_info'] = ProjectInfo.from_dict(data['project_info'])
+        if "project_info" in data and data["project_info"]:
+            data["project_info"] = ProjectInfo.from_dict(data["project_info"])
 
         # 处理StaticAnalysisSummary
-        if 'static_analysis_summary' in data and data['static_analysis_summary']:
-            data['static_analysis_summary'] = StaticAnalysisSummary.from_dict(data['static_analysis_summary'])
+        if "static_analysis_summary" in data and data["static_analysis_summary"]:
+            data["static_analysis_summary"] = StaticAnalysisSummary.from_dict(
+                data["static_analysis_summary"]
+            )
 
         # 处理FileImportanceScore列表
-        if 'file_importance_scores' in data:
+        if "file_importance_scores" in data:
             importance_scores = []
-            for score_data in data['file_importance_scores']:
+            for score_data in data["file_importance_scores"]:
                 importance_scores.append(FileImportanceScore.from_dict(score_data))
-            data['file_importance_scores'] = importance_scores
+            data["file_importance_scores"] = importance_scores
 
         # 处理AIAnalysisContext列表
-        if 'ai_analysis_contexts' in data:
+        if "ai_analysis_contexts" in data:
             ai_contexts = []
-            for context_data in data['ai_analysis_contexts']:
+            for context_data in data["ai_analysis_contexts"]:
                 ai_contexts.append(AIAnalysisContext.from_dict(context_data))
-            data['ai_analysis_contexts'] = ai_contexts
+            data["ai_analysis_contexts"] = ai_contexts
 
         # 处理FixSuggestion列表
-        for fix_field in ['fix_suggestions', 'applied_fixes', 'failed_fixes']:
+        for fix_field in ["fix_suggestions", "applied_fixes", "failed_fixes"]:
             if fix_field in data:
                 fixes = []
                 for fix_data in data[fix_field]:
@@ -1087,7 +1139,7 @@ class ProjectAnalysisResult:
                 data[fix_field] = fixes
 
         # 处理日期时间字段
-        datetime_fields = ['started_at', 'completed_at']
+        datetime_fields = ["started_at", "completed_at"]
         for field_name in datetime_fields:
             if field_name in data and isinstance(data[field_name], str):
                 data[field_name] = datetime.fromisoformat(data[field_name])
@@ -1117,7 +1169,7 @@ class ProjectAnalysisResult:
             "fixes_generated": len(self.fix_suggestions),
             "fixes_applied": len(self.applied_fixes),
             "estimated_cost_usd": round(self.estimated_cost, 4),
-            "tokens_used": self.tokens_used
+            "tokens_used": self.tokens_used,
         }
 
     def generate_final_report_summary(self) -> str:
@@ -1133,7 +1185,7 @@ class ProjectAnalysisResult:
             f"修复成功率: {stats['fix_success_rate_percent']}%",
             f"分析文件: {stats['files_analyzed']} 个",
             f"生成建议: {stats['fixes_generated']} 条",
-            f"应用修复: {stats['fixes_applied']} 条"
+            f"应用修复: {stats['fixes_applied']} 条",
         ]
 
         return "\n".join(summary_lines)

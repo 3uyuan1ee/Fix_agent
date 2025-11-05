@@ -5,16 +5,23 @@ AI问题检测执行器 - T008.2
 
 import json
 import time
-from typing import Dict, List, Any, Optional, Tuple
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from datetime import datetime
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Any, Dict, List, Optional, Tuple
 
 from ..utils.logger import get_logger
+
 try:
-    from .problem_detection_context_builder import ProblemDetectionContext
-    from .workflow_data_types import AIDetectedProblem, ProblemType, SeverityLevel, FixType, CodeContext
     from ..llm.client import LLMClient
+    from .problem_detection_context_builder import ProblemDetectionContext
+    from .workflow_data_types import (
+        AIDetectedProblem,
+        CodeContext,
+        FixType,
+        ProblemType,
+        SeverityLevel,
+    )
 except ImportError:
     # 如果相关模块不可用，定义基本类型
     from enum import Enum
@@ -94,6 +101,7 @@ except ImportError:
 @dataclass
 class ProblemDetectionResult:
     """问题检测结果"""
+
     detection_id: str
     context_id: str
     detected_problems: List[AIDetectedProblem] = field(default_factory=list)
@@ -110,7 +118,9 @@ class ProblemDetectionResult:
         return {
             "detection_id": self.detection_id,
             "context_id": self.context_id,
-            "detected_problems": [problem.to_dict() for problem in self.detected_problems],
+            "detected_problems": [
+                problem.to_dict() for problem in self.detected_problems
+            ],
             "detection_summary": self.detection_summary,
             "execution_success": self.execution_success,
             "execution_time": self.execution_time,
@@ -118,18 +128,20 @@ class ProblemDetectionResult:
             "ai_responses": self.ai_responses,
             "token_usage": self.token_usage,
             "detection_timestamp": self.detection_timestamp,
-            "total_problems": len(self.detected_problems)
+            "total_problems": len(self.detected_problems),
         }
 
 
 class AIProblemDetector:
     """AI问题检测执行器"""
 
-    def __init__(self,
-                 llm_client: Optional[Any] = None,
-                 max_concurrent_analyses: int = 3,
-                 max_retries: int = 3,
-                 retry_delay: float = 1.0):
+    def __init__(
+        self,
+        llm_client: Optional[Any] = None,
+        max_concurrent_analyses: int = 3,
+        max_retries: int = 3,
+        retry_delay: float = 1.0,
+    ):
         self.llm_client = llm_client
         self.max_concurrent_analyses = max_concurrent_analyses
         self.max_retries = max_retries
@@ -144,9 +156,14 @@ class AIProblemDetector:
             "min_confidence": 0.5,  # 最小置信度阈值
             "max_problems_per_file": 10,  # 每个文件最大问题数
             "focus_areas": [
-                "security", "performance", "logic", "maintainability",
-                "reliability", "best_practices", "error_handling"
-            ]
+                "security",
+                "performance",
+                "logic",
+                "maintainability",
+                "reliability",
+                "best_practices",
+                "error_handling",
+            ],
         }
 
         # 系统提示词模板
@@ -183,9 +200,11 @@ class AIProblemDetector:
 - estimated_fix_time: 预估修复时间（分钟）
 """
 
-    def detect_problems(self,
-                       detection_context: ProblemDetectionContext,
-                       focus_files: Optional[List[str]] = None) -> ProblemDetectionResult:
+    def detect_problems(
+        self,
+        detection_context: ProblemDetectionContext,
+        focus_files: Optional[List[str]] = None,
+    ) -> ProblemDetectionResult:
         """
         执行AI问题检测
 
@@ -202,7 +221,7 @@ class AIProblemDetector:
         result = ProblemDetectionResult(
             detection_id=self._generate_detection_id(),
             context_id=detection_context.context_id,
-            detection_timestamp=datetime.now().isoformat()
+            detection_timestamp=datetime.now().isoformat(),
         )
 
         try:
@@ -219,7 +238,9 @@ class AIProblemDetector:
             )
 
             # 去重和验证问题
-            result.detected_problems = self._deduplicate_and_validate_problems(detected_problems)
+            result.detected_problems = self._deduplicate_and_validate_problems(
+                detected_problems
+            )
 
             # 生成检测摘要
             result.detection_summary = self._generate_detection_summary(
@@ -242,9 +263,9 @@ class AIProblemDetector:
 
         return result
 
-    def _select_files_for_analysis(self,
-                                 selected_files: List[Dict[str, Any]],
-                                 focus_files: Optional[List[str]]) -> List[Dict[str, Any]]:
+    def _select_files_for_analysis(
+        self, selected_files: List[Dict[str, Any]], focus_files: Optional[List[str]]
+    ) -> List[Dict[str, Any]]:
         """选择要分析的文件"""
         if focus_files:
             # 如果指定了重点文件，只分析这些文件
@@ -260,16 +281,18 @@ class AIProblemDetector:
             selected_files,
             key=lambda x: (
                 priority_weights.get(x.get("priority", "medium"), 2),
-                x.get("analysis_priority", 0)
+                x.get("analysis_priority", 0),
             ),
-            reverse=True
+            reverse=True,
         )
 
         return sorted_files[:20]
 
-    def _analyze_files_parallel(self,
-                              files_to_analyze: List[Dict[str, Any]],
-                              detection_context: ProblemDetectionContext) -> List[AIDetectedProblem]:
+    def _analyze_files_parallel(
+        self,
+        files_to_analyze: List[Dict[str, Any]],
+        detection_context: ProblemDetectionContext,
+    ) -> List[AIDetectedProblem]:
         """并行分析文件"""
         all_problems = []
 
@@ -278,9 +301,7 @@ class AIProblemDetector:
             future_to_file = {}
             for file_data in files_to_analyze:
                 future = executor.submit(
-                    self._analyze_single_file,
-                    file_data,
-                    detection_context
+                    self._analyze_single_file, file_data, detection_context
                 )
                 future_to_file[future] = file_data
 
@@ -302,9 +323,9 @@ class AIProblemDetector:
 
         return all_problems
 
-    def _analyze_single_file(self,
-                            file_data: Dict[str, Any],
-                            detection_context: ProblemDetectionContext) -> List[AIDetectedProblem]:
+    def _analyze_single_file(
+        self, file_data: Dict[str, Any], detection_context: ProblemDetectionContext
+    ) -> List[AIDetectedProblem]:
         """分析单个文件"""
         file_path = file_data.get("file_path", "")
         relative_path = file_data.get("relative_path", file_path)
@@ -321,7 +342,9 @@ class AIProblemDetector:
         ai_response = self._call_ai_with_retry(user_prompt)
 
         if not ai_response.get("success", False):
-            self.logger.warning(f"AI分析失败: {ai_response.get('error_message', '未知错误')}")
+            self.logger.warning(
+                f"AI分析失败: {ai_response.get('error_message', '未知错误')}"
+            )
             return []
 
         # 解析AI响应
@@ -334,12 +357,18 @@ class AIProblemDetector:
 
             if detection_data:
                 # 转换为AIDetectedProblem对象
-                problems = self._parse_ai_problems(detection_data, file_path, detection_context)
+                problems = self._parse_ai_problems(
+                    detection_data, file_path, detection_context
+                )
 
                 # 限制每个文件的问题数量
                 if len(problems) > self.detection_config["max_problems_per_file"]:
-                    problems = sorted(problems, key=lambda p: p.confidence, reverse=True)
-                    problems = problems[:self.detection_config["max_problems_per_file"]]
+                    problems = sorted(
+                        problems, key=lambda p: p.confidence, reverse=True
+                    )
+                    problems = problems[
+                        : self.detection_config["max_problems_per_file"]
+                    ]
 
                 return problems
             else:
@@ -356,8 +385,10 @@ class AIProblemDetector:
 
         # 首先尝试移除markdown代码块标记
         # 匹配 ```json...``` 或 ```...``` 格式
-        code_block_pattern = r'```(?:json)?\s*(\{.*?\})\s*```'
-        code_matches = re.findall(code_block_pattern, content, re.DOTALL | re.IGNORECASE)
+        code_block_pattern = r"```(?:json)?\s*(\{.*?\})\s*```"
+        code_matches = re.findall(
+            code_block_pattern, content, re.DOTALL | re.IGNORECASE
+        )
 
         if code_matches:
             # 使用代码块中的内容
@@ -370,7 +401,7 @@ class AIProblemDetector:
                 self.logger.warning("markdown代码块中的JSON格式无效，尝试其他方法")
 
         # 如果没有代码块或提取失败，尝试直接匹配JSON对象
-        json_pattern = r'\{.*\}'
+        json_pattern = r"\{.*\}"
         matches = re.findall(json_pattern, content, re.DOTALL)
 
         if matches:
@@ -388,9 +419,9 @@ class AIProblemDetector:
         self.logger.error("无法从响应中找到有效的JSON内容")
         return None
 
-    def _build_file_analysis_prompt(self,
-                                  file_data: Dict[str, Any],
-                                  detection_context: ProblemDetectionContext) -> str:
+    def _build_file_analysis_prompt(
+        self, file_data: Dict[str, Any], detection_context: ProblemDetectionContext
+    ) -> str:
         """构建文件分析提示词"""
         file_path = file_data.get("file_path", "")
         relative_path = file_data.get("relative_path", file_path)
@@ -425,7 +456,7 @@ class AIProblemDetector:
             f"- 检测重点: {', '.join(detection_context.detection_focus)}",
             f"",
             f"## 静态分析结果",
-            f"已知问题（来自静态分析工具）："
+            f"已知问题（来自静态分析工具）：",
         ]
 
         if static_issues:
@@ -438,28 +469,30 @@ class AIProblemDetector:
         else:
             prompt_parts.append("- 无已知问题")
 
-        prompt_parts.extend([
-            f"",
-            f"## 文件内容",
-            f"```{language}",
-            file_content[:3000],  # 限制内容长度
-            "```" if len(file_content) > 3000 else "",
-            f"",
-            f"## 分析要求",
-            f"请深入分析以上代码，重点发现：",
-            f"1. 静态分析工具可能遗漏的深层问题",
-            f"2. 业务逻辑和架构层面的问题",
-            f"3. 安全性和性能隐患",
-            f"4. 可维护性和可靠性问题",
-            f"",
-            f"注意：",
-            f"- 不要重复静态分析已经发现的问题",
-            f"- 重点关注代码逻辑、设计模式、异常处理等方面",
-            f"- 提供具体的问题位置和改进建议",
-            f"- 评估问题的严重程度和修复难度",
-            f"",
-            f"请以JSON格式输出分析结果。"
-        ])
+        prompt_parts.extend(
+            [
+                f"",
+                f"## 文件内容",
+                f"```{language}",
+                file_content[:3000],  # 限制内容长度
+                "```" if len(file_content) > 3000 else "",
+                f"",
+                f"## 分析要求",
+                f"请深入分析以上代码，重点发现：",
+                f"1. 静态分析工具可能遗漏的深层问题",
+                f"2. 业务逻辑和架构层面的问题",
+                f"3. 安全性和性能隐患",
+                f"4. 可维护性和可靠性问题",
+                f"",
+                f"注意：",
+                f"- 不要重复静态分析已经发现的问题",
+                f"- 重点关注代码逻辑、设计模式、异常处理等方面",
+                f"- 提供具体的问题位置和改进建议",
+                f"- 评估问题的严重程度和修复难度",
+                f"",
+                f"请以JSON格式输出分析结果。",
+            ]
+        )
 
         return "\n".join(prompt_parts)
 
@@ -478,10 +511,10 @@ class AIProblemDetector:
                 call_params = {
                     "messages": [
                         {"role": "system", "content": self.system_prompt_template},
-                        {"role": "user", "content": user_prompt}
+                        {"role": "user", "content": user_prompt},
                     ],
                     "temperature": self.detection_config["temperature"],
-                    "max_tokens": self.detection_config["max_tokens"]
+                    "max_tokens": self.detection_config["max_tokens"],
                     # 注意：response_format暂不支持，在系统提示词中指定JSON格式
                 }
 
@@ -500,26 +533,29 @@ class AIProblemDetector:
 
             # 如果不是最后一次尝试，等待重试
             if attempt < self.max_retries - 1:
-                time.sleep(self.retry_delay * (2 ** attempt))
+                time.sleep(self.retry_delay * (2**attempt))
 
         return {
             "success": False,
-            "error_message": f"AI调用失败，已重试 {self.max_retries} 次: {last_error}"
+            "error_message": f"AI调用失败，已重试 {self.max_retries} 次: {last_error}",
         }
 
     def _create_default_llm_client(self):
         """创建默认LLM客户端"""
         try:
             from ..llm.client import LLMClient
+
             return LLMClient()
         except Exception as e:
             self.logger.error(f"无法创建默认LLM客户端: {e}")
             raise
 
-    def _parse_ai_problems(self,
-                          detection_data: Dict[str, Any],
-                          file_path: str,
-                          detection_context: ProblemDetectionContext) -> List[AIDetectedProblem]:
+    def _parse_ai_problems(
+        self,
+        detection_data: Dict[str, Any],
+        file_path: str,
+        detection_context: ProblemDetectionContext,
+    ) -> List[AIDetectedProblem]:
         """解析AI检测到的问题"""
         problems = []
         detected_problems = detection_data.get("detected_problems", [])
@@ -527,14 +563,25 @@ class AIProblemDetector:
         for problem_data in detected_problems:
             try:
                 # 验证必需字段
-                if not all(key in problem_data for key in [
-                    "problem_id", "line_number", "problem_type", "severity",
-                    "description", "code_snippet", "confidence", "reasoning"
-                ]):
+                if not all(
+                    key in problem_data
+                    for key in [
+                        "problem_id",
+                        "line_number",
+                        "problem_type",
+                        "severity",
+                        "description",
+                        "code_snippet",
+                        "confidence",
+                        "reasoning",
+                    ]
+                ):
                     continue
 
                 # 解析问题类型
-                problem_type = self._parse_problem_type(problem_data.get("problem_type", ""))
+                problem_type = self._parse_problem_type(
+                    problem_data.get("problem_type", "")
+                )
                 if not problem_type:
                     continue
 
@@ -544,7 +591,9 @@ class AIProblemDetector:
                     continue
 
                 # 解析修复类型
-                fix_type = self._parse_fix_type(problem_data.get("suggested_fix_type", ""))
+                fix_type = self._parse_fix_type(
+                    problem_data.get("suggested_fix_type", "")
+                )
 
                 # 验证置信度
                 confidence = float(problem_data.get("confidence", 0.0))
@@ -564,7 +613,7 @@ class AIProblemDetector:
                     reasoning=problem_data["reasoning"],
                     suggested_fix_type=fix_type,
                     estimated_fix_time=int(problem_data.get("estimated_fix_time", 30)),
-                    tags=problem_data.get("tags", [])
+                    tags=problem_data.get("tags", []),
                 )
 
                 problems.append(problem)
@@ -585,7 +634,7 @@ class AIProblemDetector:
             "maintainability": ProblemType.MAINTAINABILITY,
             "reliability": ProblemType.RELIABILITY,
             "compatibility": ProblemType.COMPATIBILITY,
-            "documentation": ProblemType.DOCUMENTATION
+            "documentation": ProblemType.DOCUMENTATION,
         }
 
         problem_type_lower = problem_type_str.lower()
@@ -597,7 +646,7 @@ class AIProblemDetector:
             "low": SeverityLevel.LOW,
             "medium": SeverityLevel.MEDIUM,
             "high": SeverityLevel.HIGH,
-            "critical": SeverityLevel.CRITICAL
+            "critical": SeverityLevel.CRITICAL,
         }
 
         severity_lower = severity_str.lower()
@@ -611,13 +660,15 @@ class AIProblemDetector:
             "code_deletion": FixType.CODE_DELETION,
             "refactoring": FixType.REFACTORING,
             "configuration": FixType.CONFIGURATION,
-            "dependency_update": FixType.DEPENDENCY_UPDATE
+            "dependency_update": FixType.DEPENDENCY_UPDATE,
         }
 
         fix_type_lower = fix_type_str.lower()
         return type_mapping.get(fix_type_lower, FixType.CODE_REPLACEMENT)
 
-    def _deduplicate_and_validate_problems(self, problems: List[AIDetectedProblem]) -> List[AIDetectedProblem]:
+    def _deduplicate_and_validate_problems(
+        self, problems: List[AIDetectedProblem]
+    ) -> List[AIDetectedProblem]:
         """去重和验证问题"""
         if not problems:
             return []
@@ -628,7 +679,12 @@ class AIProblemDetector:
 
         for problem in problems:
             # 创建去重键
-            dedup_key = (problem.file_path, problem.line_number, problem.problem_type, problem.description[:100])
+            dedup_key = (
+                problem.file_path,
+                problem.line_number,
+                problem.problem_type,
+                problem.description[:100],
+            )
 
             if dedup_key not in seen_problems:
                 seen_problems.add(dedup_key)
@@ -642,11 +698,8 @@ class AIProblemDetector:
 
         # 按严重程度和置信度排序
         validated_problems.sort(
-            key=lambda p: (
-                self._get_severity_weight(p.severity),
-                p.confidence
-            ),
-            reverse=True
+            key=lambda p: (self._get_severity_weight(p.severity), p.confidence),
+            reverse=True,
         )
 
         return validated_problems
@@ -675,13 +728,15 @@ class AIProblemDetector:
             SeverityLevel.CRITICAL: 4.0,
             SeverityLevel.HIGH: 3.0,
             SeverityLevel.MEDIUM: 2.0,
-            SeverityLevel.LOW: 1.0
+            SeverityLevel.LOW: 1.0,
         }
         return weights.get(severity, 1.0)
 
-    def _generate_detection_summary(self,
-                                   problems: List[AIDetectedProblem],
-                                   detection_context: ProblemDetectionContext) -> Dict[str, Any]:
+    def _generate_detection_summary(
+        self,
+        problems: List[AIDetectedProblem],
+        detection_context: ProblemDetectionContext,
+    ) -> Dict[str, Any]:
         """生成检测摘要"""
         if not problems:
             return {
@@ -690,7 +745,7 @@ class AIProblemDetector:
                 "type_distribution": {},
                 "file_distribution": {},
                 "confidence_stats": {},
-                "estimated_fix_time_total": 0
+                "estimated_fix_time_total": 0,
             }
 
         # 统计信息
@@ -703,10 +758,14 @@ class AIProblemDetector:
 
         for problem in problems:
             # 严重程度分布
-            severity_counts[problem.severity.value] = severity_counts.get(problem.severity.value, 0) + 1
+            severity_counts[problem.severity.value] = (
+                severity_counts.get(problem.severity.value, 0) + 1
+            )
 
             # 问题类型分布
-            type_counts[problem.problem_type.value] = type_counts.get(problem.problem_type.value, 0) + 1
+            type_counts[problem.problem_type.value] = (
+                type_counts.get(problem.problem_type.value, 0) + 1
+            )
 
             # 文件分布
             file_counts[problem.file_path] = file_counts.get(problem.file_path, 0) + 1
@@ -718,21 +777,27 @@ class AIProblemDetector:
             total_fix_time += problem.estimated_fix_time
 
         # 计算统计指标
-        avg_confidence = sum(confidence_values) / len(confidence_values) if confidence_values else 0
+        avg_confidence = (
+            sum(confidence_values) / len(confidence_values) if confidence_values else 0
+        )
 
         summary = {
             "total_problems": len(problems),
             "severity_distribution": severity_counts,
             "type_distribution": type_counts,
-            "file_distribution": dict(sorted(file_counts.items(), key=lambda x: x[1], reverse=True)[:10]),
+            "file_distribution": dict(
+                sorted(file_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+            ),
             "confidence_stats": {
                 "average": round(avg_confidence, 3),
                 "min": round(min(confidence_values), 3) if confidence_values else 0,
-                "max": round(max(confidence_values), 3) if confidence_values else 0
+                "max": round(max(confidence_values), 3) if confidence_values else 0,
             },
             "estimated_fix_time_total": total_fix_time,
             "estimated_fix_time_hours": round(total_fix_time / 60, 2),
-            "high_priority_files": [file for file, count in file_counts.items() if count >= 3]
+            "high_priority_files": [
+                file for file, count in file_counts.items() if count >= 3
+            ],
         }
 
         return summary
@@ -740,13 +805,16 @@ class AIProblemDetector:
     def _generate_detection_id(self) -> str:
         """生成检测ID"""
         import uuid
+
         return f"detection_{uuid.uuid4().hex[:12]}_{int(datetime.now().timestamp())}"
 
 
 # 便捷函数
-def detect_problems_with_ai(detection_context: Dict[str, Any],
-                           focus_files: Optional[List[str]] = None,
-                           llm_client: Any = None) -> Dict[str, Any]:
+def detect_problems_with_ai(
+    detection_context: Dict[str, Any],
+    focus_files: Optional[List[str]] = None,
+    llm_client: Any = None,
+) -> Dict[str, Any]:
     """
     便捷的AI问题检测函数
 
@@ -760,6 +828,7 @@ def detect_problems_with_ai(detection_context: Dict[str, Any],
     """
     # 重建上下文对象（简化实现）
     from .problem_detection_context_builder import ProblemDetectionContextBuilder
+
     builder = ProblemDetectionContextBuilder()
 
     # 这里应该重建完整的ProblemDetectionContext对象

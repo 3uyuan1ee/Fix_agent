@@ -2,15 +2,16 @@
 Prompt模板基础类和数据结构
 """
 
+import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Dict, List, Any, Optional, Union
 from enum import Enum
-import re
+from typing import Any, Dict, List, Optional, Union
 
 
 class PromptCategory(Enum):
     """Prompt模板类别"""
+
     STATIC_ANALYSIS = "static_analysis"
     DEEP_ANALYSIS = "deep_analysis"
     REPAIR_SUGGESTION = "repair_suggestion"
@@ -21,6 +22,7 @@ class PromptCategory(Enum):
 
 class PromptType(Enum):
     """Prompt模板类型"""
+
     SYSTEM = "system"
     USER = "user"
     ASSISTANT = "assistant"
@@ -30,6 +32,7 @@ class PromptType(Enum):
 @dataclass
 class PromptTemplate:
     """Prompt模板数据类"""
+
     name: str
     category: PromptCategory
     prompt_type: PromptType
@@ -56,7 +59,7 @@ class PromptTemplate:
     def _extract_parameters(self) -> Dict[str, str]:
         """从模板中提取参数"""
         # 匹配 {{parameter}} 格式的参数，匹配所有有效的参数名
-        pattern = r'\{\{([a-zA-Z_][a-zA-Z0-9_]*)\}\}'
+        pattern = r"\{\{([a-zA-Z_][a-zA-Z0-9_]*)\}\}"
         matches = re.findall(pattern, self.template)
 
         parameters = {}
@@ -101,7 +104,7 @@ class PromptTemplate:
             "version": self.version,
             "author": self.author,
             "tags": self.tags,
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }
 
     @classmethod
@@ -119,6 +122,7 @@ class PromptTemplate:
 @dataclass
 class PromptRenderResult:
     """Prompt渲染结果"""
+
     content: str
     template_name: str
     parameters_used: Dict[str, Any]
@@ -136,7 +140,7 @@ class PromptRenderResult:
             "render_time": self.render_time,
             "success": self.success,
             "error_message": self.error_message,
-            "missing_parameters": self.missing_parameters
+            "missing_parameters": self.missing_parameters,
         }
 
 
@@ -144,7 +148,9 @@ class PromptRenderer(ABC):
     """Prompt渲染器抽象基类"""
 
     @abstractmethod
-    def render(self, template: PromptTemplate, parameters: Dict[str, Any]) -> PromptRenderResult:
+    def render(
+        self, template: PromptTemplate, parameters: Dict[str, Any]
+    ) -> PromptRenderResult:
         """
         渲染模板
 
@@ -178,7 +184,9 @@ class BasePromptRenderer(PromptRenderer):
         self.delimiter_start = "{{"
         self.delimiter_end = "}}"
 
-    def render(self, template: PromptTemplate, parameters: Dict[str, Any]) -> PromptRenderResult:
+    def render(
+        self, template: PromptTemplate, parameters: Dict[str, Any]
+    ) -> PromptRenderResult:
         """
         渲染模板
 
@@ -190,6 +198,7 @@ class BasePromptRenderer(PromptRenderer):
             渲染结果
         """
         import time
+
         start_time = time.time()
 
         try:
@@ -202,7 +211,7 @@ class BasePromptRenderer(PromptRenderer):
                     parameters_used={},
                     success=False,
                     error_message=f"Missing required parameters: {', '.join(missing_params)}",
-                    missing_parameters=missing_params
+                    missing_parameters=missing_params,
                 )
 
             # 执行渲染
@@ -211,7 +220,9 @@ class BasePromptRenderer(PromptRenderer):
 
             for param_name, param_value in parameters.items():
                 if param_name in template.parameters:
-                    placeholder = f"{self.delimiter_start}{param_name}{self.delimiter_end}"
+                    placeholder = (
+                        f"{self.delimiter_start}{param_name}{self.delimiter_end}"
+                    )
                     content = content.replace(placeholder, str(param_value))
                     used_parameters[param_name] = param_value
 
@@ -222,7 +233,7 @@ class BasePromptRenderer(PromptRenderer):
                 template_name=template.name,
                 parameters_used=used_parameters,
                 render_time=render_time,
-                success=True
+                success=True,
             )
 
         except Exception as e:
@@ -231,7 +242,7 @@ class BasePromptRenderer(PromptRenderer):
                 template_name=template.name,
                 parameters_used={},
                 success=False,
-                error_message=str(e)
+                error_message=str(e),
             )
 
     def validate_template(self, template: PromptTemplate) -> List[str]:
@@ -253,11 +264,13 @@ class BasePromptRenderer(PromptRenderer):
             errors.append("Template content cannot be empty")
 
         # 验证参数格式
-        pattern = re.escape(self.delimiter_start) + r'([^}]+)' + re.escape(self.delimiter_end)
+        pattern = (
+            re.escape(self.delimiter_start) + r"([^}]+)" + re.escape(self.delimiter_end)
+        )
         matches = re.findall(pattern, template.template)
 
         for match in matches:
-            if not re.match(r'^[a-zA-Z_]\w*$', match):
+            if not re.match(r"^[a-zA-Z_]\w*$", match):
                 errors.append(f"Invalid parameter name: '{match}'")
 
         return errors

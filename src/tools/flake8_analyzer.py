@@ -3,24 +3,27 @@ Flake8静态分析工具模块
 集成flake8工具，实现代码风格检查
 """
 
-import subprocess
 import re
+import subprocess
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
-from ..utils.logger import get_logger
 from ..utils.config import get_config_manager
+from ..utils.logger import get_logger
 
 
 class Flake8AnalysisError(Exception):
     """Flake8分析异常"""
+
     pass
 
 
 class Flake8Analyzer:
     """Flake8静态分析器"""
 
-    def __init__(self, config_manager=None, config_file: Optional[str] = None, timeout: int = 30):
+    def __init__(
+        self, config_manager=None, config_file: Optional[str] = None, timeout: int = 30
+    ):
         """
         初始化Flake8分析器
 
@@ -35,13 +38,13 @@ class Flake8Analyzer:
         self.timeout = timeout
 
         # 获取配置
-        static_config = self.config_manager.get_section('static_analysis')
-        flake8_config = static_config.get('flake8', {})
+        static_config = self.config_manager.get_section("static_analysis")
+        flake8_config = static_config.get("flake8", {})
 
         # 配置参数
-        self.max_line_length = flake8_config.get('max_line_length', 88)
-        self.ignore_codes = flake8_config.get('ignore_codes', ['E203', 'W503'])
-        self.default_config_file = '.flake8'
+        self.max_line_length = flake8_config.get("max_line_length", 88)
+        self.ignore_codes = flake8_config.get("ignore_codes", ["E203", "W503"])
+        self.default_config_file = ".flake8"
 
     def analyze_file(self, file_path: Union[str, Path]) -> Dict[str, Any]:
         """
@@ -76,11 +79,13 @@ class Flake8Analyzer:
                 capture_output=True,
                 text=True,
                 timeout=self.timeout,
-                cwd=file_path.parent
+                cwd=file_path.parent,
             )
 
             # 解析结果
-            analysis_result = self._parse_flake8_output(result.stdout, result.stderr, result.returncode, file_path)
+            analysis_result = self._parse_flake8_output(
+                result.stdout, result.stderr, result.returncode, file_path
+            )
 
             self.logger.debug(f"Flake8 analysis completed: {file_path}")
             return analysis_result
@@ -91,12 +96,14 @@ class Flake8Analyzer:
                 "file_path": str(file_path),
                 "error": "Analysis timeout",
                 "issues": [],
-                "messages": ["Analysis timed out"]
+                "messages": ["Analysis timed out"],
             }
 
         except FileNotFoundError as e:
             if "flake8" in str(e).lower():
-                raise Flake8AnalysisError("Flake8 is not installed. Please install it with: pip install flake8")
+                raise Flake8AnalysisError(
+                    "Flake8 is not installed. Please install it with: pip install flake8"
+                )
             else:
                 raise Flake8AnalysisError(f"File not found: {e}")
 
@@ -124,13 +131,15 @@ class Flake8Analyzer:
 
         return cmd
 
-    def _parse_flake8_output(self, stdout: str, stderr: str, returncode: int, file_path: Path) -> Dict[str, Any]:
+    def _parse_flake8_output(
+        self, stdout: str, stderr: str, returncode: int, file_path: Path
+    ) -> Dict[str, Any]:
         """解析flake8输出"""
         result = {
             "file_path": str(file_path),
             "issues": [],
             "messages": [],
-            "return_code": returncode
+            "return_code": returncode,
         }
 
         # 解析stdout中的问题
@@ -153,10 +162,12 @@ class Flake8Analyzer:
 
         return result
 
-    def _parse_flake8_issues(self, output: str, file_path: Path) -> List[Dict[str, Any]]:
+    def _parse_flake8_issues(
+        self, output: str, file_path: Path
+    ) -> List[Dict[str, Any]]:
         """解析flake8问题输出"""
         issues = []
-        lines = output.strip().split('\n')
+        lines = output.strip().split("\n")
 
         for line in lines:
             line = line.strip()
@@ -165,7 +176,7 @@ class Flake8Analyzer:
 
             # Flake8输出格式: filename:line:column: code message
             # 例如: example.py:10:5: E302 expected 2 blank lines, found 1
-            match = re.match(r'^([^:]+):(\d+):(\d+):\s*([A-Z]\d+)\s+(.+)$', line)
+            match = re.match(r"^([^:]+):(\d+):(\d+):\s*([A-Z]\d+)\s+(.+)$", line)
             if match:
                 filename, line_num, column, code, message = match.groups()
 
@@ -180,7 +191,7 @@ class Flake8Analyzer:
                     "code": code,
                     "message": message.strip(),
                     "severity": self._get_severity_from_code(code),
-                    "type": self._get_type_from_code(code)
+                    "type": self._get_type_from_code(code),
                 }
                 issues.append(issue)
 
@@ -189,19 +200,19 @@ class Flake8Analyzer:
     def _get_severity_from_code(self, code: str) -> str:
         """根据错误代码获取严重程度"""
         # E系列：错误
-        if code.startswith('E'):
+        if code.startswith("E"):
             return "error"
         # W系列：警告
-        elif code.startswith('W'):
+        elif code.startswith("W"):
             return "warning"
         # F系列：致命错误
-        elif code.startswith('F'):
+        elif code.startswith("F"):
             return "error"
         # C系列：约定
-        elif code.startswith('C'):
+        elif code.startswith("C"):
             return "info"
         # N系列：命名
-        elif code.startswith('N'):
+        elif code.startswith("N"):
             return "info"
         # 其他默认为警告
         else:
@@ -209,15 +220,15 @@ class Flake8Analyzer:
 
     def _get_type_from_code(self, code: str) -> str:
         """根据错误代码获取问题类型"""
-        if code.startswith('E'):
+        if code.startswith("E"):
             return "style"
-        elif code.startswith('W'):
+        elif code.startswith("W"):
             return "warning"
-        elif code.startswith('F'):
+        elif code.startswith("F"):
             return "fatal"
-        elif code.startswith('C'):
+        elif code.startswith("C"):
             return "convention"
-        elif code.startswith('N'):
+        elif code.startswith("N"):
             return "naming"
         else:
             return "other"
@@ -239,7 +250,7 @@ class Flake8Analyzer:
             "issue_codes": {},
             "has_errors": False,
             "error_count": 0,
-            "return_code": result.get("return_code", 0)
+            "return_code": result.get("return_code", 0),
         }
 
         # 统计问题类型和代码
@@ -247,7 +258,9 @@ class Flake8Analyzer:
             severity = issue.get("severity", "warning")
             code = issue.get("code", "unknown")
 
-            summary["issue_types"][severity] = summary["issue_types"].get(severity, 0) + 1
+            summary["issue_types"][severity] = (
+                summary["issue_types"].get(severity, 0) + 1
+            )
             summary["issue_codes"][code] = summary["issue_codes"].get(code, 0) + 1
 
             if severity == "error":

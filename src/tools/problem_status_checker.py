@@ -6,18 +6,21 @@
 
 import json
 import uuid
+from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import Dict, List, Any, Optional, Tuple
-from pathlib import Path
-from dataclasses import dataclass, asdict
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
-from ..utils.logger import get_logger
 from ..utils.config import get_config_manager
-from .workflow_flow_state_manager import WorkflowSession
+from ..utils.logger import get_logger
 from .workflow_data_types import AIDetectedProblem
+from .workflow_flow_state_manager import (
+    WorkflowFlowStateManager,
+    WorkflowNode,
+    WorkflowSession,
+)
 from .workflow_user_interaction_types import UserDecision
-from .workflow_flow_state_manager import WorkflowNode, WorkflowFlowStateManager
 
 logger = get_logger()
 
@@ -25,6 +28,7 @@ logger = get_logger()
 @dataclass
 class ProblemStatusSummary:
     """问题状态摘要"""
+
     total_problems: int
     solved_problems: int
     skipped_problems: int
@@ -40,13 +44,14 @@ class ProblemStatusSummary:
             "skipped_problems": self.skipped_problems,
             "failed_problems": self.failed_problems,
             "remaining_problems": self.remaining_problems,
-            "problems_requiring_intervention": self.problems_requiring_intervention
+            "problems_requiring_intervention": self.problems_requiring_intervention,
         }
 
 
 @dataclass
 class WorkflowProgressReport:
     """工作流进度报告"""
+
     report_id: str
     session_id: str
     check_timestamp: datetime
@@ -66,14 +71,15 @@ class WorkflowProgressReport:
             "workflow_statistics": self.workflow_statistics,
             "remaining_work": self.remaining_work,
             "recommendations": self.recommendations,
-            "next_action": self.next_action
+            "next_action": self.next_action,
         }
 
 
 class WorkflowDecision(Enum):
     """工作流决策"""
-    CONTINUE_ANALYSIS = "continue_analysis"    # 继续分析
-    COMPLETE_WORKFLOW = "complete_workflow"    # 完成工作流
+
+    CONTINUE_ANALYSIS = "continue_analysis"  # 继续分析
+    COMPLETE_WORKFLOW = "complete_workflow"  # 完成工作流
     REQUIRE_INTERVENTION = "require_intervention"  # 需要干预
 
 
@@ -95,7 +101,9 @@ class ProblemStatusChecker:
         self.config = self.config_manager.get("project_analysis", {})
 
         # 检查报告存储目录
-        self.reports_dir = Path(self.config.get("status_check_reports_dir", ".fix_backups/status_reports"))
+        self.reports_dir = Path(
+            self.config.get("status_check_reports_dir", ".fix_backups/status_reports")
+        )
         self.reports_dir.mkdir(parents=True, exist_ok=True)
 
     def check_problem_status(self, session_id: str) -> Dict[str, Any]:
@@ -126,7 +134,9 @@ class ProblemStatusChecker:
             remaining_work = self._analyze_remaining_work(session)
 
             # 生成建议
-            recommendations = self._generate_recommendations(status_summary, workflow_statistics)
+            recommendations = self._generate_recommendations(
+                status_summary, workflow_statistics
+            )
 
             # 确定下一步行动
             next_action = self._determine_next_action(status_summary, remaining_work)
@@ -140,7 +150,7 @@ class ProblemStatusChecker:
                 workflow_statistics=workflow_statistics,
                 remaining_work=remaining_work,
                 recommendations=recommendations,
-                next_action=next_action
+                next_action=next_action,
             )
 
             # 保存进度报告
@@ -158,9 +168,7 @@ class ProblemStatusChecker:
                 transition_message = "工作流完成，需要人工审查"
 
             self.state_manager.transition_to(
-                session_id,
-                target_node,
-                transition_message
+                session_id, target_node, transition_message
             )
 
             # 生成检查结果
@@ -173,7 +181,7 @@ class ProblemStatusChecker:
                 "remaining_problems": status_summary.remaining_problems,
                 "workflow_complete": status_summary.remaining_problems == 0,
                 "progress_report_id": progress_report.report_id,
-                "message": f"问题状态检查完成: {transition_message}"
+                "message": f"问题状态检查完成: {transition_message}",
             }
 
             self.logger.info(f"问题状态检查完成: {result}")
@@ -181,29 +189,29 @@ class ProblemStatusChecker:
 
         except Exception as e:
             self.logger.error(f"检查问题状态失败: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "message": "检查问题状态失败"
-            }
+            return {"success": False, "error": str(e), "message": "检查问题状态失败"}
 
-    def _calculate_status_summary(self, session: WorkflowSession) -> ProblemStatusSummary:
+    def _calculate_status_summary(
+        self, session: WorkflowSession
+    ) -> ProblemStatusSummary:
         """计算问题状态摘要"""
         try:
             # 总问题数
             total_problems = len(session.detected_problems)
 
             # 已解决问题数
-            solved_problems = len(getattr(session, 'solved_problems', []))
+            solved_problems = len(getattr(session, "solved_problems", []))
 
             # 跳过问题数
-            skipped_problems = len(getattr(session, 'skip_history', []))
+            skipped_problems = len(getattr(session, "skip_history", []))
 
             # 失败问题数（需要重新分析但超过重试次数的）
             failed_problems = 0
-            if hasattr(session, 'reanalysis_history'):
+            if hasattr(session, "reanalysis_history"):
                 for issue_id, history in session.reanalysis_history.items():
-                    if history.get('retry_count', 0) >= self.config.get("max_retry_attempts", 3):
+                    if history.get("retry_count", 0) >= self.config.get(
+                        "max_retry_attempts", 3
+                    ):
                         failed_problems += 1
 
             # 待处理问题数
@@ -221,7 +229,7 @@ class ProblemStatusChecker:
                 skipped_problems=skipped_problems,
                 failed_problems=failed_problems,
                 remaining_problems=remaining_problems,
-                problems_requiring_intervention=problems_requiring_intervention
+                problems_requiring_intervention=problems_requiring_intervention,
             )
 
         except Exception as e:
@@ -232,7 +240,7 @@ class ProblemStatusChecker:
                 skipped_problems=0,
                 failed_problems=0,
                 remaining_problems=0,
-                problems_requiring_intervention=0
+                problems_requiring_intervention=0,
             )
 
     def _generate_workflow_statistics(self, session: WorkflowSession) -> Dict[str, Any]:
@@ -241,17 +249,25 @@ class ProblemStatusChecker:
             statistics = {
                 "session_duration": self._calculate_session_duration(session),
                 "workflow_nodes_visited": self._get_visited_nodes(session),
-                "total_fix_attempts": len(getattr(session, 'fix_suggestions', [])),
-                "verification_decisions": len(getattr(session, 'verification_decisions', [])),
-                "reanalysis_triggered": len(getattr(session, 'reanalysis_history', {})),
-                "average_time_per_problem": self._calculate_average_time_per_problem(session)
+                "total_fix_attempts": len(getattr(session, "fix_suggestions", [])),
+                "verification_decisions": len(
+                    getattr(session, "verification_decisions", [])
+                ),
+                "reanalysis_triggered": len(getattr(session, "reanalysis_history", {})),
+                "average_time_per_problem": self._calculate_average_time_per_problem(
+                    session
+                ),
             }
 
             # 成功率统计
             total_processed = statistics["total_fix_attempts"]
             if total_processed > 0:
-                statistics["success_rate"] = len(getattr(session, 'solved_problems', [])) / total_processed
-                statistics["skip_rate"] = len(getattr(session, 'skip_history', [])) / total_processed
+                statistics["success_rate"] = (
+                    len(getattr(session, "solved_problems", [])) / total_processed
+                )
+                statistics["skip_rate"] = (
+                    len(getattr(session, "skip_history", [])) / total_processed
+                )
             else:
                 statistics["success_rate"] = 0.0
                 statistics["skip_rate"] = 0.0
@@ -265,7 +281,7 @@ class ProblemStatusChecker:
     def _calculate_session_duration(self, session: WorkflowSession) -> float:
         """计算会话持续时间（秒）"""
         try:
-            if hasattr(session, 'created_at') and session.created_at:
+            if hasattr(session, "created_at") and session.created_at:
                 duration = datetime.now() - session.created_at
                 return duration.total_seconds()
             return 0.0
@@ -275,8 +291,10 @@ class ProblemStatusChecker:
     def _get_visited_nodes(self, session: WorkflowSession) -> List[str]:
         """获取访问过的节点"""
         try:
-            if hasattr(session, 'state_history'):
-                return [transition.get("to_node") for transition in session.state_history]
+            if hasattr(session, "state_history"):
+                return [
+                    transition.get("to_node") for transition in session.state_history
+                ]
             return []
         except Exception:
             return []
@@ -305,7 +323,7 @@ class ProblemStatusChecker:
                         "problem_type": problem.issue_type.value,
                         "severity": problem.severity.value,
                         "priority": self._calculate_problem_priority(problem),
-                        "estimated_complexity": self._estimate_complexity(problem)
+                        "estimated_complexity": self._estimate_complexity(problem),
                     }
                     remaining_work.append(work_item)
 
@@ -318,7 +336,9 @@ class ProblemStatusChecker:
             self.logger.error(f"分析剩余工作失败: {e}")
             return []
 
-    def _get_problem_by_id(self, session: WorkflowSession, issue_id: str) -> Optional[AIDetectedProblem]:
+    def _get_problem_by_id(
+        self, session: WorkflowSession, issue_id: str
+    ) -> Optional[AIDetectedProblem]:
         """根据ID获取问题信息"""
         for problem in session.detected_problems:
             if problem.issue_id == issue_id:
@@ -327,11 +347,7 @@ class ProblemStatusChecker:
 
     def _calculate_problem_priority(self, problem: AIDetectedProblem) -> float:
         """计算问题优先级"""
-        severity_weights = {
-            "error": 1.0,
-            "warning": 0.7,
-            "info": 0.4
-        }
+        severity_weights = {"error": 1.0, "warning": 0.7, "info": 0.4}
 
         base_priority = severity_weights.get(problem.severity.value, 0.5)
 
@@ -354,9 +370,7 @@ class ProblemStatusChecker:
             return "low"
 
     def _generate_recommendations(
-        self,
-        status_summary: ProblemStatusSummary,
-        workflow_statistics: Dict[str, Any]
+        self, status_summary: ProblemStatusSummary, workflow_statistics: Dict[str, Any]
     ) -> List[str]:
         """生成建议"""
         recommendations = []
@@ -378,18 +392,20 @@ class ProblemStatusChecker:
 
         # 基于失败问题的建议
         if status_summary.failed_problems > 0:
-            recommendations.append(f"有 {status_summary.failed_problems} 个问题需要人工干预")
+            recommendations.append(
+                f"有 {status_summary.failed_problems} 个问题需要人工干预"
+            )
 
         # 基于跳过问题的建议
         if status_summary.skipped_problems > 0:
-            recommendations.append(f"有 {status_summary.skipped_problems} 个问题被跳过，建议后续复查")
+            recommendations.append(
+                f"有 {status_summary.skipped_problems} 个问题被跳过，建议后续复查"
+            )
 
         return recommendations if recommendations else ["继续执行当前工作流程"]
 
     def _determine_next_action(
-        self,
-        status_summary: ProblemStatusSummary,
-        remaining_work: List[Dict[str, Any]]
+        self, status_summary: ProblemStatusSummary, remaining_work: List[Dict[str, Any]]
     ) -> str:
         """确定下一步行动"""
         # 如果没有剩余问题，完成工作流
@@ -402,8 +418,7 @@ class ProblemStatusChecker:
 
         # 如果剩余问题都是低优先级，可以考虑完成工作流
         high_priority_remaining = [
-            work for work in remaining_work
-            if work["priority"] > 0.7
+            work for work in remaining_work if work["priority"] > 0.7
         ]
         if not high_priority_remaining:
             return WorkflowDecision.COMPLETE_WORKFLOW.value
@@ -414,9 +429,12 @@ class ProblemStatusChecker:
     def _save_progress_report(self, report: WorkflowProgressReport) -> None:
         """保存进度报告"""
         try:
-            report_file = self.reports_dir / f"progress_report_{report.session_id}_{report.check_timestamp.strftime('%Y%m%d_%H%M%S')}.json"
+            report_file = (
+                self.reports_dir
+                / f"progress_report_{report.session_id}_{report.check_timestamp.strftime('%Y%m%d_%H%M%S')}.json"
+            )
 
-            with open(report_file, 'w', encoding='utf-8') as f:
+            with open(report_file, "w", encoding="utf-8") as f:
                 json.dump(report.to_dict(), f, indent=2, ensure_ascii=False)
 
             self.logger.info(f"进度报告已保存: {report.report_id}")
@@ -440,7 +458,7 @@ class ProblemStatusChecker:
             # 扫描进度报告文件
             pattern = f"progress_report_{session_id}_*.json"
             for report_file in self.reports_dir.glob(pattern):
-                with open(report_file, 'r', encoding='utf-8') as f:
+                with open(report_file, "r", encoding="utf-8") as f:
                     report_data = json.load(f)
                     report = self._reconstruct_progress_report(report_data)
                     if report:
@@ -452,7 +470,9 @@ class ProblemStatusChecker:
             self.logger.error(f"获取状态检查历史失败: {e}")
             return []
 
-    def _reconstruct_progress_report(self, report_data: Dict[str, Any]) -> Optional[WorkflowProgressReport]:
+    def _reconstruct_progress_report(
+        self, report_data: Dict[str, Any]
+    ) -> Optional[WorkflowProgressReport]:
         """从字典数据重构进度报告"""
         try:
             # 重构状态摘要
@@ -463,7 +483,9 @@ class ProblemStatusChecker:
                 skipped_problems=summary_data["skipped_problems"],
                 failed_problems=summary_data["failed_problems"],
                 remaining_problems=summary_data["remaining_problems"],
-                problems_requiring_intervention=summary_data["problems_requiring_intervention"]
+                problems_requiring_intervention=summary_data[
+                    "problems_requiring_intervention"
+                ],
             )
 
             return WorkflowProgressReport(
@@ -474,7 +496,7 @@ class ProblemStatusChecker:
                 workflow_statistics=report_data["workflow_statistics"],
                 remaining_work=report_data["remaining_work"],
                 recommendations=report_data["recommendations"],
-                next_action=report_data["next_action"]
+                next_action=report_data["next_action"],
             )
         except Exception as e:
             self.logger.error(f"重构进度报告失败: {e}")
@@ -508,7 +530,9 @@ class ProblemStatusChecker:
                 "session_outcome": self._determine_session_outcome(latest_report),
                 "key_achievements": self._identify_key_achievements(latest_report),
                 "remaining_concerns": self._identify_remaining_concerns(latest_report),
-                "recommendations_for_future": self._generate_future_recommendations(latest_report)
+                "recommendations_for_future": self._generate_future_recommendations(
+                    latest_report
+                ),
             }
 
             return final_summary
@@ -539,7 +563,9 @@ class ProblemStatusChecker:
         achievements = []
 
         if report.status_summary.solved_problems > 0:
-            achievements.append(f"成功解决了 {report.status_summary.solved_problems} 个问题")
+            achievements.append(
+                f"成功解决了 {report.status_summary.solved_problems} 个问题"
+            )
 
         success_rate = report.workflow_statistics.get("success_rate", 0)
         if success_rate > 0.8:
@@ -555,17 +581,23 @@ class ProblemStatusChecker:
         concerns = []
 
         if report.status_summary.remaining_problems > 0:
-            concerns.append(f"仍有 {report.status_summary.remaining_problems} 个问题待处理")
+            concerns.append(
+                f"仍有 {report.status_summary.remaining_problems} 个问题待处理"
+            )
 
         if report.status_summary.failed_problems > 0:
-            concerns.append(f"有 {report.status_summary.failed_problems} 个问题处理失败")
+            concerns.append(
+                f"有 {report.status_summary.failed_problems} 个问题处理失败"
+            )
 
         if report.status_summary.problems_requiring_intervention > 0:
             concerns.append("有问题需要人工干预")
 
         return concerns if concerns else ["无明显关切点"]
 
-    def _generate_future_recommendations(self, report: WorkflowProgressReport) -> List[str]:
+    def _generate_future_recommendations(
+        self, report: WorkflowProgressReport
+    ) -> List[str]:
         """生成未来建议"""
         recommendations = []
 

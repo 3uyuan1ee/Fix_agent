@@ -4,52 +4,69 @@
 实现`analyze workflow`命令的处理逻辑，提供完整的B→C→D→E→F/G→H→I→J/K→L→B/M工作流程
 """
 
-import sys
-import time
 import json
-from pathlib import Path
-from typing import List, Dict, Any, Optional, Tuple
+import sys
+import threading
+import time
 from dataclasses import dataclass, field
 from datetime import datetime
-import threading
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
-from ..utils.logger import get_logger
-from ..utils.config import get_config_manager
-from ..tools.workflow_flow_state_manager import WorkflowFlowStateManager, WorkflowNode, WorkflowSession
-from ..tools.workflow_data_types import AIDetectedProblem, AIFixSuggestion, ProblemType, SeverityLevel
-from ..tools.multilang_static_analyzer import MultilangStaticAnalyzer
-from ..tools.ai_problem_detector import AIProblemDetector
-from ..tools.ai_fix_suggestion_generator import AIFixSuggestionGenerator
-from ..tools.phase_a_coordinator import PhaseACoordinator
-from ..tools.verification_static_analyzer import VerificationStaticAnalyzer
 from ..tools.ai_dynamic_analysis_caller import AIDynamicAnalysisCaller
+from ..tools.ai_fix_suggestion_generator import AIFixSuggestionGenerator
+from ..tools.ai_problem_detector import AIProblemDetector
 from ..tools.fix_verification_aggregator import FixVerificationAggregator
-from ..tools.verification_result_displayer import VerificationResultDisplayer, DisplayFormat
-from ..tools.user_verification_decision_processor import UserVerificationDecisionProcessor, VerificationDecisionType
+from ..tools.multilang_static_analyzer import MultilangStaticAnalyzer
+from ..tools.phase_a_coordinator import PhaseACoordinator
 from ..tools.problem_solution_processor import ProblemSolutionProcessor
-from ..tools.reatalysis_trigger import ReanalysisTrigger
 from ..tools.problem_status_checker import ProblemStatusChecker
+from ..tools.reatalysis_trigger import ReanalysisTrigger
+from ..tools.user_verification_decision_processor import (
+    UserVerificationDecisionProcessor,
+    VerificationDecisionType,
+)
+from ..tools.verification_result_displayer import (
+    DisplayFormat,
+    VerificationResultDisplayer,
+)
+from ..tools.verification_static_analyzer import VerificationStaticAnalyzer
 from ..tools.workflow_completion_processor import WorkflowCompletionProcessor
+from ..tools.workflow_data_types import (
+    AIDetectedProblem,
+    AIFixSuggestion,
+    ProblemType,
+    SeverityLevel,
+)
+from ..tools.workflow_flow_state_manager import (
+    WorkflowFlowStateManager,
+    WorkflowNode,
+    WorkflowSession,
+)
+from ..utils.config import get_config_manager
+from ..utils.logger import get_logger
 
 logger = get_logger()
 
 
 class WorkflowUserAction(Enum):
     """工作流用户动作枚举"""
-    APPROVE_FIX = "approve_fix"        # 批准修复建议
-    MODIFY_FIX = "modify_fix"         # 修改修复建议
-    REJECT_FIX = "reject_fix"         # 拒绝修复建议
-    SKIP_PROBLEM = "skip_problem"     # 跳过问题
+
+    APPROVE_FIX = "approve_fix"  # 批准修复建议
+    MODIFY_FIX = "modify_fix"  # 修改修复建议
+    REJECT_FIX = "reject_fix"  # 拒绝修复建议
+    SKIP_PROBLEM = "skip_problem"  # 跳过问题
     ACCEPT_VERIFICATION = "accept_verification"  # 接受验证结果
     REJECT_VERIFICATION = "reject_verification"  # 拒绝验证结果
     RETRY_ANALYSIS = "retry_analysis"  # 重新分析
-    CONTINUE = "continue"             # 继续下一个问题
+    CONTINUE = "continue"  # 继续下一个问题
 
 
 @dataclass
 class WorkflowSession:
     """工作流会话"""
+
     session_id: str
     target: str
     created_at: datetime = field(default_factory=datetime.now)
@@ -65,6 +82,7 @@ class WorkflowSession:
 @dataclass
 class WorkflowResult:
     """工作流结果"""
+
     success: bool
     target: str
     session_id: str
@@ -125,10 +143,10 @@ class WorkflowInteractiveInterface:
         if suggestion.original_code and suggestion.suggested_code:
             print(f"\n🔄 代码变更:")
             print(f"   原始代码:")
-            for line in suggestion.original_code.split('\n'):
+            for line in suggestion.original_code.split("\n"):
                 print(f"   ❌ {line}")
             print(f"   建议代码:")
-            for line in suggestion.suggested_code.split('\n'):
+            for line in suggestion.suggested_code.split("\n"):
                 print(f"   ✅ {line}")
 
         if suggestion.side_effects:
@@ -137,7 +155,9 @@ class WorkflowInteractiveInterface:
                 print(f"   • {effect}")
         print("-" * 60)
 
-    def get_user_action(self, available_actions: List[WorkflowUserAction]) -> Tuple[WorkflowUserAction, Dict[str, Any]]:
+    def get_user_action(
+        self, available_actions: List[WorkflowUserAction]
+    ) -> Tuple[WorkflowUserAction, Dict[str, Any]]:
         """获取用户动作"""
         if self.quiet:
             # 静默模式，默认选择第一个可用动作
@@ -157,13 +177,15 @@ class WorkflowInteractiveInterface:
                 WorkflowUserAction.ACCEPT_VERIFICATION: "接受验证结果",
                 WorkflowUserAction.REJECT_VERIFICATION: "拒绝验证结果",
                 WorkflowUserAction.RETRY_ANALYSIS: "重新分析",
-                WorkflowUserAction.CONTINUE: "继续下一个问题"
+                WorkflowUserAction.CONTINUE: "继续下一个问题",
             }
             print(f"   {i}. {descriptions.get(action, action.value)}")
 
         while True:
             try:
-                user_input = input("\n请输入选项编号 (1-{}): ".format(len(available_actions))).strip()
+                user_input = input(
+                    "\n请输入选项编号 (1-{}): ".format(len(available_actions))
+                ).strip()
 
                 if user_input in action_map:
                     action = action_map[user_input]
@@ -226,13 +248,13 @@ class ProgressIndicator:
 
         while not self._stop_event.is_set():
             symbol = symbols[idx % len(symbols)]
-            sys.stdout.write(f'\r{symbol} {message}...')
+            sys.stdout.write(f"\r{symbol} {message}...")
             sys.stdout.flush()
             idx += 1
             time.sleep(0.1)
 
         # 清除进度行
-        sys.stdout.write('\r' + ' ' * (len(message) + 10) + '\r')
+        sys.stdout.write("\r" + " " * (len(message) + 10) + "\r")
         sys.stdout.flush()
 
 
@@ -261,7 +283,7 @@ class WorkflowCommand:
         output_file: Optional[str] = None,
         verbose: bool = False,
         quiet: bool = False,
-        dry_run: bool = False
+        dry_run: bool = False,
     ) -> WorkflowResult:
         """
         执行完整的工作流程
@@ -314,7 +336,7 @@ class WorkflowCommand:
                 solved_problems=result.get("solved_problems", 0),
                 skipped_problems=result.get("skipped_problems", 0),
                 execution_time=time.time() - start_time,
-                details=result
+                details=result,
             )
 
         except Exception as e:
@@ -329,17 +351,16 @@ class WorkflowCommand:
                 solved_problems=0,
                 skipped_problems=0,
                 execution_time=time.time() - start_time,
-                details={"error": str(e)}
+                details={"error": str(e)},
             )
 
     def _create_workflow_session(self, session_id: str, target: str) -> WorkflowSession:
         """创建工作流会话"""
-        return WorkflowSession(
-            session_id=session_id,
-            target=target
-        )
+        return WorkflowSession(session_id=session_id, target=target)
 
-    def _execute_complete_workflow(self, session: WorkflowSession, dry_run: bool) -> Dict[str, Any]:
+    def _execute_complete_workflow(
+        self, session: WorkflowSession, dry_run: bool
+    ) -> Dict[str, Any]:
         """执行完整工作流程"""
 
         # 阶段A: Phase 1-4 静态分析与AI分析结合用户决策进行文件选择
@@ -351,18 +372,20 @@ class WorkflowCommand:
                 user_requirements="优化代码质量，修复安全漏洞",
                 analysis_focus=["安全漏洞", "代码质量", "性能优化"],
                 interactive=not self.interface.quiet,
-                verbose=True
+                verbose=True,
             )
 
             if not phase_a_result.execution_success:
-                self.interface.show_message(f"阶段A执行失败: {phase_a_result.error_message}", "❌")
+                self.interface.show_message(
+                    f"阶段A执行失败: {phase_a_result.error_message}", "❌"
+                )
                 return {
                     "success": False,
                     "total_problems": 0,
                     "solved_problems": 0,
                     "skipped_problems": 0,
                     "message": f"阶段A执行失败: {phase_a_result.error_message}",
-                    "phase_a_error": phase_a_result.error_message
+                    "phase_a_error": phase_a_result.error_message,
                 }
 
             if not phase_a_result.final_selected_files:
@@ -372,10 +395,13 @@ class WorkflowCommand:
                     "total_problems": 0,
                     "solved_problems": 0,
                     "skipped_problems": 0,
-                    "message": "未选择任何文件进行分析"
+                    "message": "未选择任何文件进行分析",
                 }
 
-            self.interface.show_message(f"阶段A完成，选择了 {len(phase_a_result.final_selected_files)} 个文件", "✅")
+            self.interface.show_message(
+                f"阶段A完成，选择了 {len(phase_a_result.final_selected_files)} 个文件",
+                "✅",
+            )
 
         except Exception as e:
             self.interface.show_message(f"阶段A执行失败: {e}", "❌")
@@ -386,11 +412,13 @@ class WorkflowCommand:
                 "solved_problems": 0,
                 "skipped_problems": 0,
                 "message": f"阶段A执行失败: {e}",
-                "phase_a_error": str(e)
+                "phase_a_error": str(e),
             }
 
         # 阶段B: AI问题检测 (基于阶段A选择的文件)
-        problems = self._execute_problem_detection(session.target, phase_a_result.final_selected_files)
+        problems = self._execute_problem_detection(
+            session.target, phase_a_result.final_selected_files
+        )
         session.problems = problems
 
         if not problems:
@@ -401,7 +429,7 @@ class WorkflowCommand:
                 "solved_problems": 0,
                 "skipped_problems": 0,
                 "message": "未发现任何问题",
-                "phase_a_result": phase_a_result.to_dict()
+                "phase_a_result": phase_a_result.to_dict(),
             }
 
         self.interface.show_message(f"发现 {len(problems)} 个问题", "🔍")
@@ -417,15 +445,20 @@ class WorkflowCommand:
                 "total_problems": 0,
                 "solved_problems": 0,
                 "skipped_problems": 0,
-                "message": "没有问题需要处理"
+                "message": "没有问题需要处理",
             }
 
-        self.interface.show_message(f"总共 {len(all_problems)} 个问题需要处理 (AI检测: {len(problems)}, 用户自定义: {len(user_problems)})", "📋")
+        self.interface.show_message(
+            f"总共 {len(all_problems)} 个问题需要处理 (AI检测: {len(problems)}, 用户自定义: {len(user_problems)})",
+            "📋",
+        )
 
         # 处理每个问题
         for i, problem in enumerate(all_problems):
             session.current_problem_index = i
-            self.interface.show_step(f"处理问题 {i+1}/{len(problems)}", f"文件: {problem.file_path}")
+            self.interface.show_step(
+                f"处理问题 {i+1}/{len(problems)}", f"文件: {problem.file_path}"
+            )
 
             try:
                 # 阶段C: 生成修复建议
@@ -453,29 +486,41 @@ class WorkflowCommand:
                         session.applied_fixes.append(fix_result)
 
                     # 阶段H: 修复验证
-                    verification_result = self._execute_fix_verification(problem, suggestion)
+                    verification_result = self._execute_fix_verification(
+                        problem, suggestion
+                    )
 
                     # 阶段I: 用户验证决策
-                    verify_action, verify_data = self._execute_user_verification(verification_result)
+                    verify_action, verify_data = self._execute_user_verification(
+                        verification_result
+                    )
 
                     if verify_action == WorkflowUserAction.ACCEPT_VERIFICATION:
                         # 阶段J: 问题解决
                         session.solved_problems.append(problem.problem_id)
-                        self.interface.show_message(f"问题 {problem.problem_id} 已成功解决", "✅")
+                        self.interface.show_message(
+                            f"问题 {problem.problem_id} 已成功解决", "✅"
+                        )
 
                     elif verify_action == WorkflowUserAction.RETRY_ANALYSIS:
                         # 阶段K: 重新分析
-                        self.interface.show_message(f"问题 {problem.problem_id} 将重新分析", "🔄")
+                        self.interface.show_message(
+                            f"问题 {problem.problem_id} 将重新分析", "🔄"
+                        )
                         # 这里可以添加重新分析逻辑
                         continue
 
             except Exception as e:
                 logger.error(f"处理问题 {problem.problem_id} 时发生错误: {e}")
-                self.interface.show_message(f"处理问题 {problem.problem_id} 时发生错误: {e}", "❌")
+                self.interface.show_message(
+                    f"处理问题 {problem.problem_id} 时发生错误: {e}", "❌"
+                )
                 continue
 
         # 阶段L: 检查剩余问题
-        remaining = len(problems) - len(session.solved_problems) - len(session.skipped_problems)
+        remaining = (
+            len(problems) - len(session.solved_problems) - len(session.skipped_problems)
+        )
 
         # 阶段M: 工作流完成
         completion_result = {
@@ -485,12 +530,14 @@ class WorkflowCommand:
             "skipped_problems": len(session.skipped_problems),
             "remaining_problems": remaining,
             "applied_fixes": len(session.applied_fixes),
-            "message": "工作流执行完成"
+            "message": "工作流执行完成",
         }
 
         return completion_result
 
-    def _execute_problem_detection(self, target: str, selected_files: List[str] = None) -> List[AIDetectedProblem]:
+    def _execute_problem_detection(
+        self, target: str, selected_files: List[str] = None
+    ) -> List[AIDetectedProblem]:
         """执行问题检测"""
         self.interface.show_step("阶段B: AI问题检测", "正在分析代码中的潜在问题...")
         self.interface.progress.start("AI正在进行问题检测")
@@ -498,7 +545,9 @@ class WorkflowCommand:
         try:
             # 使用AI问题检测器
             from ..tools.ai_problem_detector import AIProblemDetector
-            from ..tools.problem_detection_context_builder import ProblemDetectionContextBuilder
+            from ..tools.problem_detection_context_builder import (
+                ProblemDetectionContextBuilder,
+            )
             from ..utils.path_resolver import get_path_resolver
 
             # 构建检测上下文
@@ -515,8 +564,8 @@ class WorkflowCommand:
             for file_path in selected_files or []:
                 if isinstance(file_path, str):
                     # 使用PathResolver解析文件路径
-                    from pathlib import Path
                     import os
+                    from pathlib import Path
 
                     # 尝试使用PathResolver解析路径
                     resolved_path = path_resolver.resolve_path(file_path)
@@ -540,38 +589,42 @@ class WorkflowCommand:
                     # 检测编程语言
                     language = "unknown"
                     ext = Path(file_path).suffix.lower()
-                    if ext == '.py':
+                    if ext == ".py":
                         language = "python"
-                    elif ext in ['.js', '.jsx']:
+                    elif ext in [".js", ".jsx"]:
                         language = "javascript"
-                    elif ext in ['.ts', '.tsx']:
+                    elif ext in [".ts", ".tsx"]:
                         language = "typescript"
-                    elif ext == '.java':
+                    elif ext == ".java":
                         language = "java"
-                    elif ext == '.go':
+                    elif ext == ".go":
                         language = "go"
-                    elif ext in ['.cpp', '.cxx', '.cc']:
+                    elif ext in [".cpp", ".cxx", ".cc"]:
                         language = "cpp"
-                    elif ext == '.c':
+                    elif ext == ".c":
                         language = "c"
-                    elif ext == '.rs':
+                    elif ext == ".rs":
                         language = "rust"
-                    elif ext == '.php':
+                    elif ext == ".php":
                         language = "php"
-                    elif ext == '.rb':
+                    elif ext == ".rb":
                         language = "ruby"
 
-                    selected_files_dicts.append({
-                        "file_path": abs_path,
-                        "relative_path": rel_path,
-                        "language": language,
-                        "selected": True,
-                        "selection_reason": "AI文件选择器推荐",
-                        "priority": "medium",
-                        "project_context": {
-                            "project_path": str(path_resolver.get_saved_project_root())
+                    selected_files_dicts.append(
+                        {
+                            "file_path": abs_path,
+                            "relative_path": rel_path,
+                            "language": language,
+                            "selected": True,
+                            "selection_reason": "AI文件选择器推荐",
+                            "priority": "medium",
+                            "project_context": {
+                                "project_path": str(
+                                    path_resolver.get_saved_project_root()
+                                )
+                            },
                         }
-                    })
+                    )
                 elif isinstance(file_path, dict):
                     selected_files_dicts.append(file_path)
 
@@ -580,8 +633,8 @@ class WorkflowCommand:
                 static_analysis_results={},  # 可以为空，AI主要基于文件内容分析
                 user_preferences={
                     "user_requirements": "优化代码质量，修复安全漏洞",
-                    "analysis_focus": ["安全漏洞", "代码质量", "性能优化"]
-                }
+                    "analysis_focus": ["安全漏洞", "代码质量", "性能优化"],
+                },
             )
 
             # 创建AI问题检测器
@@ -591,7 +644,9 @@ class WorkflowCommand:
             detection_result = detector.detect_problems(detection_context)
 
             if not detection_result.execution_success:
-                self.interface.show_message(f"AI问题检测失败: {detection_result.error_message}", "❌")
+                self.interface.show_message(
+                    f"AI问题检测失败: {detection_result.error_message}", "❌"
+                )
                 return []
 
             self.interface.progress.stop()
@@ -612,7 +667,9 @@ class WorkflowCommand:
             self.interface.show_message(f"问题检测失败: {e}", "❌")
             return []
 
-    def _execute_fix_suggestion_generation(self, problem: AIDetectedProblem) -> List[AIFixSuggestion]:
+    def _execute_fix_suggestion_generation(
+        self, problem: AIDetectedProblem
+    ) -> List[AIFixSuggestion]:
         """执行修复建议生成"""
         self.interface.show_step("阶段C: 生成修复建议", "正在生成修复方案...")
         self.interface.progress.start("AI正在生成修复建议")
@@ -623,21 +680,29 @@ class WorkflowCommand:
 
             # 使用AI修复建议生成器
             from ..tools.ai_fix_suggestion_generator import AIFixSuggestionGenerator
-            from ..tools.fix_suggestion_context_builder import FixSuggestionContextBuilder
+            from ..tools.fix_suggestion_context_builder import (
+                FixSuggestionContextBuilder,
+            )
             from ..utils.path_resolver import get_path_resolver
 
             # 使用PathResolver确保路径解析一致性
             path_resolver = get_path_resolver()
 
             # 读取问题文件的完整内容
-            file_contents = self._read_file_content_for_suggestion(problem.file_path, path_resolver)
+            file_contents = self._read_file_content_for_suggestion(
+                problem.file_path, path_resolver
+            )
 
             # 构建修复建议上下文（直接使用AIDetectedProblem）
             context_builder = FixSuggestionContextBuilder()
             user_preferences = {
                 "user_requirements": "生成高质量的修复建议",
                 "fix_preferences": ["安全性", "可读性", "性能"],
-                "project_root": str(path_resolver.get_saved_project_root()) if path_resolver.get_saved_project_root() else ""
+                "project_root": (
+                    str(path_resolver.get_saved_project_root())
+                    if path_resolver.get_saved_project_root()
+                    else ""
+                ),
             }
 
             # 如果用户有建议，添加到偏好中
@@ -649,7 +714,7 @@ class WorkflowCommand:
             suggestion_context = context_builder.build_context(
                 detected_problems=[problem],  # 直接传递问题列表
                 file_contents=file_contents,
-                user_preferences=user_preferences
+                user_preferences=user_preferences,
             )
 
             # 创建AI修复建议生成器
@@ -659,7 +724,9 @@ class WorkflowCommand:
             suggestion_result = generator.generate_fix_suggestions(suggestion_context)
 
             if not suggestion_result.execution_success:
-                self.interface.show_message(f"AI修复建议生成失败: {suggestion_result.error_message}", "❌")
+                self.interface.show_message(
+                    f"AI修复建议生成失败: {suggestion_result.error_message}", "❌"
+                )
                 return []
 
             self.interface.progress.stop()
@@ -683,7 +750,9 @@ class WorkflowCommand:
             self.interface.show_message(f"修复建议生成失败: {e}", "❌")
             return []
 
-    def _read_file_content_for_suggestion(self, file_path: str, path_resolver) -> Dict[str, str]:
+    def _read_file_content_for_suggestion(
+        self, file_path: str, path_resolver
+    ) -> Dict[str, str]:
         """为修复建议生成读取文件内容"""
         file_contents = {}
 
@@ -694,6 +763,7 @@ class WorkflowCommand:
             if not resolved_path or not resolved_path.exists():
                 # 尝试直接使用文件路径
                 from pathlib import Path
+
                 resolved_path = Path(file_path)
 
                 if not resolved_path.exists():
@@ -701,13 +771,17 @@ class WorkflowCommand:
                     return {file_path: f"# 无法读取文件: {file_path}"}
 
             # 读取文件内容
-            with open(resolved_path, 'r', encoding='utf-8', errors='ignore') as f:
+            with open(resolved_path, "r", encoding="utf-8", errors="ignore") as f:
                 content = f.read()
 
             # 使用相对路径作为键
             if path_resolver.get_saved_project_root():
                 try:
-                    relative_path = str(resolved_path.relative_to(path_resolver.get_saved_project_root()))
+                    relative_path = str(
+                        resolved_path.relative_to(
+                            path_resolver.get_saved_project_root()
+                        )
+                    )
                     file_contents[relative_path] = content
                 except ValueError:
                     file_contents[file_path] = content
@@ -744,18 +818,18 @@ class WorkflowCommand:
             try:
                 user_input = input(f"问题 #{problem_counter}: ").strip()
 
-                if user_input.lower() in ['no problem', 'no', 'n', 'none', '']:
+                if user_input.lower() in ["no problem", "no", "n", "none", ""]:
                     break
 
                 # 解析用户输入
-                if ':' not in user_input:
+                if ":" not in user_input:
                     print("❌ 格式错误，请使用: 文件路径:行号 问题描述")
                     continue
 
                 try:
-                    location_part, description = user_input.split(':', 1)
-                    if ':' in location_part:
-                        file_path, line_number = location_part.rsplit(':', 1)
+                    location_part, description = user_input.split(":", 1)
+                    if ":" in location_part:
+                        file_path, line_number = location_part.rsplit(":", 1)
                     else:
                         file_path = location_part
                         line_number = "1"
@@ -778,11 +852,13 @@ class WorkflowCommand:
                         code_snippet="",  # 用户问题可能没有代码片段
                         confidence=1.0,  # 用户100%确信这是问题
                         reasoning=f"用户自定义问题: {description}",
-                        context={"source": "user_input"}
+                        context={"source": "user_input"},
                     )
 
                     user_problems.append(user_problem)
-                    print(f"✅ 已添加问题: {file_path}:{line_number} - {description[:50]}...")
+                    print(
+                        f"✅ 已添加问题: {file_path}:{line_number} - {description[:50]}..."
+                    )
                     problem_counter += 1
 
                 except ValueError as e:
@@ -820,7 +896,7 @@ class WorkflowCommand:
 
         try:
             user_input = input("您的建议: ").strip()
-            if user_input and user_input.lower() not in ['no', 'none', '跳过', '']:
+            if user_input and user_input.lower() not in ["no", "none", "跳过", ""]:
                 print(f"✅ 已记录您的建议: {user_input[:100]}...")
                 return user_input
             else:
@@ -833,7 +909,9 @@ class WorkflowCommand:
             print("\nℹ️ 跳过用户建议")
             return None
 
-    def _execute_user_review(self, problem: AIDetectedProblem, suggestion: AIFixSuggestion) -> Tuple[WorkflowUserAction, Dict[str, Any]]:
+    def _execute_user_review(
+        self, problem: AIDetectedProblem, suggestion: AIFixSuggestion
+    ) -> Tuple[WorkflowUserAction, Dict[str, Any]]:
         """执行用户审查"""
         self.interface.show_step("阶段D: 用户审查", "请审查修复建议")
 
@@ -846,12 +924,14 @@ class WorkflowCommand:
             WorkflowUserAction.APPROVE_FIX,
             WorkflowUserAction.MODIFY_FIX,
             WorkflowUserAction.REJECT_FIX,
-            WorkflowUserAction.SKIP_PROBLEM
+            WorkflowUserAction.SKIP_PROBLEM,
         ]
 
         return self.interface.get_user_action(available_actions)
 
-    def _execute_auto_fix(self, problem: AIDetectedProblem, suggestion: AIFixSuggestion) -> Dict[str, Any]:
+    def _execute_auto_fix(
+        self, problem: AIDetectedProblem, suggestion: AIFixSuggestion
+    ) -> Dict[str, Any]:
         """执行自动修复"""
         self.interface.show_step("阶段F: 执行自动修复", "正在应用修复...")
         self.interface.progress.start("正在执行自动修复")
@@ -867,7 +947,7 @@ class WorkflowCommand:
                 "problem_id": problem.problem_id,
                 "suggestion_id": suggestion.suggestion_id,
                 "success": True,
-                "applied_at": datetime.now().isoformat()
+                "applied_at": datetime.now().isoformat(),
             }
 
         except Exception as e:
@@ -875,7 +955,9 @@ class WorkflowCommand:
             logger.error(f"自动修复失败: {e}")
             raise
 
-    def _execute_fix_verification(self, problem: AIDetectedProblem, suggestion: AIFixSuggestion) -> Dict[str, Any]:
+    def _execute_fix_verification(
+        self, problem: AIDetectedProblem, suggestion: AIFixSuggestion
+    ) -> Dict[str, Any]:
         """执行修复验证"""
         self.interface.show_step("阶段H: 修复验证", "正在验证修复效果...")
         self.interface.progress.start("正在验证修复效果")
@@ -892,7 +974,7 @@ class WorkflowCommand:
                 "problem_resolved": True,
                 "new_issues": 0,
                 "quality_score": 0.9,
-                "summary": "修复验证通过，问题已解决"
+                "summary": "修复验证通过，问题已解决",
             }
 
             self.interface.show_message("修复验证通过", "✅")
@@ -903,20 +985,26 @@ class WorkflowCommand:
             logger.error(f"修复验证失败: {e}")
             raise
 
-    def _execute_user_verification(self, verification_result: Dict[str, Any]) -> Tuple[WorkflowUserAction, Dict[str, Any]]:
+    def _execute_user_verification(
+        self, verification_result: Dict[str, Any]
+    ) -> Tuple[WorkflowUserAction, Dict[str, Any]]:
         """执行用户验证决策"""
         self.interface.show_step("阶段I: 用户验证决策", "请确认验证结果")
 
         # 显示验证结果
         if verification_result.get("success"):
-            self.interface.show_message(f"✅ 验证通过: {verification_result.get('summary', '')}")
+            self.interface.show_message(
+                f"✅ 验证通过: {verification_result.get('summary', '')}"
+            )
         else:
-            self.interface.show_message(f"❌ 验证失败: {verification_result.get('summary', '')}")
+            self.interface.show_message(
+                f"❌ 验证失败: {verification_result.get('summary', '')}"
+            )
 
         # 获取用户决策
         available_actions = [
             WorkflowUserAction.ACCEPT_VERIFICATION,
-            WorkflowUserAction.REJECT_VERIFICATION
+            WorkflowUserAction.REJECT_VERIFICATION,
         ]
 
         return self.interface.get_user_action(available_actions)
@@ -931,8 +1019,8 @@ class WorkflowCommand:
         print(f"   • 已跳过: {result.get('skipped_problems', 0)}")
         print(f"   • 已应用修复: {result.get('applied_fixes', 0)}")
 
-        total = result.get('total_problems', 0)
-        solved = result.get('solved_problems', 0)
+        total = result.get("total_problems", 0)
+        solved = result.get("solved_problems", 0)
         if total > 0:
             success_rate = (solved / total) * 100
             print(f"   • 成功率: {success_rate:.1f}%")
@@ -951,14 +1039,14 @@ class WorkflowCommand:
                     "statistics": {
                         "total_problems": result.total_problems,
                         "solved_problems": result.solved_problems,
-                        "skipped_problems": result.skipped_problems
-                    }
+                        "skipped_problems": result.skipped_problems,
+                    },
                 },
                 "details": result.details,
-                "export_time": datetime.now().isoformat()
+                "export_time": datetime.now().isoformat(),
             }
 
-            with open(output_file, 'w', encoding='utf-8') as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 json.dump(export_data, f, indent=2, ensure_ascii=False)
 
             if not quiet:

@@ -3,18 +3,19 @@
 为AI分析提供基础数据的项目结构扫描工具
 """
 
+import mimetypes
 import os
 import time
-from typing import Dict, List, Any, Optional, Set
-from pathlib import Path
+from collections import Counter, defaultdict
 from dataclasses import dataclass, field
-from collections import defaultdict, Counter
 from datetime import datetime
-import mimetypes
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Set
 
 from ..utils.logger import get_logger
+
 try:
-    from .project_analysis_types import ProgrammingLanguage, FileCategory
+    from .project_analysis_types import FileCategory, ProgrammingLanguage
 except ImportError:
     # 如果project_analysis_types不可用，定义基本类型
     from enum import Enum
@@ -58,6 +59,7 @@ except ImportError:
 @dataclass
 class ProjectStructure:
     """项目结构数据"""
+
     project_path: str
     total_files: int = 0
     total_directories: int = 0
@@ -85,7 +87,7 @@ class ProjectStructure:
             "large_files": self.large_files,
             "binary_files": self.binary_files,
             "scan_time": self.scan_time,
-            "scan_timestamp": self.scan_timestamp
+            "scan_timestamp": self.scan_timestamp,
         }
 
 
@@ -99,77 +101,173 @@ class ProjectStructureScanner:
 
         # 编程语言文件扩展名映射
         self.language_extensions = {
-            ProgrammingLanguage.PYTHON: {'.py', '.pyw', '.pyi', '.pyx', '.pyd'},
-            ProgrammingLanguage.JAVASCRIPT: {'.js', '.jsx', '.mjs', '.cjs'},
-            ProgrammingLanguage.TYPESCRIPT: {'.ts', '.tsx'},
-            ProgrammingLanguage.JAVA: {'.java', '.class', '.jar'},
-            ProgrammingLanguage.GO: {'.go'},
-            ProgrammingLanguage.CPP: {'.cpp', '.cxx', '.cc', '.c', '.h', '.hpp', '.hxx'},
-            ProgrammingLanguage.CSHARP: {'.cs', '.csx'},
-            ProgrammingLanguage.RUST: {'.rs'},
-            ProgrammingLanguage.PHP: {'.php', '.phtml', '.php3', '.php4', '.php5'},
-            ProgrammingLanguage.RUBY: {'.rb', '.rbw'},
-            ProgrammingLanguage.SWIFT: {'.swift'},
-            ProgrammingLanguage.KOTLIN: {'.kt', '.kts'},
-            ProgrammingLanguage.SCALA: {'.scala', '.sc'},
-            ProgrammingLanguage.HTML: {'.html', '.htm', '.xhtml'},
-            ProgrammingLanguage.CSS: {'.css', '.scss', '.sass', '.less'},
-            ProgrammingLanguage.JSON: {'.json'},
-            ProgrammingLanguage.YAML: {'.yaml', '.yml'},
-            ProgrammingLanguage.XML: {'.xml', '.xsl', '.xslt'},
-            ProgrammingLanguage.MARKDOWN: {'.md', '.markdown'},
-            ProgrammingLanguage.SHELL: {'.sh', '.bash', '.zsh', '.fish', '.ps1'},
-            ProgrammingLanguage.SQL: {'.sql'},
-            ProgrammingLanguage.DOCKER: {'.dockerfile', 'dockerfile'},
-            ProgrammingLanguage.CONFIG: {'.ini', '.cfg', '.conf', '.toml', '.properties'}
+            ProgrammingLanguage.PYTHON: {".py", ".pyw", ".pyi", ".pyx", ".pyd"},
+            ProgrammingLanguage.JAVASCRIPT: {".js", ".jsx", ".mjs", ".cjs"},
+            ProgrammingLanguage.TYPESCRIPT: {".ts", ".tsx"},
+            ProgrammingLanguage.JAVA: {".java", ".class", ".jar"},
+            ProgrammingLanguage.GO: {".go"},
+            ProgrammingLanguage.CPP: {
+                ".cpp",
+                ".cxx",
+                ".cc",
+                ".c",
+                ".h",
+                ".hpp",
+                ".hxx",
+            },
+            ProgrammingLanguage.CSHARP: {".cs", ".csx"},
+            ProgrammingLanguage.RUST: {".rs"},
+            ProgrammingLanguage.PHP: {".php", ".phtml", ".php3", ".php4", ".php5"},
+            ProgrammingLanguage.RUBY: {".rb", ".rbw"},
+            ProgrammingLanguage.SWIFT: {".swift"},
+            ProgrammingLanguage.KOTLIN: {".kt", ".kts"},
+            ProgrammingLanguage.SCALA: {".scala", ".sc"},
+            ProgrammingLanguage.HTML: {".html", ".htm", ".xhtml"},
+            ProgrammingLanguage.CSS: {".css", ".scss", ".sass", ".less"},
+            ProgrammingLanguage.JSON: {".json"},
+            ProgrammingLanguage.YAML: {".yaml", ".yml"},
+            ProgrammingLanguage.XML: {".xml", ".xsl", ".xslt"},
+            ProgrammingLanguage.MARKDOWN: {".md", ".markdown"},
+            ProgrammingLanguage.SHELL: {".sh", ".bash", ".zsh", ".fish", ".ps1"},
+            ProgrammingLanguage.SQL: {".sql"},
+            ProgrammingLanguage.DOCKER: {".dockerfile", "dockerfile"},
+            ProgrammingLanguage.CONFIG: {
+                ".ini",
+                ".cfg",
+                ".conf",
+                ".toml",
+                ".properties",
+            },
         }
 
         # 文件类别映射
         self.category_extensions = {
             FileCategory.SOURCE_CODE: {
-                '.py', '.js', '.ts', '.java', '.go', '.cpp', '.c', '.h', '.hpp',
-                '.cs', '.rs', '.php', '.rb', '.swift', '.kt', '.scala', '.swift'
+                ".py",
+                ".js",
+                ".ts",
+                ".java",
+                ".go",
+                ".cpp",
+                ".c",
+                ".h",
+                ".hpp",
+                ".cs",
+                ".rs",
+                ".php",
+                ".rb",
+                ".swift",
+                ".kt",
+                ".scala",
+                ".swift",
             },
             FileCategory.CONFIG: {
-                '.yaml', '.yml', '.json', '.toml', '.ini', '.cfg', '.conf',
-                '.xml', '.properties', '.env', '.dockerfile'
+                ".yaml",
+                ".yml",
+                ".json",
+                ".toml",
+                ".ini",
+                ".cfg",
+                ".conf",
+                ".xml",
+                ".properties",
+                ".env",
+                ".dockerfile",
             },
             FileCategory.DOCUMENTATION: {
-                '.md', '.markdown', '.rst', '.txt', '.doc', '.docx', '.pdf'
+                ".md",
+                ".markdown",
+                ".rst",
+                ".txt",
+                ".doc",
+                ".docx",
+                ".pdf",
             },
             FileCategory.TEST: {
-                '.test.js', '.test.ts', '.spec.js', '.spec.ts', '_test.py',
-                'test_*.py', '.test.go', '_test.go'
+                ".test.js",
+                ".test.ts",
+                ".spec.js",
+                ".spec.ts",
+                "_test.py",
+                "test_*.py",
+                ".test.go",
+                "_test.go",
             },
             FileCategory.BUILD: {
-                'Makefile', 'CMakeLists.txt', 'build.gradle', 'pom.xml',
-                'package.json', 'requirements.txt', 'go.mod', 'Cargo.toml'
+                "Makefile",
+                "CMakeLists.txt",
+                "build.gradle",
+                "pom.xml",
+                "package.json",
+                "requirements.txt",
+                "go.mod",
+                "Cargo.toml",
             },
             FileCategory.ASSET: {
-                '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.bmp',
-                '.css', '.scss', '.sass', '.less'
-            }
+                ".png",
+                ".jpg",
+                ".jpeg",
+                ".gif",
+                ".svg",
+                ".ico",
+                ".bmp",
+                ".css",
+                ".scss",
+                ".sass",
+                ".less",
+            },
         }
 
         # 默认忽略的目录和文件
         self.ignore_patterns = {
             # 版本控制
-            '.git', '.svn', '.hg', '.bzr',
+            ".git",
+            ".svn",
+            ".hg",
+            ".bzr",
             # 依赖目录
-            'node_modules', '__pycache__', '.venv', 'venv', 'env',
-            'target', 'build', 'dist', 'out', '.next', '.nuxt',
+            "node_modules",
+            "__pycache__",
+            ".venv",
+            "venv",
+            "env",
+            "target",
+            "build",
+            "dist",
+            "out",
+            ".next",
+            ".nuxt",
             # IDE目录
-            '.vscode', '.idea', '.eclipse', '.settings',
+            ".vscode",
+            ".idea",
+            ".eclipse",
+            ".settings",
             # 临时文件
-            '.tmp', '.temp', '*.tmp', '*.temp', '.cache',
+            ".tmp",
+            ".temp",
+            "*.tmp",
+            "*.temp",
+            ".cache",
             # 系统文件
-            '.DS_Store', 'Thumbs.db', '.DS_Store?',
+            ".DS_Store",
+            "Thumbs.db",
+            ".DS_Store?",
             # 日志文件
-            '*.log', '.logs', 'logs',
+            "*.log",
+            ".logs",
+            "logs",
             # 编译产物
-            '*.pyc', '*.pyo', '*.class', '*.o', '*.so', '*.dylib',
+            "*.pyc",
+            "*.pyo",
+            "*.class",
+            "*.o",
+            "*.so",
+            "*.dylib",
             # 包管理器锁文件
-            'package-lock.json', 'yarn.lock', 'poetry.lock', 'Pipfile.lock'
+            "package-lock.json",
+            "yarn.lock",
+            "poetry.lock",
+            "Pipfile.lock",
         }
 
     def scan_project(self, project_path: str) -> ProjectStructure:
@@ -188,7 +286,7 @@ class ProjectStructureScanner:
         # 初始化项目结构对象
         structure = ProjectStructure(
             project_path=os.path.abspath(project_path),
-            scan_timestamp=datetime.now().isoformat()
+            scan_timestamp=datetime.now().isoformat(),
         )
 
         # 检查项目路径是否存在
@@ -198,9 +296,7 @@ class ProjectStructureScanner:
 
         # 执行扫描
         try:
-            self._scan_directory_recursive(
-                project_path, structure, current_depth=0
-            )
+            self._scan_directory_recursive(project_path, structure, current_depth=0)
 
             # 计算扫描时间
             structure.scan_time = time.time() - start_time
@@ -220,9 +316,9 @@ class ProjectStructureScanner:
 
         return structure
 
-    def _scan_directory_recursive(self, directory_path: str,
-                                 structure: ProjectStructure,
-                                 current_depth: int) -> None:
+    def _scan_directory_recursive(
+        self, directory_path: str, structure: ProjectStructure, current_depth: int
+    ) -> None:
         """
         递归扫描目录
 
@@ -232,7 +328,9 @@ class ProjectStructureScanner:
             current_depth: 当前深度
         """
         if current_depth > self.max_depth:
-            self.logger.warning(f"达到最大扫描深度 {self.max_depth}，停止扫描: {directory_path}")
+            self.logger.warning(
+                f"达到最大扫描深度 {self.max_depth}，停止扫描: {directory_path}"
+            )
             return
 
         try:
@@ -247,7 +345,9 @@ class ProjectStructureScanner:
                     self._scan_file(item_path, structure)
                 elif os.path.isdir(item_path):
                     structure.total_directories += 1
-                    self._scan_directory_recursive(item_path, structure, current_depth + 1)
+                    self._scan_directory_recursive(
+                        item_path, structure, current_depth + 1
+                    )
 
         except PermissionError:
             self.logger.warning(f"无权限访问目录: {directory_path}")
@@ -269,12 +369,16 @@ class ProjectStructureScanner:
 
             # 检查文件大小
             if file_size > self.max_file_size_bytes:
-                structure.large_files.append({
-                    "file_path": file_path,
-                    "size_mb": file_size / (1024 * 1024),
-                    "size_bytes": file_size
-                })
-                self.logger.warning(f"文件过大，跳过详细分析: {file_path} ({file_size / 1024 / 1024:.2f}MB)")
+                structure.large_files.append(
+                    {
+                        "file_path": file_path,
+                        "size_mb": file_size / (1024 * 1024),
+                        "size_bytes": file_size,
+                    }
+                )
+                self.logger.warning(
+                    f"文件过大，跳过详细分析: {file_path} ({file_size / 1024 / 1024:.2f}MB)"
+                )
                 return
 
             # 获取文件扩展名
@@ -292,18 +396,20 @@ class ProjectStructureScanner:
             # 识别编程语言
             language = self._identify_language(ext)
             if language:
-                structure.language_distribution[language.value] = \
+                structure.language_distribution[language.value] = (
                     structure.language_distribution.get(language.value, 0) + 1
+                )
 
             # 识别文件类别
             category = self._identify_category(file_path, ext)
             if category:
-                structure.category_distribution[category.value] = \
+                structure.category_distribution[category.value] = (
                     structure.category_distribution.get(category.value, 0) + 1
+                )
 
             # 统计代码行数（仅对文本文件）
             try:
-                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
                     lines = sum(1 for _ in f)
                     structure.total_lines += lines
             except Exception as e:
@@ -329,11 +435,11 @@ class ProjectStructureScanner:
 
         # 检查忽略模式
         for pattern in self.ignore_patterns:
-            if pattern.startswith('*'):
+            if pattern.startswith("*"):
                 # 通配符模式
                 if item_lower.endswith(pattern[1:]):
                     return True
-            elif pattern.endswith('*'):
+            elif pattern.endswith("*"):
                 # 前缀匹配
                 if item_lower.startswith(pattern[:-1]):
                     return True
@@ -343,7 +449,10 @@ class ProjectStructureScanner:
                     return True
 
         # 检查隐藏文件（以.开头的文件）
-        if item_name.startswith('.') and item_name not in {'.gitignore', '.dockerignore'}:
+        if item_name.startswith(".") and item_name not in {
+            ".gitignore",
+            ".dockerignore",
+        }:
             return True
 
         return False
@@ -361,11 +470,42 @@ class ProjectStructureScanner:
         """
         # 已知的二进制文件扩展名
         binary_extensions = {
-            '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.bmp', '.webp',
-            '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
-            '.zip', '.tar', '.gz', '.rar', '.7z', '.dmg', '.exe', '.msi',
-            '.so', '.dll', '.dylib', '.class', '.pyc', '.pyo', '.jar',
-            '.mp3', '.mp4', '.avi', '.mov', '.wav', '.flac'
+            ".png",
+            ".jpg",
+            ".jpeg",
+            ".gif",
+            ".svg",
+            ".ico",
+            ".bmp",
+            ".webp",
+            ".pdf",
+            ".doc",
+            ".docx",
+            ".xls",
+            ".xlsx",
+            ".ppt",
+            ".pptx",
+            ".zip",
+            ".tar",
+            ".gz",
+            ".rar",
+            ".7z",
+            ".dmg",
+            ".exe",
+            ".msi",
+            ".so",
+            ".dll",
+            ".dylib",
+            ".class",
+            ".pyc",
+            ".pyo",
+            ".jar",
+            ".mp3",
+            ".mp4",
+            ".avi",
+            ".mov",
+            ".wav",
+            ".flac",
         }
 
         if ext in binary_extensions:
@@ -373,14 +513,14 @@ class ProjectStructureScanner:
 
         # 使用mimetypes判断
         mime_type, _ = mimetypes.guess_type(file_path)
-        if mime_type and not mime_type.startswith('text/'):
+        if mime_type and not mime_type.startswith("text/"):
             return True
 
         # 尝试读取文件前几个字节判断
         try:
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 chunk = f.read(1024)
-                if b'\x00' in chunk:  # 包含null字节通常是二进制文件
+                if b"\x00" in chunk:  # 包含null字节通常是二进制文件
                     return True
         except Exception:
             return True  # 无法读取的文件默认当作二进制文件
@@ -416,13 +556,18 @@ class ProjectStructureScanner:
         file_name = os.path.basename(file_path).lower()
 
         # 特殊文件名判断
-        if any(name in file_name for name in ['readme', 'license', 'changelog', 'contributing']):
+        if any(
+            name in file_name
+            for name in ["readme", "license", "changelog", "contributing"]
+        ):
             return FileCategory.DOCUMENTATION
 
-        if any(name in file_name for name in ['dockerfile', 'makefile', 'cmakelists.txt']):
+        if any(
+            name in file_name for name in ["dockerfile", "makefile", "cmakelists.txt"]
+        ):
             return FileCategory.BUILD
 
-        if any(pattern in file_name for pattern in ['test', 'spec']):
+        if any(pattern in file_name for pattern in ["test", "spec"]):
             return FileCategory.TEST
 
         # 根据扩展名判断
@@ -432,7 +577,9 @@ class ProjectStructureScanner:
 
         return None
 
-    def _build_directory_tree(self, project_path: str, max_depth: int = 3) -> Dict[str, Any]:
+    def _build_directory_tree(
+        self, project_path: str, max_depth: int = 3
+    ) -> Dict[str, Any]:
         """
         构建简化的目录树结构（用于展示）
 
@@ -443,7 +590,10 @@ class ProjectStructureScanner:
         Returns:
             Dict[str, Any]: 目录树结构
         """
-        def build_tree_recursive(directory_path: str, current_depth: int) -> Dict[str, Any]:
+
+        def build_tree_recursive(
+            directory_path: str, current_depth: int
+        ) -> Dict[str, Any]:
             if current_depth > max_depth:
                 return {"type": "directory", "children": {}, "truncated": True}
 
@@ -468,7 +618,7 @@ class ProjectStructureScanner:
                         tree["children"][item_name] = {
                             "type": "file",
                             "size": os.path.getsize(item_path),
-                            "extension": os.path.splitext(item_name)[1].lower()
+                            "extension": os.path.splitext(item_name)[1].lower(),
                         }
 
             except PermissionError:
@@ -492,16 +642,12 @@ class ProjectStructureScanner:
         """
         # 主要编程语言
         main_languages = sorted(
-            structure.language_distribution.items(),
-            key=lambda x: x[1],
-            reverse=True
+            structure.language_distribution.items(), key=lambda x: x[1], reverse=True
         )[:5]
 
         # 主要文件类别
         main_categories = sorted(
-            structure.category_distribution.items(),
-            key=lambda x: x[1],
-            reverse=True
+            structure.category_distribution.items(), key=lambda x: x[1], reverse=True
         )
 
         # 文件大小统计
@@ -513,29 +659,29 @@ class ProjectStructureScanner:
                 "total_files": structure.total_files,
                 "total_directories": structure.total_directories,
                 "total_lines": structure.total_lines,
-                "scan_time_seconds": round(structure.scan_time, 2)
+                "scan_time_seconds": round(structure.scan_time, 2),
             },
             "language_distribution": dict(main_languages),
             "category_distribution": dict(main_categories),
-            "file_extensions": dict(sorted(
-                structure.file_extensions.items(),
-                key=lambda x: x[1],
-                reverse=True
-            )[:10]),
+            "file_extensions": dict(
+                sorted(
+                    structure.file_extensions.items(), key=lambda x: x[1], reverse=True
+                )[:10]
+            ),
             "large_files_info": {
                 "count": len(structure.large_files),
                 "total_size_mb": round(total_size / 1024 / 1024, 2),
-                "files": structure.large_files[:5]  # 只显示前5个大文件
+                "files": structure.large_files[:5],  # 只显示前5个大文件
             },
             "binary_files_count": len(structure.binary_files),
-            "scan_timestamp": structure.scan_timestamp
+            "scan_timestamp": structure.scan_timestamp,
         }
 
 
 # 便捷函数
-def scan_project_structure(project_path: str,
-                          max_file_size_mb: int = 10,
-                          max_depth: int = 10) -> Dict[str, Any]:
+def scan_project_structure(
+    project_path: str, max_file_size_mb: int = 10, max_depth: int = 10
+) -> Dict[str, Any]:
     """
     便捷的项目结构扫描函数
 

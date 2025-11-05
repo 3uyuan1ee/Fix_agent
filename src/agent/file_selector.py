@@ -3,23 +3,24 @@
 实现基于启发式的文件选择算法
 """
 
+import ast
 import os
 import re
-import ast
 import time
-from pathlib import Path
-from typing import Dict, List, Any, Set, Tuple, Optional
-from dataclasses import dataclass, field
 from collections import defaultdict, deque
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Set, Tuple
 
-from ..utils.logger import get_logger
-from ..utils.config import get_config_manager
 from ..tools.file_operations import FileOperations
+from ..utils.config import get_config_manager
+from ..utils.logger import get_logger
 
 
 @dataclass
 class FileInfo:
     """文件信息数据结构"""
+
     path: str
     name: str
     extension: str
@@ -37,6 +38,7 @@ class FileInfo:
 @dataclass
 class SelectionCriteria:
     """文件选择标准"""
+
     keywords: List[str] = field(default_factory=list)
     exclude_patterns: List[str] = field(default_factory=list)
     include_patterns: List[str] = field(default_factory=list)
@@ -62,69 +64,68 @@ class FileSelector:
         self.file_ops = FileOperations(self.config_manager)
 
         # 选择器配置
-        self.config = self.config_manager.get_section('file_selector', {})
+        self.config = self.config_manager.get_section("file_selector", {})
 
         # 文件相关性权重
-        self.keyword_weight = self.config.get('keyword_weight', 0.4)
-        self.dependency_weight = self.config.get('dependency_weight', 0.3)
-        self.recency_weight = self.config.get('recency_weight', 0.2)
-        self.extension_weight = self.config.get('extension_weight', 0.1)
+        self.keyword_weight = self.config.get("keyword_weight", 0.4)
+        self.dependency_weight = self.config.get("dependency_weight", 0.3)
+        self.recency_weight = self.config.get("recency_weight", 0.2)
+        self.extension_weight = self.config.get("extension_weight", 0.1)
 
         # 支持的文件扩展名和权重
         self.extension_weights = {
-            '.py': 1.0,    # Python文件
-            '.js': 0.9,    # JavaScript
-            '.ts': 0.9,    # TypeScript
-            '.java': 0.8,  # Java
-            '.cpp': 0.8,   # C++
-            '.c': 0.7,     # C
-            '.h': 0.6,     # Header文件
-            '.hpp': 0.6,   # C++ Header
-            '.go': 0.8,    # Go
-            '.rs': 0.8,    # Rust
-            '.php': 0.7,   # PHP
-            '.rb': 0.7,    # Ruby
-            '.cs': 0.8,    # C#
-            '.swift': 0.8, # Swift
-            '.kt': 0.8,    # Kotlin
-            '.html': 0.5,  # HTML
-            '.css': 0.5,   # CSS
-            '.json': 0.4,  # JSON
-            '.xml': 0.4,   # XML
-            '.yaml': 0.4,  # YAML
-            '.yml': 0.4,   # YAML
-            '.md': 0.3,    # Markdown
-            '.txt': 0.2,   # Text
+            ".py": 1.0,  # Python文件
+            ".js": 0.9,  # JavaScript
+            ".ts": 0.9,  # TypeScript
+            ".java": 0.8,  # Java
+            ".cpp": 0.8,  # C++
+            ".c": 0.7,  # C
+            ".h": 0.6,  # Header文件
+            ".hpp": 0.6,  # C++ Header
+            ".go": 0.8,  # Go
+            ".rs": 0.8,  # Rust
+            ".php": 0.7,  # PHP
+            ".rb": 0.7,  # Ruby
+            ".cs": 0.8,  # C#
+            ".swift": 0.8,  # Swift
+            ".kt": 0.8,  # Kotlin
+            ".html": 0.5,  # HTML
+            ".css": 0.5,  # CSS
+            ".json": 0.4,  # JSON
+            ".xml": 0.4,  # XML
+            ".yaml": 0.4,  # YAML
+            ".yml": 0.4,  # YAML
+            ".md": 0.3,  # Markdown
+            ".txt": 0.2,  # Text
         }
 
         # 常见文件模式的重要性权重
         self.file_pattern_weights = {
             # 核心文件
-            r'^(main|index|app|application)\.': 1.0,
-            r'^(__init__|setup|requirements)\.': 0.9,
-            r'^(config|configuration)\.': 0.8,
-
+            r"^(main|index|app|application)\.": 1.0,
+            r"^(__init__|setup|requirements)\.": 0.9,
+            r"^(config|configuration)\.": 0.8,
             # 重要模块
-            r'.*core.*': 0.8,
-            r'.*utils.*': 0.7,
-            r'.*helper.*': 0.7,
-            r'.*service.*': 0.8,
-            r'.*controller.*': 0.8,
-            r'.*model.*': 0.8,
-            r'.*view.*': 0.7,
-
+            r".*core.*": 0.8,
+            r".*utils.*": 0.7,
+            r".*helper.*": 0.7,
+            r".*service.*": 0.8,
+            r".*controller.*": 0.8,
+            r".*model.*": 0.8,
+            r".*view.*": 0.7,
             # 测试文件
-            r'.*test.*': 0.6,
-            r'.*spec.*': 0.6,
-
+            r".*test.*": 0.6,
+            r".*spec.*": 0.6,
             # 配置文件
-            r'.*\.(conf|cfg|ini)$': 0.7,
-            r'.*\.(env|dotenv)$': 0.8,
+            r".*\.(conf|cfg|ini)$": 0.7,
+            r".*\.(env|dotenv)$": 0.8,
         }
 
         self.logger.info("FileSelector initialized")
 
-    def select_files(self, directory: str, criteria: SelectionCriteria) -> List[FileInfo]:
+    def select_files(
+        self, directory: str, criteria: SelectionCriteria
+    ) -> List[FileInfo]:
         """
         智能选择文件
 
@@ -149,19 +150,27 @@ class FileSelector:
         self.logger.debug(f"Analyzed dependencies for {len(dependency_graph)} files")
 
         # 计算文件相关性分数
-        scored_files = self._calculate_relevance_scores(all_files, criteria, dependency_graph)
+        scored_files = self._calculate_relevance_scores(
+            all_files, criteria, dependency_graph
+        )
         self.logger.debug(f"Calculated relevance scores for {len(scored_files)} files")
 
         # 按分数排序
-        sorted_files = sorted(scored_files, key=lambda f: (f.relevance, f.modified_time), reverse=True)
+        sorted_files = sorted(
+            scored_files, key=lambda f: (f.relevance, f.modified_time), reverse=True
+        )
 
         # 应用数量限制
-        selected_files = sorted_files[:criteria.max_files]
+        selected_files = sorted_files[: criteria.max_files]
 
-        self.logger.info(f"Selected {len(selected_files)} files out of {len(all_files)}")
+        self.logger.info(
+            f"Selected {len(selected_files)} files out of {len(all_files)}"
+        )
         return selected_files
 
-    def _scan_files(self, directory: str, criteria: SelectionCriteria) -> List[FileInfo]:
+    def _scan_files(
+        self, directory: str, criteria: SelectionCriteria
+    ) -> List[FileInfo]:
         """扫描文件并收集基础信息"""
         files = []
 
@@ -171,7 +180,7 @@ class FileSelector:
                 directory=directory,
                 recursive=True,
                 extensions=criteria.extensions or list(self.extension_weights.keys()),
-                exclude_patterns=criteria.exclude_patterns
+                exclude_patterns=criteria.exclude_patterns,
             )
 
             for file_path in file_paths:
@@ -179,18 +188,18 @@ class FileSelector:
                     file_info = self.file_ops.get_file_info(file_path)
 
                     # 读取文件内容用于分析
-                    if file_info['size'] < 1024 * 1024:  # 只读取小于1MB的文件
+                    if file_info["size"] < 1024 * 1024:  # 只读取小于1MB的文件
                         content = self.file_ops.read_file(file_path)
                     else:
                         content = ""
 
                     file_obj = FileInfo(
-                        path=file_info['path'],
-                        name=file_info['name'],
-                        extension=file_info['extension'] or '',
-                        size=file_info['size'],
-                        modified_time=file_info['modified_time'],
-                        content=content
+                        path=file_info["path"],
+                        name=file_info["name"],
+                        extension=file_info["extension"] or "",
+                        size=file_info["size"],
+                        modified_time=file_info["modified_time"],
+                        content=content,
                     )
 
                     files.append(file_obj)
@@ -210,7 +219,7 @@ class FileSelector:
         dependency_graph = defaultdict(set)
 
         for file_info in files:
-            if file_info.extension != '.py':
+            if file_info.extension != ".py":
                 continue  # 目前只分析Python文件的依赖
 
             try:
@@ -225,8 +234,10 @@ class FileSelector:
                         if node.module:
                             dependency_graph[file_info.path].add(node.module)
                             for alias in node.names:
-                                if alias.name != '*':
-                                    dependency_graph[file_info.path].add(f"{node.module}.{alias.name}")
+                                if alias.name != "*":
+                                    dependency_graph[file_info.path].add(
+                                        f"{node.module}.{alias.name}"
+                                    )
 
                 # 更新文件的依赖集合
                 file_info.imports = dependency_graph[file_info.path]
@@ -234,20 +245,28 @@ class FileSelector:
             except SyntaxError as e:
                 self.logger.debug(f"Syntax error in {file_info.path}: {e}")
             except Exception as e:
-                self.logger.warning(f"Failed to analyze dependencies for {file_info.path}: {e}")
+                self.logger.warning(
+                    f"Failed to analyze dependencies for {file_info.path}: {e}"
+                )
 
         # 构建反向依赖关系（哪些文件依赖于当前文件）
         for file_path, imports in dependency_graph.items():
             for imported_module in imports:
                 for other_file in files:
-                    if imported_module in other_file.path or other_file.name == f"{imported_module}.py":
+                    if (
+                        imported_module in other_file.path
+                        or other_file.name == f"{imported_module}.py"
+                    ):
                         other_file.dependents.add(file_path)
 
         return dict(dependency_graph)
 
-    def _calculate_relevance_scores(self, files: List[FileInfo],
-                                   criteria: SelectionCriteria,
-                                   dependency_graph: Dict[str, Set[str]]) -> List[FileInfo]:
+    def _calculate_relevance_scores(
+        self,
+        files: List[FileInfo],
+        criteria: SelectionCriteria,
+        dependency_graph: Dict[str, Set[str]],
+    ) -> List[FileInfo]:
         """计算文件相关性分数"""
         current_time = time.time()
 
@@ -264,7 +283,9 @@ class FileSelector:
 
             # 3. 依赖关系分数
             if criteria.prioritize_dependencies:
-                dependency_score = self._calculate_dependency_score(file_info, dependency_graph, files)
+                dependency_score = self._calculate_dependency_score(
+                    file_info, dependency_graph, files
+                )
                 score += dependency_score * self.dependency_weight
 
             # 4. 修改时间分数
@@ -283,7 +304,9 @@ class FileSelector:
 
         return relevant_files
 
-    def _calculate_keyword_score(self, file_info: FileInfo, keywords: List[str]) -> float:
+    def _calculate_keyword_score(
+        self, file_info: FileInfo, keywords: List[str]
+    ) -> float:
         """计算关键词匹配分数"""
         if not keywords:
             return 0.0
@@ -322,9 +345,12 @@ class FileSelector:
 
         return min(score, 1.0)
 
-    def _calculate_dependency_score(self, file_info: FileInfo,
-                                   dependency_graph: Dict[str, Set[str]],
-                                   all_files: List[FileInfo]) -> float:
+    def _calculate_dependency_score(
+        self,
+        file_info: FileInfo,
+        dependency_graph: Dict[str, Set[str]],
+        all_files: List[FileInfo],
+    ) -> float:
         """计算依赖关系分数"""
         score = 0.0
         file_path_set = {f.path for f in all_files}
@@ -339,13 +365,15 @@ class FileSelector:
             score += min(imports_in_project * 0.1, 0.5)
 
         # 核心文件加分
-        core_files = ['main.py', 'app.py', '__init__.py', 'setup.py']
+        core_files = ["main.py", "app.py", "__init__.py", "setup.py"]
         if any(core in file_info.name for core in core_files):
             score += 0.5
 
         return min(score, 2.0)
 
-    def _calculate_recency_score(self, file_info: FileInfo, current_time: float) -> float:
+    def _calculate_recency_score(
+        self, file_info: FileInfo, current_time: float
+    ) -> float:
         """计算修改时间分数"""
         # 计算文件修改时间与当前时间的差异（天）
         time_diff_days = (current_time - file_info.modified_time) / (24 * 60 * 60)
@@ -368,55 +396,63 @@ class FileSelector:
             return {}
 
         stats = {
-            'total_files': len(files),
-            'total_size': sum(f.size for f in files),
-            'extensions': defaultdict(int),
-            'avg_relevance': sum(f.relevance for f in files) / len(files),
-            'most_recent': max(f.modified_time for f in files),
-            'oldest': min(f.modified_time for f in files),
-            'high_relevance_files': len([f for f in files if f.relevance > 0.7]),
-            'files_with_dependencies': len([f for f in files if f.imports]),
+            "total_files": len(files),
+            "total_size": sum(f.size for f in files),
+            "extensions": defaultdict(int),
+            "avg_relevance": sum(f.relevance for f in files) / len(files),
+            "most_recent": max(f.modified_time for f in files),
+            "oldest": min(f.modified_time for f in files),
+            "high_relevance_files": len([f for f in files if f.relevance > 0.7]),
+            "files_with_dependencies": len([f for f in files if f.imports]),
         }
 
         # 统计扩展名分布
         for file_info in files:
-            stats['extensions'][file_info.extension] += 1
+            stats["extensions"][file_info.extension] += 1
 
         return dict(stats)
 
-    def export_selection_results(self, files: List[FileInfo],
-                                output_format: str = 'json') -> str:
+    def export_selection_results(
+        self, files: List[FileInfo], output_format: str = "json"
+    ) -> str:
         """导出选择结果"""
         results = {
-            'selected_files': [],
-            'statistics': self.get_file_statistics(files),
-            'selection_time': time.time()
+            "selected_files": [],
+            "statistics": self.get_file_statistics(files),
+            "selection_time": time.time(),
         }
 
         for file_info in files:
-            results['selected_files'].append({
-                'path': file_info.path,
-                'name': file_info.name,
-                'extension': file_info.extension,
-                'size': file_info.size,
-                'modified_time': file_info.modified_time,
-                'relevance': file_info.relevance,
-                'imports': list(file_info.imports),
-                'dependents': list(file_info.dependents)
-            })
+            results["selected_files"].append(
+                {
+                    "path": file_info.path,
+                    "name": file_info.name,
+                    "extension": file_info.extension,
+                    "size": file_info.size,
+                    "modified_time": file_info.modified_time,
+                    "relevance": file_info.relevance,
+                    "imports": list(file_info.imports),
+                    "dependents": list(file_info.dependents),
+                }
+            )
 
-        if output_format.lower() == 'json':
+        if output_format.lower() == "json":
             import json
+
             return json.dumps(results, indent=2, ensure_ascii=False)
-        elif output_format.lower() == 'yaml':
+        elif output_format.lower() == "yaml":
             import yaml
+
             return yaml.dump(results, default_flow_style=False, allow_unicode=True)
         else:
             return str(results)
 
-    def suggest_related_files(self, selected_files: List[FileInfo],
-                           all_files: List[FileInfo],
-                           max_suggestions: int = 10) -> List[FileInfo]:
+    def suggest_related_files(
+        self,
+        selected_files: List[FileInfo],
+        all_files: List[FileInfo],
+        max_suggestions: int = 10,
+    ) -> List[FileInfo]:
         """建议相关文件"""
         if not selected_files:
             return []
@@ -428,18 +464,26 @@ class FileSelector:
         for selected_file in selected_files:
             for dependency in selected_file.imports:
                 for candidate_file in all_files:
-                    if (candidate_file.path not in selected_paths and
-                        dependency in candidate_file.path and
-                        candidate_file not in suggestions):
+                    if (
+                        candidate_file.path not in selected_paths
+                        and dependency in candidate_file.path
+                        and candidate_file not in suggestions
+                    ):
                         suggestions.append(candidate_file)
 
         # 基于文件名相似性建议
         for selected_file in selected_files:
-            base_name = selected_file.name.replace('.py', '').replace('_test', '').replace('test_', '')
+            base_name = (
+                selected_file.name.replace(".py", "")
+                .replace("_test", "")
+                .replace("test_", "")
+            )
             for candidate_file in all_files:
-                if (candidate_file.path not in selected_paths and
-                    candidate_file not in suggestions and
-                    base_name in candidate_file.name):
+                if (
+                    candidate_file.path not in selected_paths
+                    and candidate_file not in suggestions
+                    and base_name in candidate_file.name
+                ):
                     suggestions.append(candidate_file)
 
         # 按相关性排序并限制数量

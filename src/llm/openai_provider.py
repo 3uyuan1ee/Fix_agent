@@ -3,13 +3,13 @@ OpenAI API适配器
 """
 
 import asyncio
-from typing import Dict, Any, AsyncGenerator, List
 import time
+from typing import Any, AsyncGenerator, Dict, List
 
-from .base import LLMProvider, LLMRequest, LLMResponse
-from .http_client import HTTPClient, RetryConfig
-from .exceptions import LLMError, LLMTimeoutError, LLMRateLimitError
 from ..utils.logger import get_logger
+from .base import LLMProvider, LLMRequest, LLMResponse
+from .exceptions import LLMError, LLMRateLimitError, LLMTimeoutError
+from .http_client import HTTPClient, RetryConfig
 
 
 class OpenAIProvider(LLMProvider):
@@ -25,10 +25,7 @@ class OpenAIProvider(LLMProvider):
         super().__init__(config)
         self.logger = get_logger()
         self.http_client = HTTPClient(
-            RetryConfig(
-                max_retries=config.max_retries,
-                base_delay=config.retry_delay
-            )
+            RetryConfig(max_retries=config.max_retries, base_delay=config.retry_delay)
         )
 
     @property
@@ -61,21 +58,25 @@ class OpenAIProvider(LLMProvider):
                 url=url,
                 headers=headers,
                 data=data,
-                timeout=request.config.timeout or self.config.timeout
+                timeout=request.config.timeout or self.config.timeout,
             )
 
             # 解析响应
             response = self._parse_response(response_data)
             response.response_time = time.time() - start_time
 
-            self.logger.debug(f"OpenAI request completed in {response.response_time:.2f}s")
+            self.logger.debug(
+                f"OpenAI request completed in {response.response_time:.2f}s"
+            )
             return response
 
         except Exception as e:
             self.logger.error(f"OpenAI request failed: {e}")
             raise
 
-    async def stream_complete(self, request: LLMRequest) -> AsyncGenerator[LLMResponse, None]:
+    async def stream_complete(
+        self, request: LLMRequest
+    ) -> AsyncGenerator[LLMResponse, None]:
         """
         流式完成文本生成请求
 
@@ -103,7 +104,7 @@ class OpenAIProvider(LLMProvider):
                 url=url,
                 headers=headers,
                 data=data,
-                timeout=request.config.timeout or self.config.timeout
+                timeout=request.config.timeout or self.config.timeout,
             ):
                 response = self._parse_stream_chunk(chunk_data, request_id)
                 if response.request_id:
@@ -134,7 +135,9 @@ class OpenAIProvider(LLMProvider):
                 raise ValueError(f"Message content cannot be empty: {message}")
 
         # 验证工具调用
-        if request.tools and not any(msg.role.value == "system" for msg in request.messages):
+        if request.tools and not any(
+            msg.role.value == "system" for msg in request.messages
+        ):
             # 工具调用通常需要系统消息
             self.logger.warning("Tool calls usually require a system message")
 
@@ -143,14 +146,16 @@ class OpenAIProvider(LLMProvider):
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.config.api_key}",
-            "User-Agent": "AIDefectDetector/1.0"
+            "User-Agent": "AIDefectDetector/1.0",
         }
 
         if self.config.organization:
             headers["OpenAI-Organization"] = self.config.organization
 
         if self.config.api_base:
-            headers["Host"] = self.config.api_base.replace("https://", "").replace("http://", "")
+            headers["Host"] = self.config.api_base.replace("https://", "").replace(
+                "http://", ""
+            )
 
         return headers
 
@@ -163,10 +168,7 @@ class OpenAIProvider(LLMProvider):
         """准备请求数据"""
         messages = []
         for msg in request.messages:
-            message_dict = {
-                "role": msg.role.value,
-                "content": msg.content
-            }
+            message_dict = {"role": msg.role.value, "content": msg.content}
             if msg.name:
                 message_dict["name"] = msg.name
             if msg.function_call:
@@ -180,7 +182,7 @@ class OpenAIProvider(LLMProvider):
             "top_p": self.config.top_p,
             "frequency_penalty": self.config.frequency_penalty,
             "presence_penalty": self.config.presence_penalty,
-            "stream": request.config.stream or self.config.stream
+            "stream": request.config.stream or self.config.stream,
         }
 
         # 添加可选参数
@@ -223,14 +225,16 @@ class OpenAIProvider(LLMProvider):
             usage={
                 "prompt_tokens": usage.get("prompt_tokens", 0),
                 "completion_tokens": usage.get("completion_tokens", 0),
-                "total_tokens": usage.get("total_tokens", 0)
+                "total_tokens": usage.get("total_tokens", 0),
             },
             created_at=data.get("created", time.time()),
             function_call=message.get("function_call"),
-            tool_calls=message.get("tool_calls")
+            tool_calls=message.get("tool_calls"),
         )
 
-    def _parse_stream_chunk(self, chunk: Dict[str, Any], request_id: str = "") -> LLMResponse:
+    def _parse_stream_chunk(
+        self, chunk: Dict[str, Any], request_id: str = ""
+    ) -> LLMResponse:
         """解析流式响应片段"""
         if "choices" not in chunk or not chunk["choices"]:
             return LLMResponse(
@@ -239,7 +243,7 @@ class OpenAIProvider(LLMProvider):
                 model=self.config.model,
                 content="",
                 is_stream=True,
-                is_complete=False
+                is_complete=False,
             )
 
         choice = chunk["choices"][0]
@@ -255,7 +259,7 @@ class OpenAIProvider(LLMProvider):
             is_stream=True,
             is_complete=choice.get("finish_reason") is not None,
             function_call=delta.get("function_call"),
-            tool_calls=delta.get("tool_calls")
+            tool_calls=delta.get("tool_calls"),
         )
 
     def get_default_config(self) -> Dict[str, Any]:
@@ -267,7 +271,7 @@ class OpenAIProvider(LLMProvider):
             "timeout": 30,
             "max_retries": 3,
             "retry_delay": 1.0,
-            "api_base": "https://api.openai.com/v1"
+            "api_base": "https://api.openai.com/v1",
         }
 
     def estimate_tokens(self, text: str) -> int:
@@ -293,7 +297,7 @@ class OpenAIProvider(LLMProvider):
         for char in text:
             if ord(char) < 128:  # ASCII字符
                 ascii_chars += 1
-            elif '\u4e00' <= char <= '\u9fff':  # 中文字符
+            elif "\u4e00" <= char <= "\u9fff":  # 中文字符
                 chinese_chars += 1
             else:
                 other_chars += 1
@@ -328,7 +332,7 @@ class OpenAIProvider(LLMProvider):
             "gpt-3.5-turbo": {"input": 0.0005, "output": 0.0015},
             "gpt-3.5-turbo-16k": {"input": 0.003, "output": 0.004},
             "text-davinci-003": {"input": 0.02, "output": 0.02},
-            "text-curie-001": {"input": 0.002, "output": 0.002}
+            "text-curie-001": {"input": 0.002, "output": 0.002},
         }
 
         model_name = response.model.lower()
@@ -345,7 +349,9 @@ class OpenAIProvider(LLMProvider):
             output_tokens = response.usage.get("completion_tokens", 0)
         else:
             # 估算tokens
-            input_tokens = sum(self.estimate_tokens(msg.content) for msg in request.messages)
+            input_tokens = sum(
+                self.estimate_tokens(msg.content) for msg in request.messages
+            )
             output_tokens = self.estimate_tokens(response.content)
 
         cost = (input_tokens * input_price + output_tokens * output_price) / 1000
@@ -366,7 +372,7 @@ class OpenAIProvider(LLMProvider):
             "text-davinci-003",
             "text-curie-001",
             "text-babbage-001",
-            "text-ada-001"
+            "text-ada-001",
         ]
 
     def check_model_availability(self, model: str) -> bool:

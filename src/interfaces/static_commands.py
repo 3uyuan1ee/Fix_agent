@@ -4,20 +4,20 @@
 实现`analyze static`命令的处理逻辑
 """
 
-import sys
-import time
-import threading
-from pathlib import Path
-from typing import List, Dict, Any, Optional
-from dataclasses import dataclass
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
+import sys
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from ..utils.logger import get_logger
-from ..utils.config import ConfigManager
 from ..agent.orchestrator import AgentOrchestrator
 from ..agent.planner import AnalysisMode
-from ..agent.user_interaction import ResponseFormatter, OutputFormat
+from ..agent.user_interaction import OutputFormat, ResponseFormatter
+from ..utils.config import ConfigManager
+from ..utils.logger import get_logger
 
 logger = get_logger()
 
@@ -25,6 +25,7 @@ logger = get_logger()
 @dataclass
 class StaticAnalysisResult:
     """静态分析结果数据类"""
+
     success: bool
     total_files: int
     analyzed_files: int
@@ -60,7 +61,11 @@ class ProgressTracker:
         """获取进度信息"""
         with self._lock:
             elapsed = time.time() - self.start_time
-            percentage = (self.processed_files / self.total_files * 100) if self.total_files > 0 else 0
+            percentage = (
+                (self.processed_files / self.total_files * 100)
+                if self.total_files > 0
+                else 0
+            )
 
             return {
                 "processed_files": self.processed_files,
@@ -68,7 +73,15 @@ class ProgressTracker:
                 "percentage": percentage,
                 "current_tool": self.current_tool,
                 "elapsed_time": elapsed,
-                "estimated_remaining": (elapsed / self.processed_files * (self.total_files - self.processed_files)) if self.processed_files > 0 else 0
+                "estimated_remaining": (
+                    (
+                        elapsed
+                        / self.processed_files
+                        * (self.total_files - self.processed_files)
+                    )
+                    if self.processed_files > 0
+                    else 0
+                ),
             }
 
 
@@ -79,18 +92,18 @@ class StaticAnalysisCommand:
         """初始化静态分析命令处理器"""
         self.config = config or ConfigManager()
         # 确保配置已加载
-        if not hasattr(self.config, '_config') or self.config._config is None:
+        if not hasattr(self.config, "_config") or self.config._config is None:
             try:
                 self.config.load_config()
             except Exception:
                 # 如果配置加载失败，使用默认配置
                 self.config._config = {
-                    'static_analysis': {
-                        'tools': {
-                            'pylint': {'enabled': True},
-                            'bandit': {'enabled': True},
-                            'flake8': {'enabled': True},
-                            'mypy': {'enabled': True}
+                    "static_analysis": {
+                        "tools": {
+                            "pylint": {"enabled": True},
+                            "bandit": {"enabled": True},
+                            "flake8": {"enabled": True},
+                            "mypy": {"enabled": True},
                         }
                     }
                 }
@@ -105,7 +118,7 @@ class StaticAnalysisCommand:
         output_file: Optional[str] = None,
         verbose: bool = False,
         quiet: bool = False,
-        dry_run: bool = False
+        dry_run: bool = False,
     ) -> StaticAnalysisResult:
         """
         执行静态分析
@@ -145,7 +158,7 @@ class StaticAnalysisCommand:
                 issues_by_type={},
                 tool_results={},
                 execution_time=0,
-                summary="未找到可分析的Python文件"
+                summary="未找到可分析的Python文件",
             )
 
         if not quiet:
@@ -165,7 +178,7 @@ class StaticAnalysisCommand:
                 issues_by_type={},
                 tool_results={},
                 execution_time=0,
-                summary="没有可用的分析工具"
+                summary="没有可用的分析工具",
             )
 
         if not quiet:
@@ -184,7 +197,7 @@ class StaticAnalysisCommand:
                 issues_by_type={},
                 tool_results={tool: "dry_run" for tool in selected_tools},
                 execution_time=0.1,
-                summary="模拟运行完成"
+                summary="模拟运行完成",
             )
 
         # 4. 执行分析
@@ -196,28 +209,20 @@ class StaticAnalysisCommand:
         # 显示进度
         if not quiet and not verbose:
             progress_thread = threading.Thread(
-                target=self._show_progress,
-                args=(progress_tracker,),
-                daemon=True
+                target=self._show_progress, args=(progress_tracker,), daemon=True
             )
             progress_thread.start()
 
         # 执行分析
         analysis_results = self._run_analysis(
-            files_to_analyze,
-            selected_tools,
-            progress_tracker,
-            verbose
+            files_to_analyze, selected_tools, progress_tracker, verbose
         )
 
         execution_time = time.time() - start_time
 
         # 5. 处理结果
         result = self._process_analysis_results(
-            analysis_results,
-            selected_tools,
-            len(files_to_analyze),
-            execution_time
+            analysis_results, selected_tools, len(files_to_analyze), execution_time
         )
 
         # 6. 输出结果
@@ -235,11 +240,11 @@ class StaticAnalysisCommand:
         files = []
 
         if target_path.is_file():
-            if target_path.suffix == '.py':
+            if target_path.suffix == ".py":
                 files.append(str(target_path))
         elif target_path.is_dir():
             # 递归查找Python文件
-            for py_file in target_path.rglob('*.py'):
+            for py_file in target_path.rglob("*.py"):
                 # 跳过隐藏文件和测试文件（根据配置）
                 if not self._should_skip_file(py_file):
                     files.append(str(py_file))
@@ -249,37 +254,38 @@ class StaticAnalysisCommand:
     def _should_skip_file(self, file_path: Path) -> bool:
         """判断是否应该跳过文件"""
         # 跳过隐藏文件
-        if file_path.name.startswith('.'):
+        if file_path.name.startswith("."):
             return True
 
         # 可以根据配置添加更多跳过规则
-        skip_patterns = ['__pycache__', '.git', '.pytest_cache', 'venv', 'env']
+        skip_patterns = ["__pycache__", ".git", ".pytest_cache", "venv", "env"]
         return any(pattern in str(file_path) for pattern in skip_patterns)
 
     def _get_selected_tools(self, requested_tools: Optional[List[str]]) -> List[str]:
         """获取选中的分析工具"""
         try:
             # 检查配置是否已加载
-            if not hasattr(self.config, '_config') or self.config._config is None:
+            if not hasattr(self.config, "_config") or self.config._config is None:
                 # 使用默认工具配置
-                enabled_tools = ['pylint', 'bandit', 'flake8', 'mypy']
+                enabled_tools = ["pylint", "bandit", "flake8", "mypy"]
             else:
-                tools_config = self.config.get_section('static_analysis')
+                tools_config = self.config.get_section("static_analysis")
 
                 # 适配实际配置文件格式
-                if 'enabled_tools' in tools_config:
+                if "enabled_tools" in tools_config:
                     # 新格式：使用 enabled_tools 列表
-                    enabled_tools = tools_config['enabled_tools']
-                elif 'tools' in tools_config:
+                    enabled_tools = tools_config["enabled_tools"]
+                elif "tools" in tools_config:
                     # 旧格式：使用 tools 字典
-                    available_tools = tools_config['tools']
+                    available_tools = tools_config["tools"]
                     enabled_tools = [
-                        name for name, config in available_tools.items()
-                        if config.get('enabled', True)
+                        name
+                        for name, config in available_tools.items()
+                        if config.get("enabled", True)
                     ]
                 else:
                     # 默认工具列表
-                    enabled_tools = ['pylint', 'bandit', 'flake8', 'mypy']
+                    enabled_tools = ["pylint", "bandit", "flake8", "mypy"]
 
             # 如果用户指定了工具，进行过滤
             if requested_tools:
@@ -296,14 +302,14 @@ class StaticAnalysisCommand:
         except Exception as e:
             logger.error(f"获取工具配置失败: {e}")
             # 返回默认工具列表
-            return ['pylint', 'bandit', 'flake8', 'mypy']
+            return ["pylint", "bandit", "flake8", "mypy"]
 
     def _run_analysis(
         self,
         files: List[str],
         tools: List[str],
         progress_tracker: ProgressTracker,
-        verbose: bool
+        verbose: bool,
     ) -> Dict[str, Any]:
         """运行分析"""
         results = {}
@@ -312,7 +318,9 @@ class StaticAnalysisCommand:
             if verbose:
                 print(f"  🔄 运行 {tool} 分析...")
 
-            tool_results = self._run_tool_analysis(tool, files, progress_tracker, verbose)
+            tool_results = self._run_tool_analysis(
+                tool, files, progress_tracker, verbose
+            )
             results[tool] = tool_results
 
         return results
@@ -322,7 +330,7 @@ class StaticAnalysisCommand:
         tool: str,
         files: List[str],
         progress_tracker: ProgressTracker,
-        verbose: bool
+        verbose: bool,
     ) -> Dict[str, Any]:
         """运行单个工具的分析"""
         progress_tracker.update(processed_files=0, current_tool=tool)
@@ -346,7 +354,7 @@ class StaticAnalysisCommand:
                 "success": result.get("success", False),
                 "message": result.get("message", ""),
                 "data": result.get("data", {}),
-                "issues": result.get("issues", [])
+                "issues": result.get("issues", []),
             }
 
         except Exception as e:
@@ -355,7 +363,7 @@ class StaticAnalysisCommand:
                 "success": False,
                 "message": f"分析失败: {e}",
                 "data": {},
-                "issues": []
+                "issues": [],
             }
         finally:
             self.orchestrator.close_session(session)
@@ -369,20 +377,24 @@ class StaticAnalysisCommand:
 
             # 构建进度条
             bar_length = 30
-            filled_length = int(bar_length * info['percentage'] / 100)
-            bar = '█' * filled_length + '░' * (bar_length - filled_length)
+            filled_length = int(bar_length * info["percentage"] / 100)
+            bar = "█" * filled_length + "░" * (bar_length - filled_length)
 
             # 显示进度
-            sys.stdout.write(f'\r🔄 分析进度: |{bar}| {info["percentage"]:.1f}% '
-                           f'({info["processed_files"]}/{info["total_files"]}) '
-                           f'工具: {info["current_tool"]} '
-                           f'耗时: {info["elapsed_time"]:.1f}s')
+            sys.stdout.write(
+                f'\r🔄 分析进度: |{bar}| {info["percentage"]:.1f}% '
+                f'({info["processed_files"]}/{info["total_files"]}) '
+                f'工具: {info["current_tool"]} '
+                f'耗时: {info["elapsed_time"]:.1f}s'
+            )
             sys.stdout.flush()
 
             time.sleep(0.5)
 
         # 进度完成
-        sys.stdout.write(f'\r✅ 分析完成! 总共分析了 {progress_tracker.total_files} 个文件\n')
+        sys.stdout.write(
+            f"\r✅ 分析完成! 总共分析了 {progress_tracker.total_files} 个文件\n"
+        )
         sys.stdout.flush()
 
     def _process_analysis_results(
@@ -390,7 +402,7 @@ class StaticAnalysisCommand:
         analysis_results: Dict[str, Any],
         tools: List[str],
         total_files: int,
-        execution_time: float
+        execution_time: float,
     ) -> StaticAnalysisResult:
         """处理分析结果"""
         total_issues = 0
@@ -437,10 +449,12 @@ class StaticAnalysisCommand:
             issues_by_type=issues_by_type,
             tool_results=analysis_results,
             execution_time=execution_time,
-            summary=summary
+            summary=summary,
         )
 
-    def _display_results(self, result: StaticAnalysisResult, output_format: str, verbose: bool):
+    def _display_results(
+        self, result: StaticAnalysisResult, output_format: str, verbose: bool
+    ):
         """显示分析结果"""
         if output_format == "simple":
             self._display_simple_results(result)
@@ -461,9 +475,11 @@ class StaticAnalysisCommand:
         print(f"   问题总数: {result.total_issues}")
 
         if result.issues_by_severity:
-            print(f"   严重程度: 错误({result.issues_by_severity.get('error', 0)}) "
-                  f"警告({result.issues_by_severity.get('warning', 0)}) "
-                  f"信息({result.issues_by_severity.get('info', 0)})")
+            print(
+                f"   严重程度: 错误({result.issues_by_severity.get('error', 0)}) "
+                f"警告({result.issues_by_severity.get('warning', 0)}) "
+                f"信息({result.issues_by_severity.get('info', 0)})"
+            )
 
         print(f"   📝 {result.summary}")
 
@@ -492,11 +508,11 @@ class StaticAnalysisCommand:
                 "total_files": result.total_files,
                 "analyzed_files": result.analyzed_files,
                 "total_issues": result.total_issues,
-                "execution_time": result.execution_time
+                "execution_time": result.execution_time,
             },
             "issues_by_severity": result.issues_by_severity,
             "issues_by_type": result.issues_by_type,
-            "tool_results": result.tool_results
+            "tool_results": result.tool_results,
         }
         print(json.dumps(result_dict, indent=2, ensure_ascii=False))
 
@@ -531,7 +547,9 @@ class StaticAnalysisCommand:
             for severity, count in result.issues_by_severity.items():
                 print(f"- **{severity.capitalize()}**: {count}")
 
-    def _save_results(self, result: StaticAnalysisResult, output_file: str, output_format: str):
+    def _save_results(
+        self, result: StaticAnalysisResult, output_file: str, output_format: str
+    ):
         """保存结果到文件"""
         try:
             output_path = Path(output_file)
@@ -539,8 +557,8 @@ class StaticAnalysisCommand:
             # 确保输出目录存在
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
-            with open(output_path, 'w', encoding='utf-8') as f:
-                if output_format == 'json':
+            with open(output_path, "w", encoding="utf-8") as f:
+                if output_format == "json":
                     result_dict = {
                         "success": result.success,
                         "summary": result.summary,
@@ -548,11 +566,11 @@ class StaticAnalysisCommand:
                             "total_files": result.total_files,
                             "analyzed_files": result.analyzed_files,
                             "total_issues": result.total_issues,
-                            "execution_time": result.execution_time
+                            "execution_time": result.execution_time,
                         },
                         "issues_by_severity": result.issues_by_severity,
                         "issues_by_type": result.issues_by_type,
-                        "tool_results": result.tool_results
+                        "tool_results": result.tool_results,
                     }
                     json.dump(result_dict, f, indent=2, ensure_ascii=False)
                 else:

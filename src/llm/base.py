@@ -2,17 +2,18 @@
 LLM接口基础抽象类和数据模型
 """
 
-from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
-from typing import Dict, List, Any, Optional, Union
-from enum import Enum
-import uuid
 import json
 import time
+import uuid
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Dict, List, Optional, Union
 
 
 class MessageRole(Enum):
     """消息角色枚举"""
+
     SYSTEM = "system"
     USER = "user"
     ASSISTANT = "assistant"
@@ -22,6 +23,7 @@ class MessageRole(Enum):
 @dataclass
 class Message:
     """消息数据类"""
+
     role: MessageRole
     content: str
     name: Optional[str] = None
@@ -32,6 +34,7 @@ class Message:
 @dataclass
 class LLMConfig:
     """LLM配置数据类"""
+
     provider: str
     model: str
     api_key: Optional[str] = None
@@ -93,7 +96,7 @@ class LLMConfig:
             "stream": self.stream,
             "logprobs": self.logprobs,
             "echo": self.echo,
-            "custom_params": self.custom_params
+            "custom_params": self.custom_params,
         }
 
     @classmethod
@@ -105,6 +108,7 @@ class LLMConfig:
 @dataclass
 class LLMRequest:
     """LLM请求数据类"""
+
     messages: List[Message]
     config: LLMConfig
     tools: Optional[List[Dict[str, Any]]] = None
@@ -132,7 +136,7 @@ class LLMRequest:
                     "content": msg.content,
                     "name": msg.name,
                     "function_call": msg.function_call,
-                    "metadata": msg.metadata
+                    "metadata": msg.metadata,
                 }
                 for msg in self.messages
             ],
@@ -142,7 +146,7 @@ class LLMRequest:
             "functions": self.functions,
             "function_call": self.function_call,
             "request_id": self.request_id,
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }
         return {k: v for k, v in result.items() if v is not None}
 
@@ -150,6 +154,7 @@ class LLMRequest:
 @dataclass
 class LLMResponse:
     """LLM响应数据类"""
+
     request_id: str
     provider: str
     model: str
@@ -183,7 +188,7 @@ class LLMResponse:
             "is_stream": self.is_stream,
             "is_complete": self.is_complete,
             "tool_calls": self.tool_calls,
-            "function_call": self.function_call
+            "function_call": self.function_call,
         }
         return {k: v for k, v in result.items() if v is not None}
 
@@ -263,7 +268,7 @@ class LLMProvider(ABC):
             "max_tokens": 1000,
             "timeout": 30,
             "max_retries": 3,
-            "retry_delay": 1.0
+            "retry_delay": 1.0,
         }
 
     def estimate_tokens(self, text: str) -> int:
@@ -291,8 +296,12 @@ class LLMProvider(ABC):
             估算成本（美元）
         """
         # 默认成本计算（需要子类重写）
-        input_tokens = sum(self.estimate_tokens(msg.content) for msg in request.messages)
-        output_tokens = self.estimate_tokens(response.content) if response.content else 0
+        input_tokens = sum(
+            self.estimate_tokens(msg.content) for msg in request.messages
+        )
+        output_tokens = (
+            self.estimate_tokens(response.content) if response.content else 0
+        )
 
         # 默认价格（每1000 tokens）
         input_price = 0.001
@@ -309,7 +318,7 @@ class LLMProvider(ABC):
         """
         headers = {
             "Content-Type": "application/json",
-            "User-Agent": f"AIDefectDetector/1.0 ({self.provider_name})"
+            "User-Agent": f"AIDefectDetector/1.0 ({self.provider_name})",
         }
 
         if self.config.api_key:
@@ -333,17 +342,14 @@ class LLMProvider(ABC):
         data = {
             "model": self.config.model,
             "messages": [
-                {
-                    "role": msg.role.value,
-                    "content": msg.content
-                }
+                {"role": msg.role.value, "content": msg.content}
                 for msg in request.messages
             ],
             "temperature": self.config.temperature,
             "top_p": self.config.top_p,
             "frequency_penalty": self.config.frequency_penalty,
             "presence_penalty": self.config.presence_penalty,
-            "stream": request.config.stream or self.config.stream
+            "stream": request.config.stream or self.config.stream,
         }
 
         if self.config.max_tokens:
@@ -393,11 +399,15 @@ class LLMProvider(ABC):
             usage={
                 "prompt_tokens": usage.get("prompt_tokens", 0),
                 "completion_tokens": usage.get("completion_tokens", 0),
-                "total_tokens": usage.get("total_tokens", 0)
+                "total_tokens": usage.get("total_tokens", 0),
             },
             created_at=data.get("created", time.time()),
-            tool_calls=data.get("choices", [{}])[0].get("message", {}).get("tool_calls"),
-            function_call=data.get("choices", [{}])[0].get("message", {}).get("function_call")
+            tool_calls=data.get("choices", [{}])[0]
+            .get("message", {})
+            .get("tool_calls"),
+            function_call=data.get("choices", [{}])[0]
+            .get("message", {})
+            .get("function_call"),
         )
 
     def parse_stream_chunk(self, chunk: Dict[str, Any]) -> LLMResponse:
@@ -417,7 +427,7 @@ class LLMProvider(ABC):
                 model=self.config.model,
                 content="",
                 is_stream=True,
-                is_complete=False
+                is_complete=False,
             )
 
         choice = chunk["choices"][0]
@@ -433,5 +443,5 @@ class LLMProvider(ABC):
             is_stream=True,
             is_complete=choice.get("finish_reason") is not None,
             tool_calls=delta.get("tool_calls"),
-            function_call=delta.get("function_call")
+            function_call=delta.get("function_call"),
         )

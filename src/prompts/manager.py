@@ -2,17 +2,26 @@
 Prompt模板管理器
 """
 
-import os
 import json
-import yaml
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Union
+import os
 from dataclasses import asdict
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
-from .base import PromptTemplate, PromptCategory, PromptType, PromptRenderResult
-from .renderer import AdvancedPromptRenderer, ConditionalPromptRenderer, TemplateFunctionRenderer
-from .templates import StaticAnalysisTemplate, DeepAnalysisTemplate, RepairSuggestionTemplate
+import yaml
+
 from ..utils.logger import get_logger
+from .base import PromptCategory, PromptRenderResult, PromptTemplate, PromptType
+from .renderer import (
+    AdvancedPromptRenderer,
+    ConditionalPromptRenderer,
+    TemplateFunctionRenderer,
+)
+from .templates import (
+    DeepAnalysisTemplate,
+    RepairSuggestionTemplate,
+    StaticAnalysisTemplate,
+)
 
 
 class PromptManager:
@@ -30,7 +39,7 @@ class PromptManager:
         self.renderers = {
             "basic": AdvancedPromptRenderer(),
             "conditional": ConditionalPromptRenderer(),
-            "function": TemplateFunctionRenderer()
+            "function": TemplateFunctionRenderer(),
         }
         self.current_renderer = "conditional"
 
@@ -47,21 +56,21 @@ class PromptManager:
         static_templates = [
             StaticAnalysisTemplate.get_system_prompt(),
             StaticAnalysisTemplate.get_analysis_prompt(),
-            StaticAnalysisTemplate.get_summary_prompt()
+            StaticAnalysisTemplate.get_summary_prompt(),
         ]
 
         # 加载深度分析模板
         deep_templates = [
             DeepAnalysisTemplate.get_system_prompt(),
             DeepAnalysisTemplate.get_code_analysis_prompt(),
-            DeepAnalysisTemplate.get_vulnerability_assessment_prompt()
+            DeepAnalysisTemplate.get_vulnerability_assessment_prompt(),
         ]
 
         # 加载修复建议模板
         repair_templates = [
             RepairSuggestionTemplate.get_system_prompt(),
             RepairSuggestionTemplate.get_fix_suggestion_prompt(),
-            RepairSuggestionTemplate.get_refactoring_suggestion_prompt()
+            RepairSuggestionTemplate.get_refactoring_suggestion_prompt(),
         ]
 
         # 注册所有模板
@@ -78,19 +87,21 @@ class PromptManager:
             return
 
         try:
-            with open(config_file, 'r', encoding='utf-8') as f:
-                if config_file.suffix.lower() in ['.yaml', '.yml']:
+            with open(config_file, "r", encoding="utf-8") as f:
+                if config_file.suffix.lower() in [".yaml", ".yml"]:
                     data = yaml.safe_load(f)
                 else:
                     data = json.load(f)
 
-            if 'templates' in data:
-                for template_data in data['templates']:
+            if "templates" in data:
+                for template_data in data["templates"]:
                     try:
                         template = PromptTemplate.from_dict(template_data)
                         self.register_template(template)
                     except Exception as e:
-                        self.logger.error(f"Failed to load template '{template_data.get('name', 'unknown')}': {e}")
+                        self.logger.error(
+                            f"Failed to load template '{template_data.get('name', 'unknown')}': {e}"
+                        )
 
             self.logger.info(f"Loaded templates from {config_path}")
 
@@ -135,9 +146,12 @@ class PromptManager:
         """
         return self.templates.get(name)
 
-    def list_templates(self, category: Optional[PromptCategory] = None,
-                      prompt_type: Optional[PromptType] = None,
-                      tags: Optional[List[str]] = None) -> List[PromptTemplate]:
+    def list_templates(
+        self,
+        category: Optional[PromptCategory] = None,
+        prompt_type: Optional[PromptType] = None,
+        tags: Optional[List[str]] = None,
+    ) -> List[PromptTemplate]:
         """
         列出模板
 
@@ -179,15 +193,21 @@ class PromptManager:
         results = []
 
         for template in self.templates.values():
-            if (keyword in template.name.lower() or
-                keyword in template.description.lower() or
-                any(keyword in tag.lower() for tag in template.tags)):
+            if (
+                keyword in template.name.lower()
+                or keyword in template.description.lower()
+                or any(keyword in tag.lower() for tag in template.tags)
+            ):
                 results.append(template)
 
         return results
 
-    def render_template(self, template_name: str, parameters: Dict[str, Any],
-                       renderer_name: Optional[str] = None) -> PromptRenderResult:
+    def render_template(
+        self,
+        template_name: str,
+        parameters: Dict[str, Any],
+        renderer_name: Optional[str] = None,
+    ) -> PromptRenderResult:
         """
         渲染模板
 
@@ -206,7 +226,7 @@ class PromptManager:
                 template_name=template_name,
                 parameters_used={},
                 success=False,
-                error_message=f"Template '{template_name}' not found"
+                error_message=f"Template '{template_name}' not found",
             )
 
         renderer_name = renderer_name or self.current_renderer
@@ -217,12 +237,14 @@ class PromptManager:
                 template_name=template_name,
                 parameters_used={},
                 success=False,
-                error_message=f"Renderer '{renderer_name}' not found"
+                error_message=f"Renderer '{renderer_name}' not found",
             )
 
         return renderer.render(template, parameters)
 
-    def validate_template(self, template_name: str, renderer_name: Optional[str] = None) -> List[str]:
+    def validate_template(
+        self, template_name: str, renderer_name: Optional[str] = None
+    ) -> List[str]:
         """
         验证模板
 
@@ -283,7 +305,9 @@ class PromptManager:
             return template.parameters
         return {}
 
-    def export_templates(self, format: str = "json", category: Optional[PromptCategory] = None) -> str:
+    def export_templates(
+        self, format: str = "json", category: Optional[PromptCategory] = None
+    ) -> str:
         """
         导出模板
 
@@ -300,8 +324,8 @@ class PromptManager:
             "metadata": {
                 "total_count": len(templates),
                 "categories": list(set(t.category.value for t in templates)),
-                "export_time": self._get_current_time()
-            }
+                "export_time": self._get_current_time(),
+            },
         }
 
         if format.lower() == "json":
@@ -311,8 +335,9 @@ class PromptManager:
         else:
             raise ValueError(f"Unsupported export format: {format}")
 
-    def import_templates(self, config_str: str, format: str = "json",
-                       overwrite: bool = False) -> int:
+    def import_templates(
+        self, config_str: str, format: str = "json", overwrite: bool = False
+    ) -> int:
         """
         导入模板
 
@@ -331,18 +356,22 @@ class PromptManager:
                 data = yaml.safe_load(config_str)
 
             imported_count = 0
-            if 'templates' in data:
-                for template_data in data['templates']:
+            if "templates" in data:
+                for template_data in data["templates"]:
                     try:
                         template = PromptTemplate.from_dict(template_data)
                         if template.name in self.templates and not overwrite:
-                            self.logger.warning(f"Template '{template.name}' already exists, skipping")
+                            self.logger.warning(
+                                f"Template '{template.name}' already exists, skipping"
+                            )
                             continue
 
                         self.register_template(template)
                         imported_count += 1
                     except Exception as e:
-                        self.logger.error(f"Failed to import template '{template_data.get('name', 'unknown')}': {e}")
+                        self.logger.error(
+                            f"Failed to import template '{template_data.get('name', 'unknown')}': {e}"
+                        )
 
             self.logger.info(f"Imported {imported_count} templates")
             return imported_count
@@ -379,14 +408,17 @@ class PromptManager:
             "total_templates": len(self.templates),
             "categories": category_counts,
             "types": type_counts,
-            "top_tags": sorted(tag_counts.items(), key=lambda x: x[1], reverse=True)[:10],
+            "top_tags": sorted(tag_counts.items(), key=lambda x: x[1], reverse=True)[
+                :10
+            ],
             "available_renderers": list(self.renderers.keys()),
-            "current_renderer": self.current_renderer
+            "current_renderer": self.current_renderer,
         }
 
     def _get_current_time(self) -> str:
         """获取当前时间字符串"""
         from datetime import datetime
+
         return datetime.now().isoformat()
 
     # 便捷方法
@@ -410,6 +442,8 @@ class PromptManager:
         """渲染深度分析提示"""
         return self.render_template("deep_code_analysis", parameters)
 
-    def render_repair_suggestion(self, parameters: Dict[str, Any]) -> PromptRenderResult:
+    def render_repair_suggestion(
+        self, parameters: Dict[str, Any]
+    ) -> PromptRenderResult:
         """渲染修复建议提示"""
         return self.render_template("defect_fix_suggestion", parameters)

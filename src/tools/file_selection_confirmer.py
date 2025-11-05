@@ -5,16 +5,17 @@
 
 import json
 import os
-from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 from ..utils.logger import get_logger
+
 try:
-    from ..tools.user_decision_collector import UserDecisionResult, UserDecisionSession
     from ..tools.ai_file_selector import FileSelectionResult
     from ..tools.project_structure_scanner import ProjectStructure
+    from ..tools.user_decision_collector import UserDecisionResult, UserDecisionSession
 except ImportError:
     # 如果相关模块不可用，定义基本类型
     @dataclass
@@ -48,6 +49,7 @@ except ImportError:
 @dataclass
 class ConfirmedFileSelection:
     """确认的文件选择"""
+
     file_path: str
     relative_path: str
     language: str
@@ -75,13 +77,14 @@ class ConfirmedFileSelection:
             "file_metadata": self.file_metadata,
             "analysis_priority": self.analysis_priority,
             "estimated_complexity": self.expected_complexity,
-            "expected_fixes": self.expected_fixes
+            "expected_fixes": self.expected_fixes,
         }
 
 
 @dataclass
 class WorkloadEstimate:
     """工作量估算"""
+
     total_files: int = 0
     estimated_hours: float = 0.0
     estimated_fixes: int = 0
@@ -97,13 +100,14 @@ class WorkloadEstimate:
             "estimated_fixes": self.estimated_fixes,
             "complexity_distribution": self.complexity_distribution,
             "language_distribution": self.language_distribution,
-            "priority_distribution": self.priority_distribution
+            "priority_distribution": self.priority_distribution,
         }
 
 
 @dataclass
 class FileSelectionConfirmation:
     """文件选择确认结果"""
+
     confirmation_id: str
     project_path: str
     confirmed_files: List[ConfirmedFileSelection] = field(default_factory=list)
@@ -126,7 +130,7 @@ class FileSelectionConfirmation:
             "export_data": self.export_data,
             "confirmation_timestamp": self.confirmation_timestamp,
             "user_signature": self.user_signature,
-            "total_confirmed": len(self.confirmed_files)
+            "total_confirmed": len(self.confirmed_files),
         }
 
 
@@ -139,9 +143,9 @@ class FileSelectionConfirmer:
 
         # 复杂度估算参数
         self.complexity_factors = {
-            "base_time_per_file": 0.5,      # 每个文件基础时间（小时）
-            "time_per_issue": 0.1,          # 每个问题时间（小时）
-            "language_multiplier": {         # 语言复杂度乘数
+            "base_time_per_file": 0.5,  # 每个文件基础时间（小时）
+            "time_per_issue": 0.1,  # 每个问题时间（小时）
+            "language_multiplier": {  # 语言复杂度乘数
                 "python": 1.0,
                 "javascript": 1.1,
                 "typescript": 1.2,
@@ -152,23 +156,25 @@ class FileSelectionConfirmer:
                 "csharp": 1.2,
                 "rust": 1.3,
                 "php": 1.1,
-                "ruby": 1.0
+                "ruby": 1.0,
             },
-            "priority_multiplier": {         # 优先级乘数
+            "priority_multiplier": {  # 优先级乘数
                 "high": 1.5,
                 "medium": 1.0,
-                "low": 0.7
-            }
+                "low": 0.7,
+            },
         }
 
         # 确保备份目录存在
         os.makedirs(self.backup_dir, exist_ok=True)
 
-    def confirm_selection(self,
-                         user_decision_result: UserDecisionResult,
-                         project_path: str,
-                         user_signature: Optional[str] = None,
-                         additional_options: Optional[Dict[str, Any]] = None) -> FileSelectionConfirmation:
+    def confirm_selection(
+        self,
+        user_decision_result: UserDecisionResult,
+        project_path: str,
+        user_signature: Optional[str] = None,
+        additional_options: Optional[Dict[str, Any]] = None,
+    ) -> FileSelectionConfirmation:
         """
         确认文件选择
 
@@ -193,18 +199,19 @@ class FileSelectionConfirmer:
             confirmation_id=confirmation_id,
             project_path=os.path.abspath(project_path),
             confirmation_timestamp=datetime.now().isoformat(),
-            user_signature=user_signature
+            user_signature=user_signature,
         )
 
         try:
             # 转换确认的文件
             confirmation.confirmed_files = self._convert_to_confirmed_files(
-                user_decision_result.final_selected_files,
-                project_path
+                user_decision_result.final_selected_files, project_path
             )
 
             # 估算工作量
-            confirmation.workload_estimate = self._estimate_workload(confirmation.confirmed_files)
+            confirmation.workload_estimate = self._estimate_workload(
+                confirmation.confirmed_files
+            )
 
             # 生成确认摘要
             confirmation.confirmation_summary = self._generate_confirmation_summary(
@@ -215,7 +222,9 @@ class FileSelectionConfirmer:
             confirmation.phase5_input_data = self._prepare_phase5_input(confirmation)
 
             # 准备导出数据
-            confirmation.export_data = self._prepare_export_data(confirmation, additional_options or {})
+            confirmation.export_data = self._prepare_export_data(
+                confirmation, additional_options or {}
+            )
 
             # 保存确认结果
             self._save_confirmation(confirmation)
@@ -231,9 +240,9 @@ class FileSelectionConfirmer:
 
         return confirmation
 
-    def _convert_to_confirmed_files(self,
-                                   final_selected_files: List[Dict[str, Any]],
-                                   project_path: str) -> List[ConfirmedFileSelection]:
+    def _convert_to_confirmed_files(
+        self, final_selected_files: List[Dict[str, Any]], project_path: str
+    ) -> List[ConfirmedFileSelection]:
         """转换为确认的文件选择"""
         confirmed_files = []
 
@@ -252,17 +261,21 @@ class FileSelectionConfirmer:
                 confidence=file_data.get("confidence", 0.5),
                 selection_score=file_data.get("selection_score", 0.0),
                 reason=file_data.get("reason", ""),
-                key_issues=file_data.get("key_issues", [])
+                key_issues=file_data.get("key_issues", []),
             )
 
             # 收集文件元数据
             confirmed_file.file_metadata = self._collect_file_metadata(file_path)
 
             # 计算分析优先级
-            confirmed_file.analysis_priority = self._calculate_analysis_priority(confirmed_file)
+            confirmed_file.analysis_priority = self._calculate_analysis_priority(
+                confirmed_file
+            )
 
             # 估算复杂度
-            confirmed_file.estimated_complexity = self._estimate_file_complexity(confirmed_file)
+            confirmed_file.estimated_complexity = self._estimate_file_complexity(
+                confirmed_file
+            )
 
             # 预期修复数量
             confirmed_file.expected_fixes = len(confirmed_file.key_issues)
@@ -278,16 +291,20 @@ class FileSelectionConfirmer:
         try:
             # 基本文件信息
             stat_info = os.stat(file_path)
-            metadata.update({
-                "file_size": stat_info.st_size,
-                "last_modified": datetime.fromtimestamp(stat_info.st_mtime).isoformat(),
-                "is_readable": os.access(file_path, os.R_OK),
-                "is_writable": os.access(file_path, os.W_OK)
-            })
+            metadata.update(
+                {
+                    "file_size": stat_info.st_size,
+                    "last_modified": datetime.fromtimestamp(
+                        stat_info.st_mtime
+                    ).isoformat(),
+                    "is_readable": os.access(file_path, os.R_OK),
+                    "is_writable": os.access(file_path, os.W_OK),
+                }
+            )
 
             # 文件行数
             try:
-                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
                     line_count = sum(1 for _ in f)
                     metadata["line_count"] = line_count
             except Exception:
@@ -310,7 +327,9 @@ class FileSelectionConfirmer:
 
         return metadata
 
-    def _calculate_analysis_priority(self, confirmed_file: ConfirmedFileSelection) -> int:
+    def _calculate_analysis_priority(
+        self, confirmed_file: ConfirmedFileSelection
+    ) -> int:
         """计算分析优先级"""
         priority = 0
 
@@ -357,9 +376,17 @@ class FileSelectionConfirmer:
 
         # 基于语言复杂度
         language_multipliers = {
-            "python": 1.0, "javascript": 1.1, "typescript": 1.2,
-            "java": 1.3, "go": 1.0, "cpp": 1.4, "c": 1.3,
-            "csharp": 1.2, "rust": 1.3, "php": 1.1, "ruby": 1.0
+            "python": 1.0,
+            "javascript": 1.1,
+            "typescript": 1.2,
+            "java": 1.3,
+            "go": 1.0,
+            "cpp": 1.4,
+            "c": 1.3,
+            "csharp": 1.2,
+            "rust": 1.3,
+            "php": 1.1,
+            "ruby": 1.0,
         }
         lang_multiplier = language_multipliers.get(confirmed_file.language, 1.0)
         complexity_score *= lang_multiplier
@@ -372,7 +399,9 @@ class FileSelectionConfirmer:
         else:
             return "低"
 
-    def _estimate_workload(self, confirmed_files: List[ConfirmedFileSelection]) -> WorkloadEstimate:
+    def _estimate_workload(
+        self, confirmed_files: List[ConfirmedFileSelection]
+    ) -> WorkloadEstimate:
         """估算工作量"""
         estimate = WorkloadEstimate()
         estimate.total_files = len(confirmed_files)
@@ -389,7 +418,10 @@ class FileSelectionConfirmer:
             file_hours = self.complexity_factors["base_time_per_file"]
 
             # 基于问题数量
-            file_hours += len(confirmed_file.key_issues) * self.complexity_factors["time_per_issue"]
+            file_hours += (
+                len(confirmed_file.key_issues)
+                * self.complexity_factors["time_per_issue"]
+            )
 
             # 基于语言的乘数
             lang_multiplier = self.complexity_factors["language_multiplier"].get(
@@ -408,7 +440,9 @@ class FileSelectionConfirmer:
 
             # 统计分布
             complexity_dist[confirmed_file.estimated_complexity] += 1
-            language_dist[confirmed_file.language] = language_dist.get(confirmed_file.language, 0) + 1
+            language_dist[confirmed_file.language] = (
+                language_dist.get(confirmed_file.language, 0) + 1
+            )
             priority_dist[confirmed_file.priority] += 1
 
         estimate.estimated_hours = total_hours
@@ -419,9 +453,11 @@ class FileSelectionConfirmer:
 
         return estimate
 
-    def _generate_confirmation_summary(self,
-                                      confirmation: FileSelectionConfirmation,
-                                      user_decision_result: UserDecisionResult) -> Dict[str, Any]:
+    def _generate_confirmation_summary(
+        self,
+        confirmation: FileSelectionConfirmation,
+        user_decision_result: UserDecisionResult,
+    ) -> Dict[str, Any]:
         """生成确认摘要"""
         summary = {
             "confirmation_id": confirmation.confirmation_id,
@@ -432,45 +468,87 @@ class FileSelectionConfirmer:
                 "total_confirmed": len(confirmation.confirmed_files),
                 "initial_selected": len(user_decision_result.final_selected_files),
                 "rejected_count": len(user_decision_result.rejected_files),
-                "added_count": len(user_decision_result.added_files)
+                "added_count": len(user_decision_result.added_files),
             },
             "workload_summary": {
                 "estimated_hours": confirmation.workload_estimate.estimated_hours,
                 "estimated_fixes": confirmation.workload_estimate.estimated_fixes,
-                "avg_time_per_file": round(
-                    confirmation.workload_estimate.estimated_hours / len(confirmation.confirmed_files), 2
-                ) if confirmation.confirmed_files else 0
+                "avg_time_per_file": (
+                    round(
+                        confirmation.workload_estimate.estimated_hours
+                        / len(confirmation.confirmed_files),
+                        2,
+                    )
+                    if confirmation.confirmed_files
+                    else 0
+                ),
             },
             "quality_metrics": {
-                "average_confidence": round(
-                    sum(f.confidence for f in confirmation.confirmed_files) / len(confirmation.confirmed_files), 2
-                ) if confirmation.confirmed_files else 0,
-                "average_selection_score": round(
-                    sum(f.selection_score for f in confirmation.confirmed_files) / len(confirmation.confirmed_files), 2
-                ) if confirmation.confirmed_files else 0,
-                "high_priority_ratio": round(
-                    len([f for f in confirmation.confirmed_files if f.priority == "high"]) /
-                    len(confirmation.confirmed_files), 2
-                ) if confirmation.confirmed_files else 0
+                "average_confidence": (
+                    round(
+                        sum(f.confidence for f in confirmation.confirmed_files)
+                        / len(confirmation.confirmed_files),
+                        2,
+                    )
+                    if confirmation.confirmed_files
+                    else 0
+                ),
+                "average_selection_score": (
+                    round(
+                        sum(f.selection_score for f in confirmation.confirmed_files)
+                        / len(confirmation.confirmed_files),
+                        2,
+                    )
+                    if confirmation.confirmed_files
+                    else 0
+                ),
+                "high_priority_ratio": (
+                    round(
+                        len(
+                            [
+                                f
+                                for f in confirmation.confirmed_files
+                                if f.priority == "high"
+                            ]
+                        )
+                        / len(confirmation.confirmed_files),
+                        2,
+                    )
+                    if confirmation.confirmed_files
+                    else 0
+                ),
             },
-            "decision_statistics": user_decision_result.decision_summary
+            "decision_statistics": user_decision_result.decision_summary,
         }
 
         return summary
 
-    def _prepare_phase5_input(self, confirmation: FileSelectionConfirmation) -> Dict[str, Any]:
+    def _prepare_phase5_input(
+        self, confirmation: FileSelectionConfirmation
+    ) -> Dict[str, Any]:
         """准备Phase 5输入数据"""
         phase5_input = {
             "phase_info": {
                 "phase": "5",
                 "name": "AI修复工作流",
                 "description": "基于严格工作流图的完整修复闭环",
-                "workflow_nodes": ["B", "C", "D", "E", "F/G", "H", "I", "J/K", "L", "B/M"]
+                "workflow_nodes": [
+                    "B",
+                    "C",
+                    "D",
+                    "E",
+                    "F/G",
+                    "H",
+                    "I",
+                    "J/K",
+                    "L",
+                    "B/M",
+                ],
             },
             "project_context": {
                 "project_path": confirmation.project_path,
                 "confirmation_id": confirmation.confirmation_id,
-                "confirmation_timestamp": confirmation.confirmation_timestamp
+                "confirmation_timestamp": confirmation.confirmation_timestamp,
             },
             "selected_files": [],
             "execution_plan": {
@@ -478,21 +556,21 @@ class FileSelectionConfirmer:
                 "estimated_duration_hours": confirmation.workload_estimate.estimated_hours,
                 "workflow_type": "sequential",  # 按优先级顺序执行
                 "error_handling": "continue_on_error",  # 遇到错误继续处理其他文件
-                "backup_enabled": True
+                "backup_enabled": True,
             },
             "workflow_config": {
                 "enable_user_interaction": True,
                 "require_confirmation_at_critical_steps": True,
                 "auto_retry_failed_fixes": True,
-                "max_retry_attempts": 3
-            }
+                "max_retry_attempts": 3,
+            },
         }
 
         # 按分析优先级排序文件
         sorted_files = sorted(
             confirmation.confirmed_files,
             key=lambda x: x.analysis_priority,
-            reverse=True
+            reverse=True,
         )
 
         # 转换为Phase 5格式
@@ -514,16 +592,16 @@ class FileSelectionConfirmer:
                     "fix_suggestion_status": "pending",
                     "user_review_status": "pending",
                     "fix_execution_status": "pending",
-                    "verification_status": "pending"
-                }
+                    "verification_status": "pending",
+                },
             }
             phase5_input["selected_files"].append(phase5_file)
 
         return phase5_input
 
-    def _prepare_export_data(self,
-                            confirmation: FileSelectionConfirmation,
-                            options: Dict[str, Any]) -> Dict[str, Any]:
+    def _prepare_export_data(
+        self, confirmation: FileSelectionConfirmation, options: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """准备导出数据"""
         export_formats = options.get("formats", ["json"])
         export_data = {}
@@ -547,46 +625,52 @@ class FileSelectionConfirmer:
                         "file_path": f.relative_path,
                         "priority": f.priority,
                         "complexity": f.estimated_complexity,
-                        "issues": len(f.key_issues)
+                        "issues": len(f.key_issues),
                     }
                     for f in confirmation.confirmed_files
-                ]
+                ],
             }
 
         return export_data
 
-    def _export_to_csv(self, confirmation: FileSelectionConfirmation) -> List[Dict[str, Any]]:
+    def _export_to_csv(
+        self, confirmation: FileSelectionConfirmation
+    ) -> List[Dict[str, Any]]:
         """导出为CSV格式"""
         csv_data = []
 
         # 添加标题行
-        csv_data.append({
-            "file_path": "文件路径",
-            "relative_path": "相对路径",
-            "language": "语言",
-            "priority": "优先级",
-            "confidence": "置信度",
-            "selection_score": "选择分数",
-            "complexity": "复杂度",
-            "expected_fixes": "预期修复数",
-            "key_issues": "关键问题",
-            "reason": "选择理由"
-        })
+        csv_data.append(
+            {
+                "file_path": "文件路径",
+                "relative_path": "相对路径",
+                "language": "语言",
+                "priority": "优先级",
+                "confidence": "置信度",
+                "selection_score": "选择分数",
+                "complexity": "复杂度",
+                "expected_fixes": "预期修复数",
+                "key_issues": "关键问题",
+                "reason": "选择理由",
+            }
+        )
 
         # 添加数据行
         for confirmed_file in confirmation.confirmed_files:
-            csv_data.append({
-                "file_path": confirmed_file.file_path,
-                "relative_path": confirmed_file.relative_path,
-                "language": confirmed_file.language,
-                "priority": confirmed_file.priority,
-                "confidence": confirmed_file.confidence,
-                "selection_score": confirmed_file.selection_score,
-                "complexity": confirmed_file.estimated_complexity,
-                "expected_fixes": confirmed_file.expected_fixes,
-                "key_issues": "; ".join(confirmed_file.key_issues),
-                "reason": confirmed_file.reason
-            })
+            csv_data.append(
+                {
+                    "file_path": confirmed_file.file_path,
+                    "relative_path": confirmed_file.relative_path,
+                    "language": confirmed_file.language,
+                    "priority": confirmed_file.priority,
+                    "confidence": confirmed_file.confidence,
+                    "selection_score": confirmed_file.selection_score,
+                    "complexity": confirmed_file.estimated_complexity,
+                    "expected_fixes": confirmed_file.expected_fixes,
+                    "key_issues": "; ".join(confirmed_file.key_issues),
+                    "reason": confirmed_file.reason,
+                }
+            )
 
         return csv_data
 
@@ -599,17 +683,21 @@ class FileSelectionConfirmer:
             filepath = os.path.join(self.backup_dir, filename)
 
             # 保存完整确认数据
-            with open(filepath, 'w', encoding='utf-8') as f:
+            with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(confirmation.to_dict(), f, ensure_ascii=False, indent=2)
 
             self.logger.info(f"文件选择确认已保存: {filepath}")
 
             # 同时保存Phase 5输入数据
-            phase5_filename = f"phase5_input_{confirmation.confirmation_id}_{timestamp}.json"
+            phase5_filename = (
+                f"phase5_input_{confirmation.confirmation_id}_{timestamp}.json"
+            )
             phase5_filepath = os.path.join(self.backup_dir, phase5_filename)
 
-            with open(phase5_filepath, 'w', encoding='utf-8') as f:
-                json.dump(confirmation.phase5_input_data, f, ensure_ascii=False, indent=2)
+            with open(phase5_filepath, "w", encoding="utf-8") as f:
+                json.dump(
+                    confirmation.phase5_input_data, f, ensure_ascii=False, indent=2
+                )
 
             self.logger.info(f"Phase 5输入数据已保存: {phase5_filepath}")
 
@@ -619,17 +707,22 @@ class FileSelectionConfirmer:
     def _generate_confirmation_id(self) -> str:
         """生成确认ID"""
         import uuid
+
         return f"confirm_{uuid.uuid4().hex[:12]}_{int(datetime.now().timestamp())}"
 
-    def load_confirmation(self, confirmation_id: str) -> Optional[FileSelectionConfirmation]:
+    def load_confirmation(
+        self, confirmation_id: str
+    ) -> Optional[FileSelectionConfirmation]:
         """加载已保存的确认结果"""
         try:
             # 查找确认文件
             for filename in os.listdir(self.backup_dir):
-                if filename.startswith(f"file_selection_confirmation_{confirmation_id}_") and filename.endswith(".json"):
+                if filename.startswith(
+                    f"file_selection_confirmation_{confirmation_id}_"
+                ) and filename.endswith(".json"):
                     filepath = os.path.join(self.backup_dir, filename)
 
-                    with open(filepath, 'r', encoding='utf-8') as f:
+                    with open(filepath, "r", encoding="utf-8") as f:
                         data = json.load(f)
 
                     # 重建确认对象
@@ -642,14 +735,16 @@ class FileSelectionConfirmer:
 
         return None
 
-    def _rebuild_confirmation_from_data(self, data: Dict[str, Any]) -> FileSelectionConfirmation:
+    def _rebuild_confirmation_from_data(
+        self, data: Dict[str, Any]
+    ) -> FileSelectionConfirmation:
         """从数据重建确认对象"""
         # 这里简化实现，实际应该完整重建所有对象
         confirmation = FileSelectionConfirmation(
             confirmation_id=data["confirmation_id"],
             project_path=data["project_path"],
             confirmation_timestamp=data["confirmation_timestamp"],
-            user_signature=data.get("user_signature")
+            user_signature=data.get("user_signature"),
         )
 
         # TODO: 完整重建confirmed_files等其他字段
@@ -658,10 +753,12 @@ class FileSelectionConfirmer:
 
 
 # 便捷函数
-def confirm_file_selection(user_decision_result: UserDecisionResult,
-                          project_path: str,
-                          backup_dir: str = ".fix_backups",
-                          export_formats: List[str] = None) -> Dict[str, Any]:
+def confirm_file_selection(
+    user_decision_result: UserDecisionResult,
+    project_path: str,
+    backup_dir: str = ".fix_backups",
+    export_formats: List[str] = None,
+) -> Dict[str, Any]:
     """
     便捷的文件选择确认函数
 
@@ -681,7 +778,7 @@ def confirm_file_selection(user_decision_result: UserDecisionResult,
     confirmation = confirmer.confirm_selection(
         user_decision_result=user_decision_result,
         project_path=project_path,
-        additional_options=options
+        additional_options=options,
     )
 
     return confirmation.to_dict()

@@ -3,18 +3,25 @@
 为AI修复建议构建上下文
 """
 
-import os
 import json
-from typing import Dict, List, Any, Optional, Tuple
+import os
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
-from collections import defaultdict
+from typing import Any, Dict, List, Optional, Tuple
 
 from ..utils.logger import get_logger
+
 try:
-    from .problem_detection_validator import ValidatedProblem, ProblemValidationResult
-    from .workflow_data_types import AIDetectedProblem, ProblemType, SeverityLevel, FixType, CodeContext
+    from .problem_detection_validator import ProblemValidationResult, ValidatedProblem
     from .project_structure_scanner import ProjectStructure
+    from .workflow_data_types import (
+        AIDetectedProblem,
+        CodeContext,
+        FixType,
+        ProblemType,
+        SeverityLevel,
+    )
 except ImportError:
     # 如果相关模块不可用，定义基本类型
     from enum import Enum
@@ -77,6 +84,7 @@ except ImportError:
 @dataclass
 class FixSuggestionContext:
     """修复建议上下文"""
+
     context_id: str
     validation_result: ProblemValidationResult
     file_contents: Dict[str, str] = field(default_factory=dict)
@@ -92,7 +100,11 @@ class FixSuggestionContext:
         """转换为字典格式"""
         return {
             "context_id": self.context_id,
-            "validation_result": self.validation_result.to_dict() if hasattr(self.validation_result, 'to_dict') else {},
+            "validation_result": (
+                self.validation_result.to_dict()
+                if hasattr(self.validation_result, "to_dict")
+                else {}
+            ),
             "file_contents": self.file_contents,
             "file_dependencies": self.file_dependencies,
             "project_context": self.project_context,
@@ -100,7 +112,7 @@ class FixSuggestionContext:
             "fix_constraints": self.fix_constraints,
             "context_statistics": self.context_statistics,
             "build_timestamp": self.build_timestamp,
-            "token_estimate": self.token_estimate
+            "token_estimate": self.token_estimate,
         }
 
 
@@ -118,58 +130,60 @@ class FixSuggestionContextBuilder:
                 "priority": "critical",
                 "approach": "conservative",
                 "require_testing": True,
-                "risk_level": "high"
+                "risk_level": "high",
             },
             ProblemType.PERFORMANCE: {
                 "priority": "high",
                 "approach": "balanced",
                 "require_testing": True,
-                "risk_level": "medium"
+                "risk_level": "medium",
             },
             ProblemType.LOGIC: {
                 "priority": "high",
                 "approach": "thorough",
                 "require_testing": True,
-                "risk_level": "high"
+                "risk_level": "high",
             },
             ProblemType.RELIABILITY: {
                 "priority": "medium",
                 "approach": "defensive",
                 "require_testing": True,
-                "risk_level": "medium"
+                "risk_level": "medium",
             },
             ProblemType.MAINTAINABILITY: {
                 "priority": "medium",
                 "approach": "incremental",
                 "require_testing": False,
-                "risk_level": "low"
+                "risk_level": "low",
             },
             ProblemType.STYLE: {
                 "priority": "low",
                 "approach": "automated",
                 "require_testing": False,
-                "risk_level": "low"
+                "risk_level": "low",
             },
             ProblemType.COMPATIBILITY: {
                 "priority": "medium",
                 "approach": "careful",
                 "require_testing": True,
-                "risk_level": "medium"
+                "risk_level": "medium",
             },
             ProblemType.DOCUMENTATION: {
                 "priority": "low",
                 "approach": "simple",
                 "require_testing": False,
-                "risk_level": "low"
-            }
+                "risk_level": "low",
+            },
         }
 
-    def build_context(self,
-                     detected_problems: Optional[List[AIDetectedProblem]] = None,
-                     validation_result: Optional[ProblemValidationResult] = None,
-                     file_contents: Optional[Dict[str, str]] = None,
-                     project_structure: Optional[ProjectStructure] = None,
-                     user_preferences: Optional[Dict[str, Any]] = None) -> FixSuggestionContext:
+    def build_context(
+        self,
+        detected_problems: Optional[List[AIDetectedProblem]] = None,
+        validation_result: Optional[ProblemValidationResult] = None,
+        file_contents: Optional[Dict[str, str]] = None,
+        project_structure: Optional[ProjectStructure] = None,
+        user_preferences: Optional[Dict[str, Any]] = None,
+    ) -> FixSuggestionContext:
         """
         构建修复建议上下文
 
@@ -186,23 +200,28 @@ class FixSuggestionContextBuilder:
         # 支持两种输入方式：detected_problems 或 validation_result
         if detected_problems:
             context_id = self._generate_context_id()
-            self.logger.info(f"开始构建修复建议上下文，问题数量: {len(detected_problems)}")
+            self.logger.info(
+                f"开始构建修复建议上下文，问题数量: {len(detected_problems)}"
+            )
             # 使用detected_problems创建上下文
             context = FixSuggestionContext(
-                context_id=context_id,
-                build_timestamp=datetime.now().isoformat()
+                context_id=context_id, build_timestamp=datetime.now().isoformat()
             )
             # 设置detected_problems并创建内部的validation_result
             context.detected_problems = detected_problems
-            context.validation_result = self._create_validation_result_from_problems(detected_problems)
+            context.validation_result = self._create_validation_result_from_problems(
+                detected_problems
+            )
         elif validation_result:
             context_id = self._generate_context_id()
-            self.logger.info(f"开始构建修复建议上下文，验证ID: {validation_result.validation_id}")
+            self.logger.info(
+                f"开始构建修复建议上下文，验证ID: {validation_result.validation_id}"
+            )
             # 使用validation_result创建上下文（保持向后兼容）
             context = FixSuggestionContext(
                 context_id=context_id,
                 validation_result=validation_result,
-                build_timestamp=datetime.now().isoformat()
+                build_timestamp=datetime.now().isoformat(),
             )
             context.detected_problems = validation_result.original_problems
         else:
@@ -236,7 +255,9 @@ class FixSuggestionContextBuilder:
             # 估算token使用量
             context.token_estimate = self._estimate_token_usage(context)
 
-            self.logger.info(f"修复建议上下文构建完成，预估token数: {context.token_estimate}")
+            self.logger.info(
+                f"修复建议上下文构建完成，预估token数: {context.token_estimate}"
+            )
 
         except Exception as e:
             self.logger.error(f"构建修复建议上下文失败: {e}")
@@ -244,9 +265,9 @@ class FixSuggestionContextBuilder:
 
         return context
 
-    def _analyze_file_dependencies(self,
-                                 problems: List[ValidatedProblem],
-                                 file_contents: Dict[str, str]) -> Dict[str, List[str]]:
+    def _analyze_file_dependencies(
+        self, problems: List[ValidatedProblem], file_contents: Dict[str, str]
+    ) -> Dict[str, List[str]]:
         """分析文件依赖关系"""
         dependencies = {}
 
@@ -264,19 +285,19 @@ class FixSuggestionContextBuilder:
     def _extract_file_dependencies(self, file_path: str, content: str) -> List[str]:
         """提取文件依赖"""
         dependencies = []
-        lines = content.split('\n')
+        lines = content.split("\n")
 
         # 根据文件类型提取依赖
         _, ext = os.path.splitext(file_path)
         ext = ext.lower()
 
-        if ext == '.py':
+        if ext == ".py":
             dependencies.extend(self._extract_python_dependencies(lines))
-        elif ext in ['.js', '.jsx', '.ts', '.tsx']:
+        elif ext in [".js", ".jsx", ".ts", ".tsx"]:
             dependencies.extend(self._extract_javascript_dependencies(lines))
-        elif ext == '.java':
+        elif ext == ".java":
             dependencies.extend(self._extract_java_dependencies(lines))
-        elif ext == '.go':
+        elif ext == ".go":
             dependencies.extend(self._extract_go_dependencies(lines))
 
         return list(set(dependencies))  # 去重
@@ -289,17 +310,17 @@ class FixSuggestionContextBuilder:
             line = line.strip()
 
             # import语句
-            if line.startswith('import '):
+            if line.startswith("import "):
                 parts = line.split()
                 if len(parts) >= 2:
-                    module = parts[1].split('.')[0]
+                    module = parts[1].split(".")[0]
                     dependencies.append(module)
 
             # from ... import语句
-            elif line.startswith('from '):
-                if ' import ' in line:
-                    module_part = line.split(' import ')[0].replace('from ', '').strip()
-                    module = module_part.split('.')[0]
+            elif line.startswith("from "):
+                if " import " in line:
+                    module_part = line.split(" import ")[0].replace("from ", "").strip()
+                    module = module_part.split(".")[0]
                     dependencies.append(module)
 
         return dependencies
@@ -312,15 +333,15 @@ class FixSuggestionContextBuilder:
             line = line.strip()
 
             # import语句
-            if line.startswith('import ') and ' from ' in line:
-                from_part = line.split(' from ')[1].strip()
+            if line.startswith("import ") and " from " in line:
+                from_part = line.split(" from ")[1].strip()
                 # 清理引号
-                module = from_part.strip('\'"')
+                module = from_part.strip("'\"")
                 dependencies.append(module)
 
             # require语句
-            elif line.startswith('require('):
-                module = line.strip()[len('require('):-1].strip('\'"')
+            elif line.startswith("require("):
+                module = line.strip()[len("require(") : -1].strip("'\"")
                 dependencies.append(module)
 
         return dependencies
@@ -333,12 +354,12 @@ class FixSuggestionContextBuilder:
             line = line.strip()
 
             # import语句
-            if line.startswith('import '):
+            if line.startswith("import "):
                 parts = line.split()
                 if len(parts) >= 2:
-                    import_statement = ' '.join(parts[1:])
+                    import_statement = " ".join(parts[1:])
                     # 移除分号
-                    module = import_statement.rstrip(';')
+                    module = import_statement.rstrip(";")
                     dependencies.append(module)
 
         return dependencies
@@ -351,22 +372,26 @@ class FixSuggestionContextBuilder:
             line = line.strip()
 
             # import语句
-            if line.startswith('import '):
-                import_part = line.replace('import ', '').strip()
+            if line.startswith("import "):
+                import_part = line.replace("import ", "").strip()
                 # 移除引号
-                module = import_part.strip('"\'')
+                module = import_part.strip("\"'")
                 dependencies.append(module)
 
         return dependencies
 
-    def _build_project_context(self,
-                             validation_result: ProblemValidationResult,
-                             project_structure: Optional[ProjectStructure]) -> Dict[str, Any]:
+    def _build_project_context(
+        self,
+        validation_result: ProblemValidationResult,
+        project_structure: Optional[ProjectStructure],
+    ) -> Dict[str, Any]:
         """构建项目上下文"""
         context = {}
 
         # 分析问题分布
-        problem_stats = self._analyze_problem_distribution(validation_result.filtered_problems)
+        problem_stats = self._analyze_problem_distribution(
+            validation_result.filtered_problems
+        )
         context["problem_statistics"] = problem_stats
 
         # 项目信息
@@ -375,18 +400,24 @@ class FixSuggestionContextBuilder:
                 "project_path": project_structure.project_path,
                 "total_files": project_structure.total_files,
                 "language_distribution": project_structure.language_distribution,
-                "project_type": self._detect_project_type(project_structure)
+                "project_type": self._detect_project_type(project_structure),
             }
 
         # 修复复杂性评估
-        context["complexity_assessment"] = self._assess_fix_complexity(validation_result.filtered_problems)
+        context["complexity_assessment"] = self._assess_fix_complexity(
+            validation_result.filtered_problems
+        )
 
         # 风险评估
-        context["risk_assessment"] = self._assess_fix_risks(validation_result.filtered_problems)
+        context["risk_assessment"] = self._assess_fix_risks(
+            validation_result.filtered_problems
+        )
 
         return context
 
-    def _analyze_problem_distribution(self, problems: List[ValidatedProblem]) -> Dict[str, Any]:
+    def _analyze_problem_distribution(
+        self, problems: List[ValidatedProblem]
+    ) -> Dict[str, Any]:
         """分析问题分布"""
         if not problems:
             return {"total_problems": 0}
@@ -396,7 +427,7 @@ class FixSuggestionContextBuilder:
             "severity_distribution": {},
             "type_distribution": {},
             "file_distribution": {},
-            "priority_distribution": {"high": 0, "medium": 0, "low": 0}
+            "priority_distribution": {"high": 0, "medium": 0, "low": 0},
         }
 
         for problem in problems:
@@ -404,15 +435,21 @@ class FixSuggestionContextBuilder:
 
             # 严重程度分布
             severity = original.severity.value
-            stats["severity_distribution"][severity] = stats["severity_distribution"].get(severity, 0) + 1
+            stats["severity_distribution"][severity] = (
+                stats["severity_distribution"].get(severity, 0) + 1
+            )
 
             # 问题类型分布
             problem_type = original.problem_type.value
-            stats["type_distribution"][problem_type] = stats["type_distribution"].get(problem_type, 0) + 1
+            stats["type_distribution"][problem_type] = (
+                stats["type_distribution"].get(problem_type, 0) + 1
+            )
 
             # 文件分布
             file_path = original.file_path
-            stats["file_distribution"][file_path] = stats["file_distribution"].get(file_path, 0) + 1
+            stats["file_distribution"][file_path] = (
+                stats["file_distribution"].get(file_path, 0) + 1
+            )
 
             # 优先级分布
             if problem.priority_rank <= len(problems) // 3:
@@ -439,7 +476,9 @@ class FixSuggestionContextBuilder:
         else:
             return "多语言项目"
 
-    def _assess_fix_complexity(self, problems: List[ValidatedProblem]) -> Dict[str, Any]:
+    def _assess_fix_complexity(
+        self, problems: List[ValidatedProblem]
+    ) -> Dict[str, Any]:
         """评估修复复杂性"""
         if not problems:
             return {"overall_complexity": "低", "complexity_score": 0}
@@ -459,7 +498,7 @@ class FixSuggestionContextBuilder:
                 ProblemType.COMPATIBILITY: 2,
                 ProblemType.MAINTAINABILITY: 2,
                 ProblemType.STYLE: 1,
-                ProblemType.DOCUMENTATION: 1
+                ProblemType.DOCUMENTATION: 1,
             }
             score += type_complexity.get(original.problem_type, 1)
 
@@ -468,7 +507,7 @@ class FixSuggestionContextBuilder:
                 SeverityLevel.CRITICAL: 4,
                 SeverityLevel.HIGH: 3,
                 SeverityLevel.MEDIUM: 2,
-                SeverityLevel.LOW: 1
+                SeverityLevel.LOW: 1,
             }
             score += severity_weights.get(original.severity, 1)
 
@@ -479,7 +518,7 @@ class FixSuggestionContextBuilder:
                 FixType.CODE_INSERTION: 2,
                 FixType.CODE_DELETION: 1,
                 FixType.CONFIGURATION: 1,
-                FixType.DEPENDENCY_UPDATE: 2
+                FixType.DEPENDENCY_UPDATE: 2,
             }
             score += fix_complexity.get(original.suggested_fix_type, 1)
 
@@ -498,7 +537,7 @@ class FixSuggestionContextBuilder:
             "overall_complexity": complexity_level,
             "complexity_score": round(avg_complexity, 2),
             "max_complexity": max(complexity_scores) if complexity_scores else 0,
-            "min_complexity": min(complexity_scores) if complexity_scores else 0
+            "min_complexity": min(complexity_scores) if complexity_scores else 0,
         }
 
     def _assess_fix_risks(self, problems: List[ValidatedProblem]) -> Dict[str, Any]:
@@ -550,61 +589,82 @@ class FixSuggestionContextBuilder:
             "risk_score": round(avg_risk, 2),
             "high_risk_problems": sum(1 for r in risk_factors if r >= 5),
             "medium_risk_problems": sum(1 for r in risk_factors if 3 <= r < 5),
-            "low_risk_problems": sum(1 for r in risk_factors if r < 3)
+            "low_risk_problems": sum(1 for r in risk_factors if r < 3),
         }
 
-    def _set_fix_constraints(self,
-                           validation_result: ProblemValidationResult,
-                           user_preferences: Dict[str, Any]) -> Dict[str, Any]:
+    def _set_fix_constraints(
+        self,
+        validation_result: ProblemValidationResult,
+        user_preferences: Dict[str, Any],
+    ) -> Dict[str, Any]:
         """设置修复约束"""
         constraints = {}
 
         # 默认约束
-        constraints.update({
-            "max_files_per_batch": 5,
-            "require_backup": True,
-            "require_testing": True,
-            "min_confidence_threshold": 0.7,
-            "allow_breaking_changes": False,
-            "prefer_minimal_changes": True
-        })
+        constraints.update(
+            {
+                "max_files_per_batch": 5,
+                "require_backup": True,
+                "require_testing": True,
+                "min_confidence_threshold": 0.7,
+                "allow_breaking_changes": False,
+                "prefer_minimal_changes": True,
+            }
+        )
 
         # 基于用户偏好调整约束
         if user_preferences.get("conservative_mode"):
-            constraints.update({
-                "max_files_per_batch": 3,
-                "min_confidence_threshold": 0.8,
-                "allow_breaking_changes": False,
-                "prefer_minimal_changes": True
-            })
+            constraints.update(
+                {
+                    "max_files_per_batch": 3,
+                    "min_confidence_threshold": 0.8,
+                    "allow_breaking_changes": False,
+                    "prefer_minimal_changes": True,
+                }
+            )
 
         if user_preferences.get("aggressive_mode"):
-            constraints.update({
-                "max_files_per_batch": 10,
-                "min_confidence_threshold": 0.6,
-                "allow_breaking_changes": True,
-                "prefer_minimal_changes": False
-            })
+            constraints.update(
+                {
+                    "max_files_per_batch": 10,
+                    "min_confidence_threshold": 0.6,
+                    "allow_breaking_changes": True,
+                    "prefer_minimal_changes": False,
+                }
+            )
 
         # 基于问题特征调整约束
-        high_risk_problems = sum(1 for p in validation_result.filtered_problems
-                               if p.original_problem.severity in [SeverityLevel.HIGH, SeverityLevel.CRITICAL])
+        high_risk_problems = sum(
+            1
+            for p in validation_result.filtered_problems
+            if p.original_problem.severity
+            in [SeverityLevel.HIGH, SeverityLevel.CRITICAL]
+        )
 
         if high_risk_problems > len(validation_result.filtered_problems) * 0.5:
-            constraints["max_files_per_batch"] = min(constraints["max_files_per_batch"], 3)
+            constraints["max_files_per_batch"] = min(
+                constraints["max_files_per_batch"], 3
+            )
             constraints["require_testing"] = True
 
         # 基于项目类型调整约束
-        if validation_result.validation_summary.get("quality_overview", {}).get("project_type") == "Python项目":
+        if (
+            validation_result.validation_summary.get("quality_overview", {}).get(
+                "project_type"
+            )
+            == "Python项目"
+        ):
             constraints["python_specific"] = {
                 "preserve_indentation": True,
                 "respect_pep8": True,
-                "check_imports": True
+                "check_imports": True,
             }
 
         return constraints
 
-    def _generate_context_statistics(self, context: FixSuggestionContext) -> Dict[str, Any]:
+    def _generate_context_statistics(
+        self, context: FixSuggestionContext
+    ) -> Dict[str, Any]:
         """生成上下文统计"""
         problems = context.validation_result.filtered_problems
 
@@ -613,12 +673,20 @@ class FixSuggestionContextBuilder:
             "total_files": len(set(p.original_problem.file_path for p in problems)),
             "file_contents_loaded": len(context.file_contents),
             "dependencies_analyzed": len(context.file_dependencies),
-            "problem_types": list(set(p.original_problem.problem_type.value for p in problems)),
-            "severity_levels": list(set(p.original_problem.severity.value for p in problems)),
-            "estimated_total_fix_time": sum(p.original_problem.estimated_fix_time for p in problems),
-            "average_confidence": round(
-                sum(p.adjusted_confidence for p in problems) / len(problems), 3
-            ) if problems else 0
+            "problem_types": list(
+                set(p.original_problem.problem_type.value for p in problems)
+            ),
+            "severity_levels": list(
+                set(p.original_problem.severity.value for p in problems)
+            ),
+            "estimated_total_fix_time": sum(
+                p.original_problem.estimated_fix_time for p in problems
+            ),
+            "average_confidence": (
+                round(sum(p.adjusted_confidence for p in problems) / len(problems), 3)
+                if problems
+                else 0
+            ),
         }
 
         return stats
@@ -628,8 +696,10 @@ class FixSuggestionContextBuilder:
         total_chars = 0
 
         # 验证结果
-        if hasattr(context.validation_result, 'to_dict'):
-            validation_chars = len(json.dumps(context.validation_result.to_dict(), ensure_ascii=False))
+        if hasattr(context.validation_result, "to_dict"):
+            validation_chars = len(
+                json.dumps(context.validation_result.to_dict(), ensure_ascii=False)
+            )
         else:
             validation_chars = 1000  # 估算值
         total_chars += validation_chars
@@ -651,7 +721,9 @@ class FixSuggestionContextBuilder:
 
         return estimated_tokens
 
-    def _create_validation_result_from_problems(self, detected_problems: List[AIDetectedProblem]) -> 'ProblemValidationResult':
+    def _create_validation_result_from_problems(
+        self, detected_problems: List[AIDetectedProblem]
+    ) -> "ProblemValidationResult":
         """
         从检测到的问题创建验证结果
 
@@ -663,7 +735,11 @@ class FixSuggestionContextBuilder:
         """
         try:
             # 导入需要的类型
-            from .problem_detection_validator import ProblemValidationResult, ValidatedProblem, ValidationResult
+            from .problem_detection_validator import (
+                ProblemValidationResult,
+                ValidatedProblem,
+                ValidationResult,
+            )
 
             # 创建ValidatedProblem列表
             validated_problems = []
@@ -676,9 +752,9 @@ class FixSuggestionContextBuilder:
                     quality_metrics={
                         "ai_confidence": problem.confidence,
                         "problem_type": problem.problem_type.value,
-                        "severity": problem.severity.value
+                        "severity": problem.severity.value,
                     },
-                    recommendations=["建议进行修复"]
+                    recommendations=["建议进行修复"],
                 )
 
                 # 创建ValidatedProblem
@@ -687,7 +763,7 @@ class FixSuggestionContextBuilder:
                     validation_result=validation_result_inner,
                     adjusted_confidence=problem.confidence,
                     priority_rank=1,
-                    is_recommended=True
+                    is_recommended=True,
                 )
                 validated_problems.append(validated_problem)
 
@@ -700,8 +776,8 @@ class FixSuggestionContextBuilder:
                     "total_problems": len(detected_problems),
                     "validated_problems": len(validated_problems),
                     "validation_success": True,
-                    "auto_generated": True
-                }
+                    "auto_generated": True,
+                },
             )
 
             return problem_validation_result
@@ -712,13 +788,15 @@ class FixSuggestionContextBuilder:
 
             class MockValidationResult:
                 def __init__(self):
-                    self.validation_id = f"mock_validation_{int(datetime.now().timestamp())}"
+                    self.validation_id = (
+                        f"mock_validation_{int(datetime.now().timestamp())}"
+                    )
                     self.original_problems = detected_problems
                     self.filtered_problems = detected_problems
                     self.validation_summary = {
                         "total_problems": len(detected_problems),
                         "validated_problems": len(detected_problems),
-                        "validation_success": True
+                        "validation_success": True,
                     }
 
             return MockValidationResult()
@@ -726,11 +804,12 @@ class FixSuggestionContextBuilder:
     def _generate_context_id(self) -> str:
         """生成上下文ID"""
         import uuid
+
         return f"fix_context_{uuid.uuid4().hex[:12]}_{int(datetime.now().timestamp())}"
 
-    def optimize_context_for_tokens(self,
-                                  context: FixSuggestionContext,
-                                  target_tokens: int) -> FixSuggestionContext:
+    def optimize_context_for_tokens(
+        self, context: FixSuggestionContext, target_tokens: int
+    ) -> FixSuggestionContext:
         """
         优化上下文以控制token数量
 
@@ -744,7 +823,9 @@ class FixSuggestionContextBuilder:
         if context.token_estimate <= target_tokens:
             return context
 
-        self.logger.info(f"优化上下文，当前token数: {context.token_estimate}, 目标: {target_tokens}")
+        self.logger.info(
+            f"优化上下文，当前token数: {context.token_estimate}, 目标: {target_tokens}"
+        )
 
         # 创建优化的上下文副本
         optimized_context = FixSuggestionContext(
@@ -753,7 +834,7 @@ class FixSuggestionContextBuilder:
             project_context=context.project_context,
             user_preferences=context.user_preferences,
             fix_constraints=context.fix_constraints,
-            build_timestamp=context.build_timestamp
+            build_timestamp=context.build_timestamp,
         )
 
         # 优化文件内容
@@ -778,17 +859,21 @@ class FixSuggestionContextBuilder:
         # 重新估算token数量
         optimized_context.token_estimate = self._estimate_token_usage(optimized_context)
 
-        self.logger.info(f"上下文优化完成，新token数: {optimized_context.token_estimate}")
+        self.logger.info(
+            f"上下文优化完成，新token数: {optimized_context.token_estimate}"
+        )
 
         return optimized_context
 
 
 # 便捷函数
-def build_fix_suggestion_context(validation_result: Any,
-                                file_contents: Optional[Dict[str, str]] = None,
-                                project_structure: Optional[Any] = None,
-                                user_preferences: Optional[Dict[str, Any]] = None,
-                                max_tokens: int = 6000) -> Dict[str, Any]:
+def build_fix_suggestion_context(
+    validation_result: Any,
+    file_contents: Optional[Dict[str, str]] = None,
+    project_structure: Optional[Any] = None,
+    user_preferences: Optional[Dict[str, Any]] = None,
+    max_tokens: int = 6000,
+) -> Dict[str, Any]:
     """
     便捷的修复建议上下文构建函数
 
@@ -807,7 +892,7 @@ def build_fix_suggestion_context(validation_result: Any,
         validation_result=validation_result,
         file_contents=file_contents,
         project_structure=project_structure,
-        user_preferences=user_preferences
+        user_preferences=user_preferences,
     )
 
     # 如果token过多，进行优化

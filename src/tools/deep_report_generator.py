@@ -6,11 +6,11 @@
 import json
 import time
 from datetime import datetime
-from typing import Dict, List, Any, Optional
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from ..utils.logger import get_logger
 from ..utils.config import get_config_manager
+from ..utils.logger import get_logger
 from .deep_analyzer import DeepAnalysisResult
 
 
@@ -29,15 +29,16 @@ class DeepAnalysisReportGenerator:
 
         # 获取配置
         try:
-            self.config = self.config_manager.get_section('deep_analysis')
+            self.config = self.config_manager.get_section("deep_analysis")
         except:
             self.config = {}
-        self.report_config = self.config.get('report', {})
+        self.report_config = self.config.get("report", {})
 
         self.logger.info("DeepAnalysisReportGenerator initialized")
 
-    def generate_report(self, results: List[DeepAnalysisResult],
-                       output_format: str = "json") -> Dict[str, Any]:
+    def generate_report(
+        self, results: List[DeepAnalysisResult], output_format: str = "json"
+    ) -> Dict[str, Any]:
         """
         生成深度分析报告
 
@@ -48,7 +49,9 @@ class DeepAnalysisReportGenerator:
         Returns:
             分析报告字典
         """
-        self.logger.info(f"Generating {output_format} deep analysis report for {len(results)} files")
+        self.logger.info(
+            f"Generating {output_format} deep analysis report for {len(results)} files"
+        )
 
         # 生成报告
         report = {
@@ -56,7 +59,7 @@ class DeepAnalysisReportGenerator:
             "summary": self._generate_overall_summary(results),
             "file_results": [self._process_file_result(result) for result in results],
             "analysis_insights": self._generate_analysis_insights(results),
-            "recommendations": self._generate_recommendations(results)
+            "recommendations": self._generate_recommendations(results),
         }
 
         # 根据格式调整报告内容
@@ -66,7 +69,7 @@ class DeepAnalysisReportGenerator:
                 "metadata": report["metadata"],
                 "summary": report["summary"],
                 "analysis_insights": report["analysis_insights"],
-                "recommendations": report["recommendations"]
+                "recommendations": report["recommendations"],
             }
         elif output_format == "detailed":
             # 详细格式，包含原始结果
@@ -76,8 +79,9 @@ class DeepAnalysisReportGenerator:
 
         return report
 
-    def save_report(self, report: Dict[str, Any], output_path: str,
-                   output_format: str = "json") -> bool:
+    def save_report(
+        self, report: Dict[str, Any], output_path: str, output_format: str = "json"
+    ) -> bool:
         """
         保存报告到文件
 
@@ -94,19 +98,21 @@ class DeepAnalysisReportGenerator:
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
             if output_format == "json":
-                with open(output_path, 'w', encoding='utf-8') as f:
+                with open(output_path, "w", encoding="utf-8") as f:
                     json.dump(report, f, indent=2, ensure_ascii=False)
             else:
                 # 生成文本格式报告
                 text_report = self._generate_text_report(report)
-                with open(output_path, 'w', encoding='utf-8') as f:
+                with open(output_path, "w", encoding="utf-8") as f:
                     f.write(text_report)
 
             self.logger.info(f"Deep analysis report saved to: {output_path}")
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to save deep analysis report to {output_path}: {e}")
+            self.logger.error(
+                f"Failed to save deep analysis report to {output_path}: {e}"
+            )
             return False
 
     def _process_file_result(self, result: DeepAnalysisResult) -> Dict[str, Any]:
@@ -121,14 +127,17 @@ class DeepAnalysisReportGenerator:
             "content_summary": "",
             "key_findings": [],
             "issues_found": [],
-            "recommendations": []
+            "recommendations": [],
         }
 
         if result.success and result.content:
             # 生成内容摘要
-            content_lines = result.content.split('\n')
+            content_lines = result.content.split("\n")
             if len(content_lines) > 10:
-                file_result["content_summary"] = '\n'.join(content_lines[:5]) + f"\n\n... (总长度: {len(content_lines)} 行)"
+                file_result["content_summary"] = (
+                    "\n".join(content_lines[:5])
+                    + f"\n\n... (总长度: {len(content_lines)} 行)"
+                )
             else:
                 file_result["content_summary"] = result.content
 
@@ -138,7 +147,9 @@ class DeepAnalysisReportGenerator:
 
                 # 提取关键发现
                 if "findings" in structured:
-                    file_result["key_findings"] = structured["findings"][:5]  # 前5个发现
+                    file_result["key_findings"] = structured["findings"][
+                        :5
+                    ]  # 前5个发现
 
                 # 提取问题
                 if "issues" in structured:
@@ -146,7 +157,9 @@ class DeepAnalysisReportGenerator:
 
                 # 提取建议
                 if "recommendations" in structured:
-                    file_result["recommendations"] = structured["recommendations"][:3]  # 前3个建议
+                    file_result["recommendations"] = structured["recommendations"][
+                        :3
+                    ]  # 前3个建议
 
                 # 提取总体评分
                 if "overall_score" in structured:
@@ -162,7 +175,9 @@ class DeepAnalysisReportGenerator:
 
         return file_result
 
-    def _generate_report_metadata(self, results: List[DeepAnalysisResult]) -> Dict[str, Any]:
+    def _generate_report_metadata(
+        self, results: List[DeepAnalysisResult]
+    ) -> Dict[str, Any]:
         """生成报告元数据"""
         return {
             "generated_at": datetime.now().isoformat(),
@@ -171,10 +186,12 @@ class DeepAnalysisReportGenerator:
             "total_execution_time": sum(r.execution_time for r in results),
             "models_used": list(set(r.model_used for r in results if r.model_used)),
             "analysis_types": list(set(r.analysis_type for r in results)),
-            "version": "1.0.0"
+            "version": "1.0.0",
         }
 
-    def _generate_overall_summary(self, results: List[DeepAnalysisResult]) -> Dict[str, Any]:
+    def _generate_overall_summary(
+        self, results: List[DeepAnalysisResult]
+    ) -> Dict[str, Any]:
         """生成总体摘要"""
         successful_results = [r for r in results if r.success]
 
@@ -184,33 +201,47 @@ class DeepAnalysisReportGenerator:
             "failed_files": len(results) - len(successful_results),
             "success_rate": len(successful_results) / len(results) if results else 0,
             "total_execution_time": sum(r.execution_time for r in results),
-            "average_execution_time": sum(r.execution_time for r in results) / len(results) if results else 0,
+            "average_execution_time": (
+                sum(r.execution_time for r in results) / len(results) if results else 0
+            ),
             "analysis_type_distribution": {},
             "model_distribution": {},
             "token_usage_stats": {},
-            "overall_assessment": {}
+            "overall_assessment": {},
         }
 
         # 统计分析类型分布
         for result in results:
             analysis_type = result.analysis_type
-            summary["analysis_type_distribution"][analysis_type] = summary["analysis_type_distribution"].get(analysis_type, 0) + 1
+            summary["analysis_type_distribution"][analysis_type] = (
+                summary["analysis_type_distribution"].get(analysis_type, 0) + 1
+            )
 
         # 统计模型分布
         for result in results:
             model = result.model_used or "unknown"
-            summary["model_distribution"][model] = summary["model_distribution"].get(model, 0) + 1
+            summary["model_distribution"][model] = (
+                summary["model_distribution"].get(model, 0) + 1
+            )
 
         # 统计token使用
-        total_tokens = sum(r.token_usage.get('total_tokens', 0) for r in successful_results)
-        total_prompt_tokens = sum(r.token_usage.get('prompt_tokens', 0) for r in successful_results)
-        total_completion_tokens = sum(r.token_usage.get('completion_tokens', 0) for r in successful_results)
+        total_tokens = sum(
+            r.token_usage.get("total_tokens", 0) for r in successful_results
+        )
+        total_prompt_tokens = sum(
+            r.token_usage.get("prompt_tokens", 0) for r in successful_results
+        )
+        total_completion_tokens = sum(
+            r.token_usage.get("completion_tokens", 0) for r in successful_results
+        )
 
         summary["token_usage_stats"] = {
             "total_tokens": total_tokens,
             "total_prompt_tokens": total_prompt_tokens,
             "total_completion_tokens": total_completion_tokens,
-            "average_tokens_per_file": total_tokens / len(successful_results) if successful_results else 0
+            "average_tokens_per_file": (
+                total_tokens / len(successful_results) if successful_results else 0
+            ),
         }
 
         # 总体评估
@@ -234,12 +265,16 @@ class DeepAnalysisReportGenerator:
                 "total_issues_found": total_issues,
                 "average_score": sum(scores) / len(scores) if scores else 0,
                 "files_with_scores": len(scores),
-                "risk_level": self._calculate_overall_risk_level(high_risk_files, len(successful_results))
+                "risk_level": self._calculate_overall_risk_level(
+                    high_risk_files, len(successful_results)
+                ),
             }
 
         return summary
 
-    def _generate_analysis_insights(self, results: List[DeepAnalysisResult]) -> Dict[str, Any]:
+    def _generate_analysis_insights(
+        self, results: List[DeepAnalysisResult]
+    ) -> Dict[str, Any]:
         """生成分析洞察"""
         successful_results = [r for r in results if r.success]
 
@@ -248,7 +283,7 @@ class DeepAnalysisReportGenerator:
             "best_practices": [],
             "security_concerns": [],
             "performance_insights": [],
-            "architecture_patterns": []
+            "architecture_patterns": [],
         }
 
         # 收集所有发现的问题
@@ -278,14 +313,19 @@ class DeepAnalysisReportGenerator:
 
         # 找出最常见的问题类型
         sorted_issues = sorted(issue_counts.items(), key=lambda x: x[1], reverse=True)
-        insights["common_issues"] = [{"type": issue_type, "count": count} for issue_type, count in sorted_issues[:5]]
+        insights["common_issues"] = [
+            {"type": issue_type, "count": count}
+            for issue_type, count in sorted_issues[:5]
+        ]
 
         # 分析最佳实践建议
         recommendation_counts = {}
         for rec in all_recommendations:
             if isinstance(rec, dict) and "category" in rec:
                 category = rec["category"]
-                recommendation_counts[category] = recommendation_counts.get(category, 0) + 1
+                recommendation_counts[category] = (
+                    recommendation_counts.get(category, 0) + 1
+                )
             elif isinstance(rec, str):
                 # 简单字符串，尝试分类
                 rec_lower = rec.lower()
@@ -296,13 +336,18 @@ class DeepAnalysisReportGenerator:
                 elif "design" in rec_lower or "architecture" in rec_lower:
                     insights["architecture_patterns"].append(rec)
 
-        insights["best_practices"] = [{"category": category, "count": count}
-                                       for category, count in sorted(recommendation_counts.items(),
-                                                                      key=lambda x: x[1], reverse=True)[:5]]
+        insights["best_practices"] = [
+            {"category": category, "count": count}
+            for category, count in sorted(
+                recommendation_counts.items(), key=lambda x: x[1], reverse=True
+            )[:5]
+        ]
 
         return insights
 
-    def _generate_recommendations(self, results: List[DeepAnalysisResult]) -> Dict[str, Any]:
+    def _generate_recommendations(
+        self, results: List[DeepAnalysisResult]
+    ) -> Dict[str, Any]:
         """生成建议"""
         successful_results = [r for r in results if r.success]
 
@@ -311,7 +356,7 @@ class DeepAnalysisReportGenerator:
             "short_term_improvements": [],
             "long_term_refactoring": [],
             "security_improvements": [],
-            "performance_optimizations": []
+            "performance_optimizations": [],
         }
 
         # 收集所有建议
@@ -340,7 +385,10 @@ class DeepAnalysisReportGenerator:
             else:
                 # 简单字符串，添加到默认类别
                 rec_lower = rec.lower()
-                if any(keyword in rec_lower for keyword in ["urgent", "critical", "immediate"]):
+                if any(
+                    keyword in rec_lower
+                    for keyword in ["urgent", "critical", "immediate"]
+                ):
                     recommendations["immediate_actions"].append(rec)
                 elif "security" in rec_lower:
                     recommendations["security_improvements"].append(rec)
@@ -351,7 +399,9 @@ class DeepAnalysisReportGenerator:
 
         return recommendations
 
-    def _calculate_overall_risk_level(self, high_risk_files: int, total_files: int) -> str:
+    def _calculate_overall_risk_level(
+        self, high_risk_files: int, total_files: int
+    ) -> str:
         """计算总体风险等级"""
         if total_files == 0:
             return "unknown"
@@ -404,8 +454,11 @@ class DeepAnalysisReportGenerator:
         if summary["analysis_type_distribution"]:
             lines.append("")
             lines.append("分析类型分布:")
-            for analysis_type, count in sorted(summary["analysis_type_distribution"].items(),
-                                        key=lambda x: x[1], reverse=True):
+            for analysis_type, count in sorted(
+                summary["analysis_type_distribution"].items(),
+                key=lambda x: x[1],
+                reverse=True,
+            ):
                 lines.append(f"  {analysis_type}: {count}")
 
         # 分析洞察
@@ -448,7 +501,9 @@ class DeepAnalysisReportGenerator:
                 lines.append("安全改进:")
                 for improvement in recommendations["security_improvements"][:3]:
                     if isinstance(improvement, dict):
-                        lines.append(f"  • {improvement.get('description', str(improvement))}")
+                        lines.append(
+                            f"  • {improvement.get('description', str(improvement))}"
+                        )
                     else:
                         lines.append(f"  • {improvement}")
 

@@ -5,16 +5,17 @@
 
 import os
 import re
-from typing import Dict, List, Any, Optional, Tuple, Set
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
-from collections import defaultdict
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from ..utils.logger import get_logger
+
 try:
-    from .ai_problem_detector import ProblemDetectionResult, AIDetectedProblem
-    from .workflow_data_types import ProblemType, SeverityLevel, FixType
+    from .ai_problem_detector import AIDetectedProblem, ProblemDetectionResult
     from .multilang_static_analyzer import StaticAnalysisResult
+    from .workflow_data_types import FixType, ProblemType, SeverityLevel
 except ImportError:
     # 如果相关模块不可用，定义基本类型
     from enum import Enum
@@ -78,6 +79,7 @@ except ImportError:
 @dataclass
 class ValidationResult:
     """验证结果"""
+
     is_valid: bool
     validation_score: float  # 0.0-1.0
     validation_issues: List[str] = field(default_factory=list)
@@ -88,6 +90,7 @@ class ValidationResult:
 @dataclass
 class ValidatedProblem:
     """验证后的问题"""
+
     original_problem: AIDetectedProblem
     validation_result: ValidationResult
     adjusted_confidence: float
@@ -113,13 +116,14 @@ class ValidatedProblem:
             "priority_rank": self.priority_rank,
             "is_recommended": self.is_recommended,
             "tags": self.original_problem.tags,
-            "estimated_fix_time": self.original_problem.estimated_fix_time
+            "estimated_fix_time": self.original_problem.estimated_fix_time,
         }
 
 
 @dataclass
 class ProblemValidationResult:
     """问题验证结果"""
+
     validation_id: str
     original_detection_result: ProblemDetectionResult
     validated_problems: List[ValidatedProblem] = field(default_factory=list)
@@ -133,24 +137,34 @@ class ProblemValidationResult:
         return {
             "validation_id": self.validation_id,
             "original_detection_id": self.original_detection_result.detection_id,
-            "validated_problems": [problem.to_dict() for problem in self.validated_problems],
-            "filtered_problems": [problem.to_dict() for problem in self.filtered_problems],
+            "validated_problems": [
+                problem.to_dict() for problem in self.validated_problems
+            ],
+            "filtered_problems": [
+                problem.to_dict() for problem in self.filtered_problems
+            ],
             "validation_summary": self.validation_summary,
             "quality_report": self.quality_report,
             "validation_timestamp": self.validation_timestamp,
             "total_validated": len(self.validated_problems),
             "total_filtered": len(self.filtered_problems),
-            "filtering_ratio": round(len(self.filtered_problems) / len(self.validated_problems), 3) if self.validated_problems else 0
+            "filtering_ratio": (
+                round(len(self.filtered_problems) / len(self.validated_problems), 3)
+                if self.validated_problems
+                else 0
+            ),
         }
 
 
 class ProblemDetectionValidator:
     """问题检测结果验证器"""
 
-    def __init__(self,
-                 min_confidence_threshold: float = 0.5,
-                 max_problems_per_file: int = 10,
-                 enable_deduplication: bool = True):
+    def __init__(
+        self,
+        min_confidence_threshold: float = 0.5,
+        max_problems_per_file: int = 10,
+        enable_deduplication: bool = True,
+    ):
         self.min_confidence_threshold = min_confidence_threshold
         self.max_problems_per_file = max_problems_per_file
         self.enable_deduplication = enable_deduplication
@@ -158,12 +172,12 @@ class ProblemDetectionValidator:
 
         # 验证权重配置
         self.validation_weights = {
-            "location_accuracy": 0.25,      # 位置准确性
-            "description_quality": 0.20,    # 描述质量
-            "reasoning_depth": 0.20,        # 推理深度
-            "code_snippet_relevance": 0.15, # 代码片段相关性
-            "confidence_reasonableness": 0.10, # 置信度合理性
-            "actionability": 0.10          # 可操作性
+            "location_accuracy": 0.25,  # 位置准确性
+            "description_quality": 0.20,  # 描述质量
+            "reasoning_depth": 0.20,  # 推理深度
+            "code_snippet_relevance": 0.15,  # 代码片段相关性
+            "confidence_reasonableness": 0.10,  # 置信度合理性
+            "actionability": 0.10,  # 可操作性
         }
 
         # 质量阈值配置
@@ -173,14 +187,22 @@ class ProblemDetectionValidator:
             "min_code_snippet_length": 10,
             "max_line_number_deviation": 5,
             "suspicious_keywords": [
-                "可能", "也许", "大概", "或许", "probably", "maybe", "possibly"
-            ]
+                "可能",
+                "也许",
+                "大概",
+                "或许",
+                "probably",
+                "maybe",
+                "possibly",
+            ],
         }
 
-    def validate_detection_result(self,
-                                 detection_result: ProblemDetectionResult,
-                                 static_analysis_results: Optional[Dict[str, StaticAnalysisResult]] = None,
-                                 file_contents: Optional[Dict[str, str]] = None) -> ProblemValidationResult:
+    def validate_detection_result(
+        self,
+        detection_result: ProblemDetectionResult,
+        static_analysis_results: Optional[Dict[str, StaticAnalysisResult]] = None,
+        file_contents: Optional[Dict[str, str]] = None,
+    ) -> ProblemValidationResult:
         """
         验证问题检测结果
 
@@ -192,12 +214,14 @@ class ProblemDetectionValidator:
         Returns:
             ProblemValidationResult: 验证结果
         """
-        self.logger.info(f"开始验证问题检测结果，检测ID: {detection_result.detection_id}")
+        self.logger.info(
+            f"开始验证问题检测结果，检测ID: {detection_result.detection_id}"
+        )
 
         validation_result = ProblemValidationResult(
             validation_id=self._generate_validation_id(),
             original_detection_result=detection_result,
-            validation_timestamp=datetime.now().isoformat()
+            validation_timestamp=datetime.now().isoformat(),
         )
 
         try:
@@ -205,7 +229,7 @@ class ProblemDetectionValidator:
             validation_result.validated_problems = self._validate_individual_problems(
                 detection_result.detected_problems,
                 static_analysis_results,
-                file_contents
+                file_contents,
             )
 
             # 去重问题
@@ -228,10 +252,14 @@ class ProblemDetectionValidator:
             )
 
             # 生成验证摘要
-            validation_result.validation_summary = self._generate_validation_summary(validation_result)
+            validation_result.validation_summary = self._generate_validation_summary(
+                validation_result
+            )
 
             # 生成质量报告
-            validation_result.quality_report = self._generate_quality_report(validation_result)
+            validation_result.quality_report = self._generate_quality_report(
+                validation_result
+            )
 
             self.logger.info(
                 f"问题检测验证完成: 原始 {len(detection_result.detected_problems)} 个, "
@@ -245,10 +273,12 @@ class ProblemDetectionValidator:
 
         return validation_result
 
-    def _validate_individual_problems(self,
-                                    problems: List[AIDetectedProblem],
-                                    static_analysis_results: Optional[Dict[str, StaticAnalysisResult]],
-                                    file_contents: Optional[Dict[str, str]]) -> List[ValidatedProblem]:
+    def _validate_individual_problems(
+        self,
+        problems: List[AIDetectedProblem],
+        static_analysis_results: Optional[Dict[str, StaticAnalysisResult]],
+        file_contents: Optional[Dict[str, str]],
+    ) -> List[ValidatedProblem]:
         """验证单个问题"""
         validated_problems = []
 
@@ -269,7 +299,9 @@ class ProblemDetectionValidator:
                     original_problem=problem,
                     validation_result=validation_result,
                     adjusted_confidence=adjusted_confidence,
-                    is_recommended=self._is_problem_recommended(validation_result, adjusted_confidence)
+                    is_recommended=self._is_problem_recommended(
+                        validation_result, adjusted_confidence
+                    ),
                 )
 
                 validated_problems.append(validated_problem)
@@ -280,26 +312,34 @@ class ProblemDetectionValidator:
 
         return validated_problems
 
-    def _validate_single_problem(self,
-                               problem: AIDetectedProblem,
-                               static_analysis_results: Optional[Dict[str, StaticAnalysisResult]],
-                               file_contents: Optional[Dict[str, str]]) -> ValidationResult:
+    def _validate_single_problem(
+        self,
+        problem: AIDetectedProblem,
+        static_analysis_results: Optional[Dict[str, StaticAnalysisResult]],
+        file_contents: Optional[Dict[str, str]],
+    ) -> ValidationResult:
         """验证单个问题"""
         validation_issues = []
         quality_metrics = {}
         total_score = 0.0
 
         # 1. 验证位置准确性
-        location_score, location_issues = self._validate_location_accuracy(problem, file_contents)
+        location_score, location_issues = self._validate_location_accuracy(
+            problem, file_contents
+        )
         validation_issues.extend(location_issues)
         quality_metrics["location_accuracy"] = location_score
         total_score += location_score * self.validation_weights["location_accuracy"]
 
         # 2. 验证描述质量
-        description_score, description_issues = self._validate_description_quality(problem)
+        description_score, description_issues = self._validate_description_quality(
+            problem
+        )
         validation_issues.extend(description_issues)
         quality_metrics["description_quality"] = description_score
-        total_score += description_score * self.validation_weights["description_quality"]
+        total_score += (
+            description_score * self.validation_weights["description_quality"]
+        )
 
         # 3. 验证推理深度
         reasoning_score, reasoning_issues = self._validate_reasoning_depth(problem)
@@ -308,19 +348,27 @@ class ProblemDetectionValidator:
         total_score += reasoning_score * self.validation_weights["reasoning_depth"]
 
         # 4. 验证代码片段相关性
-        snippet_score, snippet_issues = self._validate_code_snippet_relevance(problem, file_contents)
+        snippet_score, snippet_issues = self._validate_code_snippet_relevance(
+            problem, file_contents
+        )
         validation_issues.extend(snippet_issues)
         quality_metrics["code_snippet_relevance"] = snippet_score
         total_score += snippet_score * self.validation_weights["code_snippet_relevance"]
 
         # 5. 验证置信度合理性
-        confidence_score, confidence_issues = self._validate_confidence_reasonableness(problem)
+        confidence_score, confidence_issues = self._validate_confidence_reasonableness(
+            problem
+        )
         validation_issues.extend(confidence_issues)
         quality_metrics["confidence_reasonableness"] = confidence_score
-        total_score += confidence_score * self.validation_weights["confidence_reasonableness"]
+        total_score += (
+            confidence_score * self.validation_weights["confidence_reasonableness"]
+        )
 
         # 6. 验证可操作性
-        actionability_score, actionability_issues = self._validate_actionability(problem)
+        actionability_score, actionability_issues = self._validate_actionability(
+            problem
+        )
         validation_issues.extend(actionability_issues)
         quality_metrics["actionability"] = actionability_score
         total_score += actionability_score * self.validation_weights["actionability"]
@@ -334,13 +382,15 @@ class ProblemDetectionValidator:
             quality_metrics["static_analysis_consistency"] = static_score
 
         # 生成建议
-        recommendations = self._generate_recommendations(validation_issues, quality_metrics)
+        recommendations = self._generate_recommendations(
+            validation_issues, quality_metrics
+        )
 
         # 判断是否有效
         is_valid = (
-            total_score >= 0.6 and  # 总体质量分数
-            len(validation_issues) <= 3 and  # 验证问题数量
-            problem.confidence >= self.min_confidence_threshold
+            total_score >= 0.6  # 总体质量分数
+            and len(validation_issues) <= 3  # 验证问题数量
+            and problem.confidence >= self.min_confidence_threshold
         )
 
         return ValidationResult(
@@ -348,12 +398,12 @@ class ProblemDetectionValidator:
             validation_score=round(total_score, 3),
             validation_issues=validation_issues,
             quality_metrics=quality_metrics,
-            recommendations=recommendations
+            recommendations=recommendations,
         )
 
-    def _validate_location_accuracy(self,
-                                  problem: AIDetectedProblem,
-                                  file_contents: Optional[Dict[str, str]]) -> Tuple[float, List[str]]:
+    def _validate_location_accuracy(
+        self, problem: AIDetectedProblem, file_contents: Optional[Dict[str, str]]
+    ) -> Tuple[float, List[str]]:
         """验证位置准确性"""
         issues = []
         score = 1.0
@@ -366,11 +416,13 @@ class ProblemDetectionValidator:
         # 检查行号是否合理
         if file_contents and problem.file_path in file_contents:
             content = file_contents[problem.file_path]
-            lines = content.split('\n')
+            lines = content.split("\n")
             total_lines = len(lines)
 
             if problem.line_number <= 0 or problem.line_number > total_lines:
-                issues.append(f"行号 {problem.line_number} 超出文件范围 (1-{total_lines})")
+                issues.append(
+                    f"行号 {problem.line_number} 超出文件范围 (1-{total_lines})"
+                )
                 score *= 0.3
             elif problem.line_number > total_lines * 0.95:
                 issues.append(f"行号 {problem.line_number} 接近文件末尾，可能不准确")
@@ -379,7 +431,7 @@ class ProblemDetectionValidator:
         # 检查代码片段是否包含在指定行附近
         if file_contents and problem.file_path in file_contents:
             content = file_contents[problem.file_path]
-            lines = content.split('\n')
+            lines = content.split("\n")
 
             if 0 < problem.line_number <= len(lines):
                 # 检查指定行附近是否包含问题代码片段
@@ -402,7 +454,9 @@ class ProblemDetectionValidator:
 
         return score, issues
 
-    def _validate_description_quality(self, problem: AIDetectedProblem) -> Tuple[float, List[str]]:
+    def _validate_description_quality(
+        self, problem: AIDetectedProblem
+    ) -> Tuple[float, List[str]]:
         """验证描述质量"""
         issues = []
         score = 1.0
@@ -418,16 +472,19 @@ class ProblemDetectionValidator:
             score *= 0.9
 
         # 检查是否包含具体信息
-        if not any(char in description for char in [':', '。', '！', '?']):
+        if not any(char in description for char in [":", "。", "！", "?"]):
             issues.append("描述缺乏具体信息")
             score *= 0.8
 
         # 检查是否包含可疑关键词
-        suspicious_count = sum(1 for keyword in self.quality_thresholds["suspicious_keywords"]
-                              if keyword in description.lower())
+        suspicious_count = sum(
+            1
+            for keyword in self.quality_thresholds["suspicious_keywords"]
+            if keyword in description.lower()
+        )
         if suspicious_count > 0:
             issues.append(f"描述包含不确定词汇 ({suspicious_count} 个)")
-            score *= (1 - suspicious_count * 0.2)
+            score *= 1 - suspicious_count * 0.2
 
         # 检查是否为空或纯空白
         if not description or description.isspace():
@@ -436,7 +493,9 @@ class ProblemDetectionValidator:
 
         return score, issues
 
-    def _validate_reasoning_depth(self, problem: AIDetectedProblem) -> Tuple[float, List[str]]:
+    def _validate_reasoning_depth(
+        self, problem: AIDetectedProblem
+    ) -> Tuple[float, List[str]]:
         """验证推理深度"""
         issues = []
         score = 1.0
@@ -449,7 +508,16 @@ class ProblemDetectionValidator:
             score *= 0.6
 
         # 检查推理是否包含逻辑连接词
-        logical_connectors = ['因为', '所以', '导致', '影响', '原因', '结果', '如果', '那么']
+        logical_connectors = [
+            "因为",
+            "所以",
+            "导致",
+            "影响",
+            "原因",
+            "结果",
+            "如果",
+            "那么",
+        ]
         if not any(connector in reasoning for connector in logical_connectors):
             issues.append("推理缺乏逻辑连接")
             score *= 0.8
@@ -461,9 +529,9 @@ class ProblemDetectionValidator:
 
         return score, issues
 
-    def _validate_code_snippet_relevance(self,
-                                       problem: AIDetectedProblem,
-                                       file_contents: Optional[Dict[str, str]]) -> Tuple[float, List[str]]:
+    def _validate_code_snippet_relevance(
+        self, problem: AIDetectedProblem, file_contents: Optional[Dict[str, str]]
+    ) -> Tuple[float, List[str]]:
         """验证代码片段相关性"""
         issues = []
         score = 1.0
@@ -483,14 +551,16 @@ class ProblemDetectionValidator:
             score *= 0.8
 
         # 检查是否包含常见的代码语法元素
-        code_syntax = ['=', '(', ')', '{', '}', ';', ':', '[', ']', '.', ',']
+        code_syntax = ["=", "(", ")", "{", "}", ";", ":", "[", "]", ".", ","]
         if not any(syntax in snippet for syntax in code_syntax):
             issues.append("代码片段缺乏编程语法元素")
             score *= 0.7
 
         return score, issues
 
-    def _validate_confidence_reasonableness(self, problem: AIDetectedProblem) -> Tuple[float, List[str]]:
+    def _validate_confidence_reasonableness(
+        self, problem: AIDetectedProblem
+    ) -> Tuple[float, List[str]]:
         """验证置信度合理性"""
         issues = []
         score = 1.0
@@ -513,7 +583,9 @@ class ProblemDetectionValidator:
 
         return score, issues
 
-    def _validate_actionability(self, problem: AIDetectedProblem) -> Tuple[float, List[str]]:
+    def _validate_actionability(
+        self, problem: AIDetectedProblem
+    ) -> Tuple[float, List[str]]:
         """验证可操作性"""
         issues = []
         score = 1.0
@@ -525,16 +597,18 @@ class ProblemDetectionValidator:
                 score *= 0.7
 
         # 检查问题描述是否指向具体操作
-        actionable_keywords = ['修改', '添加', '删除', '替换', '优化', '重构', '调整']
+        actionable_keywords = ["修改", "添加", "删除", "替换", "优化", "重构", "调整"]
         if not any(keyword in problem.description for keyword in actionable_keywords):
             issues.append("问题描述缺乏具体的操作指导")
             score *= 0.8
 
         return score, issues
 
-    def _compare_with_static_analysis(self,
-                                    problem: AIDetectedProblem,
-                                    static_analysis_results: Dict[str, StaticAnalysisResult]) -> Tuple[float, List[str]]:
+    def _compare_with_static_analysis(
+        self,
+        problem: AIDetectedProblem,
+        static_analysis_results: Dict[str, StaticAnalysisResult],
+    ) -> Tuple[float, List[str]]:
         """与静态分析结果对比"""
         issues = []
         score = 1.0
@@ -567,7 +641,9 @@ class ProblemDetectionValidator:
 
         return score, issues
 
-    def _generate_recommendations(self, validation_issues: List[str], quality_metrics: Dict[str, Any]) -> List[str]:
+    def _generate_recommendations(
+        self, validation_issues: List[str], quality_metrics: Dict[str, Any]
+    ) -> List[str]:
         """生成改进建议"""
         recommendations = []
 
@@ -596,21 +672,27 @@ class ProblemDetectionValidator:
 
         return recommendations
 
-    def _calculate_adjusted_confidence(self, original_confidence: float, validation_score: float) -> float:
+    def _calculate_adjusted_confidence(
+        self, original_confidence: float, validation_score: float
+    ) -> float:
         """计算调整后的置信度"""
         # 综合原始置信度和验证分数
         adjusted_confidence = (original_confidence * 0.6) + (validation_score * 0.4)
         return round(max(0.0, min(1.0, adjusted_confidence)), 3)
 
-    def _is_problem_recommended(self, validation_result: ValidationResult, adjusted_confidence: float) -> bool:
+    def _is_problem_recommended(
+        self, validation_result: ValidationResult, adjusted_confidence: float
+    ) -> bool:
         """判断问题是否推荐保留"""
         return (
-            validation_result.is_valid and
-            adjusted_confidence >= self.min_confidence_threshold and
-            validation_result.validation_score >= 0.6
+            validation_result.is_valid
+            and adjusted_confidence >= self.min_confidence_threshold
+            and validation_result.validation_score >= 0.6
         )
 
-    def _deduplicate_problems(self, problems: List[ValidatedProblem]) -> List[ValidatedProblem]:
+    def _deduplicate_problems(
+        self, problems: List[ValidatedProblem]
+    ) -> List[ValidatedProblem]:
         """去重问题"""
         if not problems:
             return problems
@@ -625,7 +707,7 @@ class ProblemDetectionValidator:
                 original.file_path,
                 original.line_number,
                 original.problem_type,
-                original.description[:100]  # 描述前100个字符
+                original.description[:100],  # 描述前100个字符
             )
 
             if dedup_key not in seen_problems:
@@ -644,7 +726,7 @@ class ProblemDetectionValidator:
             SeverityLevel.CRITICAL: 4,
             SeverityLevel.HIGH: 3,
             SeverityLevel.MEDIUM: 2,
-            SeverityLevel.LOW: 1
+            SeverityLevel.LOW: 1,
         }
 
         def sort_key(problem: ValidatedProblem):
@@ -653,7 +735,7 @@ class ProblemDetectionValidator:
                 severity_weights.get(original.severity, 1),
                 problem.adjusted_confidence,
                 problem.validation_result.validation_score,
-                -len(original.description)  # 描述长度（越详细越好）
+                -len(original.description),  # 描述长度（越详细越好）
             )
 
         # 排序并分配排名
@@ -661,7 +743,9 @@ class ProblemDetectionValidator:
         for rank, problem in enumerate(sorted_problems, 1):
             problem.priority_rank = rank
 
-    def _filter_low_quality_problems(self, problems: List[ValidatedProblem]) -> List[ValidatedProblem]:
+    def _filter_low_quality_problems(
+        self, problems: List[ValidatedProblem]
+    ) -> List[ValidatedProblem]:
         """过滤低质量问题"""
         filtered = []
 
@@ -669,11 +753,15 @@ class ProblemDetectionValidator:
             if problem.is_recommended:
                 filtered.append(problem)
             else:
-                self.logger.debug(f"过滤低质量问题: {problem.original_problem.problem_id}")
+                self.logger.debug(
+                    f"过滤低质量问题: {problem.original_problem.problem_id}"
+                )
 
         return filtered
 
-    def _limit_problems_per_file(self, problems: List[ValidatedProblem]) -> List[ValidatedProblem]:
+    def _limit_problems_per_file(
+        self, problems: List[ValidatedProblem]
+    ) -> List[ValidatedProblem]:
         """限制每个文件的问题数量"""
         file_problem_counts = defaultdict(int)
         limited_problems = []
@@ -687,44 +775,81 @@ class ProblemDetectionValidator:
                 limited_problems.append(problem)
                 file_problem_counts[file_path] += 1
             else:
-                self.logger.debug(f"文件 {file_path} 问题数量超限，跳过: {problem.original_problem.problem_id}")
+                self.logger.debug(
+                    f"文件 {file_path} 问题数量超限，跳过: {problem.original_problem.problem_id}"
+                )
 
         return limited_problems
 
-    def _generate_validation_summary(self, validation_result: ProblemValidationResult) -> Dict[str, Any]:
+    def _generate_validation_summary(
+        self, validation_result: ProblemValidationResult
+    ) -> Dict[str, Any]:
         """生成验证摘要"""
-        original_count = len(validation_result.original_detection_result.detected_problems)
+        original_count = len(
+            validation_result.original_detection_result.detected_problems
+        )
         validated_count = len(validation_result.validated_problems)
         filtered_count = len(validation_result.filtered_problems)
 
         # 计算质量统计
-        validation_scores = [p.validation_result.validation_score for p in validation_result.validated_problems]
-        confidence_scores = [p.adjusted_confidence for p in validation_result.validated_problems]
+        validation_scores = [
+            p.validation_result.validation_score
+            for p in validation_result.validated_problems
+        ]
+        confidence_scores = [
+            p.adjusted_confidence for p in validation_result.validated_problems
+        ]
 
         summary = {
             "original_problems": original_count,
             "validated_problems": validated_count,
             "filtered_problems": filtered_count,
-            "filtering_ratio": round(filtered_count / original_count, 3) if original_count > 0 else 0,
-            "quality_improvement": round(1 - (filtered_count / original_count), 3) if original_count > 0 else 0,
+            "filtering_ratio": (
+                round(filtered_count / original_count, 3) if original_count > 0 else 0
+            ),
+            "quality_improvement": (
+                round(1 - (filtered_count / original_count), 3)
+                if original_count > 0
+                else 0
+            ),
             "quality_statistics": {
-                "average_validation_score": round(sum(validation_scores) / len(validation_scores), 3) if validation_scores else 0,
-                "average_confidence": round(sum(confidence_scores) / len(confidence_scores), 3) if confidence_scores else 0,
-                "min_validation_score": min(validation_scores) if validation_scores else 0,
-                "max_validation_score": max(validation_scores) if validation_scores else 0
+                "average_validation_score": (
+                    round(sum(validation_scores) / len(validation_scores), 3)
+                    if validation_scores
+                    else 0
+                ),
+                "average_confidence": (
+                    round(sum(confidence_scores) / len(confidence_scores), 3)
+                    if confidence_scores
+                    else 0
+                ),
+                "min_validation_score": (
+                    min(validation_scores) if validation_scores else 0
+                ),
+                "max_validation_score": (
+                    max(validation_scores) if validation_scores else 0
+                ),
             },
             "validation_effectiveness": {
                 "problems_removed": original_count - filtered_count,
-                "quality_improvements": sum(1 for p in validation_result.validated_problems
-                                        if p.adjusted_confidence < p.original_problem.confidence),
-                "high_quality_problems": sum(1 for p in validation_result.filtered_problems
-                                           if p.validation_result.validation_score >= 0.8)
-            }
+                "quality_improvements": sum(
+                    1
+                    for p in validation_result.validated_problems
+                    if p.adjusted_confidence < p.original_problem.confidence
+                ),
+                "high_quality_problems": sum(
+                    1
+                    for p in validation_result.filtered_problems
+                    if p.validation_result.validation_score >= 0.8
+                ),
+            },
         }
 
         return summary
 
-    def _generate_quality_report(self, validation_result: ProblemValidationResult) -> Dict[str, Any]:
+    def _generate_quality_report(
+        self, validation_result: ProblemValidationResult
+    ) -> Dict[str, Any]:
         """生成质量报告"""
         # 统计验证问题类型
         validation_issues = defaultdict(int)
@@ -744,7 +869,9 @@ class ProblemDetectionValidator:
         # 计算平均质量指标
         average_metrics = {}
         for metric, values in quality_metrics.items():
-            average_metrics[metric] = round(sum(values) / len(values), 3) if values else 0
+            average_metrics[metric] = (
+                round(sum(values) / len(values), 3) if values else 0
+            )
 
         report = {
             "validation_id": validation_result.validation_id,
@@ -752,17 +879,27 @@ class ProblemDetectionValidator:
             "quality_overview": {
                 "total_problems_analyzed": len(validation_result.validated_problems),
                 "problems_passed_validation": len(validation_result.filtered_problems),
-                "overall_quality_score": round(average_metrics.get("location_accuracy", 0), 3)
+                "overall_quality_score": round(
+                    average_metrics.get("location_accuracy", 0), 3
+                ),
             },
-            "common_validation_issues": dict(sorted(validation_issues.items(), key=lambda x: x[1], reverse=True)[:10]),
+            "common_validation_issues": dict(
+                sorted(validation_issues.items(), key=lambda x: x[1], reverse=True)[:10]
+            ),
             "quality_metrics_distribution": average_metrics,
-            "recommendations_summary": self._generate_overall_recommendations(validation_result),
-            "quality_trend": "improved" if len(validation_result.filtered_problems) > 0 else "stable"
+            "recommendations_summary": self._generate_overall_recommendations(
+                validation_result
+            ),
+            "quality_trend": (
+                "improved" if len(validation_result.filtered_problems) > 0 else "stable"
+            ),
         }
 
         return report
 
-    def _generate_overall_recommendations(self, validation_result: ProblemValidationResult) -> List[str]:
+    def _generate_overall_recommendations(
+        self, validation_result: ProblemValidationResult
+    ) -> List[str]:
         """生成总体改进建议"""
         recommendations = []
 
@@ -778,11 +915,13 @@ class ProblemDetectionValidator:
         # 统计问题类型
         issue_types = defaultdict(int)
         for issue in all_issues:
-            issue_type = issue.split('：')[0] if '：' in issue else issue
+            issue_type = issue.split("：")[0] if "：" in issue else issue
             issue_types[issue_type] += 1
 
         # 生成针对主要问题的建议
-        most_common_issues = sorted(issue_types.items(), key=lambda x: x[1], reverse=True)[:3]
+        most_common_issues = sorted(
+            issue_types.items(), key=lambda x: x[1], reverse=True
+        )[:3]
 
         for issue_type, count in most_common_issues:
             if "描述" in issue_type:
@@ -799,14 +938,17 @@ class ProblemDetectionValidator:
     def _generate_validation_id(self) -> str:
         """生成验证ID"""
         import uuid
+
         return f"validation_{uuid.uuid4().hex[:12]}_{int(datetime.now().timestamp())}"
 
 
 # 便捷函数
-def validate_ai_detection_results(detection_result: Dict[str, Any],
-                                 static_analysis_results: Optional[Dict[str, Any]] = None,
-                                 file_contents: Optional[Dict[str, str]] = None,
-                                 min_confidence: float = 0.5) -> Dict[str, Any]:
+def validate_ai_detection_results(
+    detection_result: Dict[str, Any],
+    static_analysis_results: Optional[Dict[str, Any]] = None,
+    file_contents: Optional[Dict[str, str]] = None,
+    min_confidence: float = 0.5,
+) -> Dict[str, Any]:
     """
     便捷的AI检测结果验证函数
 
@@ -831,13 +973,17 @@ def validate_ai_detection_results(detection_result: Dict[str, Any],
             "original_problems": len(detection_result.get("detected_problems", [])),
             "validated_problems": len(detection_result.get("detected_problems", [])),
             "filtered_problems": len(detection_result.get("detected_problems", [])),
-            "filtering_ratio": 1.0
+            "filtering_ratio": 1.0,
         },
         "quality_report": {
             "quality_overview": {
-                "total_problems_analyzed": len(detection_result.get("detected_problems", [])),
-                "problems_passed_validation": len(detection_result.get("detected_problems", []))
+                "total_problems_analyzed": len(
+                    detection_result.get("detected_problems", [])
+                ),
+                "problems_passed_validation": len(
+                    detection_result.get("detected_problems", [])
+                ),
             }
         },
-        "validation_timestamp": datetime.now().isoformat()
+        "validation_timestamp": datetime.now().isoformat(),
     }

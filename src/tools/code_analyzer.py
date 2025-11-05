@@ -4,21 +4,23 @@
 """
 
 import ast
-import re
 import json
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Set, Tuple
+import re
 from collections import defaultdict, deque
-import radon.metrics
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Set, Tuple
+
 import radon.complexity
+import radon.metrics
 from radon.complexity import cc_rank
 
-from ..utils.logger import get_logger
 from ..utils.config import get_config_manager
+from ..utils.logger import get_logger
 
 
 class CodeAnalysisError(Exception):
     """代码分析异常"""
+
     pass
 
 
@@ -37,38 +39,38 @@ class CodeAnalyzer:
 
         # 反模式定义
         self.anti_patterns = {
-            'long_method': {
-                'threshold': 20,  # 最大行数
-                'description': '方法过长，超过20行'
+            "long_method": {
+                "threshold": 20,  # 最大行数
+                "description": "方法过长，超过20行",
             },
-            'long_parameter_list': {
-                'threshold': 5,  # 最大参数数量
-                'description': '参数列表过长，超过5个参数'
+            "long_parameter_list": {
+                "threshold": 5,  # 最大参数数量
+                "description": "参数列表过长，超过5个参数",
             },
-            'large_class': {
-                'threshold': 200,  # 最大类行数
-                'description': '类过大，超过200行'
+            "large_class": {
+                "threshold": 200,  # 最大类行数
+                "description": "类过大，超过200行",
             },
-            'deeply_nested': {
-                'threshold': 4,  # 最大嵌套深度
-                'description': '嵌套过深，超过4层'
+            "deeply_nested": {
+                "threshold": 4,  # 最大嵌套深度
+                "description": "嵌套过深，超过4层",
             },
-            'duplicate_code': {
-                'threshold': 5,  # 相似代码行数阈值
-                'description': '可能存在重复代码'
+            "duplicate_code": {
+                "threshold": 5,  # 相似代码行数阈值
+                "description": "可能存在重复代码",
             },
-            'magic_numbers': {
-                'pattern': r'\b(?!1|0|2|10|100)\d{2,}\b',  # 魔法数字模式
-                'description': '发现魔法数字，应使用常量替代'
+            "magic_numbers": {
+                "pattern": r"\b(?!1|0|2|10|100)\d{2,}\b",  # 魔法数字模式
+                "description": "发现魔法数字，应使用常量替代",
             },
-            'god_object': {
-                'method_threshold': 15,  # 方法数量阈值
-                'description': '可能是上帝对象，方法过多'
+            "god_object": {
+                "method_threshold": 15,  # 方法数量阈值
+                "description": "可能是上帝对象，方法过多",
             },
-            'feature_envy': {
-                'import_threshold': 10,  # 导入其他模块类/函数数量阈值
-                'description': '可能存在特性嫉妒，过度依赖其他模块'
-            }
+            "feature_envy": {
+                "import_threshold": 10,  # 导入其他模块类/函数数量阈值
+                "description": "可能存在特性嫉妒，过度依赖其他模块",
+            },
         }
 
         # 依赖图
@@ -98,7 +100,7 @@ class CodeAnalyzer:
             raise CodeAnalysisError(f"File is not a Python file: {file_path}")
 
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 source_code = f.read()
 
             # 解析AST
@@ -114,7 +116,7 @@ class CodeAnalyzer:
                 "anti_patterns": self._detect_anti_patterns(tree, source_code),
                 "dependencies": self._analyze_dependencies(tree, file_path),
                 "quality_metrics": self._calculate_quality_metrics(tree, source_code),
-                "import_analysis": self._analyze_imports(tree)
+                "import_analysis": self._analyze_imports(tree),
             }
 
             self.logger.debug(f"Code analysis completed: {file_path}")
@@ -129,7 +131,7 @@ class CodeAnalyzer:
             "cyclomatic_complexity": {},
             "maintainability_index": 0,
             "halstead_metrics": {},
-            "loc_metrics": {}
+            "loc_metrics": {},
         }
 
         # 圈复杂度分析
@@ -140,7 +142,7 @@ class CodeAnalyzer:
                     "complexity": item.complexity,
                     "rank": cc_rank(item.complexity),
                     "line": item.lineno,
-                    "endline": getattr(item, 'endline', item.lineno)
+                    "endline": getattr(item, "endline", item.lineno),
                 }
         except Exception as e:
             self.logger.warning(f"Cyclomatic complexity analysis failed: {e}")
@@ -162,7 +164,7 @@ class CodeAnalyzer:
                 "bugs": h_metrics.bugs,
                 "length": h_metrics.length,
                 "vocabulary": h_metrics.vocabulary,
-                "volume": h_metrics.volume
+                "volume": h_metrics.volume,
             }
         except Exception as e:
             self.logger.warning(f"Halstead metrics analysis failed: {e}")
@@ -177,7 +179,7 @@ class CodeAnalyzer:
                 "sloc": loc_metrics.sloc,
                 "comments": loc_metrics.comments,
                 "multi": loc_metrics.multi,
-                "blank": loc_metrics.blank
+                "blank": loc_metrics.blank,
             }
         except Exception as e:
             self.logger.warning(f"LOC metrics analysis failed: {e}")
@@ -189,12 +191,14 @@ class CodeAnalyzer:
                 "sloc": len(lines),
                 "comments": 0,
                 "multi": 0,
-                "blank": 0
+                "blank": 0,
             }
 
         return complexity_result
 
-    def _detect_anti_patterns(self, tree: ast.AST, source_code: str) -> List[Dict[str, Any]]:
+    def _detect_anti_patterns(
+        self, tree: ast.AST, source_code: str
+    ) -> List[Dict[str, Any]]:
         """检测反模式"""
         anti_patterns = []
 
@@ -246,75 +250,86 @@ class CodeAnalyzer:
 
         return anti_patterns
 
-    def _check_long_method(self, node: ast.FunctionDef, lines: List[str]) -> Optional[Dict[str, Any]]:
+    def _check_long_method(
+        self, node: ast.FunctionDef, lines: List[str]
+    ) -> Optional[Dict[str, Any]]:
         """检查长方法"""
         if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             return None
 
         # 计算方法行数
-        end_line = getattr(node, 'end_lineno', node.lineno)
+        end_line = getattr(node, "end_lineno", node.lineno)
         method_lines = end_line - node.lineno + 1
 
-        if method_lines > self.anti_patterns['long_method']['threshold']:
+        if method_lines > self.anti_patterns["long_method"]["threshold"]:
             return {
                 "type": "long_method",
                 "name": node.name,
                 "line": node.lineno,
                 "end_line": end_line,
                 "lines_count": method_lines,
-                "threshold": self.anti_patterns['long_method']['threshold'],
-                "description": self.anti_patterns['long_method']['description'],
-                "severity": "medium" if method_lines < 30 else "high"
+                "threshold": self.anti_patterns["long_method"]["threshold"],
+                "description": self.anti_patterns["long_method"]["description"],
+                "severity": "medium" if method_lines < 30 else "high",
             }
         return None
 
-    def _check_long_parameter_list(self, node: ast.FunctionDef) -> Optional[Dict[str, Any]]:
+    def _check_long_parameter_list(
+        self, node: ast.FunctionDef
+    ) -> Optional[Dict[str, Any]]:
         """检查长参数列表"""
         if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             return None
 
         param_count = len(node.args.args)
-        if param_count > self.anti_patterns['long_parameter_list']['threshold']:
+        if param_count > self.anti_patterns["long_parameter_list"]["threshold"]:
             return {
                 "type": "long_parameter_list",
                 "name": node.name,
                 "line": node.lineno,
                 "parameter_count": param_count,
-                "threshold": self.anti_patterns['long_parameter_list']['threshold'],
-                "description": self.anti_patterns['long_parameter_list']['description'],
-                "severity": "low" if param_count < 8 else "medium"
+                "threshold": self.anti_patterns["long_parameter_list"]["threshold"],
+                "description": self.anti_patterns["long_parameter_list"]["description"],
+                "severity": "low" if param_count < 8 else "medium",
             }
         return None
 
-    def _check_large_class(self, tree: ast.AST, lines: List[str]) -> Optional[Dict[str, Any]]:
+    def _check_large_class(
+        self, tree: ast.AST, lines: List[str]
+    ) -> Optional[Dict[str, Any]]:
         """检查大类"""
         for node in ast.walk(tree):
             if isinstance(node, ast.ClassDef):
                 # 计算类行数
-                end_line = getattr(node, 'end_lineno', node.lineno)
+                end_line = getattr(node, "end_lineno", node.lineno)
                 class_lines = end_line - node.lineno + 1
 
-                if class_lines > self.anti_patterns['large_class']['threshold']:
+                if class_lines > self.anti_patterns["large_class"]["threshold"]:
                     return {
                         "type": "large_class",
                         "name": node.name,
                         "line": node.lineno,
                         "end_line": end_line,
                         "lines_count": class_lines,
-                        "threshold": self.anti_patterns['large_class']['threshold'],
-                        "description": self.anti_patterns['large_class']['description'],
-                        "severity": "medium" if class_lines < 300 else "high"
+                        "threshold": self.anti_patterns["large_class"]["threshold"],
+                        "description": self.anti_patterns["large_class"]["description"],
+                        "severity": "medium" if class_lines < 300 else "high",
                     }
         return None
 
-    def _check_deeply_nested(self, tree: ast.AST, lines: List[str]) -> Optional[Dict[str, Any]]:
+    def _check_deeply_nested(
+        self, tree: ast.AST, lines: List[str]
+    ) -> Optional[Dict[str, Any]]:
         """检查深度嵌套"""
+
         def get_nesting_depth(node):
             depth = 0
             current = node
 
-            while hasattr(current, 'parent'):
-                if isinstance(current.parent, (ast.If, ast.While, ast.For, ast.With, ast.Try)):
+            while hasattr(current, "parent"):
+                if isinstance(
+                    current.parent, (ast.If, ast.While, ast.For, ast.With, ast.Try)
+                ):
                     depth += 1
                 current = current.parent
             return depth
@@ -328,47 +343,55 @@ class CodeAnalyzer:
         max_depth_node = None
 
         for current_node in ast.walk(tree):
-            if isinstance(current_node, (ast.If, ast.While, ast.For, ast.With, ast.Try)):
+            if isinstance(
+                current_node, (ast.If, ast.While, ast.For, ast.With, ast.Try)
+            ):
                 depth = get_nesting_depth(current_node)
                 if depth > max_depth:
                     max_depth = depth
                     max_depth_node = current_node
 
-        if max_depth > self.anti_patterns['deeply_nested']['threshold']:
+        if max_depth > self.anti_patterns["deeply_nested"]["threshold"]:
             return {
                 "type": "deeply_nested",
                 "line": max_depth_node.lineno if max_depth_node else 0,
                 "nesting_depth": max_depth,
-                "threshold": self.anti_patterns['deeply_nested']['threshold'],
-                "description": self.anti_patterns['deeply_nested']['description'],
-                "severity": "medium" if max_depth < 6 else "high"
+                "threshold": self.anti_patterns["deeply_nested"]["threshold"],
+                "description": self.anti_patterns["deeply_nested"]["description"],
+                "severity": "medium" if max_depth < 6 else "high",
             }
         return None
 
-    def _check_magic_numbers(self, node: ast.AST, lines: List[str]) -> List[Dict[str, Any]]:
+    def _check_magic_numbers(
+        self, node: ast.AST, lines: List[str]
+    ) -> List[Dict[str, Any]]:
         """检查魔法数字"""
         magic_numbers = []
 
         # 处理不同Python版本的AST节点
         value = None
-        if hasattr(node, 'value'):  # Python 3.8+
+        if hasattr(node, "value"):  # Python 3.8+
             if isinstance(node, ast.Constant) and isinstance(node.value, int):
                 value = node.value
-        elif hasattr(node, 'n'):  # Python 3.7及以下
+        elif hasattr(node, "n"):  # Python 3.7及以下
             if isinstance(node, ast.Num):
                 value = node.n
 
         if value is not None:
             # 检查是否匹配魔法数字模式
-            pattern = re.compile(self.anti_patterns['magic_numbers']['pattern'])
+            pattern = re.compile(self.anti_patterns["magic_numbers"]["pattern"])
             if pattern.match(str(value)):
-                magic_numbers.append({
-                    "type": "magic_numbers",
-                    "line": node.lineno,
-                    "value": value,
-                    "description": self.anti_patterns['magic_numbers']['description'],
-                    "severity": "low"
-                })
+                magic_numbers.append(
+                    {
+                        "type": "magic_numbers",
+                        "line": node.lineno,
+                        "value": value,
+                        "description": self.anti_patterns["magic_numbers"][
+                            "description"
+                        ],
+                        "severity": "low",
+                    }
+                )
 
         return magic_numbers
 
@@ -377,18 +400,23 @@ class CodeAnalyzer:
         for node in ast.walk(tree):
             if isinstance(node, ast.ClassDef):
                 # 统计方法数量
-                method_count = sum(1 for child in node.body
-                                 if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)))
+                method_count = sum(
+                    1
+                    for child in node.body
+                    if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef))
+                )
 
-                if method_count > self.anti_patterns['god_object']['method_threshold']:
+                if method_count > self.anti_patterns["god_object"]["method_threshold"]:
                     return {
                         "type": "god_object",
                         "name": node.name,
                         "line": node.lineno,
                         "method_count": method_count,
-                        "threshold": self.anti_patterns['god_object']['method_threshold'],
-                        "description": self.anti_patterns['god_object']['description'],
-                        "severity": "medium" if method_count < 25 else "high"
+                        "threshold": self.anti_patterns["god_object"][
+                            "method_threshold"
+                        ],
+                        "description": self.anti_patterns["god_object"]["description"],
+                        "severity": "medium" if method_count < 25 else "high",
                     }
         return None
 
@@ -407,15 +435,15 @@ class CodeAnalyzer:
         # 统计外部依赖
         total_external_deps = len(external_dependencies)
 
-        if total_external_deps > self.anti_patterns['feature_envy']['import_threshold']:
+        if total_external_deps > self.anti_patterns["feature_envy"]["import_threshold"]:
             return {
                 "type": "feature_envy",
                 "line": 1,
                 "external_dependencies": total_external_deps,
-                "threshold": self.anti_patterns['feature_envy']['import_threshold'],
+                "threshold": self.anti_patterns["feature_envy"]["import_threshold"],
                 "dependencies": list(external_dependencies.keys()),
-                "description": self.anti_patterns['feature_envy']['description'],
-                "severity": "low" if total_external_deps < 15 else "medium"
+                "description": self.anti_patterns["feature_envy"]["description"],
+                "severity": "low" if total_external_deps < 15 else "medium",
             }
         return None
 
@@ -428,20 +456,28 @@ class CodeAnalyzer:
         for i, line in enumerate(lines, 1):
             if len(line.strip()) > 10:  # 忽略短行
                 # 简单规范化：移除空格和制表符
-                normalized = re.sub(r'\s+', '', line.strip())
+                normalized = re.sub(r"\s+", "", line.strip())
                 code_blocks[normalized].append(i)
 
         # 查找重复的代码块
         for normalized, line_numbers in code_blocks.items():
             if len(line_numbers) > 1:
-                duplicates.append({
-                    "type": "duplicate_code",
-                    "lines": line_numbers,
-                    "count": len(line_numbers),
-                    "pattern": normalized[:50] + "..." if len(normalized) > 50 else normalized,
-                    "description": self.anti_patterns['duplicate_code']['description'],
-                    "severity": "low"
-                })
+                duplicates.append(
+                    {
+                        "type": "duplicate_code",
+                        "lines": line_numbers,
+                        "count": len(line_numbers),
+                        "pattern": (
+                            normalized[:50] + "..."
+                            if len(normalized) > 50
+                            else normalized
+                        ),
+                        "description": self.anti_patterns["duplicate_code"][
+                            "description"
+                        ],
+                        "severity": "low",
+                    }
+                )
 
         return duplicates
 
@@ -451,25 +487,29 @@ class CodeAnalyzer:
             "imports": [],
             "internal_dependencies": [],
             "external_dependencies": [],
-            "dependency_graph": {}
+            "dependency_graph": {},
         }
 
         # 收集导入信息
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
                 for alias in node.names:
-                    dependencies["imports"].append({
-                        "module": alias.name,
-                        "alias": alias.asname,
-                        "line": node.lineno
-                    })
+                    dependencies["imports"].append(
+                        {
+                            "module": alias.name,
+                            "alias": alias.asname,
+                            "line": node.lineno,
+                        }
+                    )
 
             elif isinstance(node, ast.ImportFrom):
-                dependencies["imports"].append({
-                    "module": node.module or "",
-                    "names": [alias.name for alias in node.names],
-                    "line": node.lineno
-                })
+                dependencies["imports"].append(
+                    {
+                        "module": node.module or "",
+                        "names": [alias.name for alias in node.names],
+                        "line": node.lineno,
+                    }
+                )
 
         # 构建依赖图
         file_module = file_path.stem
@@ -477,7 +517,7 @@ class CodeAnalyzer:
 
         for imp in dependencies["imports"]:
             module_name = imp["module"]
-            if module_name and not module_name.startswith('.'):
+            if module_name and not module_name.startswith("."):
                 self.dependency_graph[file_module].add(module_name)
 
         dependencies["dependency_graph"] = {
@@ -486,7 +526,9 @@ class CodeAnalyzer:
 
         return dependencies
 
-    def _calculate_quality_metrics(self, tree: ast.AST, source_code: str) -> Dict[str, Any]:
+    def _calculate_quality_metrics(
+        self, tree: ast.AST, source_code: str
+    ) -> Dict[str, Any]:
         """计算代码质量指标"""
         metrics = {
             "functions_count": 0,
@@ -494,7 +536,7 @@ class CodeAnalyzer:
             "lines_of_code": len(source_code.splitlines()),
             "comment_ratio": 0,
             "average_function_length": 0,
-            "max_function_length": 0
+            "max_function_length": 0,
         }
 
         functions_lengths = []
@@ -502,22 +544,26 @@ class CodeAnalyzer:
         for node in ast.walk(tree):
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 metrics["functions_count"] += 1
-                end_line = getattr(node, 'end_lineno', node.lineno)
+                end_line = getattr(node, "end_lineno", node.lineno)
                 func_length = end_line - node.lineno + 1
                 functions_lengths.append(func_length)
-                metrics["max_function_length"] = max(metrics["max_function_length"], func_length)
+                metrics["max_function_length"] = max(
+                    metrics["max_function_length"], func_length
+                )
 
             elif isinstance(node, ast.ClassDef):
                 metrics["classes_count"] += 1
 
         # 计算平均函数长度
         if functions_lengths:
-            metrics["average_function_length"] = sum(functions_lengths) / len(functions_lengths)
+            metrics["average_function_length"] = sum(functions_lengths) / len(
+                functions_lengths
+            )
 
         # 计算注释比例
         comment_lines = 0
         for line in source_code.splitlines():
-            if line.strip().startswith('#'):
+            if line.strip().startswith("#"):
                 comment_lines += 1
 
         if metrics["lines_of_code"] > 0:
@@ -532,21 +578,37 @@ class CodeAnalyzer:
             "third_party_imports": [],
             "local_imports": [],
             "unused_imports": [],
-            "import_complexity": 0
+            "import_complexity": 0,
         }
 
         # 标准库模块列表（简化版）
         stdlib_modules = {
-            'os', 'sys', 'json', 're', 'datetime', 'collections',
-            'math', 'random', 'itertools', 'functools', 'operator',
-            'pathlib', 'urllib', 'http', 'socket', 'threading',
-            'multiprocessing', 'asyncio', 'logging', 'unittest'
+            "os",
+            "sys",
+            "json",
+            "re",
+            "datetime",
+            "collections",
+            "math",
+            "random",
+            "itertools",
+            "functools",
+            "operator",
+            "pathlib",
+            "urllib",
+            "http",
+            "socket",
+            "threading",
+            "multiprocessing",
+            "asyncio",
+            "logging",
+            "unittest",
         }
 
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
                 for alias in node.names:
-                    module_name = alias.name.split('.')[0]
+                    module_name = alias.name.split(".")[0]
                     if module_name in stdlib_modules:
                         import_analysis["standard_library_imports"].append(alias.name)
                     else:
@@ -554,18 +616,20 @@ class CodeAnalyzer:
 
             elif isinstance(node, ast.ImportFrom):
                 if node.module:
-                    module_name = node.module.split('.')[0]
+                    module_name = node.module.split(".")[0]
                     if module_name in stdlib_modules:
                         import_analysis["standard_library_imports"].append(node.module)
-                    elif node.module.startswith('.'):
+                    elif node.module.startswith("."):
                         import_analysis["local_imports"].append(node.module)
                     else:
                         import_analysis["third_party_imports"].append(node.module)
 
         # 计算导入复杂度
-        total_imports = (len(import_analysis["standard_library_imports"]) +
-                        len(import_analysis["third_party_imports"]) +
-                        len(import_analysis["local_imports"]))
+        total_imports = (
+            len(import_analysis["standard_library_imports"])
+            + len(import_analysis["third_party_imports"])
+            + len(import_analysis["local_imports"])
+        )
         import_analysis["import_complexity"] = total_imports
 
         return import_analysis
@@ -587,12 +651,14 @@ class CodeAnalyzer:
         for file_path in files:
             if file_path.exists() and file_path.suffix == ".py":
                 try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, "r", encoding="utf-8") as f:
                         source_code = f.read()
                     tree = ast.parse(source_code)
                     self._analyze_dependencies(tree, file_path)
                 except Exception as e:
-                    self.logger.warning(f"Failed to analyze dependencies for {file_path}: {e}")
+                    self.logger.warning(
+                        f"Failed to analyze dependencies for {file_path}: {e}"
+                    )
 
         # 分析图的特性
         graph_analysis = {
@@ -601,20 +667,19 @@ class CodeAnalyzer:
             "graph": {node: list(deps) for node, deps in self.dependency_graph.items()},
             "most_connected": self._find_most_connected_nodes(),
             "circular_dependencies": self._detect_circular_dependencies(),
-            "dependency_levels": self._calculate_dependency_levels()
+            "dependency_levels": self._calculate_dependency_levels(),
         }
 
         return graph_analysis
 
     def _find_most_connected_nodes(self) -> List[Dict[str, Any]]:
         """找到连接度最高的节点"""
-        connections = [(node, len(deps)) for node, deps in self.dependency_graph.items()]
+        connections = [
+            (node, len(deps)) for node, deps in self.dependency_graph.items()
+        ]
         connections.sort(key=lambda x: x[1], reverse=True)
 
-        return [
-            {"node": node, "dependencies": deps}
-            for node, deps in connections[:5]
-        ]
+        return [{"node": node, "dependencies": deps} for node, deps in connections[:5]]
 
     def _detect_circular_dependencies(self) -> List[List[str]]:
         """检测循环依赖"""
@@ -669,7 +734,9 @@ class CodeAnalyzer:
 
         return levels
 
-    def assess_change_impact(self, file_path: Path, changed_items: List[str]) -> Dict[str, Any]:
+    def assess_change_impact(
+        self, file_path: Path, changed_items: List[str]
+    ) -> Dict[str, Any]:
         """
         评估修改影响范围
 
@@ -695,7 +762,7 @@ class CodeAnalyzer:
             "direct_dependents": dependents,
             "impact_score": 0,
             "risk_level": "low",
-            "recommendations": []
+            "recommendations": [],
         }
 
         # 计算影响评分
@@ -722,6 +789,8 @@ class CodeAnalyzer:
             impact_assessment["recommendations"].append("考虑创建接口隔离变化")
 
         if dependents:
-            impact_assessment["recommendations"].append(f"需要测试 {len(dependents)} 个依赖文件")
+            impact_assessment["recommendations"].append(
+                f"需要测试 {len(dependents)} 个依赖文件"
+            )
 
         return impact_assessment

@@ -5,19 +5,20 @@
 
 import sys
 import time
-from typing import Dict, List, Any, Optional, Callable, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from ..utils.logger import get_logger
 from ..utils.config import get_config_manager
+from ..utils.logger import get_logger
+from .diff_viewer import DiffResult, DiffViewer
 from .fix_generator import FixResult, FixSuggestion
-from .diff_viewer import DiffViewer, DiffResult
 
 
 class ConfirmationStatus(Enum):
     """确认状态"""
+
     PENDING = "pending"
     APPROVED = "approved"
     REJECTED = "rejected"
@@ -28,6 +29,7 @@ class ConfirmationStatus(Enum):
 @dataclass
 class ConfirmationRequest:
     """确认请求"""
+
     fix_id: str
     file_path: str
     fix_result: FixResult
@@ -42,6 +44,7 @@ class ConfirmationRequest:
 @dataclass
 class ConfirmationResponse:
     """确认响应"""
+
     fix_id: str
     status: ConfirmationStatus
     selected_suggestions: List[int] = field(default_factory=list)  # 选中的建议索引
@@ -53,6 +56,7 @@ class ConfirmationResponse:
 @dataclass
 class ConfirmationSession:
     """确认会话"""
+
     session_id: str
     requests: List[ConfirmationRequest] = field(default_factory=list)
     responses: List[ConfirmationResponse] = field(default_factory=list)
@@ -82,22 +86,26 @@ class FixConfirmationManager:
 
         # 获取配置
         try:
-            self.config = self.config_manager.get_section('fix_confirmation')
+            self.config = self.config_manager.get_section("fix_confirmation")
         except:
             self.config = {}
 
-        self.default_timeout = self.config.get('default_timeout', 300)
-        self.auto_approve_safe = self.config.get('auto_approve_safe', False)
-        self.show_diff_summary = self.config.get('show_diff_summary', True)
-        self.interactive_mode = self.config.get('interactive_mode', True)
-        self.batch_mode = self.config.get('batch_mode', False)
+        self.default_timeout = self.config.get("default_timeout", 300)
+        self.auto_approve_safe = self.config.get("auto_approve_safe", False)
+        self.show_diff_summary = self.config.get("show_diff_summary", True)
+        self.interactive_mode = self.config.get("interactive_mode", True)
+        self.batch_mode = self.config.get("batch_mode", False)
 
         # 确认回调函数
-        self.confirmation_callback: Optional[Callable[[ConfirmationRequest], ConfirmationResponse]] = None
+        self.confirmation_callback: Optional[
+            Callable[[ConfirmationRequest], ConfirmationResponse]
+        ] = None
 
         self.logger.info("FixConfirmationManager initialized")
 
-    def set_confirmation_callback(self, callback: Callable[[ConfirmationRequest], ConfirmationResponse]):
+    def set_confirmation_callback(
+        self, callback: Callable[[ConfirmationRequest], ConfirmationResponse]
+    ):
         """
         设置确认回调函数
 
@@ -107,9 +115,15 @@ class FixConfirmationManager:
         self.confirmation_callback = callback
         self.logger.info("Confirmation callback set")
 
-    def request_confirmation(self, fix_id: str, file_path: str, fix_result: FixResult,
-                           diff_result: DiffResult, backup_id: str,
-                           timeout_seconds: Optional[int] = None) -> ConfirmationResponse:
+    def request_confirmation(
+        self,
+        fix_id: str,
+        file_path: str,
+        fix_result: FixResult,
+        diff_result: DiffResult,
+        backup_id: str,
+        timeout_seconds: Optional[int] = None,
+    ) -> ConfirmationResponse:
         """
         请求用户确认
 
@@ -138,7 +152,7 @@ class FixConfirmationManager:
             timestamp=time.strftime("%Y-%m-%d %H:%M:%S"),
             timeout_seconds=timeout_seconds or self.default_timeout,
             auto_approve_safe=self.auto_approve_safe,
-            require_explicit_confirmation=not self.batch_mode
+            require_explicit_confirmation=not self.batch_mode,
         )
 
         try:
@@ -148,7 +162,7 @@ class FixConfirmationManager:
                     fix_id=fix_id,
                     status=ConfirmationStatus.APPROVED,
                     user_message="Auto-approved: all fixes are safe",
-                    response_time=time.time() - start_time
+                    response_time=time.time() - start_time,
                 )
                 self.logger.info(f"Fix {fix_id} auto-approved")
                 return response
@@ -160,7 +174,9 @@ class FixConfirmationManager:
                 response = self._interactive_confirmation(request)
 
             response.response_time = time.time() - start_time
-            self.logger.info(f"Confirmation received for fix {fix_id}: {response.status.value}")
+            self.logger.info(
+                f"Confirmation received for fix {fix_id}: {response.status.value}"
+            )
 
             return response
 
@@ -170,10 +186,12 @@ class FixConfirmationManager:
                 fix_id=fix_id,
                 status=ConfirmationStatus.CANCELLED,
                 user_message=f"Confirmation error: {e}",
-                response_time=time.time() - start_time
+                response_time=time.time() - start_time,
             )
 
-    def batch_request_confirmation(self, requests: List[ConfirmationRequest]) -> List[ConfirmationResponse]:
+    def batch_request_confirmation(
+        self, requests: List[ConfirmationRequest]
+    ) -> List[ConfirmationResponse]:
         """
         批量请求确认
 
@@ -200,7 +218,7 @@ class FixConfirmationManager:
                     request.fix_result,
                     request.diff_result,
                     request.backup_id,
-                    request.timeout_seconds
+                    request.timeout_seconds,
                 )
                 responses.append(response)
 
@@ -210,7 +228,9 @@ class FixConfirmationManager:
 
         return responses
 
-    def create_confirmation_session(self, requests: List[ConfirmationRequest]) -> ConfirmationSession:
+    def create_confirmation_session(
+        self, requests: List[ConfirmationRequest]
+    ) -> ConfirmationSession:
         """
         创建确认会话
 
@@ -226,7 +246,7 @@ class FixConfirmationManager:
             session_id=str(uuid.uuid4()),
             requests=requests,
             start_time=time.strftime("%Y-%m-%d %H:%M:%S"),
-            total_files=len(requests)
+            total_files=len(requests),
         )
 
         # 处理确认
@@ -244,9 +264,11 @@ class FixConfirmationManager:
 
         session.end_time = time.strftime("%Y-%m-%d %H:%M:%S")
 
-        self.logger.info(f"Confirmation session {session.session_id} completed: "
-                        f"{session.approved_files} approved, {session.rejected_files} rejected, "
-                        f"{session.partial_files} partial")
+        self.logger.info(
+            f"Confirmation session {session.session_id} completed: "
+            f"{session.approved_files} approved, {session.rejected_files} rejected, "
+            f"{session.partial_files} partial"
+        )
 
         return session
 
@@ -257,26 +279,32 @@ class FixConfirmationManager:
 
             # 检查所有修复建议是否安全
         complexity = self.diff_viewer.analyze_change_complexity(request.diff_result)
-        if complexity.get('complexity') == 'high':
-            self.logger.warning(f"Fix {request.fix_id} contains high-complexity changes, requiring manual review")
+        if complexity.get("complexity") == "high":
+            self.logger.warning(
+                f"Fix {request.fix_id} contains high-complexity changes, requiring manual review"
+            )
             return False
 
         # 检查每个建议的置信度
         for suggestion in request.fix_result.suggestions:
             if suggestion.confidence < 0.8:
-                self.logger.warning(f"Fix {request.fix_id} has low confidence suggestions, requiring manual review")
+                self.logger.warning(
+                    f"Fix {request.fix_id} has low confidence suggestions, requiring manual review"
+                )
                 return False
 
         return True
 
-    def _interactive_confirmation(self, request: ConfirmationRequest) -> ConfirmationResponse:
+    def _interactive_confirmation(
+        self, request: ConfirmationRequest
+    ) -> ConfirmationResponse:
         """交互式确认"""
         if not self.interactive_mode:
             # 非交互模式，默认批准
             return ConfirmationResponse(
                 fix_id=request.fix_id,
                 status=ConfirmationStatus.APPROVED,
-                user_message="Auto-approved (non-interactive mode)"
+                user_message="Auto-approved (non-interactive mode)",
             )
 
         # 显示修复摘要
@@ -291,33 +319,33 @@ class FixConfirmationManager:
             try:
                 choice = self._get_user_choice(request)
 
-                if choice in ['y', 'yes', 'Y', 'YES']:
+                if choice in ["y", "yes", "Y", "YES"]:
                     return ConfirmationResponse(
                         fix_id=request.fix_id,
                         status=ConfirmationStatus.APPROVED,
-                        user_message="User approved all fixes"
+                        user_message="User approved all fixes",
                     )
-                elif choice in ['n', 'no', 'N', 'NO']:
+                elif choice in ["n", "no", "N", "NO"]:
                     return ConfirmationResponse(
                         fix_id=request.fix_id,
                         status=ConfirmationStatus.REJECTED,
-                        user_message="User rejected fixes"
+                        user_message="User rejected fixes",
                     )
-                elif choice in ['p', 'partial', 'P', 'PARTIAL']:
+                elif choice in ["p", "partial", "P", "PARTIAL"]:
                     selected = self._select_specific_suggestions(request)
                     return ConfirmationResponse(
                         fix_id=request.fix_id,
                         status=ConfirmationStatus.PARTIAL,
                         selected_suggestions=selected,
-                        user_message=f"User approved selected fixes: {selected}"
+                        user_message=f"User approved selected fixes: {selected}",
                     )
-                elif choice in ['d', 'details', 'D', 'DETAILS']:
+                elif choice in ["d", "details", "D", "DETAILS"]:
                     self._display_detailed_fixes(request)
-                elif choice in ['q', 'quit', 'Q', 'QUIT']:
+                elif choice in ["q", "quit", "Q", "QUIT"]:
                     return ConfirmationResponse(
                         fix_id=request.fix_id,
                         status=ConfirmationStatus.CANCELLED,
-                        user_message="User cancelled"
+                        user_message="User cancelled",
                     )
                 else:
                     print("无效选择，请重新输入")
@@ -326,16 +354,18 @@ class FixConfirmationManager:
                 return ConfirmationResponse(
                     fix_id=request.fix_id,
                     status=ConfirmationStatus.CANCELLED,
-                    user_message="User interrupted (Ctrl+C)"
+                    user_message="User interrupted (Ctrl+C)",
                 )
             except EOFError:
                 return ConfirmationResponse(
                     fix_id=request.fix_id,
                     status=ConfirmationStatus.CANCELLED,
-                    user_message="End of input"
+                    user_message="End of input",
                 )
 
-    def _batch_confirmation(self, requests: List[ConfirmationRequest]) -> ConfirmationResponse:
+    def _batch_confirmation(
+        self, requests: List[ConfirmationRequest]
+    ) -> ConfirmationResponse:
         """批量确认"""
         print(f"\n{'='*80}")
         print(f"批量修复确认 - 共 {len(requests)} 个文件")
@@ -363,27 +393,27 @@ class FixConfirmationManager:
 
                 choice = input("\n请选择 (y/n/d/q): ").strip().lower()
 
-                if choice in ['y', 'yes']:
+                if choice in ["y", "yes"]:
                     return ConfirmationResponse(
                         fix_id="batch",
                         status=ConfirmationStatus.APPROVED,
-                        user_message="User approved all batch fixes"
+                        user_message="User approved all batch fixes",
                     )
-                elif choice in ['n', 'no']:
+                elif choice in ["n", "no"]:
                     return ConfirmationResponse(
                         fix_id="batch",
                         status=ConfirmationStatus.REJECTED,
-                        user_message="User rejected all batch fixes"
+                        user_message="User rejected all batch fixes",
                     )
-                elif choice in ['d', 'details']:
+                elif choice in ["d", "details"]:
                     for request in requests:
                         self._display_detailed_fixes(request)
-                        print("\n" + "-"*80)
-                elif choice in ['q', 'quit']:
+                        print("\n" + "-" * 80)
+                elif choice in ["q", "quit"]:
                     return ConfirmationResponse(
                         fix_id="batch",
                         status=ConfirmationStatus.CANCELLED,
-                        user_message="User cancelled batch operation"
+                        user_message="User cancelled batch operation",
                     )
                 else:
                     print("无效选择，请重新输入")
@@ -392,7 +422,7 @@ class FixConfirmationManager:
                 return ConfirmationResponse(
                     fix_id="batch",
                     status=ConfirmationStatus.CANCELLED,
-                    user_message="User cancelled"
+                    user_message="User cancelled",
                 )
 
     def _display_fix_summary(self, request: ConfirmationRequest):
@@ -418,7 +448,9 @@ class FixConfirmationManager:
         print(f"\n修复建议 ({len(suggestions)} 个):")
         for i, suggestion in enumerate(suggestions, 1):
             print(f"  {i}. {suggestion.issue_type} - {suggestion.description}")
-            print(f"     严重程度: {suggestion.severity}, 置信度: {suggestion.confidence:.2f}")
+            print(
+                f"     严重程度: {suggestion.severity}, 置信度: {suggestion.confidence:.2f}"
+            )
 
     def _display_diff_summary(self, diff_result: DiffResult):
         """显示差异摘要"""
@@ -430,7 +462,7 @@ class FixConfirmationManager:
         print(f"  复杂度: {complexity.get('complexity', 'unknown')}")
         print(f"  变更比例: {complexity.get('change_ratio', 0):.1%}")
 
-        if complexity.get('risk_factors'):
+        if complexity.get("risk_factors"):
             print(f"  风险因素: {', '.join(complexity['risk_factors'])}")
 
         print(f"  建议: {complexity.get('recommendation', '')}")
@@ -454,11 +486,11 @@ class FixConfirmationManager:
 
             print(f"\n  修复代码:")
             print("  ```python")
-            for line in suggestion.fixed_code.split('\n'):
+            for line in suggestion.fixed_code.split("\n"):
                 print(f"  {line}")
             print("  ```")
 
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
 
     def _select_specific_suggestions(self, request: ConfirmationRequest) -> List[int]:
         """选择特定修复建议"""
@@ -472,22 +504,26 @@ class FixConfirmationManager:
 
         while True:
             try:
-                choice = input("请输入要应用的修复编号 (用逗号分隔，如: 1,3,5): ").strip()
+                choice = input(
+                    "请输入要应用的修复编号 (用逗号分隔，如: 1,3,5): "
+                ).strip()
                 if not choice:
                     return []
 
                 selected_indices = []
-                for part in choice.split(','):
+                for part in choice.split(","):
                     part = part.strip()
-                    if '-' in part:
+                    if "-" in part:
                         # 处理范围，如: 1-3
-                        start, end = map(int, part.split('-'))
+                        start, end = map(int, part.split("-"))
                         selected_indices.extend(range(start, end + 1))
                     else:
                         selected_indices.append(int(part))
 
                 # 验证选择
-                valid_indices = [i for i in selected_indices if 1 <= i <= len(suggestions)]
+                valid_indices = [
+                    i for i in selected_indices if 1 <= i <= len(suggestions)
+                ]
                 if valid_indices:
                     print(f"已选择修复建议: {valid_indices}")
                     return [i - 1 for i in valid_indices]  # 转换为0-based索引
@@ -523,18 +559,22 @@ class FixConfirmationManager:
             f"部分批准文件数: {session.partial_files}",
             "",
             f"详细结果:",
-            "-" * 40
+            "-" * 40,
         ]
 
-        for i, (request, response) in enumerate(zip(session.requests, session.responses), 1):
-            report_lines.extend([
-                f"",
-                f"{i}. {request.file_path}",
-                f"   状态: {response.status.value}",
-                f"   修复数: {len(request.fix_result.suggestions)}",
-                f"   用户消息: {response.user_message}",
-                f"   响应时间: {response.response_time:.2f}秒"
-            ])
+        for i, (request, response) in enumerate(
+            zip(session.requests, session.responses), 1
+        ):
+            report_lines.extend(
+                [
+                    f"",
+                    f"{i}. {request.file_path}",
+                    f"   状态: {response.status.value}",
+                    f"   修复数: {len(request.fix_result.suggestions)}",
+                    f"   用户消息: {response.user_message}",
+                    f"   响应时间: {response.response_time:.2f}秒",
+                ]
+            )
 
             if response.selected_suggestions:
                 report_lines.append(f"   选择的修复: {response.selected_suggestions}")

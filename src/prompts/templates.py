@@ -2,8 +2,9 @@
 具体的Prompt模板定义
 """
 
-from typing import Dict, Any, List
-from .base import PromptTemplate, PromptCategory, PromptType
+from typing import Any, Dict, List
+
+from .base import PromptCategory, PromptTemplate, PromptType
 
 
 class StaticAnalysisTemplate:
@@ -30,7 +31,7 @@ class StaticAnalysisTemplate:
             description="静态分析系统提示",
             version="1.0",
             author="AIDefectDetector",
-            tags=["static_analysis", "security", "code_quality"]
+            tags=["static_analysis", "security", "code_quality"],
         )
 
     @staticmethod
@@ -95,11 +96,11 @@ class StaticAnalysisTemplate:
                 "description": "描述",
                 "code_snippet": "代码片段",
                 "rule": "规则",
-                "index": "索引"
+                "index": "索引",
             },
             version="1.0",
             author="AIDefectDetector",
-            tags=["static_analysis", "defect_analysis", "security"]
+            tags=["static_analysis", "defect_analysis", "security"],
         )
 
     @staticmethod
@@ -142,11 +143,11 @@ class StaticAnalysisTemplate:
                 "type": "类型",
                 "file": "文件",
                 "line": "行号",
-                "description": "描述"
+                "description": "描述",
             },
             version="1.0",
             author="AIDefectDetector",
-            tags=["summary", "report", "prioritization"]
+            tags=["summary", "report", "prioritization"],
         )
 
 
@@ -175,7 +176,7 @@ class DeepAnalysisTemplate:
             description="深度分析系统提示",
             version="1.0",
             author="AIDefectDetector",
-            tags=["deep_analysis", "security", "architecture", "performance"]
+            tags=["deep_analysis", "security", "architecture", "performance"],
         )
 
     @staticmethod
@@ -253,11 +254,17 @@ class DeepAnalysisTemplate:
                 "dependencies": "依赖项列表",
                 "usage_context": "使用场景",
                 "name": "名称",
-                "version": "版本"
+                "version": "版本",
             },
             version="1.0",
             author="AIDefectDetector",
-            tags=["deep_analysis", "code_analysis", "security", "performance", "architecture"]
+            tags=[
+                "deep_analysis",
+                "code_analysis",
+                "security",
+                "performance",
+                "architecture",
+            ],
         )
 
     @staticmethod
@@ -333,11 +340,17 @@ class DeepAnalysisTemplate:
                 "attack_scenarios": "攻击场景列表",
                 "title": "标题",
                 "impact": "影响程度",
-                "difficulty": "利用难度"
+                "difficulty": "利用难度",
             },
             version="1.0",
             author="AIDefectDetector",
-            tags=["deep_analysis", "security", "vulnerability", "security_assessment", "risk_analysis"]
+            tags=[
+                "deep_analysis",
+                "security",
+                "vulnerability",
+                "security_assessment",
+                "risk_analysis",
+            ],
         )
 
 
@@ -366,7 +379,7 @@ class RepairSuggestionTemplate:
             description="修复建议系统提示",
             version="1.0",
             author="AIDefectDetector",
-            tags=["repair", "code_fix", "optimization", "best_practices"]
+            tags=["repair", "code_fix", "optimization", "best_practices"],
         )
 
     @staticmethod
@@ -468,11 +481,17 @@ class RepairSuggestionTemplate:
                 "solution_2_explanation": "方案2说明",
                 "solution_2_advantages": "方案2优点",
                 "solution_2_disadvantages": "方案2缺点",
-                "else": "else"
+                "else": "else",
             },
             version="1.0",
             author="AIDefectDetector",
-            tags=["repair", "fix_suggestion", "code_fix", "code_repair", "best_practices"]
+            tags=[
+                "repair",
+                "fix_suggestion",
+                "code_fix",
+                "code_repair",
+                "best_practices",
+            ],
         )
 
     @staticmethod
@@ -553,9 +572,9 @@ class RepairSuggestionTemplate:
                 "type": "类型",
                 "index": "索引",
                 "description": "描述",
-                "code": "代码"
+                "code": "代码",
             },
             version="1.0",
             author="AIDefectDetector",
-            tags=["refactoring", "code_quality", "optimization"]
+            tags=["refactoring", "code_quality", "optimization"],
         )

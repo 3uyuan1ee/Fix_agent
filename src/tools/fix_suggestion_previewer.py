@@ -10,32 +10,38 @@ T010.2: 修复建议预览器
 """
 
 import json
-from typing import Dict, List, Any, Optional, Tuple, Callable
-from dataclasses import dataclass, asdict
-from enum import Enum
 import re
+from dataclasses import asdict, dataclass
+from enum import Enum
 from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from ..utils.types import ProblemType, RiskLevel, FixType
 from ..utils.logger import get_logger
+from ..utils.types import FixType, ProblemType, RiskLevel
+from .fix_suggestion_displayer import (
+    DisplayFormat,
+    DisplaySection,
+    SuggestionDisplayData,
+)
 from .workflow_data_types import AIFixSuggestion, WorkflowDataPacket
-from .workflow_user_interaction_types import UserDecision, DecisionType, UserAction
-from .fix_suggestion_displayer import SuggestionDisplayData, DisplayFormat, DisplaySection
+from .workflow_user_interaction_types import DecisionType, UserAction, UserDecision
 
 logger = get_logger()
 
 
 class PreviewMode(Enum):
     """预览模式枚举"""
-    QUICK_OVERVIEW = "quick_overview"    # 快速概览
-    DETAILED_PREVIEW = "detailed_preview" # 详细预览
-    COMPACT_VIEW = "compact_view"        # 紧凑视图
-    CARD_VIEW = "card_view"             # 卡片视图
-    LIST_VIEW = "list_view"             # 列表视图
+
+    QUICK_OVERVIEW = "quick_overview"  # 快速概览
+    DETAILED_PREVIEW = "detailed_preview"  # 详细预览
+    COMPACT_VIEW = "compact_view"  # 紧凑视图
+    CARD_VIEW = "card_view"  # 卡片视图
+    LIST_VIEW = "list_view"  # 列表视图
 
 
 class FilterCriteria(Enum):
     """过滤条件枚举"""
+
     BY_PROBLEM_TYPE = "by_problem_type"
     BY_RISK_LEVEL = "by_risk_level"
     BY_CONFIDENCE = "by_confidence"
@@ -47,6 +53,7 @@ class FilterCriteria(Enum):
 
 class SortCriteria(Enum):
     """排序条件枚举"""
+
     BY_QUALITY_SCORE = "by_quality_score"
     BY_RISK_LEVEL = "by_risk_level"
     BY_CONFIDENCE = "by_confidence"
@@ -58,6 +65,7 @@ class SortCriteria(Enum):
 @dataclass
 class PreviewConfiguration:
     """预览配置"""
+
     mode: PreviewMode = PreviewMode.QUICK_OVERVIEW
     max_items_per_page: int = 10
     enable_filtering: bool = True
@@ -73,6 +81,7 @@ class PreviewConfiguration:
 @dataclass
 class PreviewFilter:
     """预览过滤器"""
+
     criteria: FilterCriteria
     values: List[Any]
     operator: str = "in"  # in, not_in, gt, lt, eq, contains
@@ -81,6 +90,7 @@ class PreviewFilter:
 @dataclass
 class PreviewSort:
     """预览排序器"""
+
     criteria: SortCriteria
     ascending: bool = True
 
@@ -88,6 +98,7 @@ class PreviewSort:
 @dataclass
 class PreviewGroup:
     """预览分组器"""
+
     criteria: str  # 分组条件
     groups: Dict[str, List[SuggestionDisplayData]]
 
@@ -95,6 +106,7 @@ class PreviewGroup:
 @dataclass
 class PreviewPage:
     """预览页面"""
+
     page_number: int
     total_pages: int
     items: List[SuggestionDisplayData]
@@ -106,6 +118,7 @@ class PreviewPage:
 @dataclass
 class PreviewStatistics:
     """预览统计信息"""
+
     total_suggestions: int
     quality_distribution: Dict[str, int]
     risk_distribution: Dict[str, int]
@@ -117,6 +130,7 @@ class PreviewStatistics:
 @dataclass
 class PreviewResult:
     """预览结果"""
+
     mode: PreviewMode
     config: PreviewConfiguration
     statistics: PreviewStatistics
@@ -166,8 +180,7 @@ class FixSuggestionPreviewer:
         """
         # 移除相同条件的现有过滤器
         self._filters = [
-            f for f in self._filters
-            if f.criteria != filter_config.criteria
+            f for f in self._filters if f.criteria != filter_config.criteria
         ]
         self._filters.append(filter_config)
         logger.info(f"设置过滤器: {filter_config.criteria.value}")
@@ -206,11 +219,15 @@ class FixSuggestionPreviewer:
 
         # 应用过滤器
         for filter_config in self._filters:
-            filtered_suggestions = self._apply_filter(filtered_suggestions, filter_config)
+            filtered_suggestions = self._apply_filter(
+                filtered_suggestions, filter_config
+            )
 
         # 应用排序
         if self._sort_config:
-            filtered_suggestions = self._apply_sort(filtered_suggestions, self._sort_config)
+            filtered_suggestions = self._apply_sort(
+                filtered_suggestions, self._sort_config
+            )
 
         logger.info(f"过滤和排序后剩余 {len(filtered_suggestions)} 个建议")
         return filtered_suggestions
@@ -246,13 +263,15 @@ class FixSuggestionPreviewer:
             sort_config=self._sort_config,
             groups=self._groups,
             selected_items=self._selected_items.copy(),
-            rejected_items=self._rejected_items.copy()
+            rejected_items=self._rejected_items.copy(),
         )
 
         logger.info(f"生成预览结果: {preview_mode.value}, 总页数: {len(pages)}")
         return result
 
-    def get_page(self, page_number: int, suggestions: List[SuggestionDisplayData]) -> PreviewPage:
+    def get_page(
+        self, page_number: int, suggestions: List[SuggestionDisplayData]
+    ) -> PreviewPage:
         """
         获取指定页面
 
@@ -264,7 +283,9 @@ class FixSuggestionPreviewer:
             预览页面
         """
         total_items = len(suggestions)
-        total_pages = (total_items + self.config.max_items_per_page - 1) // self.config.max_items_per_page
+        total_pages = (
+            total_items + self.config.max_items_per_page - 1
+        ) // self.config.max_items_per_page
 
         if page_number < 1 or page_number > total_pages:
             raise ValueError(f"页码 {page_number} 超出范围 (1-{total_pages})")
@@ -280,7 +301,7 @@ class FixSuggestionPreviewer:
             items=page_items,
             has_next=page_number < total_pages,
             has_previous=page_number > 1,
-            page_size=len(page_items)
+            page_size=len(page_items),
         )
 
     def select_item(self, suggestion_id: str) -> None:
@@ -326,14 +347,16 @@ class FixSuggestionPreviewer:
     def get_selected_items(self) -> List[SuggestionDisplayData]:
         """获取选择的修复建议"""
         return [
-            suggestion for suggestion in self._current_suggestions
+            suggestion
+            for suggestion in self._current_suggestions
             if suggestion.suggestion_id in self._selected_items
         ]
 
     def get_rejected_items(self) -> List[SuggestionDisplayData]:
         """获取拒绝的修复建议"""
         return [
-            suggestion for suggestion in self._current_suggestions
+            suggestion
+            for suggestion in self._current_suggestions
             if suggestion.suggestion_id in self._rejected_items
         ]
 
@@ -341,12 +364,14 @@ class FixSuggestionPreviewer:
         """获取未处理的修复建议"""
         processed_ids = self._selected_items + self._rejected_items
         return [
-            suggestion for suggestion in self._current_suggestions
+            suggestion
+            for suggestion in self._current_suggestions
             if suggestion.suggestion_id not in processed_ids
         ]
 
-    def _apply_filter(self, suggestions: List[SuggestionDisplayData],
-                     filter_config: PreviewFilter) -> List[SuggestionDisplayData]:
+    def _apply_filter(
+        self, suggestions: List[SuggestionDisplayData], filter_config: PreviewFilter
+    ) -> List[SuggestionDisplayData]:
         """应用单个过滤器"""
         filtered = []
 
@@ -356,8 +381,9 @@ class FixSuggestionPreviewer:
 
         return filtered
 
-    def _matches_filter(self, suggestion: SuggestionDisplayData,
-                       filter_config: PreviewFilter) -> bool:
+    def _matches_filter(
+        self, suggestion: SuggestionDisplayData, filter_config: PreviewFilter
+    ) -> bool:
         """检查建议是否匹配过滤器"""
         value = self._get_filter_value(suggestion, filter_config.criteria)
 
@@ -376,8 +402,9 @@ class FixSuggestionPreviewer:
         else:
             return False
 
-    def _get_filter_value(self, suggestion: SuggestionDisplayData,
-                         criteria: FilterCriteria) -> Any:
+    def _get_filter_value(
+        self, suggestion: SuggestionDisplayData, criteria: FilterCriteria
+    ) -> Any:
         """获取过滤值"""
         if criteria == FilterCriteria.BY_PROBLEM_TYPE:
             return suggestion.problem_type
@@ -396,13 +423,14 @@ class FixSuggestionPreviewer:
         else:
             return None
 
-    def _apply_sort(self, suggestions: List[SuggestionDisplayData],
-                   sort_config: PreviewSort) -> List[SuggestionDisplayData]:
+    def _apply_sort(
+        self, suggestions: List[SuggestionDisplayData], sort_config: PreviewSort
+    ) -> List[SuggestionDisplayData]:
         """应用排序"""
         return sorted(
             suggestions,
             key=self._get_sort_key(sort_config.criteria),
-            reverse=not sort_config.ascending
+            reverse=not sort_config.ascending,
         )
 
     def _get_sort_key(self, criteria: SortCriteria) -> Callable:
@@ -425,16 +453,22 @@ class FixSuggestionPreviewer:
     def _risk_level_to_number(self, risk_level: str) -> int:
         """风险等级转数字"""
         risk_map = {
-            "CRITICAL": 5, "HIGH": 4, "MEDIUM": 3, "LOW": 2, "NEGLIGIBLE": 1,
-            "关键风险": 5, "高风险": 4, "中等风险": 3, "低风险": 2, "可忽略风险": 1
+            "CRITICAL": 5,
+            "HIGH": 4,
+            "MEDIUM": 3,
+            "LOW": 2,
+            "NEGLIGIBLE": 1,
+            "关键风险": 5,
+            "高风险": 4,
+            "中等风险": 3,
+            "低风险": 2,
+            "可忽略风险": 1,
         }
         return risk_map.get(risk_level, 0)
 
     def _severity_to_number(self, severity: str) -> int:
         """严重程度转数字"""
-        severity_map = {
-            "严重": 5, "高": 4, "中": 3, "低": 2, "未知": 1
-        }
+        severity_map = {"严重": 5, "高": 4, "中": 3, "低": 2, "未知": 1}
         return severity_map.get(severity, 0)
 
     def _create_groups(self, group_by: str) -> PreviewGroup:
@@ -471,14 +505,17 @@ class FixSuggestionPreviewer:
         else:
             return "其他"
 
-    def _generate_statistics(self, suggestions: List[SuggestionDisplayData]) -> PreviewStatistics:
+    def _generate_statistics(
+        self, suggestions: List[SuggestionDisplayData]
+    ) -> PreviewStatistics:
         """生成统计信息"""
         total_suggestions = len(suggestions)
 
         # 质量分布
         quality_distribution = self._calculate_distribution(
-            suggestions, "overall_quality_score",
-            [(0.9, "优秀"), (0.8, "良好"), (0.7, "一般"), (0.0, "需改进")]
+            suggestions,
+            "overall_quality_score",
+            [(0.9, "优秀"), (0.8, "良好"), (0.7, "一般"), (0.0, "需改进")],
         )
 
         # 风险分布
@@ -501,8 +538,9 @@ class FixSuggestionPreviewer:
 
         # 置信度分布
         confidence_distribution = self._calculate_distribution(
-            suggestions, "confidence",
-            [(0.9, "极高"), (0.8, "高"), (0.7, "中等"), (0.0, "较低")]
+            suggestions,
+            "confidence",
+            [(0.9, "极高"), (0.8, "高"), (0.7, "中等"), (0.0, "较低")],
         )
 
         return PreviewStatistics(
@@ -511,11 +549,15 @@ class FixSuggestionPreviewer:
             risk_distribution=risk_distribution,
             type_distribution=type_distribution,
             file_distribution=file_distribution,
-            confidence_distribution=confidence_distribution
+            confidence_distribution=confidence_distribution,
         )
 
-    def _calculate_distribution(self, suggestions: List[SuggestionDisplayData],
-                               field: str, thresholds: List[Tuple[float, str]]) -> Dict[str, int]:
+    def _calculate_distribution(
+        self,
+        suggestions: List[SuggestionDisplayData],
+        field: str,
+        thresholds: List[Tuple[float, str]],
+    ) -> Dict[str, int]:
         """计算分布统计"""
         distribution = {name: 0 for _, name in thresholds}
 
@@ -528,10 +570,14 @@ class FixSuggestionPreviewer:
 
         return distribution
 
-    def _generate_pages(self, suggestions: List[SuggestionDisplayData]) -> List[PreviewPage]:
+    def _generate_pages(
+        self, suggestions: List[SuggestionDisplayData]
+    ) -> List[PreviewPage]:
         """生成分页"""
         pages = []
-        total_pages = (len(suggestions) + self.config.max_items_per_page - 1) // self.config.max_items_per_page
+        total_pages = (
+            len(suggestions) + self.config.max_items_per_page - 1
+        ) // self.config.max_items_per_page
 
         for page_num in range(1, total_pages + 1):
             page = self.get_page(page_num, suggestions)
@@ -549,15 +595,13 @@ class FixSuggestionPreviewer:
             "filters": [asdict(f) for f in result.filters],
             "sort_config": asdict(result.sort_config) if result.sort_config else None,
             "selected_count": len(result.selected_items),
-            "rejected_count": len(result.rejected_items)
+            "rejected_count": len(result.rejected_items),
         }
 
     def quick_filter_high_quality(self, min_score: float = 0.8) -> None:
         """快速过滤高质量建议"""
         filter_config = PreviewFilter(
-            criteria=FilterCriteria.BY_QUALITY_SCORE,
-            values=[min_score],
-            operator="gt"
+            criteria=FilterCriteria.BY_QUALITY_SCORE, values=[min_score], operator="gt"
         )
         self.set_filter(filter_config)
 
@@ -568,17 +612,14 @@ class FixSuggestionPreviewer:
             risk_levels.extend(["MEDIUM", "中等风险"])
 
         filter_config = PreviewFilter(
-            criteria=FilterCriteria.BY_RISK_LEVEL,
-            values=risk_levels,
-            operator="in"
+            criteria=FilterCriteria.BY_RISK_LEVEL, values=risk_levels, operator="in"
         )
         self.set_filter(filter_config)
 
     def quick_sort_by_quality(self, descending: bool = True) -> None:
         """快速按质量排序"""
         sort_config = PreviewSort(
-            criteria=SortCriteria.BY_QUALITY_SCORE,
-            ascending=not descending
+            criteria=SortCriteria.BY_QUALITY_SCORE, ascending=not descending
         )
         self.set_sort(sort_config)
 

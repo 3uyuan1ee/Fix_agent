@@ -6,17 +6,19 @@
 
 import os
 import shutil
-import chardet
 from pathlib import Path
-from typing import List, Optional, Dict, Any, Union
+from typing import Any, Dict, List, Optional, Union
 
-from ..utils.logger import get_logger
+import chardet
+
 from ..utils.config import get_config_manager
+from ..utils.logger import get_logger
 from ..utils.path_resolver import get_path_resolver
 
 
 class FileOperationError(Exception):
     """文件操作异常"""
+
     pass
 
 
@@ -37,15 +39,20 @@ class FileOperations:
         self.path_resolver = get_path_resolver()
 
         # 获取配置
-        file_ops_config = self.config_manager.get_section('file_operations')
-        self.max_file_size = file_ops_config.get('max_file_size', 10 * 1024 * 1024)  # 10MB
-        security_config = self.config_manager.get_section('security')
-        self.backup_dir = security_config.get('backup_dir', '.aiderector_backups')
+        file_ops_config = self.config_manager.get_section("file_operations")
+        self.max_file_size = file_ops_config.get(
+            "max_file_size", 10 * 1024 * 1024
+        )  # 10MB
+        security_config = self.config_manager.get_section("security")
+        self.backup_dir = security_config.get("backup_dir", ".aiderector_backups")
 
-    def scan_directory(self, directory: Union[str, Path],
-                      recursive: bool = True,
-                      extensions: Optional[List[str]] = None,
-                      exclude_patterns: Optional[List[str]] = None) -> List[str]:
+    def scan_directory(
+        self,
+        directory: Union[str, Path],
+        recursive: bool = True,
+        extensions: Optional[List[str]] = None,
+        exclude_patterns: Optional[List[str]] = None,
+    ) -> List[str]:
         """
         扫描目录获取文件列表
 
@@ -92,7 +99,9 @@ class FileOperations:
 
                 # 检查扩展名过滤
                 if extensions:
-                    if file_path.suffix.lower() not in [ext.lower() for ext in extensions]:
+                    if file_path.suffix.lower() not in [
+                        ext.lower() for ext in extensions
+                    ]:
                         continue
 
                 # 检查排除模式
@@ -113,10 +122,13 @@ class FileOperations:
         except Exception as e:
             raise FileOperationError(f"Failed to scan directory {directory}: {e}")
 
-    def read_file(self, file_path: Union[str, Path],
-                 encoding: str = "utf-8",
-                 fallback_encodings: Optional[List[str]] = None,
-                 streaming: bool = False) -> str:
+    def read_file(
+        self,
+        file_path: Union[str, Path],
+        encoding: str = "utf-8",
+        fallback_encodings: Optional[List[str]] = None,
+        streaming: bool = False,
+    ) -> str:
         """
         安全读取文件内容
 
@@ -149,29 +161,36 @@ class FileOperations:
         # 检查文件大小
         file_size = file_path.stat().st_size
         if file_size > self.max_file_size and not streaming:
-            self.logger.warning(f"File {file_path} is large ({file_size} bytes), enabling streaming mode")
+            self.logger.warning(
+                f"File {file_path} is large ({file_size} bytes), enabling streaming mode"
+            )
             streaming = True
 
         try:
             if streaming:
-                return self._read_file_streaming(file_path, encoding, fallback_encodings)
+                return self._read_file_streaming(
+                    file_path, encoding, fallback_encodings
+                )
             else:
                 return self._read_file_normal(file_path, encoding, fallback_encodings)
 
         except Exception as e:
             raise FileOperationError(f"Failed to read file {file_path}: {e}")
 
-    def _read_file_normal(self, file_path: Path, encoding: str,
-                         fallback_encodings: Optional[List[str]]) -> str:
+    def _read_file_normal(
+        self, file_path: Path, encoding: str, fallback_encodings: Optional[List[str]]
+    ) -> str:
         """正常模式读取文件"""
         if fallback_encodings is None:
-            fallback_encodings = ['utf-8', 'gbk', 'gb2312', 'latin-1']
+            fallback_encodings = ["utf-8", "gbk", "gb2312", "latin-1"]
 
         # 首先尝试指定编码
         try:
-            with open(file_path, 'r', encoding=encoding) as f:
+            with open(file_path, "r", encoding=encoding) as f:
                 content = f.read()
-            self.logger.debug(f"Successfully read file {file_path} with encoding {encoding}")
+            self.logger.debug(
+                f"Successfully read file {file_path} with encoding {encoding}"
+            )
             return content
         except UnicodeDecodeError:
             pass
@@ -181,45 +200,50 @@ class FileOperations:
             if fallback_encoding == encoding:
                 continue
             try:
-                with open(file_path, 'r', encoding=fallback_encoding) as f:
+                with open(file_path, "r", encoding=fallback_encoding) as f:
                     content = f.read()
-                self.logger.debug(f"Successfully read file {file_path} with fallback encoding {fallback_encoding}")
+                self.logger.debug(
+                    f"Successfully read file {file_path} with fallback encoding {fallback_encoding}"
+                )
                 return content
             except UnicodeDecodeError:
                 continue
 
         # 最后尝试自动检测编码
         try:
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 raw_data = f.read()
 
             detected = chardet.detect(raw_data)
-            if detected['encoding']:
-                with open(file_path, 'r', encoding=detected['encoding']) as f:
+            if detected["encoding"]:
+                with open(file_path, "r", encoding=detected["encoding"]) as f:
                     content = f.read()
-                self.logger.debug(f"Successfully read file {file_path} with detected encoding {detected['encoding']}")
+                self.logger.debug(
+                    f"Successfully read file {file_path} with detected encoding {detected['encoding']}"
+                )
                 return content
         except Exception:
             pass
 
         raise FileOperationError(f"Unable to decode file {file_path} with any encoding")
 
-    def _read_file_streaming(self, file_path: Path, encoding: str,
-                            fallback_encodings: Optional[List[str]]) -> str:
+    def _read_file_streaming(
+        self, file_path: Path, encoding: str, fallback_encodings: Optional[List[str]]
+    ) -> str:
         """流式模式读取大文件"""
         if fallback_encodings is None:
-            fallback_encodings = ['utf-8', 'gbk', 'gb2312', 'latin-1']
+            fallback_encodings = ["utf-8", "gbk", "gb2312", "latin-1"]
 
         # 测试编码
         test_encoding = encoding
         try:
-            with open(file_path, 'r', encoding=encoding) as f:
+            with open(file_path, "r", encoding=encoding) as f:
                 f.read(1024)  # 读取一小块测试编码
         except UnicodeDecodeError:
             # 找到可用编码
             for fallback_encoding in fallback_encodings:
                 try:
-                    with open(file_path, 'r', encoding=fallback_encoding) as f:
+                    with open(file_path, "r", encoding=fallback_encoding) as f:
                         f.read(1024)
                     test_encoding = fallback_encoding
                     break
@@ -227,30 +251,37 @@ class FileOperations:
                     continue
             else:
                 # 尝试自动检测
-                with open(file_path, 'rb') as f:
+                with open(file_path, "rb") as f:
                     raw_data = f.read(8192)
                 detected = chardet.detect(raw_data)
-                if detected['encoding']:
-                    test_encoding = detected['encoding']
+                if detected["encoding"]:
+                    test_encoding = detected["encoding"]
                 else:
-                    raise FileOperationError(f"Unable to determine encoding for large file {file_path}")
+                    raise FileOperationError(
+                        f"Unable to determine encoding for large file {file_path}"
+                    )
 
         # 流式读取
         content_chunks = []
-        with open(file_path, 'r', encoding=test_encoding) as f:
+        with open(file_path, "r", encoding=test_encoding) as f:
             while True:
                 chunk = f.read(8192)
                 if not chunk:
                     break
                 content_chunks.append(chunk)
 
-        self.logger.debug(f"Successfully read large file {file_path} with streaming mode")
-        return ''.join(content_chunks)
+        self.logger.debug(
+            f"Successfully read large file {file_path} with streaming mode"
+        )
+        return "".join(content_chunks)
 
-    def write_file(self, file_path: Union[str, Path],
-                   content: str,
-                   encoding: str = "utf-8",
-                   create_directories: bool = True) -> None:
+    def write_file(
+        self,
+        file_path: Union[str, Path],
+        content: str,
+        encoding: str = "utf-8",
+        create_directories: bool = True,
+    ) -> None:
         """
         写入文件内容
 
@@ -271,7 +302,7 @@ class FileOperations:
                 file_path.parent.mkdir(parents=True, exist_ok=True)
 
             # 写入文件
-            with open(file_path, 'w', encoding=encoding) as f:
+            with open(file_path, "w", encoding=encoding) as f:
                 f.write(content)
 
             self.logger.debug(f"Successfully wrote file {file_path}")
@@ -279,11 +310,14 @@ class FileOperations:
         except Exception as e:
             raise FileOperationError(f"Failed to write file {file_path}: {e}")
 
-    def search_files(self, directory: Union[str, Path],
-                    pattern: Optional[str] = None,
-                    content_pattern: Optional[str] = None,
-                    extensions: Optional[List[str]] = None,
-                    recursive: bool = True) -> List[str]:
+    def search_files(
+        self,
+        directory: Union[str, Path],
+        pattern: Optional[str] = None,
+        content_pattern: Optional[str] = None,
+        extensions: Optional[List[str]] = None,
+        recursive: bool = True,
+    ) -> List[str]:
         """
         搜索文件
 
@@ -297,7 +331,9 @@ class FileOperations:
         Returns:
             匹配的文件路径列表
         """
-        files = self.scan_directory(directory, recursive=recursive, extensions=extensions)
+        files = self.scan_directory(
+            directory, recursive=recursive, extensions=extensions
+        )
         matching_files = []
 
         for file_path in files:
@@ -345,27 +381,27 @@ class FileOperations:
         stat = file_path.stat()
 
         info = {
-            'path': str(file_path),
-            'name': file_path.name,
-            'size': stat.st_size,
-            'modified_time': stat.st_mtime,
-            'is_file': file_path.is_file(),
-            'is_directory': file_path.is_dir(),
-            'extension': file_path.suffix if file_path.is_file() else None,
-            'absolute_path': str(file_path.absolute())
+            "path": str(file_path),
+            "name": file_path.name,
+            "size": stat.st_size,
+            "modified_time": stat.st_mtime,
+            "is_file": file_path.is_file(),
+            "is_directory": file_path.is_dir(),
+            "extension": file_path.suffix if file_path.is_file() else None,
+            "absolute_path": str(file_path.absolute()),
         }
 
         # 如果是文件，尝试检测编码
-        if info['is_file'] and info['size'] > 0:
+        if info["is_file"] and info["size"] > 0:
             try:
-                with open(file_path, 'rb') as f:
+                with open(file_path, "rb") as f:
                     raw_data = f.read(8192)
                 detected = chardet.detect(raw_data)
-                info['encoding'] = detected.get('encoding')
-                info['confidence'] = detected.get('confidence')
+                info["encoding"] = detected.get("encoding")
+                info["confidence"] = detected.get("confidence")
             except Exception:
-                info['encoding'] = None
-                info['confidence'] = None
+                info["encoding"] = None
+                info["confidence"] = None
 
         return info
 
@@ -386,7 +422,7 @@ class FileOperations:
                 return False
 
             # 读取文件头部检测
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 raw_data = f.read(8192)
 
             # 如果是空文件，认为是文本文件
@@ -394,11 +430,13 @@ class FileOperations:
                 return True
 
             # 首先检查是否包含null字节（明确是二进制文件的特征）
-            if b'\x00' in raw_data:
+            if b"\x00" in raw_data:
                 return False
 
             # 检查是否包含太多控制字符（二进制文件特征）
-            text_chars = len([c for c in raw_data if 32 <= c <= 126 or c in [9, 10, 13]])
+            text_chars = len(
+                [c for c in raw_data if 32 <= c <= 126 or c in [9, 10, 13]]
+            )
             text_ratio = text_chars / len(raw_data) if raw_data else 0
 
             # 如果文本字符比例低于70%，认为是二进制文件
@@ -409,9 +447,9 @@ class FileOperations:
             result = chardet.detect(raw_data)
 
             # 如果检测置信度高且编码为常见文本编码，认为是文本文件
-            text_encodings = ['utf-8', 'ascii', 'gb2312', 'gbk', 'big5', 'latin-1']
+            text_encodings = ["utf-8", "ascii", "gb2312", "gbk", "big5", "latin-1"]
 
-            if result['confidence'] > 0.7 and result['encoding'] in text_encodings:
+            if result["confidence"] > 0.7 and result["encoding"] in text_encodings:
                 return True
 
             return True
@@ -419,8 +457,9 @@ class FileOperations:
         except Exception:
             return False
 
-    def get_relative_path(self, file_path: Union[str, Path],
-                         base_path: Union[str, Path]) -> str:
+    def get_relative_path(
+        self, file_path: Union[str, Path], base_path: Union[str, Path]
+    ) -> str:
         """
         获取相对路径
 
@@ -437,11 +476,14 @@ class FileOperations:
             # 如果解析失败，返回原始路径
             return str(file_path)
 
-        relative_path = self.path_resolver.get_relative_path(resolved_file_path, base_path)
+        relative_path = self.path_resolver.get_relative_path(
+            resolved_file_path, base_path
+        )
         return str(relative_path)
 
-    def backup_file(self, file_path: Union[str, Path],
-                   backup_dir: Optional[str] = None) -> str:
+    def backup_file(
+        self, file_path: Union[str, Path], backup_dir: Optional[str] = None
+    ) -> str:
         """
         备份文件
 
@@ -477,6 +519,7 @@ class FileOperations:
 
         # 生成备份文件名
         import time
+
         timestamp = int(time.time())
         backup_name = f"{file_path.stem}_{timestamp}{file_path.suffix}.backup"
         backup_path = backup_dir_path / backup_name

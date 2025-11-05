@@ -9,22 +9,27 @@ T010.1: 修复建议展示器
 输出: 格式化的修复建议展示数据
 """
 
-import json
-from typing import Dict, List, Any, Optional, Tuple, Union
-from dataclasses import dataclass, asdict
-from enum import Enum
-import re
 import difflib
+import json
+import re
+from dataclasses import asdict, dataclass
+from enum import Enum
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from ..utils.types import ProblemType, RiskLevel, FixType
 from ..utils.logger import get_logger
+from ..utils.types import FixType, ProblemType, RiskLevel
 from .workflow_data_types import (
-    AIFixSuggestion, FixSuggestionQualityAssessment,
-    WorkflowDataPacket, UserInteractionData
+    AIFixSuggestion,
+    FixSuggestionQualityAssessment,
+    UserInteractionData,
+    WorkflowDataPacket,
 )
 from .workflow_user_interaction_types import (
-    UserDecision, DecisionType, UserAction, ReviewResult
+    DecisionType,
+    ReviewResult,
+    UserAction,
+    UserDecision,
 )
 
 logger = get_logger()
@@ -32,26 +37,29 @@ logger = get_logger()
 
 class DisplayFormat(Enum):
     """展示格式枚举"""
-    CONCISE = "concise"        # 精简格式
-    DETAILED = "detailed"      # 详细格式
-    TECHNICAL = "technical"    # 技术格式
-    SUMMARY = "summary"        # 摘要格式
+
+    CONCISE = "concise"  # 精简格式
+    DETAILED = "detailed"  # 详细格式
+    TECHNICAL = "technical"  # 技术格式
+    SUMMARY = "summary"  # 摘要格式
 
 
 class DisplaySection(Enum):
     """展示部分枚举"""
-    OVERVIEW = "overview"              # 概览
-    CODE_CHANGES = "code_changes"      # 代码变更
-    EXPLANATION = "explanation"        # 解释说明
-    RISK_ASSESSMENT = "risk_assessment" # 风险评估
-    ALTERNATIVES = "alternatives"      # 替代方案
-    TESTING = "testing"               # 测试要求
-    QUALITY = "quality"               # 质量评估
+
+    OVERVIEW = "overview"  # 概览
+    CODE_CHANGES = "code_changes"  # 代码变更
+    EXPLANATION = "explanation"  # 解释说明
+    RISK_ASSESSMENT = "risk_assessment"  # 风险评估
+    ALTERNATIVES = "alternatives"  # 替代方案
+    TESTING = "testing"  # 测试要求
+    QUALITY = "quality"  # 质量评估
 
 
 @dataclass
 class DisplayConfiguration:
     """展示配置"""
+
     format: DisplayFormat = DisplayFormat.DETAILED
     show_sections: List[DisplaySection] = None
     include_syntax_highlighting: bool = True
@@ -69,6 +77,7 @@ class DisplayConfiguration:
 @dataclass
 class CodeChangeDisplay:
     """代码变更展示"""
+
     original_code: str
     suggested_code: str
     file_path: str
@@ -92,6 +101,7 @@ class CodeChangeDisplay:
 @dataclass
 class SuggestionDisplayData:
     """修复建议展示数据"""
+
     suggestion_id: str
     problem_summary: str
     problem_type: str
@@ -149,11 +159,14 @@ class FixSuggestionDisplayFormatter:
             "go": "go",
             "cpp": "cpp",
             "c": "c",
-            "rust": "rust"
+            "rust": "rust",
         }
 
-    def format_suggestion(self, suggestion: AIFixSuggestion,
-                         quality_assessment: Optional[FixSuggestionQualityAssessment] = None) -> SuggestionDisplayData:
+    def format_suggestion(
+        self,
+        suggestion: AIFixSuggestion,
+        quality_assessment: Optional[FixSuggestionQualityAssessment] = None,
+    ) -> SuggestionDisplayData:
         """
         格式化修复建议为展示数据
 
@@ -194,33 +207,34 @@ class FixSuggestionDisplayFormatter:
             display_data = SuggestionDisplayData(
                 suggestion_id=suggestion.suggestion_id,
                 problem_summary=self._build_problem_summary(suggestion),
-                problem_type=suggestion.problem_type.value if hasattr(suggestion.problem_type, 'value') else str(suggestion.problem_type),
+                problem_type=(
+                    suggestion.problem_type.value
+                    if hasattr(suggestion.problem_type, "value")
+                    else str(suggestion.problem_type)
+                ),
                 severity=self._map_severity(suggestion.problem_type),
                 confidence=suggestion.confidence,
-                risk_level=suggestion.risk_level.value if hasattr(suggestion.risk_level, 'value') else str(suggestion.risk_level),
-
+                risk_level=(
+                    suggestion.risk_level.value
+                    if hasattr(suggestion.risk_level, "value")
+                    else str(suggestion.risk_level)
+                ),
                 code_changes=code_changes,
-
                 explanation=suggestion.explanation,
                 reasoning=suggestion.reasoning,
                 business_impact=self._extract_business_impact(suggestion),
-
                 risk_assessment=risk_data,
                 side_effects=suggestion.side_effects,
                 prerequisites=self._extract_prerequisites(suggestion),
-
                 alternatives=alternatives_data,
-
                 testing_requirements=testing_data["requirements"],
                 verification_steps=testing_data["verification_steps"],
-
                 quality_scores=quality_data["scores"],
                 overall_quality_score=quality_data["overall_score"],
                 quality_recommendation=quality_data["recommendation"],
-
                 file_info=file_info,
                 context_info=context_info,
-                display_metadata=display_metadata
+                display_metadata=display_metadata,
             )
 
             logger.info(f"修复建议格式化完成: {suggestion.suggestion_id}")
@@ -236,7 +250,7 @@ class FixSuggestionDisplayFormatter:
         diff_html = self._generate_diff_html(
             suggestion.original_code,
             suggestion.suggested_code,
-            self._get_language(suggestion.file_path)
+            self._get_language(suggestion.file_path),
         )
 
         # 分析变更行
@@ -259,7 +273,7 @@ class FixSuggestionDisplayFormatter:
             change_summary=change_summary,
             added_lines=added_lines,
             removed_lines=removed_lines,
-            modified_lines=modified_lines
+            modified_lines=modified_lines,
         )
 
     def _generate_diff_html(self, original: str, suggested: str, language: str) -> str:
@@ -271,17 +285,17 @@ class FixSuggestionDisplayFormatter:
             differ = difflib.HtmlDiff(
                 tabsize=4,
                 wrapcolumn=80,
-                linejunk=lambda x: x.strip() == '',
-                charjunk=lambda x: x.isspace()
+                linejunk=lambda x: x.strip() == "",
+                charjunk=lambda x: x.isspace(),
             )
 
             diff_html = differ.make_table(
                 original_lines,
                 suggested_lines,
-                fromdesc='原始代码',
-                todesc='建议代码',
+                fromdesc="原始代码",
+                todesc="建议代码",
                 context=True,
-                numlines=3
+                numlines=3,
             )
 
             # 简化HTML并添加样式类
@@ -296,15 +310,12 @@ class FixSuggestionDisplayFormatter:
     def _style_diff_html(self, html: str, language: str) -> str:
         """为差异HTML添加样式"""
         # 添加语法高亮类名
-        styled_html = html.replace(
-            '<td class="diff_add">',
-            f'<td class="diff_add lang-{language}">'
-        ).replace(
-            '<td class="diff_chg">',
-            f'<td class="diff_chg lang-{language}">'
-        ).replace(
-            '<td class="diff_sub">',
-            f'<td class="diff_sub lang-{language}">'
+        styled_html = (
+            html.replace(
+                '<td class="diff_add">', f'<td class="diff_add lang-{language}">'
+            )
+            .replace('<td class="diff_chg">', f'<td class="diff_chg lang-{language}">')
+            .replace('<td class="diff_sub">', f'<td class="diff_sub lang-{language}">')
         )
 
         return styled_html
@@ -325,7 +336,9 @@ class FixSuggestionDisplayFormatter:
         </div>
         """
 
-    def _analyze_code_changes(self, original: str, suggested: str) -> Tuple[List[int], List[int], List[int]]:
+    def _analyze_code_changes(
+        self, original: str, suggested: str
+    ) -> Tuple[List[int], List[int], List[int]]:
         """分析代码变更行"""
         original_lines = original.splitlines()
         suggested_lines = suggested.splitlines()
@@ -337,17 +350,17 @@ class FixSuggestionDisplayFormatter:
         modified_lines = []
 
         for tag, i1, i2, j1, j2 in matcher.get_opcodes():
-            if tag == 'replace':
+            if tag == "replace":
                 # 替换的行
                 for i in range(i1, i2):
                     modified_lines.append(i + 1)
                 for j in range(j1, j2):
                     added_lines.append(j + 1)
-            elif tag == 'delete':
+            elif tag == "delete":
                 # 删除的行
                 for i in range(i1, i2):
                     removed_lines.append(i + 1)
-            elif tag == 'insert':
+            elif tag == "insert":
                 # 插入的行
                 for j in range(j1, j2):
                     added_lines.append(j + 1)
@@ -368,7 +381,9 @@ class FixSuggestionDisplayFormatter:
         else:
             return "修改了代码内容，但行数保持不变"
 
-    def _format_quality_assessment(self, quality_assessment: Optional[FixSuggestionQualityAssessment]) -> Dict[str, Any]:
+    def _format_quality_assessment(
+        self, quality_assessment: Optional[FixSuggestionQualityAssessment]
+    ) -> Dict[str, Any]:
         """格式化质量评估数据"""
         if not quality_assessment:
             return {
@@ -379,10 +394,10 @@ class FixSuggestionDisplayFormatter:
                     "风险评估准确性": 0.0,
                     "解释质量": 0.0,
                     "替代方案质量": 0.0,
-                    "可行性评估": 0.0
+                    "可行性评估": 0.0,
                 },
                 "overall_score": 0.0,
-                "recommendation": "无质量评估数据"
+                "recommendation": "无质量评估数据",
             }
 
         return {
@@ -393,13 +408,15 @@ class FixSuggestionDisplayFormatter:
                 "风险评估准确性": quality_assessment.risk_assessment_accuracy_score,
                 "解释质量": quality_assessment.explanation_quality_score,
                 "替代方案质量": quality_assessment.alternatives_quality_score,
-                "可行性评估": quality_assessment.feasibility_score
+                "可行性评估": quality_assessment.feasibility_score,
             },
             "overall_score": quality_assessment.overall_score,
-            "recommendation": self._generate_quality_recommendation(quality_assessment)
+            "recommendation": self._generate_quality_recommendation(quality_assessment),
         }
 
-    def _generate_quality_recommendation(self, assessment: FixSuggestionQualityAssessment) -> str:
+    def _generate_quality_recommendation(
+        self, assessment: FixSuggestionQualityAssessment
+    ) -> str:
         """生成质量建议"""
         if assessment.overall_score >= 0.9:
             return "强烈推荐：修复建议质量极高，可以安全实施"
@@ -415,11 +432,15 @@ class FixSuggestionDisplayFormatter:
     def _format_risk_assessment(self, suggestion: AIFixSuggestion) -> Dict[str, Any]:
         """格式化风险评估数据"""
         return {
-            "risk_level": suggestion.risk_level.value if hasattr(suggestion.risk_level, 'value') else str(suggestion.risk_level),
-            "estimated_impact": getattr(suggestion, 'estimated_impact', '未知'),
+            "risk_level": (
+                suggestion.risk_level.value
+                if hasattr(suggestion.risk_level, "value")
+                else str(suggestion.risk_level)
+            ),
+            "estimated_impact": getattr(suggestion, "estimated_impact", "未知"),
             "side_effects_count": len(suggestion.side_effects),
             "complexity_level": self._assess_complexity(suggestion),
-            "dependencies": self._extract_dependencies(suggestion)
+            "dependencies": self._extract_dependencies(suggestion),
         }
 
     def _assess_complexity(self, suggestion: AIFixSuggestion) -> str:
@@ -438,51 +459,46 @@ class FixSuggestionDisplayFormatter:
         """格式化替代方案"""
         formatted_alternatives = []
 
-        for i, alt in enumerate(alternatives[:self.config.max_alternatives_display]):
+        for i, alt in enumerate(alternatives[: self.config.max_alternatives_display]):
             alt_data = {
                 "id": f"alt_{i+1}",
-                "description": getattr(alt, 'description', '无描述'),
-                "code": getattr(alt, 'code', ''),
-                "advantages": getattr(alt, 'advantages', []),
-                "disadvantages": getattr(alt, 'disadvantages', []),
-                "risk_level": getattr(alt, 'risk_level', '未知'),
-                "confidence": getattr(alt, 'confidence', 0.0)
+                "description": getattr(alt, "description", "无描述"),
+                "code": getattr(alt, "code", ""),
+                "advantages": getattr(alt, "advantages", []),
+                "disadvantages": getattr(alt, "disadvantages", []),
+                "risk_level": getattr(alt, "risk_level", "未知"),
+                "confidence": getattr(alt, "confidence", 0.0),
             }
             formatted_alternatives.append(alt_data)
 
         return formatted_alternatives
 
-    def _format_testing_requirements(self, suggestion: AIFixSuggestion) -> Dict[str, List[str]]:
+    def _format_testing_requirements(
+        self, suggestion: AIFixSuggestion
+    ) -> Dict[str, List[str]]:
         """格式化测试要求"""
-        requirements = getattr(suggestion, 'testing_requirements', [])
+        requirements = getattr(suggestion, "testing_requirements", [])
 
         verification_steps = [
             "确认代码语法正确",
             "运行相关单元测试",
             "检查功能是否正常工作",
             "验证修复效果",
-            "检查是否引入新问题"
+            "检查是否引入新问题",
         ]
 
         # 根据问题类型添加特定的验证步骤
-        if hasattr(suggestion, 'problem_type'):
+        if hasattr(suggestion, "problem_type"):
             if suggestion.problem_type == ProblemType.SECURITY:
-                verification_steps.extend([
-                    "进行安全性测试",
-                    "检查权限控制",
-                    "验证输入验证"
-                ])
+                verification_steps.extend(
+                    ["进行安全性测试", "检查权限控制", "验证输入验证"]
+                )
             elif suggestion.problem_type == ProblemType.PERFORMANCE:
-                verification_steps.extend([
-                    "进行性能测试",
-                    "检查资源使用情况",
-                    "对比性能指标"
-                ])
+                verification_steps.extend(
+                    ["进行性能测试", "检查资源使用情况", "对比性能指标"]
+                )
 
-        return {
-            "requirements": requirements,
-            "verification_steps": verification_steps
-        }
+        return {"requirements": requirements, "verification_steps": verification_steps}
 
     def _build_problem_summary(self, suggestion: AIFixSuggestion) -> str:
         """构建问题摘要"""
@@ -497,7 +513,7 @@ class FixSuggestionDisplayFormatter:
             ProblemType.LOGIC_ERROR: "高",
             ProblemType.MAINTAINABILITY: "中",
             ProblemType.RELIABILITY: "高",
-            ProblemType.BEST_PRACTICE: "低"
+            ProblemType.BEST_PRACTICE: "低",
         }
         return severity_mapping.get(problem_type, "未知")
 
@@ -510,12 +526,11 @@ class FixSuggestionDisplayFormatter:
             ProblemType.LOGIC_ERROR: "可能影响业务逻辑正确性，导致功能异常",
             ProblemType.MAINTAINABILITY: "影响代码可维护性，增加后续开发成本",
             ProblemType.RELIABILITY: "可能影响系统稳定性，导致异常或崩溃",
-            ProblemType.BEST_PRACTICE: "违反最佳实践，影响代码质量"
+            ProblemType.BEST_PRACTICE: "违反最佳实践，影响代码质量",
         }
 
         return impact_mapping.get(
-            suggestion.problem_type,
-            "可能对系统产生一定影响，建议修复"
+            suggestion.problem_type, "可能对系统产生一定影响，建议修复"
         )
 
     def _extract_prerequisites(self, suggestion: AIFixSuggestion) -> List[str]:
@@ -546,7 +561,10 @@ class FixSuggestionDisplayFormatter:
         if "import " in suggestion.suggested_code:
             dependencies.append("需要确保相关模块可用")
 
-        if "database" in suggestion.explanation.lower() or "db" in suggestion.explanation.lower():
+        if (
+            "database" in suggestion.explanation.lower()
+            or "db" in suggestion.explanation.lower()
+        ):
             dependencies.append("需要数据库连接和相应权限")
 
         if "api" in suggestion.explanation.lower():
@@ -565,16 +583,20 @@ class FixSuggestionDisplayFormatter:
             "directory": str(file_path.parent),
             "language": self._get_language(suggestion.file_path),
             "line_number": suggestion.line_number,
-            "relative_path": str(file_path)
+            "relative_path": str(file_path),
         }
 
     def _build_context_info(self, suggestion: AIFixSuggestion) -> Dict[str, Any]:
         """构建上下文信息"""
         return {
-            "fix_type": suggestion.fix_type.value if hasattr(suggestion.fix_type, 'value') else str(suggestion.fix_type),
-            "estimated_impact": getattr(suggestion, 'estimated_impact', '未知'),
+            "fix_type": (
+                suggestion.fix_type.value
+                if hasattr(suggestion.fix_type, "value")
+                else str(suggestion.fix_type)
+            ),
+            "estimated_impact": getattr(suggestion, "estimated_impact", "未知"),
             "confidence_category": self._categorize_confidence(suggestion.confidence),
-            "risk_category": self._categorize_risk(suggestion.risk_level)
+            "risk_category": self._categorize_risk(suggestion.risk_level),
         }
 
     def _build_display_metadata(self, suggestion: AIFixSuggestion) -> Dict[str, Any]:
@@ -586,7 +608,7 @@ class FixSuggestionDisplayFormatter:
             "has_quality_assessment": True,  # 实际应根据是否有质量评估
             "code_change_size": len(suggestion.suggested_code.splitlines()),
             "explanation_length": len(suggestion.explanation),
-            "alternatives_count": len(suggestion.alternatives)
+            "alternatives_count": len(suggestion.alternatives),
         }
 
     def _categorize_confidence(self, confidence: float) -> str:
@@ -609,7 +631,7 @@ class FixSuggestionDisplayFormatter:
             RiskLevel.HIGH: "高风险",
             RiskLevel.MEDIUM: "中等风险",
             RiskLevel.LOW: "低风险",
-            RiskLevel.NEGLIGIBLE: "可忽略风险"
+            RiskLevel.NEGLIGIBLE: "可忽略风险",
         }
         return risk_mapping.get(risk_level, "未知风险")
 
@@ -618,25 +640,28 @@ class FixSuggestionDisplayFormatter:
         extension = Path(file_path).suffix.lower()
 
         language_map = {
-            '.py': 'python',
-            '.js': 'javascript',
-            '.ts': 'typescript',
-            '.jsx': 'javascript',
-            '.tsx': 'typescript',
-            '.java': 'java',
-            '.go': 'go',
-            '.cpp': 'cpp',
-            '.c': 'c',
-            '.cs': 'csharp',
-            '.php': 'php',
-            '.rb': 'ruby',
-            '.rs': 'rust'
+            ".py": "python",
+            ".js": "javascript",
+            ".ts": "typescript",
+            ".jsx": "javascript",
+            ".tsx": "typescript",
+            ".java": "java",
+            ".go": "go",
+            ".cpp": "cpp",
+            ".c": "c",
+            ".cs": "csharp",
+            ".php": "php",
+            ".rb": "ruby",
+            ".rs": "rust",
         }
 
-        return language_map.get(extension, 'text')
+        return language_map.get(extension, "text")
 
-    def format_multiple_suggestions(self, suggestions: List[AIFixSuggestion],
-                                  quality_assessments: Optional[List[FixSuggestionQualityAssessment]] = None) -> List[SuggestionDisplayData]:
+    def format_multiple_suggestions(
+        self,
+        suggestions: List[AIFixSuggestion],
+        quality_assessments: Optional[List[FixSuggestionQualityAssessment]] = None,
+    ) -> List[SuggestionDisplayData]:
         """
         批量格式化多个修复建议
 
@@ -661,13 +686,19 @@ class FixSuggestionDisplayFormatter:
                 logger.error(f"格式化修复建议 {suggestion.suggestion_id} 失败: {e}")
                 continue
 
-        logger.info(f"批量格式化完成，成功: {len(formatted_suggestions)}/{len(suggestions)}")
+        logger.info(
+            f"批量格式化完成，成功: {len(formatted_suggestions)}/{len(suggestions)}"
+        )
         return formatted_suggestions
 
     def export_to_dict(self, display_data: SuggestionDisplayData) -> Dict[str, Any]:
         """导出展示数据为字典"""
         return asdict(display_data)
 
-    def export_to_json(self, display_data: SuggestionDisplayData, indent: int = 2) -> str:
+    def export_to_json(
+        self, display_data: SuggestionDisplayData, indent: int = 2
+    ) -> str:
         """导出展示数据为JSON字符串"""
-        return json.dumps(self.export_to_dict(display_data), ensure_ascii=False, indent=indent)
+        return json.dumps(
+            self.export_to_dict(display_data), ensure_ascii=False, indent=indent
+        )

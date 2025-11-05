@@ -4,20 +4,20 @@
 实现`analyze fix`命令的处理逻辑，提供修复建议和确认流程
 """
 
-import sys
-import time
+import difflib
 import json
 import shutil
-from pathlib import Path
-from typing import List, Dict, Any, Optional, Tuple
+import sys
+import threading
+import time
 from dataclasses import dataclass, field
 from datetime import datetime
-import difflib
-import threading
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
-from ..utils.logger import get_logger
-from ..utils.config import ConfigManager
 from ..agent.orchestrator import AgentOrchestrator
+from ..utils.config import ConfigManager
+from ..utils.logger import get_logger
 
 logger = get_logger()
 
@@ -25,6 +25,7 @@ logger = get_logger()
 @dataclass
 class FixSuggestion:
     """修复建议数据类"""
+
     file_path: str
     issue_type: str
     description: str
@@ -39,6 +40,7 @@ class FixSuggestion:
 @dataclass
 class FixResult:
     """修复结果数据类"""
+
     success: bool
     target: str
     suggestions: List[FixSuggestion]
@@ -74,7 +76,7 @@ class CodeDiffer:
             fixed_lines,
             fromfile=f"a/{file_path}",
             tofile=f"b/{file_path}",
-            lineterm=""
+            lineterm="",
         )
 
         return "".join(diff)
@@ -135,7 +137,7 @@ class FixManager:
                 return False
 
             # 读取文件内容
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             lines = content.splitlines()
@@ -149,10 +151,12 @@ class FixManager:
             lines[suggestion.line_number - 1] = suggestion.fixed_code
 
             # 写回文件
-            with open(file_path, 'w', encoding='utf-8') as f:
-                f.write('\n'.join(lines))
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write("\n".join(lines))
 
-            logger.info(f"成功应用修复: {suggestion.file_path}:{suggestion.line_number}")
+            logger.info(
+                f"成功应用修复: {suggestion.file_path}:{suggestion.line_number}"
+            )
             return True
 
         except Exception as e:
@@ -198,7 +202,7 @@ class FixAnalysisCommand:
         target: str,
         confirm_fixes: bool = True,
         verbose: bool = False,
-        quiet: bool = False
+        quiet: bool = False,
     ) -> FixResult:
         """
         执行分析修复
@@ -221,10 +225,7 @@ class FixAnalysisCommand:
         # 验证目标路径
         if not self._validate_target(target_path):
             return FixResult(
-                success=False,
-                target=target,
-                suggestions=[],
-                execution_time=0
+                success=False, target=target, suggestions=[], execution_time=0
             )
 
         if not quiet:
@@ -241,7 +242,9 @@ class FixAnalysisCommand:
 
         try:
             # 执行分析获取修复建议
-            suggestions = self._analyze_and_generate_suggestions(target_path, session, quiet)
+            suggestions = self._analyze_and_generate_suggestions(
+                target_path, session, quiet
+            )
 
             if not suggestions:
                 if not quiet:
@@ -251,7 +254,7 @@ class FixAnalysisCommand:
                     target=target,
                     suggestions=[],
                     execution_time=time.time() - start_time,
-                    total_issues=0
+                    total_issues=0,
                 )
 
             # 显示修复建议
@@ -265,13 +268,13 @@ class FixAnalysisCommand:
 
             if confirm_fixes:
                 # 交互式确认每个修复
-                applied_fixes, failed_fixes, backup_files = self._apply_fixes_with_confirmation(
-                    suggestions, quiet, verbose
+                applied_fixes, failed_fixes, backup_files = (
+                    self._apply_fixes_with_confirmation(suggestions, quiet, verbose)
                 )
             else:
                 # 自动应用所有修复
-                applied_fixes, failed_fixes, backup_files = self._apply_fixes_automatically(
-                    suggestions, quiet, verbose
+                applied_fixes, failed_fixes, backup_files = (
+                    self._apply_fixes_automatically(suggestions, quiet, verbose)
                 )
 
             # 计算执行时间
@@ -290,7 +293,7 @@ class FixAnalysisCommand:
                 backup_files=backup_files,
                 execution_time=execution_time,
                 total_issues=len(suggestions),
-                fixed_issues=len(applied_fixes)
+                fixed_issues=len(applied_fixes),
             )
 
         finally:
@@ -307,17 +310,14 @@ class FixAnalysisCommand:
             bool: 是否为有效目标
         """
         if target_path.is_file():
-            return target_path.suffix == '.py'
+            return target_path.suffix == ".py"
         elif target_path.is_dir():
             # 检查目录中是否包含Python文件
-            return any(target_path.rglob('*.py'))
+            return any(target_path.rglob("*.py"))
         return False
 
     def _analyze_and_generate_suggestions(
-        self,
-        target_path: Path,
-        session,
-        quiet: bool
+        self, target_path: Path, session, quiet: bool
     ) -> List[FixSuggestion]:
         """
         分析并生成修复建议
@@ -356,7 +356,7 @@ class FixAnalysisCommand:
         if target_path.is_file():
             suggestions.extend(self._analyze_file(target_path))
         else:
-            for py_file in target_path.rglob('*.py'):
+            for py_file in target_path.rglob("*.py"):
                 suggestions.extend(self._analyze_file(py_file))
 
         return suggestions
@@ -374,7 +374,7 @@ class FixAnalysisCommand:
         suggestions = []
 
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 lines = f.readlines()
 
             for i, line in enumerate(lines, 1):
@@ -382,44 +382,59 @@ class FixAnalysisCommand:
 
                 # 检查常见问题
                 if "import *" in line_content:
-                    suggestions.append(FixSuggestion(
-                        file_path=str(file_path),
-                        issue_type="style",
-                        description="避免使用通配符导入",
-                        line_number=i,
-                        original_code=line_content,
-                        fixed_code=line_content.replace("import *", "# TODO: 明确导入所需模块"),
-                        severity="medium",
-                        confidence=0.9
-                    ))
-
-                # 检查硬编码密码
-                if "password" in line_content.lower() and "=" in line_content and not line_content.startswith("#"):
-                    suggestions.append(FixSuggestion(
-                        file_path=str(file_path),
-                        issue_type="security",
-                        description="硬编码密码存在安全风险",
-                        line_number=i,
-                        original_code=line_content,
-                        fixed_code=line_content + "  # TODO: 使用环境变量或配置文件",
-                        severity="high",
-                        confidence=0.8
-                    ))
-
-                # 检查未使用的导入
-                if line_content.startswith("import ") or line_content.startswith("from "):
-                    # 简单演示，实际需要更复杂的分析
-                    if "os" in line_content and i > len(lines) // 2:
-                        suggestions.append(FixSuggestion(
+                    suggestions.append(
+                        FixSuggestion(
                             file_path=str(file_path),
-                            issue_type="unused",
-                            description="未使用的导入",
+                            issue_type="style",
+                            description="避免使用通配符导入",
                             line_number=i,
                             original_code=line_content,
-                            fixed_code="# " + line_content,
-                            severity="low",
-                            confidence=0.6
-                        ))
+                            fixed_code=line_content.replace(
+                                "import *", "# TODO: 明确导入所需模块"
+                            ),
+                            severity="medium",
+                            confidence=0.9,
+                        )
+                    )
+
+                # 检查硬编码密码
+                if (
+                    "password" in line_content.lower()
+                    and "=" in line_content
+                    and not line_content.startswith("#")
+                ):
+                    suggestions.append(
+                        FixSuggestion(
+                            file_path=str(file_path),
+                            issue_type="security",
+                            description="硬编码密码存在安全风险",
+                            line_number=i,
+                            original_code=line_content,
+                            fixed_code=line_content
+                            + "  # TODO: 使用环境变量或配置文件",
+                            severity="high",
+                            confidence=0.8,
+                        )
+                    )
+
+                # 检查未使用的导入
+                if line_content.startswith("import ") or line_content.startswith(
+                    "from "
+                ):
+                    # 简单演示，实际需要更复杂的分析
+                    if "os" in line_content and i > len(lines) // 2:
+                        suggestions.append(
+                            FixSuggestion(
+                                file_path=str(file_path),
+                                issue_type="unused",
+                                description="未使用的导入",
+                                line_number=i,
+                                original_code=line_content,
+                                fixed_code="# " + line_content,
+                                severity="low",
+                                confidence=0.6,
+                            )
+                        )
 
         except Exception as e:
             logger.error(f"分析文件失败 {file_path}: {e}")
@@ -441,36 +456,37 @@ class FixAnalysisCommand:
                 "low": "🟢",
                 "medium": "🟡",
                 "high": "🟠",
-                "critical": "🔴"
+                "critical": "🔴",
             }.get(suggestion.severity, "⚪")
 
-            print(f"\n{i}. {severity_icon} [{suggestion.issue_type.upper()}] {suggestion.description}")
+            print(
+                f"\n{i}. {severity_icon} [{suggestion.issue_type.upper()}] {suggestion.description}"
+            )
             print(f"   📁 文件: {suggestion.file_path}:{suggestion.line_number}")
-            print(f"   📊 严重程度: {suggestion.severity} | 置信度: {suggestion.confidence:.1f}")
+            print(
+                f"   📊 严重程度: {suggestion.severity} | 置信度: {suggestion.confidence:.1f}"
+            )
 
             # 显示代码差异
             diff = CodeDiffer.generate_diff(
                 suggestion.original_code,
                 suggestion.fixed_code,
-                Path(suggestion.file_path).name
+                Path(suggestion.file_path).name,
             )
             if diff.strip():
                 print("   📝 代码变更:")
-                for line in diff.split('\n'):
-                    if line.startswith('-'):
+                for line in diff.split("\n"):
+                    if line.startswith("-"):
                         print(f"     \033[91m{line}\033[0m")  # 红色
-                    elif line.startswith('+'):
+                    elif line.startswith("+"):
                         print(f"     \033[92m{line}\033[0m")  # 绿色
-                    elif line.startswith('@@'):
+                    elif line.startswith("@@"):
                         print(f"     \033[96m{line}\033[0m")  # 蓝色
 
         print("-" * 60)
 
     def _apply_fixes_with_confirmation(
-        self,
-        suggestions: List[FixSuggestion],
-        quiet: bool,
-        verbose: bool
+        self, suggestions: List[FixSuggestion], quiet: bool, verbose: bool
     ) -> Tuple[List[FixSuggestion], List[FixSuggestion], Dict[str, str]]:
         """
         通过用户确认应用修复
@@ -501,21 +517,23 @@ class FixAnalysisCommand:
                     if not quiet:
                         response = input("确认修复? [y/n/a/q]: ").strip().lower()
                     else:
-                        response = 'n'  # 静默模式默认跳过
+                        response = "n"  # 静默模式默认跳过
 
-                    if response == 'q':
+                    if response == "q":
                         print("👋 用户退出修复操作")
                         return applied_fixes, failed_fixes, backup_files
-                    elif response == 'a':
+                    elif response == "a":
                         # 应用剩余所有修复
                         remaining_suggestions = suggestions[i:]
                         for remaining_suggestion in remaining_suggestions:
-                            if self._apply_single_fix(remaining_suggestion, backup_files, verbose):
+                            if self._apply_single_fix(
+                                remaining_suggestion, backup_files, verbose
+                            ):
                                 applied_fixes.append(remaining_suggestion)
                             else:
                                 failed_fixes.append(remaining_suggestion)
                         return applied_fixes, failed_fixes, backup_files
-                    elif response == 'y':
+                    elif response == "y":
                         if self._apply_single_fix(suggestion, backup_files, verbose):
                             applied_fixes.append(suggestion)
                             if not quiet:
@@ -525,7 +543,7 @@ class FixAnalysisCommand:
                             if not quiet:
                                 print("❌ 修复失败")
                         break
-                    elif response == 'n':
+                    elif response == "n":
                         if not quiet:
                             print("⏭️ 跳过修复")
                         break
@@ -539,10 +557,7 @@ class FixAnalysisCommand:
         return applied_fixes, failed_fixes, backup_files
 
     def _apply_fixes_automatically(
-        self,
-        suggestions: List[FixSuggestion],
-        quiet: bool,
-        verbose: bool
+        self, suggestions: List[FixSuggestion], quiet: bool, verbose: bool
     ) -> Tuple[List[FixSuggestion], List[FixSuggestion], Dict[str, str]]:
         """
         自动应用修复
@@ -578,10 +593,7 @@ class FixAnalysisCommand:
         return applied_fixes, failed_fixes, backup_files
 
     def _apply_single_fix(
-        self,
-        suggestion: FixSuggestion,
-        backup_files: Dict[str, str],
-        verbose: bool
+        self, suggestion: FixSuggestion, backup_files: Dict[str, str], verbose: bool
     ) -> bool:
         """
         应用单个修复
@@ -617,7 +629,7 @@ class FixAnalysisCommand:
         self,
         applied_fixes: List[FixSuggestion],
         failed_fixes: List[FixSuggestion],
-        execution_time: float
+        execution_time: float,
     ):
         """
         显示修复结果

@@ -4,17 +4,19 @@
 """
 
 import asyncio
+import hashlib
 import json
 import time
-import hashlib
-from typing import Dict, Any, Optional, Callable, List
 from dataclasses import dataclass, field
+from typing import Any, Callable, Dict, List, Optional
+
 from ..utils.logger import get_logger
 
 
 @dataclass
 class QueuedRequest:
     """队列中的请求"""
+
     request_id: str
     task_func: Callable
     args: tuple
@@ -57,12 +59,16 @@ class GlobalConcurrencyManager:
             "failed_requests": 0,
             "cached_requests": 0,
             "queue_length": 0,
-            "active_requests": 0
+            "active_requests": 0,
         }
 
-        self.logger.info(f"GlobalConcurrencyManager initialized with max_concurrent={max_concurrent_requests}")
+        self.logger.info(
+            f"GlobalConcurrencyManager initialized with max_concurrent={max_concurrent_requests}"
+        )
 
-    def _generate_request_key(self, task_func: Callable, args: tuple, kwargs: dict) -> str:
+    def _generate_request_key(
+        self, task_func: Callable, args: tuple, kwargs: dict
+    ) -> str:
         """
         生成请求的唯一键（用于去重）
 
@@ -78,7 +84,11 @@ class GlobalConcurrencyManager:
         key_data = {
             "func_name": task_func.__name__,
             "args": str(args)[:200],  # 限制长度避免过长
-            "kwargs": {k: str(v)[:100] for k, v in kwargs.items() if k in ['messages', 'temperature', 'max_tokens']}
+            "kwargs": {
+                k: str(v)[:100]
+                for k, v in kwargs.items()
+                if k in ["messages", "temperature", "max_tokens"]
+            },
         }
         key_str = json.dumps(key_data, sort_keys=True)
         return hashlib.md5(key_str.encode()).hexdigest()
@@ -101,7 +111,9 @@ class GlobalConcurrencyManager:
         request_key = self._generate_request_key(task_func, args, kwargs)
         if self._check_duplicate(request_key):
             self.stats["cached_requests"] += 1
-            self.logger.debug(f"Returning cached result for request key: {request_key[:8]}...")
+            self.logger.debug(
+                f"Returning cached result for request key: {request_key[:8]}..."
+            )
             return self._request_cache[request_key]["result"]
 
         # 创建请求对象
@@ -109,7 +121,7 @@ class GlobalConcurrencyManager:
             request_id=f"{int(time.time() * 1000)}_{len(self._active_requests)}",
             task_func=task_func,
             args=args,
-            kwargs=kwargs
+            kwargs=kwargs,
         )
 
         try:
@@ -118,7 +130,9 @@ class GlobalConcurrencyManager:
                 self.stats["active_requests"] += 1
                 self._active_requests[request.request_id] = request
 
-                self.logger.debug(f"Executing request {request.request_id} (active: {len(self._active_requests)})")
+                self.logger.debug(
+                    f"Executing request {request.request_id} (active: {len(self._active_requests)})"
+                )
 
                 # 执行任务
                 start_time = time.time()
@@ -129,7 +143,9 @@ class GlobalConcurrencyManager:
                 self._cache_result(request_key, result)
 
                 self.stats["successful_requests"] += 1
-                self.logger.debug(f"Request {request.request_id} completed in {execution_time:.2f}s")
+                self.logger.debug(
+                    f"Request {request.request_id} completed in {execution_time:.2f}s"
+                )
 
                 return result
 
@@ -172,15 +188,13 @@ class GlobalConcurrencyManager:
             request_key: 请求键
             result: 结果
         """
-        self._request_cache[request_key] = {
-            "result": result,
-            "timestamp": time.time()
-        }
+        self._request_cache[request_key] = {"result": result, "timestamp": time.time()}
 
         # 清理过期缓存
         current_time = time.time()
         expired_keys = [
-            key for key, entry in self._request_cache.items()
+            key
+            for key, entry in self._request_cache.items()
             if current_time - entry["timestamp"] > self._cache_ttl
         ]
         for key in expired_keys:
@@ -207,12 +221,14 @@ class GlobalConcurrencyManager:
     def get_stats(self) -> Dict[str, Any]:
         """获取统计信息"""
         stats = self.stats.copy()
-        stats.update({
-            "max_concurrent_requests": self.max_concurrent_requests,
-            "available_permits": self._semaphore._value,
-            "cache_size": len(self._request_cache),
-            "active_request_ids": list(self._active_requests.keys())
-        })
+        stats.update(
+            {
+                "max_concurrent_requests": self.max_concurrent_requests,
+                "available_permits": self._semaphore._value,
+                "cache_size": len(self._request_cache),
+                "active_request_ids": list(self._active_requests.keys()),
+            }
+        )
         return stats
 
     async def clear_cache(self):

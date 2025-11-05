@@ -6,12 +6,12 @@
 import json
 import time
 from datetime import datetime
-from typing import Dict, List, Any, Optional
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from ..utils.logger import get_logger
 from ..utils.config import get_config_manager
-from .static_coordinator import StaticAnalysisResult, AnalysisIssue, SeverityLevel
+from ..utils.logger import get_logger
+from .static_coordinator import AnalysisIssue, SeverityLevel, StaticAnalysisResult
 
 
 class StaticAnalysisReportGenerator:
@@ -29,22 +29,24 @@ class StaticAnalysisReportGenerator:
 
         # 获取配置
         try:
-            self.config = self.config_manager.get_section('static_analysis')
+            self.config = self.config_manager.get_section("static_analysis")
         except:
             self.config = {}
-        self.report_config = self.config.get('report', {})
+        self.report_config = self.config.get("report", {})
 
         # 严重程度排序权重
         self.severity_weights = {
             SeverityLevel.ERROR: 1000,
             SeverityLevel.WARNING: 100,
             SeverityLevel.INFO: 10,
-            SeverityLevel.LOW: 1
+            SeverityLevel.LOW: 1,
         }
 
         self.logger.info("StaticAnalysisReportGenerator initialized")
 
-    def merge_results(self, results: List[StaticAnalysisResult]) -> StaticAnalysisResult:
+    def merge_results(
+        self, results: List[StaticAnalysisResult]
+    ) -> StaticAnalysisResult:
         """
         合并多个静态分析结果
 
@@ -60,7 +62,7 @@ class StaticAnalysisReportGenerator:
         # 创建合并结果
         merged_result = StaticAnalysisResult(
             file_path="multiple_files",
-            execution_time=sum(r.execution_time for r in results)
+            execution_time=sum(r.execution_time for r in results),
         )
 
         # 合并问题
@@ -77,7 +79,9 @@ class StaticAnalysisReportGenerator:
         # 生成合并摘要
         merged_result.summary = self._generate_merged_summary(results, merged_result)
 
-        self.logger.info(f"Merged {len(results)} analysis results with {len(all_issues)} total issues")
+        self.logger.info(
+            f"Merged {len(results)} analysis results with {len(all_issues)} total issues"
+        )
 
         return merged_result
 
@@ -91,6 +95,7 @@ class StaticAnalysisReportGenerator:
         Returns:
             排序后的问题列表
         """
+
         def sort_key(issue: AnalysisIssue):
             # 主要按严重程度排序，次要按行号排序
             severity_weight = self.severity_weights.get(issue.severity, 0)
@@ -122,7 +127,7 @@ class StaticAnalysisReportGenerator:
                 issue.line,
                 issue.column,
                 issue.message,
-                issue.severity.value
+                issue.severity.value,
             )
 
             if issue_key not in seen_issues:
@@ -135,8 +140,9 @@ class StaticAnalysisReportGenerator:
 
         return unique_issues
 
-    def generate_report(self, results: List[StaticAnalysisResult],
-                       output_format: str = "json") -> Dict[str, Any]:
+    def generate_report(
+        self, results: List[StaticAnalysisResult], output_format: str = "json"
+    ) -> Dict[str, Any]:
         """
         生成统一的分析报告
 
@@ -162,26 +168,28 @@ class StaticAnalysisReportGenerator:
             "summary": self._generate_overall_summary(sorted_issues, results),
             "issues": [issue.to_dict() for issue in sorted_issues],
             "file_details": self._generate_file_details(results),
-            "tool_details": self._generate_tool_details(results)
+            "tool_details": self._generate_tool_details(results),
         }
 
         # 根据格式调整报告内容
         if output_format == "summary":
             # 简化格式，只包含摘要
-            report = {
-                "metadata": report["metadata"],
-                "summary": report["summary"]
-            }
+            report = {"metadata": report["metadata"], "summary": report["summary"]}
         elif output_format == "detailed":
             # 详细格式，包含工具原始结果
-            report["raw_results"] = {result.file_path: result.tool_results for result in results}
+            report["raw_results"] = {
+                result.file_path: result.tool_results for result in results
+            }
 
-        self.logger.info(f"Generated {output_format} report with {len(sorted_issues)} issues")
+        self.logger.info(
+            f"Generated {output_format} report with {len(sorted_issues)} issues"
+        )
 
         return report
 
-    def save_report(self, report: Dict[str, Any], output_path: str,
-                   output_format: str = "json") -> bool:
+    def save_report(
+        self, report: Dict[str, Any], output_path: str, output_format: str = "json"
+    ) -> bool:
         """
         保存报告到文件
 
@@ -198,12 +206,12 @@ class StaticAnalysisReportGenerator:
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
             if output_format == "json":
-                with open(output_path, 'w', encoding='utf-8') as f:
+                with open(output_path, "w", encoding="utf-8") as f:
                     json.dump(report, f, indent=2, ensure_ascii=False)
             else:
                 # 生成文本格式报告
                 text_report = self._generate_text_report(report)
-                with open(output_path, 'w', encoding='utf-8') as f:
+                with open(output_path, "w", encoding="utf-8") as f:
                     f.write(text_report)
 
             self.logger.info(f"Report saved to: {output_path}")
@@ -213,18 +221,23 @@ class StaticAnalysisReportGenerator:
             self.logger.error(f"Failed to save report to {output_path}: {e}")
             return False
 
-    def _generate_report_metadata(self, results: List[StaticAnalysisResult]) -> Dict[str, Any]:
+    def _generate_report_metadata(
+        self, results: List[StaticAnalysisResult]
+    ) -> Dict[str, Any]:
         """生成报告元数据"""
         return {
             "generated_at": datetime.now().isoformat(),
             "total_files": len(results),
             "total_execution_time": sum(r.execution_time for r in results),
-            "tools_used": list(set().union(*[list(r.tool_results.keys()) for r in results])),
-            "version": "1.0.0"
+            "tools_used": list(
+                set().union(*[list(r.tool_results.keys()) for r in results])
+            ),
+            "version": "1.0.0",
         }
 
-    def _generate_overall_summary(self, issues: List[AnalysisIssue],
-                                 results: List[StaticAnalysisResult]) -> Dict[str, Any]:
+    def _generate_overall_summary(
+        self, issues: List[AnalysisIssue], results: List[StaticAnalysisResult]
+    ) -> Dict[str, Any]:
         """生成总体摘要"""
         summary = {
             "total_issues": len(issues),
@@ -232,30 +245,38 @@ class StaticAnalysisReportGenerator:
             "severity_distribution": {},
             "tool_distribution": {},
             "issue_types": {},
-            "top_issues": []
+            "top_issues": [],
         }
 
         # 统计严重程度分布
         for issue in issues:
             severity = issue.severity.value
-            summary["severity_distribution"][severity] = summary["severity_distribution"].get(severity, 0) + 1
+            summary["severity_distribution"][severity] = (
+                summary["severity_distribution"].get(severity, 0) + 1
+            )
 
         # 统计工具分布
         for issue in issues:
             tool = issue.tool_name
-            summary["tool_distribution"][tool] = summary["tool_distribution"].get(tool, 0) + 1
+            summary["tool_distribution"][tool] = (
+                summary["tool_distribution"].get(tool, 0) + 1
+            )
 
         # 统计问题类型
         for issue in issues:
             issue_type = issue.issue_type
-            summary["issue_types"][issue_type] = summary["issue_types"].get(issue_type, 0) + 1
+            summary["issue_types"][issue_type] = (
+                summary["issue_types"].get(issue_type, 0) + 1
+            )
 
         # 获取前10个最严重的问题
         summary["top_issues"] = [issue.to_dict() for issue in issues[:10]]
 
         return summary
 
-    def _generate_file_details(self, results: List[StaticAnalysisResult]) -> List[Dict[str, Any]]:
+    def _generate_file_details(
+        self, results: List[StaticAnalysisResult]
+    ) -> List[Dict[str, Any]]:
         """生成文件详情"""
         file_details = []
 
@@ -264,8 +285,10 @@ class StaticAnalysisReportGenerator:
                 "file_path": result.file_path,
                 "issue_count": len(result.issues),
                 "execution_time": result.execution_time,
-                "severity_distribution": result.summary.get("severity_distribution", {}),
-                "tool_distribution": result.summary.get("tool_distribution", {})
+                "severity_distribution": result.summary.get(
+                    "severity_distribution", {}
+                ),
+                "tool_distribution": result.summary.get("tool_distribution", {}),
             }
             file_details.append(file_detail)
 
@@ -274,7 +297,9 @@ class StaticAnalysisReportGenerator:
 
         return file_details
 
-    def _generate_tool_details(self, results: List[StaticAnalysisResult]) -> Dict[str, Any]:
+    def _generate_tool_details(
+        self, results: List[StaticAnalysisResult]
+    ) -> Dict[str, Any]:
         """生成工具详情"""
         tool_stats = {}
 
@@ -284,26 +309,35 @@ class StaticAnalysisReportGenerator:
                     tool_stats[tool_name] = {
                         "files_analyzed": 0,
                         "total_issues": 0,
-                        "execution_time": 0.0
+                        "execution_time": 0.0,
                     }
 
                 tool_stats[tool_name]["files_analyzed"] += 1
                 tool_stats[tool_name]["execution_time"] += result.execution_time
 
                 # 根据工具类型统计问题数量
-                if tool_name == 'ast':
-                    tool_stats[tool_name]["total_issues"] += len(tool_result.get('errors', []))
-                elif tool_name == 'pylint':
-                    tool_stats[tool_name]["total_issues"] += len(tool_result.get('issues', []))
-                elif tool_name == 'flake8':
-                    tool_stats[tool_name]["total_issues"] += len(tool_result.get('issues', []))
-                elif tool_name == 'bandit':
-                    tool_stats[tool_name]["total_issues"] += len(tool_result.get('vulnerabilities', []))
+                if tool_name == "ast":
+                    tool_stats[tool_name]["total_issues"] += len(
+                        tool_result.get("errors", [])
+                    )
+                elif tool_name == "pylint":
+                    tool_stats[tool_name]["total_issues"] += len(
+                        tool_result.get("issues", [])
+                    )
+                elif tool_name == "flake8":
+                    tool_stats[tool_name]["total_issues"] += len(
+                        tool_result.get("issues", [])
+                    )
+                elif tool_name == "bandit":
+                    tool_stats[tool_name]["total_issues"] += len(
+                        tool_result.get("vulnerabilities", [])
+                    )
 
         return tool_stats
 
-    def _generate_merged_summary(self, results: List[StaticAnalysisResult],
-                               merged_result: StaticAnalysisResult) -> Dict[str, Any]:
+    def _generate_merged_summary(
+        self, results: List[StaticAnalysisResult], merged_result: StaticAnalysisResult
+    ) -> Dict[str, Any]:
         """生成合并结果的摘要"""
         summary = {
             "total_files": len(results),
@@ -312,19 +346,27 @@ class StaticAnalysisReportGenerator:
             "severity_distribution": {},
             "tool_distribution": {},
             "issue_types": {},
-            "execution_time": merged_result.execution_time
+            "execution_time": merged_result.execution_time,
         }
 
         # 统计各种分布
         for result in results:
-            for severity, count in result.summary.get("severity_distribution", {}).items():
-                summary["severity_distribution"][severity] = summary["severity_distribution"].get(severity, 0) + count
+            for severity, count in result.summary.get(
+                "severity_distribution", {}
+            ).items():
+                summary["severity_distribution"][severity] = (
+                    summary["severity_distribution"].get(severity, 0) + count
+                )
 
             for tool, count in result.summary.get("tool_distribution", {}).items():
-                summary["tool_distribution"][tool] = summary["tool_distribution"].get(tool, 0) + count
+                summary["tool_distribution"][tool] = (
+                    summary["tool_distribution"].get(tool, 0) + count
+                )
 
             for issue_type, count in result.summary.get("issue_types", {}).items():
-                summary["issue_types"][issue_type] = summary["issue_types"].get(issue_type, 0) + count
+                summary["issue_types"][issue_type] = (
+                    summary["issue_types"].get(issue_type, 0) + count
+                )
 
         return summary
 
@@ -356,16 +398,19 @@ class StaticAnalysisReportGenerator:
         if summary["severity_distribution"]:
             lines.append("")
             lines.append("严重程度分布:")
-            for severity, count in sorted(summary["severity_distribution"].items(),
-                                        key=lambda x: self.severity_weights.get(SeverityLevel(x[0]), 0),
-                                        reverse=True):
+            for severity, count in sorted(
+                summary["severity_distribution"].items(),
+                key=lambda x: self.severity_weights.get(SeverityLevel(x[0]), 0),
+                reverse=True,
+            ):
                 lines.append(f"  {severity}: {count}")
 
         if summary["tool_distribution"]:
             lines.append("")
             lines.append("工具分布:")
-            for tool, count in sorted(summary["tool_distribution"].items(),
-                                     key=lambda x: x[1], reverse=True):
+            for tool, count in sorted(
+                summary["tool_distribution"].items(), key=lambda x: x[1], reverse=True
+            ):
                 lines.append(f"  {tool}: {count}")
 
         # 文件详情
@@ -374,7 +419,9 @@ class StaticAnalysisReportGenerator:
             lines.append("## 文件详情")
             lines.append("-" * 30)
             for file_detail in report["file_details"][:10]:  # 只显示前10个文件
-                lines.append(f"{file_detail['file_path']}: {file_detail['issue_count']} 个问题")
+                lines.append(
+                    f"{file_detail['file_path']}: {file_detail['issue_count']} 个问题"
+                )
 
         # 前10个问题
         if summary.get("top_issues"):
@@ -382,7 +429,9 @@ class StaticAnalysisReportGenerator:
             lines.append("## 主要问题 (前10个)")
             lines.append("-" * 30)
             for i, issue in enumerate(summary["top_issues"][:10], 1):
-                lines.append(f"{i}. [{issue['severity'].upper()}] {issue['file_path']}:{issue['line']}")
+                lines.append(
+                    f"{i}. [{issue['severity'].upper()}] {issue['file_path']}:{issue['line']}"
+                )
                 lines.append(f"   {issue['message']}")
                 lines.append(f"   工具: {issue['tool_name']}")
                 lines.append("")

@@ -4,16 +4,16 @@
 """
 
 import re
-from typing import Dict, List, Any, Optional, Tuple, Callable
 from dataclasses import dataclass, field
 from enum import Enum
 
-from ..utils.logger import get_logger
-from ..utils.config import get_config_manager
-from .planner import AnalysisMode, UserRequest, ExecutionPlan
-
 # 使用字符串类型定义避免循环导入
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
+
+from ..utils.config import get_config_manager
+from ..utils.logger import get_logger
+from .planner import AnalysisMode, ExecutionPlan, UserRequest
+
 if TYPE_CHECKING:
     from .orchestrator import Session, SessionState
 
@@ -21,14 +21,16 @@ if TYPE_CHECKING:
 def _get_session_state():
     """延迟导入SessionState枚举"""
     from .orchestrator import SessionState
+
     return SessionState
 
 
 @dataclass
 class RouteRequest:
     """路由请求数据结构"""
+
     user_input: str
-    session: 'Session'  # 使用字符串类型避免循环导入
+    session: "Session"  # 使用字符串类型避免循环导入
     context: Dict[str, Any] = field(default_factory=dict)
     force_mode: Optional[AnalysisMode] = None
     options: Dict[str, Any] = field(default_factory=dict)
@@ -37,12 +39,13 @@ class RouteRequest:
 @dataclass
 class RouteResult:
     """路由结果数据结构"""
+
     success: bool
     mode: AnalysisMode
     execution_method: str  # "direct", "interactive", "confirmation"
     execution_plan: Optional[ExecutionPlan] = None
     response_message: str = ""
-    next_state: Optional['SessionState'] = None  # 延迟设置默认值
+    next_state: Optional["SessionState"] = None  # 延迟设置默认值
     error: Optional[str] = None
     error_type: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
@@ -59,12 +62,14 @@ class RouteResult:
             "success": self.success,
             "mode": self.mode.value,
             "execution_method": self.execution_method,
-            "execution_plan_id": self.execution_plan.plan_id if self.execution_plan else None,
+            "execution_plan_id": (
+                self.execution_plan.plan_id if self.execution_plan else None
+            ),
             "response_message": self.response_message,
             "next_state": self.next_state.value if self.next_state else None,
             "error": self.error,
             "error_type": self.error_type,
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }
 
 
@@ -83,40 +88,105 @@ class ModeRecognizer:
 
         # 获取配置
         try:
-            self.config = self.config_manager.get_section('mode_recognizer') or {}
+            self.config = self.config_manager.get_section("mode_recognizer") or {}
         except:
             self.config = {}
 
         # 模式识别关键词
-        self.static_keywords = self.config.get('static_keywords', [
-            'static', 'quick', 'fast', 'basic', 'simple', 'check', 'scan', 'test',
-            '静态', '快速', '基础', '简单', '检查', '扫描', '测试', '校验', '验证'
-        ])
+        self.static_keywords = self.config.get(
+            "static_keywords",
+            [
+                "static",
+                "quick",
+                "fast",
+                "basic",
+                "simple",
+                "check",
+                "scan",
+                "test",
+                "静态",
+                "快速",
+                "基础",
+                "简单",
+                "检查",
+                "扫描",
+                "测试",
+                "校验",
+                "验证",
+            ],
+        )
 
-        self.deep_keywords = self.config.get('deep_keywords', [
-            'deep', 'detailed', 'thorough', 'comprehensive', 'analyze', 'analysis', 'review',
-            '深度', '详细', '全面', '智能', '分析', '解析', '解释', '说明', '架构', '设计', '原理', '实现', '逻辑'
-        ])
+        self.deep_keywords = self.config.get(
+            "deep_keywords",
+            [
+                "deep",
+                "detailed",
+                "thorough",
+                "comprehensive",
+                "analyze",
+                "analysis",
+                "review",
+                "深度",
+                "详细",
+                "全面",
+                "智能",
+                "分析",
+                "解析",
+                "解释",
+                "说明",
+                "架构",
+                "设计",
+                "原理",
+                "实现",
+                "逻辑",
+            ],
+        )
 
-        self.fix_keywords = self.config.get('fix_keywords', [
-            'fix', 'repair', 'resolve', 'correct', 'auto-fix', 'fixing', 'debug', 'patch',
-            '修复', '解决', '更正', '自动修复', '调试', '补丁', '改正', '缺陷', '错误', '异常', '问题', '优化', '改进'
-        ])
+        self.fix_keywords = self.config.get(
+            "fix_keywords",
+            [
+                "fix",
+                "repair",
+                "resolve",
+                "correct",
+                "auto-fix",
+                "fixing",
+                "debug",
+                "patch",
+                "修复",
+                "解决",
+                "更正",
+                "自动修复",
+                "调试",
+                "补丁",
+                "改正",
+                "缺陷",
+                "错误",
+                "异常",
+                "问题",
+                "优化",
+                "改进",
+            ],
+        )
 
         # 命令模式关键词
         self.command_patterns = [
-            r'^(static|analyze|check|scan)\s+',
-            r'^(deep|detailed|thorough)\s+',
-            r'^(fix|repair|resolve)\s+',
-            r'^/(static|deep|fix|analyze|scan|repair|review)\s*',
-            r'--mode\s*=\s*(static|deep|fix)',
-            r'-m\s+(static|deep|fix)'
+            r"^(static|analyze|check|scan)\s+",
+            r"^(deep|detailed|thorough)\s+",
+            r"^(fix|repair|resolve)\s+",
+            r"^/(static|deep|fix|analyze|scan|repair|review)\s*",
+            r"--mode\s*=\s*(static|deep|fix)",
+            r"-m\s+(static|deep|fix)",
         ]
 
         self.logger.info("ModeRecognizer initialized")
 
-    def recognize_mode(self, user_input: str, session: Optional['Session'] = None,
-                      force_mode: Optional[AnalysisMode] = None) -> Tuple[AnalysisMode, float]:
+    def recognize_mode(
+        self,
+        user_input: str,
+        session: Optional["Session"] = None,
+        force_mode: Optional[AnalysisMode] = None,
+    ) -> Tuple[AnalysisMode, float]:
         """
         识别用户输入的分析模式
 
@@ -157,7 +227,9 @@ class ModeRecognizer:
                 return AnalysisMode.STATIC, 0.5
 
             # 计算置信度：基于匹配的关键词数量
-            confidence = min(0.5 + (best_score * 0.2), 1.0)  # 基础0.5 + 每个0.2，最高1.0
+            confidence = min(
+                0.5 + (best_score * 0.2), 1.0
+            )  # 基础0.5 + 每个0.2，最高1.0
             return best_mode, confidence
 
         # 默认使用静态分析
@@ -171,16 +243,20 @@ class ModeRecognizer:
                 mode_str = match.group(1) if match.groups() else match.group(0)
                 mode_str = mode_str.lower()
 
-                if mode_str in ['static', 'check', 'scan', 'analyze', 'review']:
-                    return AnalysisMode.STATIC if mode_str != 'review' else AnalysisMode.DEEP
-                elif mode_str in ['deep', 'detailed', 'comprehensive', 'review']:
+                if mode_str in ["static", "check", "scan", "analyze", "review"]:
+                    return (
+                        AnalysisMode.STATIC
+                        if mode_str != "review"
+                        else AnalysisMode.DEEP
+                    )
+                elif mode_str in ["deep", "detailed", "comprehensive", "review"]:
                     return AnalysisMode.DEEP
-                elif mode_str in ['fix', 'repair', 'resolve']:
+                elif mode_str in ["fix", "repair", "resolve"]:
                     return AnalysisMode.FIX
 
         return None
 
-    def _check_context_mode(self, session: 'Session') -> Optional[AnalysisMode]:
+    def _check_context_mode(self, session: "Session") -> Optional[AnalysisMode]:
         """基于会话上下文检查模式"""
         if not session.messages:
             return None
@@ -191,7 +267,7 @@ class ModeRecognizer:
         mode_counts = {
             AnalysisMode.STATIC: 0,
             AnalysisMode.DEEP: 0,
-            AnalysisMode.FIX: 0
+            AnalysisMode.FIX: 0,
         }
 
         for message in recent_messages:
@@ -216,7 +292,9 @@ class ModeRecognizer:
         scores = {}
 
         # 静态分析得分
-        static_matches = sum(1 for keyword in self.static_keywords if keyword in user_input)
+        static_matches = sum(
+            1 for keyword in self.static_keywords if keyword in user_input
+        )
         scores[AnalysisMode.STATIC] = static_matches
 
         # 深度分析得分
@@ -229,7 +307,9 @@ class ModeRecognizer:
 
         return scores
 
-    def get_mode_suggestions(self, user_input: str, top_n: int = 3) -> List[Tuple[AnalysisMode, float]]:
+    def get_mode_suggestions(
+        self, user_input: str, top_n: int = 3
+    ) -> List[Tuple[AnalysisMode, float]]:
         """
         获取模式建议
 
@@ -278,20 +358,20 @@ class RequestRouter:
 
         # 获取配置
         try:
-            self.config = self.config_manager.get_section('request_router') or {}
+            self.config = self.config_manager.get_section("request_router") or {}
         except:
             self.config = {}
 
         # 路由配置
-        self.auto_execute_static = self.config.get('auto_execute_static', True)
-        self.interactive_deep = self.config.get('interactive_deep', True)
-        self.confirmation_fix = self.config.get('confirmation_fix', True)
+        self.auto_execute_static = self.config.get("auto_execute_static", True)
+        self.interactive_deep = self.config.get("interactive_deep", True)
+        self.confirmation_fix = self.config.get("confirmation_fix", True)
 
         # 路由处理器
         self.route_handlers = {
             AnalysisMode.STATIC: self._handle_static_route,
             AnalysisMode.DEEP: self._handle_deep_route,
-            AnalysisMode.FIX: self._handle_fix_route
+            AnalysisMode.FIX: self._handle_fix_route,
         }
 
         self.logger.info("RequestRouter initialized")
@@ -313,10 +393,12 @@ class RequestRouter:
             mode, confidence = self.mode_recognizer.recognize_mode(
                 route_request.user_input,
                 route_request.session,
-                route_request.force_mode
+                route_request.force_mode,
             )
 
-            self.logger.info(f"Recognized mode: {mode.value} (confidence: {confidence:.2f})")
+            self.logger.info(
+                f"Recognized mode: {mode.value} (confidence: {confidence:.2f})"
+            )
 
             # 获取对应的处理器
             handler = self.route_handlers.get(mode)
@@ -326,7 +408,7 @@ class RequestRouter:
                     mode=mode,
                     execution_method="unknown",
                     error=f"No handler for mode: {mode.value}",
-                    error_type="NoHandlerError"
+                    error_type="NoHandlerError",
                 )
 
             # 执行路由处理
@@ -339,10 +421,12 @@ class RequestRouter:
                 mode=AnalysisMode.STATIC,  # 默认模式
                 execution_method="error",
                 error=str(e),
-                error_type=type(e).__name__
+                error_type=type(e).__name__,
             )
 
-    def _handle_static_route(self, route_request: RouteRequest, confidence: float) -> RouteResult:
+    def _handle_static_route(
+        self, route_request: RouteRequest, confidence: float
+    ) -> RouteResult:
         """处理静态分析路由"""
         session = route_request.session
         user_input = route_request.user_input
@@ -351,22 +435,22 @@ class RequestRouter:
         SessionState = _get_session_state()
 
         # 更新会话状态
-        session.update_state(SessionState.PROCESSING, {
-            "routing_mode": "static",
-            "confidence": confidence
-        })
+        session.update_state(
+            SessionState.PROCESSING,
+            {"routing_mode": "static", "confidence": confidence},
+        )
 
         # 添加用户消息
         user_message = session.add_message(
-            "user",
-            user_input,
-            {"mode": "static", "routing_confidence": confidence}
+            "user", user_input, {"mode": "static", "routing_confidence": confidence}
         )
 
         try:
             # 解析用户请求
-            current_path = route_request.context.get('current_path', '.')
-            user_request = self.task_planner.parse_user_request(user_input, current_path)
+            current_path = route_request.context.get("current_path", ".")
+            user_request = self.task_planner.parse_user_request(
+                user_input, current_path
+            )
             user_request.mode = AnalysisMode.STATIC  # 确保模式正确
 
             # 创建执行计划
@@ -384,7 +468,7 @@ class RequestRouter:
                     execution_method="direct",
                     error=f"Invalid execution plan: {', '.join(errors)}",
                     error_type="InvalidPlanError",
-                    next_state=SessionState.ERROR
+                    next_state=SessionState.ERROR,
                 )
 
             # 静态分析模式：直接执行
@@ -394,17 +478,20 @@ class RequestRouter:
                 session.execution_results.extend(execution_results)
 
                 # 生成响应
-                response = self._generate_static_response(execution_plan, execution_results)
+                response = self._generate_static_response(
+                    execution_plan, execution_results
+                )
                 assistant_message = session.add_message(
-                    "assistant",
-                    response,
-                    {"mode": "static", "auto_executed": True}
+                    "assistant", response, {"mode": "static", "auto_executed": True}
                 )
 
-                session.update_state(SessionState.ACTIVE, {
-                    "execution_completed": True,
-                    "results_count": len(execution_results)
-                })
+                session.update_state(
+                    SessionState.ACTIVE,
+                    {
+                        "execution_completed": True,
+                        "results_count": len(execution_results),
+                    },
+                )
 
                 return RouteResult(
                     success=True,
@@ -415,22 +502,20 @@ class RequestRouter:
                     next_state=SessionState.ACTIVE,
                     metadata={
                         "execution_results": len(execution_results),
-                        "auto_executed": True
-                    }
+                        "auto_executed": True,
+                    },
                 )
             else:
                 # 不自动执行，仅创建计划
                 response = f"已创建静态分析计划 {execution_plan.plan_id}，包含 {len(execution_plan.tasks)} 个任务。"
                 assistant_message = session.add_message(
-                    "assistant",
-                    response,
-                    {"mode": "static", "auto_executed": False}
+                    "assistant", response, {"mode": "static", "auto_executed": False}
                 )
 
-                session.update_state(SessionState.WAITING_INPUT, {
-                    "plan_created": True,
-                    "awaiting_execution": True
-                })
+                session.update_state(
+                    SessionState.WAITING_INPUT,
+                    {"plan_created": True, "awaiting_execution": True},
+                )
 
                 return RouteResult(
                     success=True,
@@ -438,7 +523,7 @@ class RequestRouter:
                     execution_method="manual",
                     execution_plan=execution_plan,
                     response_message=response,
-                    next_state=SessionState.WAITING_INPUT
+                    next_state=SessionState.WAITING_INPUT,
                 )
 
         except Exception as e:
@@ -449,31 +534,32 @@ class RequestRouter:
                 execution_method="direct",
                 error=str(e),
                 error_type=type(e).__name__,
-                next_state=SessionState.ERROR
+                next_state=SessionState.ERROR,
             )
 
-    def _handle_deep_route(self, route_request: RouteRequest, confidence: float) -> RouteResult:
+    def _handle_deep_route(
+        self, route_request: RouteRequest, confidence: float
+    ) -> RouteResult:
         """处理深度分析路由"""
         session = route_request.session
         user_input = route_request.user_input
 
         # 更新会话状态
-        session.update_state(SessionState.PROCESSING, {
-            "routing_mode": "deep",
-            "confidence": confidence
-        })
+        session.update_state(
+            SessionState.PROCESSING, {"routing_mode": "deep", "confidence": confidence}
+        )
 
         # 添加用户消息
         user_message = session.add_message(
-            "user",
-            user_input,
-            {"mode": "deep", "routing_confidence": confidence}
+            "user", user_input, {"mode": "deep", "routing_confidence": confidence}
         )
 
         try:
             # 解析用户请求
-            current_path = route_request.context.get('current_path', '.')
-            user_request = self.task_planner.parse_user_request(user_input, current_path)
+            current_path = route_request.context.get("current_path", ".")
+            user_request = self.task_planner.parse_user_request(
+                user_input, current_path
+            )
             user_request.mode = AnalysisMode.DEEP  # 确保模式正确
 
             # 创建执行计划
@@ -491,7 +577,7 @@ class RequestRouter:
                     execution_method="interactive",
                     error=f"Invalid execution plan: {', '.join(errors)}",
                     error_type="InvalidPlanError",
-                    next_state=SessionState.ERROR
+                    next_state=SessionState.ERROR,
                 )
 
             # 深度分析模式：启动对话交互
@@ -502,15 +588,13 @@ class RequestRouter:
                 response += "准备开始深度分析，是否继续？"
 
                 assistant_message = session.add_message(
-                    "assistant",
-                    response,
-                    {"mode": "deep", "interactive": True}
+                    "assistant", response, {"mode": "deep", "interactive": True}
                 )
 
-                session.update_state(SessionState.WAITING_INPUT, {
-                    "deep_analysis_ready": True,
-                    "awaiting_confirmation": True
-                })
+                session.update_state(
+                    SessionState.WAITING_INPUT,
+                    {"deep_analysis_ready": True, "awaiting_confirmation": True},
+                )
 
                 return RouteResult(
                     success=True,
@@ -519,27 +603,27 @@ class RequestRouter:
                     execution_plan=execution_plan,
                     response_message=response,
                     next_state=SessionState.WAITING_INPUT,
-                    metadata={
-                        "interactive": True,
-                        "awaiting_confirmation": True
-                    }
+                    metadata={"interactive": True, "awaiting_confirmation": True},
                 )
             else:
                 # 直接执行
                 execution_results = self.execution_engine.execute_plan(execution_plan)
                 session.execution_results.extend(execution_results)
 
-                response = self._generate_deep_response(execution_plan, execution_results)
+                response = self._generate_deep_response(
+                    execution_plan, execution_results
+                )
                 assistant_message = session.add_message(
-                    "assistant",
-                    response,
-                    {"mode": "deep", "auto_executed": True}
+                    "assistant", response, {"mode": "deep", "auto_executed": True}
                 )
 
-                session.update_state(SessionState.ACTIVE, {
-                    "execution_completed": True,
-                    "results_count": len(execution_results)
-                })
+                session.update_state(
+                    SessionState.ACTIVE,
+                    {
+                        "execution_completed": True,
+                        "results_count": len(execution_results),
+                    },
+                )
 
                 return RouteResult(
                     success=True,
@@ -550,8 +634,8 @@ class RequestRouter:
                     next_state=SessionState.ACTIVE,
                     metadata={
                         "execution_results": len(execution_results),
-                        "auto_executed": True
-                    }
+                        "auto_executed": True,
+                    },
                 )
 
         except Exception as e:
@@ -562,31 +646,32 @@ class RequestRouter:
                 execution_method="interactive",
                 error=str(e),
                 error_type=type(e).__name__,
-                next_state=SessionState.ERROR
+                next_state=SessionState.ERROR,
             )
 
-    def _handle_fix_route(self, route_request: RouteRequest, confidence: float) -> RouteResult:
+    def _handle_fix_route(
+        self, route_request: RouteRequest, confidence: float
+    ) -> RouteResult:
         """处理修复分析路由"""
         session = route_request.session
         user_input = route_request.user_input
 
         # 更新会话状态
-        session.update_state(SessionState.PROCESSING, {
-            "routing_mode": "fix",
-            "confidence": confidence
-        })
+        session.update_state(
+            SessionState.PROCESSING, {"routing_mode": "fix", "confidence": confidence}
+        )
 
         # 添加用户消息
         user_message = session.add_message(
-            "user",
-            user_input,
-            {"mode": "fix", "routing_confidence": confidence}
+            "user", user_input, {"mode": "fix", "routing_confidence": confidence}
         )
 
         try:
             # 解析用户请求
-            current_path = route_request.context.get('current_path', '.')
-            user_request = self.task_planner.parse_user_request(user_input, current_path)
+            current_path = route_request.context.get("current_path", ".")
+            user_request = self.task_planner.parse_user_request(
+                user_input, current_path
+            )
             user_request.mode = AnalysisMode.FIX  # 确保模式正确
 
             # 创建执行计划
@@ -604,7 +689,7 @@ class RequestRouter:
                     execution_method="confirmation",
                     error=f"Invalid execution plan: {', '.join(errors)}",
                     error_type="InvalidPlanError",
-                    next_state=SessionState.ERROR
+                    next_state=SessionState.ERROR,
                 )
 
             # 修复模式：包含确认流程
@@ -618,14 +703,17 @@ class RequestRouter:
                 assistant_message = session.add_message(
                     "assistant",
                     response,
-                    {"mode": "fix", "confirmation_required": True}
+                    {"mode": "fix", "confirmation_required": True},
                 )
 
-                session.update_state(SessionState.WAITING_INPUT, {
-                    "fix_analysis_ready": True,
-                    "awaiting_confirmation": True,
-                    "confirmation_required": True
-                })
+                session.update_state(
+                    SessionState.WAITING_INPUT,
+                    {
+                        "fix_analysis_ready": True,
+                        "awaiting_confirmation": True,
+                        "confirmation_required": True,
+                    },
+                )
 
                 return RouteResult(
                     success=True,
@@ -636,25 +724,28 @@ class RequestRouter:
                     next_state=SessionState.WAITING_INPUT,
                     metadata={
                         "confirmation_required": True,
-                        "awaiting_confirmation": True
-                    }
+                        "awaiting_confirmation": True,
+                    },
                 )
             else:
                 # 直接执行（不推荐）
                 execution_results = self.execution_engine.execute_plan(execution_plan)
                 session.execution_results.extend(execution_results)
 
-                response = self._generate_fix_response(execution_plan, execution_results)
+                response = self._generate_fix_response(
+                    execution_plan, execution_results
+                )
                 assistant_message = session.add_message(
-                    "assistant",
-                    response,
-                    {"mode": "fix", "auto_executed": True}
+                    "assistant", response, {"mode": "fix", "auto_executed": True}
                 )
 
-                session.update_state(SessionState.ACTIVE, {
-                    "execution_completed": True,
-                    "results_count": len(execution_results)
-                })
+                session.update_state(
+                    SessionState.ACTIVE,
+                    {
+                        "execution_completed": True,
+                        "results_count": len(execution_results),
+                    },
+                )
 
                 return RouteResult(
                     success=True,
@@ -666,8 +757,8 @@ class RequestRouter:
                     metadata={
                         "execution_results": len(execution_results),
                         "auto_executed": True,
-                        "warning": "Auto-executed fix operations without confirmation"
-                    }
+                        "warning": "Auto-executed fix operations without confirmation",
+                    },
                 )
 
         except Exception as e:
@@ -678,7 +769,7 @@ class RequestRouter:
                 execution_method="confirmation",
                 error=str(e),
                 error_type=type(e).__name__,
-                next_state=SessionState.ERROR
+                next_state=SessionState.ERROR,
             )
 
     def _generate_static_response(self, plan: ExecutionPlan, results: List) -> str:
@@ -741,6 +832,6 @@ class RequestRouter:
         descriptions = {
             "static": "静态分析：直接使用工具进行代码质量、安全和风格检查",
             "deep": "深度分析：使用AI进行深入的代码分析和建议，支持交互式对话",
-            "fix": "修复分析：检测问题并提供修复建议，包含确认流程保护"
+            "fix": "修复分析：检测问题并提供修复建议，包含确认流程保护",
         }
         return descriptions.get(mode, "未知模式")

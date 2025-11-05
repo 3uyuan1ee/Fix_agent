@@ -4,25 +4,25 @@ CLI主程序入口
 整合参数解析、配置加载和AgentOrchestrator，提供完整的命令行接口
 """
 
-import sys
+import json
 import os
 import signal
+import sys
 from pathlib import Path
-from typing import Optional, List
-import json
+from typing import List, Optional
 
 # 添加项目根目录到路径
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from .cli import CLIArgumentParser, CLIArguments, CLIHelper
-from .static_commands import StaticAnalysisCommand
-from .deep_commands import DeepAnalysisCommand
-from .fix_commands import FixAnalysisCommand
-from ..utils.config import ConfigManager
-from ..utils.logger import get_logger, setup_logging
 from ..agent.orchestrator import AgentOrchestrator
 from ..agent.planner import AnalysisMode
+from ..utils.config import ConfigManager
+from ..utils.logger import get_logger, setup_logging
+from .cli import CLIArgumentParser, CLIArguments, CLIHelper
+from .deep_commands import DeepAnalysisCommand
+from .fix_commands import FixAnalysisCommand
+from .static_commands import StaticAnalysisCommand
 
 logger = get_logger()
 
@@ -40,6 +40,7 @@ class CLIMainApplication:
 
     def _setup_signal_handlers(self):
         """设置信号处理器"""
+
         def signal_handler(signum, frame):
             logger.info(f"接收到信号 {signum}，正在退出...")
             if self.orchestrator:
@@ -64,7 +65,7 @@ class CLIMainApplication:
             if args:
                 self._raw_args = args
                 # 检查是否为帮助主题（在参数解析之前）
-                if args[0] in ['modes', 'tools', 'formats', 'examples']:
+                if args[0] in ["modes", "tools", "formats", "examples"]:
                     self.parser.print_help(args[0])
                     return 0
 
@@ -76,7 +77,7 @@ class CLIMainApplication:
                 return 0
 
             # 处理子命令
-            if self.args.command == 'analyze':
+            if self.args.command == "analyze":
                 return self._handle_analyze_command()
 
             # 加载配置
@@ -98,6 +99,7 @@ class CLIMainApplication:
             logger.error(f"程序执行失败: {e}")
             if self.args and self.args.verbose:
                 import traceback
+
                 traceback.print_exc()
             return 1
         finally:
@@ -119,9 +121,9 @@ class CLIMainApplication:
             return True
 
         # 检查是否为帮助主题（通过原始参数）
-        if hasattr(self, '_raw_args') and self._raw_args:
+        if hasattr(self, "_raw_args") and self._raw_args:
             first_arg = self._raw_args[0]
-            if first_arg in ['modes', 'tools', 'formats', 'examples']:
+            if first_arg in ["modes", "tools", "formats", "examples"]:
                 self.parser.print_help(first_arg)
                 return True
 
@@ -135,20 +137,23 @@ class CLIMainApplication:
             int: 退出码
         """
         try:
-            if self.args.analyze_command == 'static':
+            if self.args.analyze_command == "static":
                 return self._handle_static_analysis_command()
-            elif self.args.analyze_command == 'deep':
+            elif self.args.analyze_command == "deep":
                 return self._handle_deep_analysis_command()
-            elif self.args.analyze_command == 'fix':
+            elif self.args.analyze_command == "fix":
                 return self._handle_fix_analysis_command()
             else:
-                print("❌ 未知的分析模式，使用 'aidetector analyze --help' 查看可用模式")
+                print(
+                    "❌ 未知的分析模式，使用 'aidetector analyze --help' 查看可用模式"
+                )
                 return 1
 
         except Exception as e:
             logger.error(f"处理analyze命令失败: {e}")
             if self.args.verbose:
                 import traceback
+
                 traceback.print_exc()
             return 1
 
@@ -166,7 +171,9 @@ class CLIMainApplication:
                 return 1
 
             # 创建静态分析命令处理器
-            static_cmd = StaticAnalysisCommand(self.config if hasattr(self, 'config') and self.config else None)
+            static_cmd = StaticAnalysisCommand(
+                self.config if hasattr(self, "config") and self.config else None
+            )
 
             # 执行静态分析
             result = static_cmd.execute_static_analysis(
@@ -176,7 +183,7 @@ class CLIMainApplication:
                 output_file=self.args.sub_output,
                 verbose=self.args.sub_verbose,
                 quiet=self.args.sub_quiet,
-                dry_run=self.args.sub_dry_run
+                dry_run=self.args.sub_dry_run,
             )
 
             return 0 if result.success else 1
@@ -188,6 +195,7 @@ class CLIMainApplication:
             logger.error(f"静态分析执行失败: {e}")
             if self.args.verbose:
                 import traceback
+
                 traceback.print_exc()
             return 1
 
@@ -205,14 +213,16 @@ class CLIMainApplication:
                 return 1
 
             # 创建深度分析命令处理器
-            deep_cmd = DeepAnalysisCommand(self.config if hasattr(self, 'config') and self.config else None)
+            deep_cmd = DeepAnalysisCommand(
+                self.config if hasattr(self, "config") and self.config else None
+            )
 
             # 执行深度分析
             result = deep_cmd.execute_deep_analysis(
                 target=self.args.sub_target,
                 output_file=self.args.sub_output,
                 verbose=self.args.sub_verbose,
-                quiet=self.args.sub_quiet
+                quiet=self.args.sub_quiet,
             )
 
             return 0 if result.success else 1
@@ -224,6 +234,7 @@ class CLIMainApplication:
             logger.error(f"深度分析执行失败: {e}")
             if self.args.verbose:
                 import traceback
+
                 traceback.print_exc()
             return 1
 
@@ -241,14 +252,16 @@ class CLIMainApplication:
                 return 1
 
             # 创建分析修复命令处理器
-            fix_cmd = FixAnalysisCommand(self.config if hasattr(self, 'config') and self.config else None)
+            fix_cmd = FixAnalysisCommand(
+                self.config if hasattr(self, "config") and self.config else None
+            )
 
             # 执行分析修复
             result = fix_cmd.execute_fix_analysis(
                 target=self.args.sub_target,
                 confirm_fixes=not self.args.sub_no_confirm,
                 verbose=self.args.sub_verbose,
-                quiet=self.args.sub_quiet
+                quiet=self.args.sub_quiet,
             )
 
             return 0 if result.success else 1
@@ -260,6 +273,7 @@ class CLIMainApplication:
             logger.error(f"分析修复执行失败: {e}")
             if self.args.verbose:
                 import traceback
+
                 traceback.print_exc()
             return 1
 
@@ -320,9 +334,8 @@ class CLIMainApplication:
         if self.args.static_tools:
             try:
                 current_config = self.config.get_tools_config()
-                current_config['static_analysis_tools'] = {
-                    tool: {'enabled': True}
-                    for tool in self.args.static_tools
+                current_config["static_analysis_tools"] = {
+                    tool: {"enabled": True} for tool in self.args.static_tools
                 }
                 logger.info(f"使用指定工具: {', '.join(self.args.static_tools)}")
             except Exception as e:
@@ -332,7 +345,7 @@ class CLIMainApplication:
         if self.args.deep_model:
             try:
                 current_config = self.config.get_tools_config()
-                current_config['llm_interface']['model'] = self.args.deep_model
+                current_config["llm_interface"]["model"] = self.args.deep_model
                 logger.info(f"使用指定LLM模型: {self.args.deep_model}")
             except Exception as e:
                 logger.warning(f"设置LLM模型失败: {e}")
@@ -402,7 +415,7 @@ class CLIMainApplication:
                     result = self._process_user_input(session, user_input)
 
                     # 检查是否需要退出
-                    if result.get('should_exit', False):
+                    if result.get("should_exit", False):
                         break
 
                 except KeyboardInterrupt:
@@ -417,7 +430,7 @@ class CLIMainApplication:
             logger.error(f"交互式模式执行失败: {e}")
             return 1
         finally:
-            if 'session' in locals():
+            if "session" in locals():
                 self.orchestrator.close_session(session)
 
     def _run_non_interactive_mode(self) -> int:
@@ -447,7 +460,7 @@ class CLIMainApplication:
                 # 执行分析
                 result = self._process_user_input(session, command)
 
-                if result.get('success', False):
+                if result.get("success", False):
                     # 输出结果
                     self._output_result(result)
                     return 0
@@ -476,8 +489,12 @@ class CLIMainApplication:
                 return 1
 
             # 读取批处理命令
-            with open(batch_file, 'r', encoding='utf-8') as f:
-                commands = [line.strip() for line in f if line.strip() and not line.strip().startswith('#')]
+            with open(batch_file, "r", encoding="utf-8") as f:
+                commands = [
+                    line.strip()
+                    for line in f
+                    if line.strip() and not line.strip().startswith("#")
+                ]
 
             if not commands:
                 logger.warning("批处理文件为空")
@@ -493,26 +510,26 @@ class CLIMainApplication:
                 try:
                     session = self.orchestrator.create_session()
                     result = self._process_user_input(session, command)
-                    results.append({
-                        'command': command,
-                        'success': result.get('success', False),
-                        'result': result
-                    })
+                    results.append(
+                        {
+                            "command": command,
+                            "success": result.get("success", False),
+                            "result": result,
+                        }
+                    )
                     self.orchestrator.close_session(session)
 
                 except Exception as e:
                     logger.error(f"命令执行失败: {command} - {e}")
-                    results.append({
-                        'command': command,
-                        'success': False,
-                        'error': str(e)
-                    })
+                    results.append(
+                        {"command": command, "success": False, "error": str(e)}
+                    )
 
             # 输出批处理结果
             self._output_batch_results(results)
 
             # 检查是否全部成功
-            failed_count = sum(1 for r in results if not r['success'])
+            failed_count = sum(1 for r in results if not r["success"])
             if failed_count > 0:
                 logger.warning(f"批处理完成，{failed_count} 个命令失败")
                 return 1
@@ -551,18 +568,14 @@ class CLIMainApplication:
             result = self.orchestrator.process_user_input(session, user_input)
 
             # 实时输出结果
-            if not self.args.quiet and result.get('success', False):
+            if not self.args.quiet and result.get("success", False):
                 print(f"✓ {result.get('message', '操作成功')}")
 
             return result
 
         except Exception as e:
             logger.error(f"处理用户输入失败: {e}")
-            return {
-                'success': False,
-                'message': f"处理失败: {e}",
-                'should_exit': False
-            }
+            return {"success": False, "message": f"处理失败: {e}", "should_exit": False}
 
     def _output_result(self, result: dict):
         """输出结果"""
@@ -570,15 +583,15 @@ class CLIMainApplication:
             if self.args.output:
                 # 输出到文件
                 output_path = Path(self.args.output)
-                with open(output_path, 'w', encoding='utf-8') as f:
-                    if self.args.format == 'json':
+                with open(output_path, "w", encoding="utf-8") as f:
+                    if self.args.format == "json":
                         json.dump(result, f, indent=2, ensure_ascii=False)
                     else:
                         f.write(str(result))
                 logger.info(f"结果已保存到: {output_path}")
             else:
                 # 输出到控制台
-                if self.args.format == 'json':
+                if self.args.format == "json":
                     print(json.dumps(result, indent=2, ensure_ascii=False))
                 else:
                     print(str(result))
@@ -590,16 +603,16 @@ class CLIMainApplication:
         """输出批处理结果"""
         try:
             summary = {
-                'total_commands': len(results),
-                'successful_commands': sum(1 for r in results if r['success']),
-                'failed_commands': sum(1 for r in results if not r['success']),
-                'results': results
+                "total_commands": len(results),
+                "successful_commands": sum(1 for r in results if r["success"]),
+                "failed_commands": sum(1 for r in results if not r["success"]),
+                "results": results,
             }
 
             if self.args.output:
                 # 输出到文件
                 output_path = Path(self.args.output)
-                with open(output_path, 'w', encoding='utf-8') as f:
+                with open(output_path, "w", encoding="utf-8") as f:
                     json.dump(summary, f, indent=2, ensure_ascii=False)
                 logger.info(f"批处理结果已保存到: {output_path}")
             else:
@@ -609,12 +622,12 @@ class CLIMainApplication:
                 print(f"成功: {summary['successful_commands']}")
                 print(f"失败: {summary['failed_commands']}")
 
-                if self.args.verbose and summary['failed_commands'] > 0:
+                if self.args.verbose and summary["failed_commands"] > 0:
                     print("\n失败的命令:")
                     for result in results:
-                        if not result['success']:
+                        if not result["success"]:
                             print(f"  ✗ {result['command']}")
-                            if 'error' in result:
+                            if "error" in result:
                                 print(f"    错误: {result['error']}")
 
         except Exception as e:

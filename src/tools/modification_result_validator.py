@@ -10,60 +10,68 @@ T012.3: 修改结果验证器
 """
 
 import json
+import statistics
 import subprocess
 import time
-import statistics
-from typing import Dict, List, Any, Optional, Tuple, Union, Callable
-from dataclasses import dataclass, asdict
-from enum import Enum
-from datetime import datetime
-from pathlib import Path
 import uuid
+from dataclasses import asdict, dataclass
+from datetime import datetime
+from enum import Enum
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-from ..utils.types import ProblemType, RiskLevel, FixType
 from ..utils.logger import get_logger
-from .workflow_data_types import AIFixSuggestion, WorkflowDataPacket
-from .workflow_user_interaction_types import UserAction, DecisionResult
-from .workflow_flow_state_manager import WorkflowNode
-from .code_auto_modifier_executor import ExecutionResult, ExecutionStatus, FileModification
+from ..utils.types import FixType, ProblemType, RiskLevel
+from .code_auto_modifier_executor import (
+    ExecutionResult,
+    ExecutionStatus,
+    FileModification,
+)
 from .fix_execution_preparer import FixExecutionPreparation
+from .workflow_data_types import AIFixSuggestion, WorkflowDataPacket
+from .workflow_flow_state_manager import WorkflowNode
+from .workflow_user_interaction_types import DecisionResult, UserAction
 
 logger = get_logger()
 
 
 class ValidationLevel(Enum):
     """验证等级枚举"""
-    BASIC = "basic"                       # 基础验证
-    STANDARD = "standard"                 # 标准验证
-    COMPREHENSIVE = "comprehensive"       # 全面验证
-    THOROUGH = "thorough"                 # 彻底验证
+
+    BASIC = "basic"  # 基础验证
+    STANDARD = "standard"  # 标准验证
+    COMPREHENSIVE = "comprehensive"  # 全面验证
+    THOROUGH = "thorough"  # 彻底验证
 
 
 class ValidationStatus(Enum):
     """验证状态枚举"""
-    PENDING = "pending"                   # 等待验证
-    IN_PROGRESS = "in_progress"          # 验证中
-    PASSED = "passed"                    # 验证通过
-    FAILED = "failed"                    # 验证失败
-    WARNING = "warning"                  # 验证通过但有警告
-    CANCELLED = "cancelled"              # 已取消
-    SKIPPED = "skipped"                  # 已跳过
+
+    PENDING = "pending"  # 等待验证
+    IN_PROGRESS = "in_progress"  # 验证中
+    PASSED = "passed"  # 验证通过
+    FAILED = "failed"  # 验证失败
+    WARNING = "warning"  # 验证通过但有警告
+    CANCELLED = "cancelled"  # 已取消
+    SKIPPED = "skipped"  # 已跳过
 
 
 class TestType(Enum):
     """测试类型枚举"""
-    SYNTAX = "syntax"                    # 语法测试
-    IMPORT = "import"                    # 导入测试
-    FUNCTIONAL = "functional"            # 功能测试
-    PERFORMANCE = "performance"          # 性能测试
-    REGRESSION = "regression"            # 回归测试
-    INTEGRATION = "integration"          # 集成测试
-    SECURITY = "security"                # 安全测试
+
+    SYNTAX = "syntax"  # 语法测试
+    IMPORT = "import"  # 导入测试
+    FUNCTIONAL = "functional"  # 功能测试
+    PERFORMANCE = "performance"  # 性能测试
+    REGRESSION = "regression"  # 回归测试
+    INTEGRATION = "integration"  # 集成测试
+    SECURITY = "security"  # 安全测试
 
 
 @dataclass
 class TestCase:
     """测试用例"""
+
     test_id: str
     test_type: TestType
     name: str
@@ -77,6 +85,7 @@ class TestCase:
 @dataclass
 class TestResult:
     """测试结果"""
+
     test_id: str
     test_type: TestType
     status: ValidationStatus
@@ -90,6 +99,7 @@ class TestResult:
 @dataclass
 class ValidationResult:
     """验证结果"""
+
     validation_id: str
     execution_id: str
     overall_status: ValidationStatus
@@ -108,6 +118,7 @@ class ValidationResult:
 @dataclass
 class ValidationReport:
     """验证报告"""
+
     report_id: str
     validation_result: ValidationResult
     summary: str
@@ -132,9 +143,12 @@ class ModificationResultValidator:
         self._validation_history: List[ValidationResult] = []
         self._test_generators = self._init_test_generators()
 
-    def validate_modification(self, execution_result: ExecutionResult,
-                            preparation: FixExecutionPreparation,
-                            validation_level: ValidationLevel = ValidationLevel.STANDARD) -> ValidationResult:
+    def validate_modification(
+        self,
+        execution_result: ExecutionResult,
+        preparation: FixExecutionPreparation,
+        validation_level: ValidationLevel = ValidationLevel.STANDARD,
+    ) -> ValidationResult:
         """
         验证修改结果
 
@@ -168,10 +182,14 @@ class ModificationResultValidator:
             performance_metrics = self._collect_performance_metrics(execution_result)
 
             # 收集质量指标
-            quality_metrics = self._collect_quality_metrics(execution_result, test_results)
+            quality_metrics = self._collect_quality_metrics(
+                execution_result, test_results
+            )
 
             # 识别问题
-            issues_found = self._identify_issues(test_results, performance_metrics, quality_metrics)
+            issues_found = self._identify_issues(
+                test_results, performance_metrics, quality_metrics
+            )
 
             # 生成建议
             recommendations = self._generate_recommendations(
@@ -204,23 +222,28 @@ class ModificationResultValidator:
                 metadata={
                     "file_count": len(execution_result.modifications),
                     "test_count": len(test_cases),
-                    "validation_level": validation_level.value
-                }
+                    "validation_level": validation_level.value,
+                },
             )
 
             # 记录验证历史
             self._record_validation(validation_result)
 
-            logger.info(f"修改结果验证完成: {validation_id}, 状态: {overall_status.value}")
+            logger.info(
+                f"修改结果验证完成: {validation_id}, 状态: {overall_status.value}"
+            )
             return validation_result
 
         except Exception as e:
             logger.error(f"验证修改结果失败: {e}")
             raise
 
-    def batch_validate_modifications(self, execution_results: List[ExecutionResult],
-                                   preparations: List[FixExecutionPreparation],
-                                   validation_level: ValidationLevel = ValidationLevel.STANDARD) -> List[ValidationResult]:
+    def batch_validate_modifications(
+        self,
+        execution_results: List[ExecutionResult],
+        preparations: List[FixExecutionPreparation],
+        validation_level: ValidationLevel = ValidationLevel.STANDARD,
+    ) -> List[ValidationResult]:
         """
         批量验证修改结果
 
@@ -244,15 +267,21 @@ class ModificationResultValidator:
             except Exception as e:
                 logger.error(f"批量验证失败: {e}")
                 # 创建失败结果
-                failed_result = self._create_failed_validation_result(execution_result, str(e))
+                failed_result = self._create_failed_validation_result(
+                    execution_result, str(e)
+                )
                 results.append(failed_result)
 
-        successful_count = sum(1 for r in results if r.overall_status == ValidationStatus.PASSED)
+        successful_count = sum(
+            1 for r in results if r.overall_status == ValidationStatus.PASSED
+        )
         logger.info(f"批量验证完成: 成功 {successful_count}/{len(results)}")
 
         return results
 
-    def generate_validation_report(self, validation_result: ValidationResult) -> ValidationReport:
+    def generate_validation_report(
+        self, validation_result: ValidationResult
+    ) -> ValidationReport:
         """
         生成验证报告
 
@@ -290,10 +319,12 @@ class ModificationResultValidator:
             impact_assessment=impact_assessment,
             next_steps=next_steps,
             approval_required=approval_required,
-            confidence_score=confidence_score
+            confidence_score=confidence_score,
         )
 
-    def get_validation_history(self, limit: Optional[int] = None) -> List[ValidationResult]:
+    def get_validation_history(
+        self, limit: Optional[int] = None
+    ) -> List[ValidationResult]:
         """
         获取验证历史
 
@@ -311,9 +342,12 @@ class ModificationResultValidator:
 
         return history
 
-    def _generate_test_cases(self, execution_result: ExecutionResult,
-                           preparation: FixExecutionPreparation,
-                           validation_level: ValidationLevel) -> List[TestCase]:
+    def _generate_test_cases(
+        self,
+        execution_result: ExecutionResult,
+        preparation: FixExecutionPreparation,
+        validation_level: ValidationLevel,
+    ) -> List[TestCase]:
         """生成测试用例"""
         test_cases = []
 
@@ -322,21 +356,36 @@ class ModificationResultValidator:
         test_cases.extend(basic_tests)
 
         # 根据验证等级添加更多测试
-        if validation_level in [ValidationLevel.STANDARD, ValidationLevel.COMPREHENSIVE, ValidationLevel.THOROUGH]:
-            standard_tests = self._generate_standard_tests(execution_result, preparation)
+        if validation_level in [
+            ValidationLevel.STANDARD,
+            ValidationLevel.COMPREHENSIVE,
+            ValidationLevel.THOROUGH,
+        ]:
+            standard_tests = self._generate_standard_tests(
+                execution_result, preparation
+            )
             test_cases.extend(standard_tests)
 
-        if validation_level in [ValidationLevel.COMPREHENSIVE, ValidationLevel.THOROUGH]:
-            comprehensive_tests = self._generate_comprehensive_tests(execution_result, preparation)
+        if validation_level in [
+            ValidationLevel.COMPREHENSIVE,
+            ValidationLevel.THOROUGH,
+        ]:
+            comprehensive_tests = self._generate_comprehensive_tests(
+                execution_result, preparation
+            )
             test_cases.extend(comprehensive_tests)
 
         if validation_level == ValidationLevel.THOROUGH:
-            thorough_tests = self._generate_thorough_tests(execution_result, preparation)
+            thorough_tests = self._generate_thorough_tests(
+                execution_result, preparation
+            )
             test_cases.extend(thorough_tests)
 
         return test_cases
 
-    def _generate_basic_tests(self, execution_result: ExecutionResult) -> List[TestCase]:
+    def _generate_basic_tests(
+        self, execution_result: ExecutionResult
+    ) -> List[TestCase]:
         """生成基础测试"""
         test_cases = []
 
@@ -344,106 +393,130 @@ class ModificationResultValidator:
             file_path = Path(modification.file_path)
 
             # 语法测试
-            if file_path.suffix == '.py':
-                test_cases.append(TestCase(
-                    test_id=str(uuid.uuid4()),
-                    test_type=TestType.SYNTAX,
-                    name=f"语法检查 - {file_path.name}",
-                    description=f"验证 {file_path} 的Python语法正确性",
-                    command=f"python -m py_compile {file_path}",
-                    expected_result="编译成功，无语法错误",
-                    timeout_seconds=30,
-                    critical=True
-                ))
+            if file_path.suffix == ".py":
+                test_cases.append(
+                    TestCase(
+                        test_id=str(uuid.uuid4()),
+                        test_type=TestType.SYNTAX,
+                        name=f"语法检查 - {file_path.name}",
+                        description=f"验证 {file_path} 的Python语法正确性",
+                        command=f"python -m py_compile {file_path}",
+                        expected_result="编译成功，无语法错误",
+                        timeout_seconds=30,
+                        critical=True,
+                    )
+                )
 
             # 导入测试
-            if file_path.suffix == '.py':
-                test_cases.append(TestCase(
-                    test_id=str(uuid.uuid4()),
-                    test_type=TestType.IMPORT,
-                    name=f"导入测试 - {file_path.name}",
-                    description=f"验证 {file_path} 可以正常导入",
-                    command=f"python -c \"import {file_path.stem}\"",
-                    expected_result="模块导入成功",
-                    timeout_seconds=10,
-                    critical=True
-                ))
+            if file_path.suffix == ".py":
+                test_cases.append(
+                    TestCase(
+                        test_id=str(uuid.uuid4()),
+                        test_type=TestType.IMPORT,
+                        name=f"导入测试 - {file_path.name}",
+                        description=f"验证 {file_path} 可以正常导入",
+                        command=f'python -c "import {file_path.stem}"',
+                        expected_result="模块导入成功",
+                        timeout_seconds=10,
+                        critical=True,
+                    )
+                )
 
         return test_cases
 
-    def _generate_standard_tests(self, execution_result: ExecutionResult,
-                               preparation: FixExecutionPreparation) -> List[TestCase]:
+    def _generate_standard_tests(
+        self, execution_result: ExecutionResult, preparation: FixExecutionPreparation
+    ) -> List[TestCase]:
         """生成标准测试"""
         test_cases = []
 
         # 功能测试
-        project_root = Path(execution_result.modifications[0].file_path).parent if execution_result.modifications else Path.cwd()
+        project_root = (
+            Path(execution_result.modifications[0].file_path).parent
+            if execution_result.modifications
+            else Path.cwd()
+        )
 
         # 查找并运行测试文件
-        test_files = list(project_root.glob("**/test*.py")) + list(project_root.glob("**/*test*.py"))
+        test_files = list(project_root.glob("**/test*.py")) + list(
+            project_root.glob("**/*test*.py")
+        )
 
         for test_file in test_files[:3]:  # 限制测试文件数量
-            test_cases.append(TestCase(
-                test_id=str(uuid.uuid4()),
-                test_type=TestType.FUNCTIONAL,
-                name=f"功能测试 - {test_file.name}",
-                description=f"运行 {test_file} 中的功能测试",
-                command=f"python -m pytest {test_file} -v",
-                expected_result="所有测试通过",
-                timeout_seconds=120,
-                critical=False
-            ))
+            test_cases.append(
+                TestCase(
+                    test_id=str(uuid.uuid4()),
+                    test_type=TestType.FUNCTIONAL,
+                    name=f"功能测试 - {test_file.name}",
+                    description=f"运行 {test_file} 中的功能测试",
+                    command=f"python -m pytest {test_file} -v",
+                    expected_result="所有测试通过",
+                    timeout_seconds=120,
+                    critical=False,
+                )
+            )
 
         return test_cases
 
-    def _generate_comprehensive_tests(self, execution_result: ExecutionResult,
-                                    preparation: FixExecutionPreparation) -> List[TestCase]:
+    def _generate_comprehensive_tests(
+        self, execution_result: ExecutionResult, preparation: FixExecutionPreparation
+    ) -> List[TestCase]:
         """生成全面测试"""
         test_cases = []
 
         # 性能测试
         for modification in execution_result.modifications:
             file_path = Path(modification.file_path)
-            if file_path.suffix == '.py':
-                test_cases.append(TestCase(
-                    test_id=str(uuid.uuid4()),
-                    test_type=TestType.PERFORMANCE,
-                    name=f"性能测试 - {file_path.name}",
-                    description=f"测试 {file_path} 的基本性能",
-                    command=f"python -c \"import time; import {file_path.stem}; start = time.time(); # 基本性能测试; print(f'执行时间: {{time.time() - start:.3f}}秒')\"",
-                    expected_result="性能测试完成",
-                    timeout_seconds=60,
-                    critical=False
-                ))
+            if file_path.suffix == ".py":
+                test_cases.append(
+                    TestCase(
+                        test_id=str(uuid.uuid4()),
+                        test_type=TestType.PERFORMANCE,
+                        name=f"性能测试 - {file_path.name}",
+                        description=f"测试 {file_path} 的基本性能",
+                        command=f"python -c \"import time; import {file_path.stem}; start = time.time(); # 基本性能测试; print(f'执行时间: {{time.time() - start:.3f}}秒')\"",
+                        expected_result="性能测试完成",
+                        timeout_seconds=60,
+                        critical=False,
+                    )
+                )
 
         return test_cases
 
-    def _generate_thorough_tests(self, execution_result: ExecutionResult,
-                               preparation: FixExecutionPreparation) -> List[TestCase]:
+    def _generate_thorough_tests(
+        self, execution_result: ExecutionResult, preparation: FixExecutionPreparation
+    ) -> List[TestCase]:
         """生成彻底测试"""
         test_cases = []
 
         # 集成测试
-        project_root = Path(execution_result.modifications[0].file_path).parent if execution_result.modifications else Path.cwd()
+        project_root = (
+            Path(execution_result.modifications[0].file_path).parent
+            if execution_result.modifications
+            else Path.cwd()
+        )
         setup_py = project_root / "setup.py"
         requirements_txt = project_root / "requirements.txt"
 
         if setup_py.exists():
-            test_cases.append(TestCase(
-                test_id=str(uuid.uuid4()),
-                test_type=TestType.INTEGRATION,
-                name="集成测试",
-                description="验证项目整体集成",
-                command=f"cd {project_root} && python setup.py check",
-                expected_result="集成检查通过",
-                timeout_seconds=180,
-                critical=False
-            ))
+            test_cases.append(
+                TestCase(
+                    test_id=str(uuid.uuid4()),
+                    test_type=TestType.INTEGRATION,
+                    name="集成测试",
+                    description="验证项目整体集成",
+                    command=f"cd {project_root} && python setup.py check",
+                    expected_result="集成检查通过",
+                    timeout_seconds=180,
+                    critical=False,
+                )
+            )
 
         return test_cases
 
-    def _execute_test_cases(self, test_cases: List[TestCase],
-                          execution_result: ExecutionResult) -> List[TestResult]:
+    def _execute_test_cases(
+        self, test_cases: List[TestCase], execution_result: ExecutionResult
+    ) -> List[TestResult]:
         """执行测试用例"""
         test_results = []
 
@@ -463,7 +536,7 @@ class ModificationResultValidator:
                     output="",
                     error=str(e),
                     passed=False,
-                    warnings=[f"测试执行异常: {e}"]
+                    warnings=[f"测试执行异常: {e}"],
                 )
                 test_results.append(failed_result)
 
@@ -484,7 +557,7 @@ class ModificationResultValidator:
                 capture_output=True,
                 text=True,
                 timeout=test_case.timeout_seconds,
-                cwd=Path.cwd()
+                cwd=Path.cwd(),
             )
 
             execution_time = time.time() - start_time
@@ -513,7 +586,7 @@ class ModificationResultValidator:
                 output=output,
                 error=error,
                 passed=passed,
-                warnings=warnings
+                warnings=warnings,
             )
 
         except subprocess.TimeoutExpired:
@@ -526,7 +599,7 @@ class ModificationResultValidator:
                 output="",
                 error=f"测试超时 ({test_case.timeout_seconds}秒)",
                 passed=False,
-                warnings=["测试执行超时"]
+                warnings=["测试执行超时"],
             )
 
         except Exception as e:
@@ -539,10 +612,12 @@ class ModificationResultValidator:
                 output="",
                 error=str(e),
                 passed=False,
-                warnings=[f"测试执行异常: {e}"]
+                warnings=[f"测试执行异常: {e}"],
             )
 
-    def _collect_performance_metrics(self, execution_result: ExecutionResult) -> Dict[str, float]:
+    def _collect_performance_metrics(
+        self, execution_result: ExecutionResult
+    ) -> Dict[str, float]:
         """收集性能指标"""
         metrics = {}
 
@@ -560,18 +635,23 @@ class ModificationResultValidator:
                     if file_path.exists():
                         total_size += file_path.stat().st_size
                 metrics["total_file_size_bytes"] = total_size
-                metrics["average_file_size_bytes"] = total_size / len(execution_result.modifications)
+                metrics["average_file_size_bytes"] = total_size / len(
+                    execution_result.modifications
+                )
 
             # 代码复杂度指标
-            metrics["code_complexity_score"] = self._calculate_code_complexity(execution_result)
+            metrics["code_complexity_score"] = self._calculate_code_complexity(
+                execution_result
+            )
 
         except Exception as e:
             logger.warning(f"收集性能指标失败: {e}")
 
         return metrics
 
-    def _collect_quality_metrics(self, execution_result: ExecutionResult,
-                               test_results: List[TestResult]) -> Dict[str, float]:
+    def _collect_quality_metrics(
+        self, execution_result: ExecutionResult, test_results: List[TestResult]
+    ) -> Dict[str, float]:
         """收集质量指标"""
         metrics = {}
 
@@ -583,17 +663,27 @@ class ModificationResultValidator:
 
                 # 平均执行时间
                 execution_times = [test.execution_time_seconds for test in test_results]
-                metrics["average_test_time"] = statistics.mean(execution_times) if execution_times else 0.0
+                metrics["average_test_time"] = (
+                    statistics.mean(execution_times) if execution_times else 0.0
+                )
 
                 # 关键测试通过率
-                critical_tests = [test for test in test_results if hasattr(TestCase, 'critical')]  # 这里需要调整
+                critical_tests = [
+                    test for test in test_results if hasattr(TestCase, "critical")
+                ]  # 这里需要调整
                 if critical_tests:
                     passed_critical = sum(1 for test in critical_tests if test.passed)
-                    metrics["critical_test_pass_rate"] = passed_critical / len(critical_tests)
+                    metrics["critical_test_pass_rate"] = passed_critical / len(
+                        critical_tests
+                    )
 
             # 代码质量指标
-            metrics["code_quality_score"] = self._calculate_code_quality(execution_result)
-            metrics["maintainability_score"] = self._calculate_maintainability_score(execution_result)
+            metrics["code_quality_score"] = self._calculate_code_quality(
+                execution_result
+            )
+            metrics["maintainability_score"] = self._calculate_maintainability_score(
+                execution_result
+            )
 
         except Exception as e:
             logger.warning(f"收集质量指标失败: {e}")
@@ -607,11 +697,23 @@ class ModificationResultValidator:
             file_count = 0
 
             for modification in execution_result.modifications:
-                if modification.file_path.endswith('.py'):
+                if modification.file_path.endswith(".py"):
                     code = modification.modified_content
                     # 简单的复杂度计算：基于关键字数量
-                    complexity_keywords = ['if', 'elif', 'for', 'while', 'try', 'except', 'with', 'def', 'class']
-                    complexity = sum(code.count(keyword) for keyword in complexity_keywords)
+                    complexity_keywords = [
+                        "if",
+                        "elif",
+                        "for",
+                        "while",
+                        "try",
+                        "except",
+                        "with",
+                        "def",
+                        "class",
+                    ]
+                    complexity = sum(
+                        code.count(keyword) for keyword in complexity_keywords
+                    )
                     total_complexity += complexity
                     file_count += 1
 
@@ -632,7 +734,7 @@ class ModificationResultValidator:
                 # 基本质量检查
                 if len(code.strip()) == 0:
                     score -= 0.5
-                if code.count('#') / max(len(code.splitlines()), 1) < 0.1:  # 注释比例
+                if code.count("#") / max(len(code.splitlines()), 1) < 0.1:  # 注释比例
                     score -= 0.1
 
                 # 代码长度检查
@@ -646,7 +748,9 @@ class ModificationResultValidator:
         except:
             return 0.0
 
-    def _calculate_maintainability_score(self, execution_result: ExecutionResult) -> float:
+    def _calculate_maintainability_score(
+        self, execution_result: ExecutionResult
+    ) -> float:
         """计算可维护性分数"""
         try:
             maintainability_scores = []
@@ -656,79 +760,101 @@ class ModificationResultValidator:
                 score = 1.0
 
                 # 函数长度检查
-                functions = code.split('def ')[1:]  # 简单的函数分割
+                functions = code.split("def ")[1:]  # 简单的函数分割
                 for func in functions:
-                    func_lines = func.split('\n')
+                    func_lines = func.split("\n")
                     if len(func_lines) > 50:
                         score -= 0.1
 
                 # 类长度检查
-                classes = code.split('class ')[1:]
+                classes = code.split("class ")[1:]
                 for cls in classes:
-                    cls_lines = cls.split('\n')
+                    cls_lines = cls.split("\n")
                     if len(cls_lines) > 200:
                         score -= 0.1
 
                 maintainability_scores.append(max(0.0, score))
 
-            return statistics.mean(maintainability_scores) if maintainability_scores else 0.0
+            return (
+                statistics.mean(maintainability_scores)
+                if maintainability_scores
+                else 0.0
+            )
 
         except:
             return 0.0
 
-    def _identify_issues(self, test_results: List[TestResult],
-                        performance_metrics: Dict[str, float],
-                        quality_metrics: Dict[str, float]) -> List[Dict[str, Any]]:
+    def _identify_issues(
+        self,
+        test_results: List[TestResult],
+        performance_metrics: Dict[str, float],
+        quality_metrics: Dict[str, float],
+    ) -> List[Dict[str, Any]]:
         """识别问题"""
         issues = []
 
         # 测试失败问题
         failed_tests = [test for test in test_results if not test.passed]
         for test in failed_tests:
-            issues.append({
-                "type": "test_failure",
-                "severity": "high" if test.test_type == TestType.SYNTAX else "medium",
-                "description": f"测试失败: {test.test_id}",
-                "details": test.error,
-                "test_type": test.test_type.value,
-                "critical": test.test_type == TestType.SYNTAX
-            })
+            issues.append(
+                {
+                    "type": "test_failure",
+                    "severity": (
+                        "high" if test.test_type == TestType.SYNTAX else "medium"
+                    ),
+                    "description": f"测试失败: {test.test_id}",
+                    "details": test.error,
+                    "test_type": test.test_type.value,
+                    "critical": test.test_type == TestType.SYNTAX,
+                }
+            )
 
         # 性能问题
         if performance_metrics.get("execution_time", 0) > 300:  # 5分钟
-            issues.append({
-                "type": "performance",
-                "severity": "medium",
-                "description": "执行时间过长",
-                "details": f"执行时间: {performance_metrics['execution_time']}秒"
-            })
+            issues.append(
+                {
+                    "type": "performance",
+                    "severity": "medium",
+                    "description": "执行时间过长",
+                    "details": f"执行时间: {performance_metrics['execution_time']}秒",
+                }
+            )
 
         # 质量问题
         if quality_metrics.get("code_quality_score", 1.0) < 0.7:
-            issues.append({
-                "type": "quality",
-                "severity": "low",
-                "description": "代码质量分数较低",
-                "details": f"质量分数: {quality_metrics['code_quality_score']:.2f}"
-            })
+            issues.append(
+                {
+                    "type": "quality",
+                    "severity": "low",
+                    "description": "代码质量分数较低",
+                    "details": f"质量分数: {quality_metrics['code_quality_score']:.2f}",
+                }
+            )
 
         return issues
 
-    def _generate_recommendations(self, issues_found: List[Dict[str, Any]],
-                                test_results: List[TestResult],
-                                performance_metrics: Dict[str, float]) -> List[str]:
+    def _generate_recommendations(
+        self,
+        issues_found: List[Dict[str, Any]],
+        test_results: List[TestResult],
+        performance_metrics: Dict[str, float],
+    ) -> List[str]:
         """生成建议"""
         recommendations = []
 
         # 基于问题的建议
-        critical_issues = [issue for issue in issues_found if issue.get("severity") == "high"]
+        critical_issues = [
+            issue for issue in issues_found if issue.get("severity") == "high"
+        ]
         if critical_issues:
             recommendations.append("存在关键问题，建议立即修复后再进行验证")
 
         # 基于测试结果的建议
         failed_tests = [test for test in test_results if not test.passed]
         if failed_tests:
-            recommendations.append(f"有 {len(failed_tests)} 个测试失败，建议检查相关代码")
+            recommendations.append(
+                f"有 {len(failed_tests)} 个测试失败，建议检查相关代码"
+            )
 
         # 基于性能的建议
         if performance_metrics.get("execution_time", 0) > 300:
@@ -751,13 +877,17 @@ class ModificationResultValidator:
         passed_tests = sum(1 for test in test_results if test.passed)
         return passed_tests / len(test_results)
 
-    def _determine_overall_status(self, test_results: List[TestResult],
-                                issues_found: List[Dict[str, Any]],
-                                success_rate: float) -> ValidationStatus:
+    def _determine_overall_status(
+        self,
+        test_results: List[TestResult],
+        issues_found: List[Dict[str, Any]],
+        success_rate: float,
+    ) -> ValidationStatus:
         """确定整体状态"""
         # 检查是否有关键测试失败
         critical_failures = [
-            issue for issue in issues_found
+            issue
+            for issue in issues_found
             if issue.get("critical") or issue.get("severity") == "high"
         ]
         if critical_failures:
@@ -783,22 +913,32 @@ class ModificationResultValidator:
         summary += f"发现问题: {len(validation_result.issues_found)}个\n"
 
         if validation_result.issues_found:
-            high_issues = [issue for issue in validation_result.issues_found if issue.get("severity") == "high"]
+            high_issues = [
+                issue
+                for issue in validation_result.issues_found
+                if issue.get("severity") == "high"
+            ]
             if high_issues:
                 summary += f"包含 {len(high_issues)} 个高优先级问题\n"
 
         return summary
 
-    def _generate_detailed_findings(self, validation_result: ValidationResult) -> List[str]:
+    def _generate_detailed_findings(
+        self, validation_result: ValidationResult
+    ) -> List[str]:
         """生成详细发现"""
         findings = []
 
         # 测试结果发现
         passed_tests = [test for test in validation_result.test_results if test.passed]
-        failed_tests = [test for test in validation_result.test_results if not test.passed]
+        failed_tests = [
+            test for test in validation_result.test_results if not test.passed
+        ]
 
         if passed_tests:
-            findings.append(f"✓ {len(passed_tests)} 个测试通过，包括 {', '.join(set(test.test_type.value for test in passed_tests))}")
+            findings.append(
+                f"✓ {len(passed_tests)} 个测试通过，包括 {', '.join(set(test.test_type.value for test in passed_tests))}"
+            )
 
         if failed_tests:
             findings.append(f"✗ {len(failed_tests)} 个测试失败:")
@@ -813,7 +953,9 @@ class ModificationResultValidator:
 
         # 质量发现
         if validation_result.quality_metrics:
-            quality_score = validation_result.quality_metrics.get("code_quality_score", 1.0)
+            quality_score = validation_result.quality_metrics.get(
+                "code_quality_score", 1.0
+            )
             if quality_score < 0.7:
                 findings.append(f"⚠ 代码质量分数较低: {quality_score:.2f}")
 
@@ -845,7 +987,9 @@ class ModificationResultValidator:
 
         # 基于建议添加行动
         if validation_result.recommendations:
-            next_steps.extend([f"建议: {rec}" for rec in validation_result.recommendations[:3]])
+            next_steps.extend(
+                [f"建议: {rec}" for rec in validation_result.recommendations[:3]]
+            )
 
         return next_steps
 
@@ -856,7 +1000,8 @@ class ModificationResultValidator:
             return True
 
         high_issues = [
-            issue for issue in validation_result.issues_found
+            issue
+            for issue in validation_result.issues_found
             if issue.get("severity") == "high"
         ]
         if high_issues:
@@ -895,10 +1040,12 @@ class ModificationResultValidator:
             "basic": self._generate_basic_tests,
             "standard": self._generate_standard_tests,
             "comprehensive": self._generate_comprehensive_tests,
-            "thorough": self._generate_thorough_tests
+            "thorough": self._generate_thorough_tests,
         }
 
-    def _create_failed_validation_result(self, execution_result: ExecutionResult, error_message: str) -> ValidationResult:
+    def _create_failed_validation_result(
+        self, execution_result: ExecutionResult, error_message: str
+    ) -> ValidationResult:
         """创建失败验证结果"""
         return ValidationResult(
             validation_id=str(uuid.uuid4()),
@@ -913,7 +1060,7 @@ class ModificationResultValidator:
             validation_time_seconds=0,
             success_rate=0.0,
             timestamp=datetime.now(),
-            metadata={"error": error_message}
+            metadata={"error": error_message},
         )
 
     def _record_validation(self, validation_result: ValidationResult) -> None:

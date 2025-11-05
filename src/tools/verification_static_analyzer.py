@@ -6,19 +6,23 @@
 
 import json
 import uuid
+from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import Dict, List, Any, Optional, Tuple
-from pathlib import Path
-from dataclasses import dataclass, asdict
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
-from ..utils.logger import get_logger
 from ..utils.config import get_config_manager
-from .workflow_flow_state_manager import WorkflowSession
-from .workflow_data_types import AIFixSuggestion
-from .project_analysis_types import StaticAnalysisResult
+from ..utils.logger import get_logger
+from .project_analysis_types import (
+    Issue,
+    IssueSeverity,
+    IssueType,
+    StaticAnalysisResult,
+)
 from .static_coordinator import StaticAnalysisCoordinator
-from .project_analysis_types import StaticAnalysisResult, Issue, IssueSeverity, IssueType
+from .workflow_data_types import AIFixSuggestion
+from .workflow_flow_state_manager import WorkflowSession
 
 logger = get_logger()
 
@@ -26,6 +30,7 @@ logger = get_logger()
 @dataclass
 class VerificationIssue:
     """验证中发现的问题"""
+
     issue_id: str
     file_path: str
     line: int
@@ -49,13 +54,14 @@ class VerificationIssue:
             "code_snippet": self.code_snippet,
             "tool_name": self.tool_name,
             "is_new_issue": self.is_new_issue,
-            "is_original_fixed": self.is_original_fixed
+            "is_original_fixed": self.is_original_fixed,
         }
 
 
 @dataclass
 class FixComparison:
     """修复前后对比"""
+
     original_issues: List[Issue]
     current_issues: List[Issue]
     fixed_issues: List[str]  # 已修复的问题ID列表
@@ -69,13 +75,14 @@ class FixComparison:
             "current_issues": [issue.to_dict() for issue in self.current_issues],
             "fixed_issues": self.fixed_issues,
             "remaining_issues": self.remaining_issues,
-            "new_issues": [issue.to_dict() for issue in self.new_issues]
+            "new_issues": [issue.to_dict() for issue in self.new_issues],
         }
 
 
 @dataclass
 class StaticVerificationReport:
     """静态验证报告"""
+
     verification_id: str
     session_id: str
     suggestion_id: str
@@ -96,19 +103,22 @@ class StaticVerificationReport:
             "file_path": self.file_path,
             "verification_timestamp": self.verification_timestamp.isoformat(),
             "fix_comparison": self.fix_comparison.to_dict(),
-            "verification_issues": [issue.to_dict() for issue in self.verification_issues],
+            "verification_issues": [
+                issue.to_dict() for issue in self.verification_issues
+            ],
             "success_rate": self.success_rate,
             "new_issues_count": self.new_issues_count,
-            "overall_quality_score": self.overall_quality_score
+            "overall_quality_score": self.overall_quality_score,
         }
 
 
 class VerificationStatus(Enum):
     """验证状态"""
-    SUCCESS = "success"           # 修复成功
+
+    SUCCESS = "success"  # 修复成功
     PARTIAL_SUCCESS = "partial_success"  # 部分成功
-    FAILED = "failed"            # 修复失败
-    REGRESSED = "regressed"      # 出现回退
+    FAILED = "failed"  # 修复失败
+    REGRESSED = "regressed"  # 出现回退
 
 
 class VerificationStaticAnalyzer:
@@ -129,7 +139,9 @@ class VerificationStaticAnalyzer:
         self.static_coordinator = StaticAnalysisCoordinator()
 
         # 验证结果存储目录
-        self.verification_dir = Path(self.config.get("verification_dir", ".fix_backups/verifications"))
+        self.verification_dir = Path(
+            self.config.get("verification_dir", ".fix_backups/verifications")
+        )
         self.verification_dir.mkdir(parents=True, exist_ok=True)
 
     def verify_fix_with_static_analysis(
@@ -137,7 +149,7 @@ class VerificationStaticAnalyzer:
         session_id: str,
         suggestion_id: str,
         original_analysis: StaticAnalysisResult,
-        modified_file_path: str
+        modified_file_path: str,
     ) -> StaticVerificationReport:
         """
         使用静态分析验证修复效果
@@ -152,7 +164,9 @@ class VerificationStaticAnalyzer:
             StaticVerificationReport: 静态验证报告
         """
         try:
-            self.logger.info(f"开始静态分析验证: 会话={session_id}, 文件={modified_file_path}")
+            self.logger.info(
+                f"开始静态分析验证: 会话={session_id}, 文件={modified_file_path}"
+            )
 
             # 1. 对修复后的文件执行静态分析
             current_analysis = self._analyze_modified_file(modified_file_path)
@@ -183,13 +197,15 @@ class VerificationStaticAnalyzer:
                 verification_issues=verification_issues,
                 success_rate=success_rate,
                 new_issues_count=new_issues_count,
-                overall_quality_score=quality_score
+                overall_quality_score=quality_score,
             )
 
             # 6. 保存验证报告
             self._save_verification_report(verification_report)
 
-            self.logger.info(f"静态分析验证完成: 成功率={success_rate:.2%}, 新问题={new_issues_count}")
+            self.logger.info(
+                f"静态分析验证完成: 成功率={success_rate:.2%}, 新问题={new_issues_count}"
+            )
             return verification_report
 
         except Exception as e:
@@ -215,18 +231,18 @@ class VerificationStaticAnalyzer:
                 issues=[],
                 execution_time=0.0,
                 summary={"error": str(e)},
-                success=False
+                success=False,
             )
 
     def _compare_analysis_results(
         self,
         original: StaticAnalysisResult,
         current: StaticAnalysisResult,
-        suggestion_id: str
+        suggestion_id: str,
     ) -> FixComparison:
         """对比修复前后的分析结果"""
-        original_issues = original.issues if hasattr(original, 'issues') else []
-        current_issues = current.issues if hasattr(current, 'issues') else []
+        original_issues = original.issues if hasattr(original, "issues") else []
+        current_issues = current.issues if hasattr(current, "issues") else []
 
         # 找出修复的问题
         fixed_issues = []
@@ -263,7 +279,7 @@ class VerificationStaticAnalyzer:
             current_issues=current_issues,
             fixed_issues=fixed_issues,
             remaining_issues=remaining_issues,
-            new_issues=new_issues
+            new_issues=new_issues,
         )
 
     def _create_issue_signature(self, issue: Issue) -> str:
@@ -272,9 +288,7 @@ class VerificationStaticAnalyzer:
         return f"{issue.file_path}:{issue.line}:{issue.issue_type.value}:{issue.message[:100]}"
 
     def _generate_verification_issues(
-        self,
-        fix_comparison: FixComparison,
-        current_analysis: StaticAnalysisResult
+        self, fix_comparison: FixComparison, current_analysis: StaticAnalysisResult
     ) -> List[VerificationIssue]:
         """生成验证问题列表"""
         verification_issues = []
@@ -289,9 +303,9 @@ class VerificationStaticAnalyzer:
                 severity=new_issue.severity.value,
                 message=new_issue.message,
                 code_snippet=new_issue.code_snippet or "",
-                tool_name=getattr(new_issue, 'tool_name', 'unknown'),
+                tool_name=getattr(new_issue, "tool_name", "unknown"),
                 is_new_issue=True,
-                is_original_fixed=False
+                is_original_fixed=False,
             )
             verification_issues.append(verification_issue)
 
@@ -308,9 +322,9 @@ class VerificationStaticAnalyzer:
                         severity=issue.severity.value,
                         message=issue.message,
                         code_snippet=issue.code_snippet or "",
-                        tool_name=getattr(issue, 'tool_name', 'unknown'),
+                        tool_name=getattr(issue, "tool_name", "unknown"),
                         is_new_issue=False,
-                        is_original_fixed=False
+                        is_original_fixed=False,
                     )
                     verification_issues.append(verification_issue)
                     break
@@ -326,17 +340,15 @@ class VerificationStaticAnalyzer:
         fixed_count = len(fix_comparison.fixed_issues)
         return fixed_count / total_original_issues
 
-    def _calculate_quality_score(self, verification_issues: List[VerificationIssue]) -> float:
+    def _calculate_quality_score(
+        self, verification_issues: List[VerificationIssue]
+    ) -> float:
         """计算整体质量分数"""
         if not verification_issues:
             return 1.0
 
         # 根据问题严重程度计算分数
-        severity_weights = {
-            "error": 0.1,
-            "warning": 0.3,
-            "info": 0.6
-        }
+        severity_weights = {"error": 0.1, "warning": 0.3, "info": 0.6}
 
         total_score = 0.0
         for issue in verification_issues:
@@ -354,9 +366,12 @@ class VerificationStaticAnalyzer:
     def _save_verification_report(self, report: StaticVerificationReport) -> None:
         """保存验证报告"""
         try:
-            report_file = self.verification_dir / f"verification_{report.session_id}_{report.suggestion_id}.json"
+            report_file = (
+                self.verification_dir
+                / f"verification_{report.session_id}_{report.suggestion_id}.json"
+            )
 
-            with open(report_file, 'w', encoding='utf-8') as f:
+            with open(report_file, "w", encoding="utf-8") as f:
                 json.dump(report.to_dict(), f, indent=2, ensure_ascii=False)
 
             self.logger.info(f"验证报告已保存: {report_file}")
@@ -365,9 +380,7 @@ class VerificationStaticAnalyzer:
             self.logger.error(f"保存验证报告失败: {e}")
 
     def batch_verify_fixes(
-        self,
-        session_id: str,
-        verification_tasks: List[Dict[str, Any]]
+        self, session_id: str, verification_tasks: List[Dict[str, Any]]
     ) -> List[StaticVerificationReport]:
         """
         批量验证修复效果
@@ -380,7 +393,9 @@ class VerificationStaticAnalyzer:
             List[StaticVerificationReport]: 验证报告列表
         """
         try:
-            self.logger.info(f"开始批量验证修复: 会话={session_id}, 任务数={len(verification_tasks)}")
+            self.logger.info(
+                f"开始批量验证修复: 会话={session_id}, 任务数={len(verification_tasks)}"
+            )
 
             reports = []
             for task in verification_tasks:
@@ -389,7 +404,7 @@ class VerificationStaticAnalyzer:
                         session_id=session_id,
                         suggestion_id=task["suggestion_id"],
                         original_analysis=task["original_analysis"],
-                        modified_file_path=task["file_path"]
+                        modified_file_path=task["file_path"],
                     )
                     reports.append(report)
 
@@ -406,7 +421,7 @@ class VerificationStaticAnalyzer:
                         verification_issues=[],
                         success_rate=0.0,
                         new_issues_count=0,
-                        overall_quality_score=0.0
+                        overall_quality_score=0.0,
                     )
                     reports.append(failure_report)
 
@@ -417,7 +432,9 @@ class VerificationStaticAnalyzer:
             self.logger.error(f"批量验证失败: {e}")
             return []
 
-    def get_verification_report(self, session_id: str, suggestion_id: str) -> Optional[StaticVerificationReport]:
+    def get_verification_report(
+        self, session_id: str, suggestion_id: str
+    ) -> Optional[StaticVerificationReport]:
         """
         获取验证报告
 
@@ -429,12 +446,15 @@ class VerificationStaticAnalyzer:
             Optional[StaticVerificationReport]: 验证报告
         """
         try:
-            report_file = self.verification_dir / f"verification_{session_id}_{suggestion_id}.json"
+            report_file = (
+                self.verification_dir
+                / f"verification_{session_id}_{suggestion_id}.json"
+            )
 
             if not report_file.exists():
                 return None
 
-            with open(report_file, 'r', encoding='utf-8') as f:
+            with open(report_file, "r", encoding="utf-8") as f:
                 report_data = json.load(f)
 
             # 重新构建报告对象
@@ -444,20 +464,28 @@ class VerificationStaticAnalyzer:
             self.logger.error(f"获取验证报告失败: {e}")
             return None
 
-    def _reconstruct_report(self, report_data: Dict[str, Any]) -> StaticVerificationReport:
+    def _reconstruct_report(
+        self, report_data: Dict[str, Any]
+    ) -> StaticVerificationReport:
         """从字典数据重构验证报告"""
         # 重构FixComparison
         fix_comparison_data = report_data["fix_comparison"]
-        original_issues = [Issue.from_dict(data) for data in fix_comparison_data["original_issues"]]
-        current_issues = [Issue.from_dict(data) for data in fix_comparison_data["current_issues"]]
-        new_issues = [Issue.from_dict(data) for data in fix_comparison_data["new_issues"]]
+        original_issues = [
+            Issue.from_dict(data) for data in fix_comparison_data["original_issues"]
+        ]
+        current_issues = [
+            Issue.from_dict(data) for data in fix_comparison_data["current_issues"]
+        ]
+        new_issues = [
+            Issue.from_dict(data) for data in fix_comparison_data["new_issues"]
+        ]
 
         fix_comparison = FixComparison(
             original_issues=original_issues,
             current_issues=current_issues,
             fixed_issues=fix_comparison_data["fixed_issues"],
             remaining_issues=fix_comparison_data["remaining_issues"],
-            new_issues=new_issues
+            new_issues=new_issues,
         )
 
         # 重构VerificationIssue列表
@@ -473,7 +501,7 @@ class VerificationStaticAnalyzer:
                 code_snippet=issue_data["code_snippet"],
                 tool_name=issue_data["tool_name"],
                 is_new_issue=issue_data["is_new_issue"],
-                is_original_fixed=issue_data["is_original_fixed"]
+                is_original_fixed=issue_data["is_original_fixed"],
             )
             verification_issues.append(verification_issue)
 
@@ -483,10 +511,12 @@ class VerificationStaticAnalyzer:
             session_id=report_data["session_id"],
             suggestion_id=report_data["suggestion_id"],
             file_path=report_data["file_path"],
-            verification_timestamp=datetime.fromisoformat(report_data["verification_timestamp"]),
+            verification_timestamp=datetime.fromisoformat(
+                report_data["verification_timestamp"]
+            ),
             fix_comparison=fix_comparison,
             verification_issues=verification_issues,
             success_rate=report_data["success_rate"],
             new_issues_count=report_data["new_issues_count"],
-            overall_quality_score=report_data["overall_quality_score"]
+            overall_quality_score=report_data["overall_quality_score"],
         )

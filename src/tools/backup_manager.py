@@ -3,23 +3,24 @@
 负责在代码修复前创建文件备份并管理备份历史
 """
 
+import hashlib
+import json
 import os
 import shutil
-import json
 import time
-import hashlib
-from datetime import datetime
-from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from ..utils.logger import get_logger
 from ..utils.config import get_config_manager
+from ..utils.logger import get_logger
 
 
 @dataclass
 class BackupMetadata:
     """备份元数据"""
+
     backup_id: str
     original_file_path: str
     backup_file_path: str
@@ -36,6 +37,7 @@ class BackupMetadata:
 @dataclass
 class BackupResult:
     """备份结果"""
+
     success: bool
     backup_id: str
     backup_path: str
@@ -61,27 +63,33 @@ class BackupManager:
 
         # 获取配置
         try:
-            self.config = self.config_manager.get_section('backup')
+            self.config = self.config_manager.get_section("backup")
         except:
             self.config = {}
 
-        self.backup_dir = Path(self.config.get('backup_directory', '.fix_backups'))
-        self.max_backups_per_file = self.config.get('max_backups_per_file', 10)
-        self.backup_retention_days = self.config.get('backup_retention_days', 30)
-        self.compress_backups = self.config.get('compress_backups', True)
+        self.backup_dir = Path(self.config.get("backup_directory", ".fix_backups"))
+        self.max_backups_per_file = self.config.get("max_backups_per_file", 10)
+        self.backup_retention_days = self.config.get("backup_retention_days", 30)
+        self.compress_backups = self.config.get("compress_backups", True)
 
         # 创建备份目录
         self.backup_dir.mkdir(exist_ok=True)
-        self.metadata_file = self.backup_dir / 'backup_metadata.json'
+        self.metadata_file = self.backup_dir / "backup_metadata.json"
 
         # 初始化元数据
         self._load_metadata()
 
-        self.logger.info(f"BackupManager initialized with backup directory: {self.backup_dir}")
+        self.logger.info(
+            f"BackupManager initialized with backup directory: {self.backup_dir}"
+        )
 
-    def create_backup(self, file_path: str, reason: str = "pre_fix",
-                     fix_request_id: Optional[str] = None,
-                     issues_fixed: Optional[List[str]] = None) -> BackupResult:
+    def create_backup(
+        self,
+        file_path: str,
+        reason: str = "pre_fix",
+        fix_request_id: Optional[str] = None,
+        issues_fixed: Optional[List[str]] = None,
+    ) -> BackupResult:
         """
         创建文件备份
 
@@ -104,7 +112,7 @@ class BackupManager:
             backup_id="",
             backup_path="",
             original_path=str(file_path),
-            file_size=0
+            file_size=0,
         )
 
         try:
@@ -127,7 +135,9 @@ class BackupManager:
             # 检查是否已存在相同内容的备份
             existing_backup = self._find_existing_backup(file_path, file_hash)
             if existing_backup:
-                self.logger.info(f"File already backed up with same content: {existing_backup.backup_id}")
+                self.logger.info(
+                    f"File already backed up with same content: {existing_backup.backup_id}"
+                )
                 result.backup_id = existing_backup.backup_id
                 result.backup_path = existing_backup.backup_file_path
                 result.file_size = existing_backup.file_size
@@ -138,7 +148,7 @@ class BackupManager:
 
             # 复制文件
             if self.compress_backups and file_size > 1024:  # 压缩大于1KB的文件
-                backup_path = backup_path.with_suffix(backup_path.suffix + '.gz')
+                backup_path = backup_path.with_suffix(backup_path.suffix + ".gz")
                 self._create_compressed_backup(file_path, backup_path)
             else:
                 shutil.copy2(file_path, backup_path)
@@ -157,8 +167,8 @@ class BackupManager:
                 created_by="fix_system",
                 additional_info={
                     "original_mtime": file_path.stat().st_mtime,
-                    "compression": backup_path.suffix == '.gz'
-                }
+                    "compression": backup_path.suffix == ".gz",
+                },
             )
 
             # 保存元数据
@@ -207,18 +217,26 @@ class BackupManager:
                 return False
 
             # 确定目标路径
-            target = Path(target_path) if target_path else Path(metadata.original_file_path)
+            target = (
+                Path(target_path) if target_path else Path(metadata.original_file_path)
+            )
             target.parent.mkdir(parents=True, exist_ok=True)
 
             # 恢复文件
-            if backup_path.suffix == '.gz':
+            if backup_path.suffix == ".gz":
                 self._restore_compressed_backup(backup_path, target)
             else:
                 shutil.copy2(backup_path, target)
 
             # 恢复原始时间戳
-            if 'original_mtime' in metadata.additional_info:
-                os.utime(target, (target.stat().st_atime, metadata.additional_info['original_mtime']))
+            if "original_mtime" in metadata.additional_info:
+                os.utime(
+                    target,
+                    (
+                        target.stat().st_atime,
+                        metadata.additional_info["original_mtime"],
+                    ),
+                )
 
             self.logger.info(f"File restored from backup: {backup_id} -> {target}")
             return True
@@ -227,7 +245,9 @@ class BackupManager:
             self.logger.error(f"Failed to restore backup {backup_id}: {e}")
             return False
 
-    def list_backups(self, file_path: Optional[str] = None, limit: int = 50) -> List[BackupMetadata]:
+    def list_backups(
+        self, file_path: Optional[str] = None, limit: int = 50
+    ) -> List[BackupMetadata]:
         """
         列出备份
 
@@ -239,15 +259,15 @@ class BackupManager:
             备份元数据列表
         """
         try:
-            backups = self.metadata.get('backups', [])
+            backups = self.metadata.get("backups", [])
 
             # 按文件路径过滤
             if file_path:
                 file_path = str(Path(file_path).resolve())
-                backups = [b for b in backups if b['original_file_path'] == file_path]
+                backups = [b for b in backups if b["original_file_path"] == file_path]
 
             # 按时间戳排序（最新的在前）
-            backups.sort(key=lambda x: x['timestamp'], reverse=True)
+            backups.sort(key=lambda x: x["timestamp"], reverse=True)
 
             # 限制数量
             backups = backups[:limit]
@@ -281,9 +301,8 @@ class BackupManager:
                 backup_path.unlink()
 
             # 从元数据中删除
-            self.metadata['backups'] = [
-                b for b in self.metadata['backups']
-                if b['backup_id'] != backup_id
+            self.metadata["backups"] = [
+                b for b in self.metadata["backups"] if b["backup_id"] != backup_id
             ]
             self._save_metadata_file()
 
@@ -302,28 +321,36 @@ class BackupManager:
             删除的备份数量
         """
         deleted_count = 0
-        cutoff_time = datetime.now().timestamp() - (self.backup_retention_days * 24 * 3600)
+        cutoff_time = datetime.now().timestamp() - (
+            self.backup_retention_days * 24 * 3600
+        )
 
         try:
             backups_to_keep = []
-            for backup_data in self.metadata.get('backups', []):
-                backup_time = datetime.fromisoformat(backup_data['timestamp']).timestamp()
+            for backup_data in self.metadata.get("backups", []):
+                backup_time = datetime.fromisoformat(
+                    backup_data["timestamp"]
+                ).timestamp()
 
                 if backup_time < cutoff_time:
                     # 删除过期备份文件
-                    backup_path = Path(backup_data['backup_file_path'])
+                    backup_path = Path(backup_data["backup_file_path"])
                     if backup_path.exists():
                         backup_path.unlink()
                         deleted_count += 1
-                    self.logger.info(f"Deleted expired backup: {backup_data['backup_id']}")
+                    self.logger.info(
+                        f"Deleted expired backup: {backup_data['backup_id']}"
+                    )
                 else:
                     backups_to_keep.append(backup_data)
 
             # 更新元数据
-            self.metadata['backups'] = backups_to_keep
+            self.metadata["backups"] = backups_to_keep
             self._save_metadata_file()
 
-            self.logger.info(f"Cleanup completed, deleted {deleted_count} expired backups")
+            self.logger.info(
+                f"Cleanup completed, deleted {deleted_count} expired backups"
+            )
 
         except Exception as e:
             self.logger.error(f"Failed to cleanup expired backups: {e}")
@@ -338,22 +365,22 @@ class BackupManager:
             备份统计信息
         """
         try:
-            backups = self.metadata.get('backups', [])
+            backups = self.metadata.get("backups", [])
 
             total_backups = len(backups)
-            total_size = sum(b['file_size'] for b in backups)
-            unique_files = len(set(b['original_file_path'] for b in backups))
+            total_size = sum(b["file_size"] for b in backups)
+            unique_files = len(set(b["original_file_path"] for b in backups))
 
             # 按原因统计
             reason_counts = {}
             for backup in backups:
-                reason = backup['reason']
+                reason = backup["reason"]
                 reason_counts[reason] = reason_counts.get(reason, 0) + 1
 
             # 按日期统计
             date_counts = {}
             for backup in backups:
-                date = backup['timestamp'][:10]  # YYYY-MM-DD
+                date = backup["timestamp"][:10]  # YYYY-MM-DD
                 date_counts[date] = date_counts.get(date, 0) + 1
 
             return {
@@ -364,8 +391,12 @@ class BackupManager:
                 "backup_directory": str(self.backup_dir),
                 "reason_distribution": reason_counts,
                 "daily_distribution": date_counts,
-                "oldest_backup": min(b['timestamp'] for b in backups) if backups else None,
-                "newest_backup": max(b['timestamp'] for b in backups) if backups else None
+                "oldest_backup": (
+                    min(b["timestamp"] for b in backups) if backups else None
+                ),
+                "newest_backup": (
+                    max(b["timestamp"] for b in backups) if backups else None
+                ),
             }
 
         except Exception as e:
@@ -384,7 +415,9 @@ class BackupManager:
             # 尝试保持相对路径结构
             relative_path = file_path.relative_to(Path.cwd())
             backup_dir = self.backup_dir / relative_path.parent
-            return backup_dir / f"{relative_path.stem}_{backup_id}{relative_path.suffix}"
+            return (
+                backup_dir / f"{relative_path.stem}_{backup_id}{relative_path.suffix}"
+            )
         except ValueError:
             # 如果文件不在当前工作目录的子路径中，使用文件名
             backup_dir = self.backup_dir
@@ -398,13 +431,17 @@ class BackupManager:
                 hash_md5.update(chunk)
         return hash_md5.hexdigest()
 
-    def _find_existing_backup(self, file_path: Path, file_hash: str) -> Optional[BackupMetadata]:
+    def _find_existing_backup(
+        self, file_path: Path, file_hash: str
+    ) -> Optional[BackupMetadata]:
         """查找已存在的相同内容备份"""
         file_path_str = str(file_path.resolve())
 
-        for backup_data in self.metadata.get('backups', []):
-            if (backup_data['original_file_path'] == file_path_str and
-                backup_data['file_hash'] == file_hash):
+        for backup_data in self.metadata.get("backups", []):
+            if (
+                backup_data["original_file_path"] == file_path_str
+                and backup_data["file_hash"] == file_hash
+            ):
                 return self._dict_to_metadata(backup_data)
 
         return None
@@ -412,15 +449,17 @@ class BackupManager:
     def _create_compressed_backup(self, source: Path, target: Path):
         """创建压缩备份"""
         import gzip
-        with open(source, 'rb') as f_in:
-            with gzip.open(target, 'wb') as f_out:
+
+        with open(source, "rb") as f_in:
+            with gzip.open(target, "wb") as f_out:
                 shutil.copyfileobj(f_in, f_out)
 
     def _restore_compressed_backup(self, backup_path: Path, target: Path):
         """恢复压缩备份"""
         import gzip
-        with gzip.open(backup_path, 'rb') as f_in:
-            with open(target, 'wb') as f_out:
+
+        with gzip.open(backup_path, "rb") as f_in:
+            with open(target, "wb") as f_out:
                 shutil.copyfileobj(f_in, f_out)
 
     def _cleanup_old_backups(self, file_path: Path):
@@ -429,29 +468,32 @@ class BackupManager:
 
         # 获取该文件的所有备份
         file_backups = [
-            b for b in self.metadata.get('backups', [])
-            if b['original_file_path'] == file_path_str
+            b
+            for b in self.metadata.get("backups", [])
+            if b["original_file_path"] == file_path_str
         ]
 
         # 按时间戳排序，保留最新的N个
-        file_backups.sort(key=lambda x: x['timestamp'], reverse=True)
+        file_backups.sort(key=lambda x: x["timestamp"], reverse=True)
 
-        backups_to_keep = file_backups[:self.max_backups_per_file]
-        backups_to_delete = file_backups[self.max_backups_per_file:]
+        backups_to_keep = file_backups[: self.max_backups_per_file]
+        backups_to_delete = file_backups[self.max_backups_per_file :]
 
         # 删除多余备份
         for backup_data in backups_to_delete:
             try:
-                backup_path = Path(backup_data['backup_file_path'])
+                backup_path = Path(backup_data["backup_file_path"])
                 if backup_path.exists():
                     backup_path.unlink()
 
                 # 从元数据中删除
-                self.metadata['backups'].remove(backup_data)
+                self.metadata["backups"].remove(backup_data)
                 self.logger.info(f"Deleted old backup: {backup_data['backup_id']}")
 
             except Exception as e:
-                self.logger.error(f"Failed to delete old backup {backup_data['backup_id']}: {e}")
+                self.logger.error(
+                    f"Failed to delete old backup {backup_data['backup_id']}: {e}"
+                )
 
         # 保存更新的元数据
         if backups_to_delete:
@@ -461,13 +503,13 @@ class BackupManager:
         """加载元数据"""
         try:
             if self.metadata_file.exists():
-                with open(self.metadata_file, 'r', encoding='utf-8') as f:
+                with open(self.metadata_file, "r", encoding="utf-8") as f:
                     self.metadata = json.load(f)
             else:
                 self.metadata = {
                     "version": "1.0",
                     "created_at": datetime.now().isoformat(),
-                    "backups": []
+                    "backups": [],
                 }
                 self._save_metadata_file()
         except Exception as e:
@@ -477,7 +519,7 @@ class BackupManager:
     def _save_metadata_file(self):
         """保存元数据文件"""
         try:
-            with open(self.metadata_file, 'w', encoding='utf-8') as f:
+            with open(self.metadata_file, "w", encoding="utf-8") as f:
                 json.dump(self.metadata, f, indent=2, ensure_ascii=False)
         except Exception as e:
             self.logger.error(f"Failed to save backup metadata: {e}")
@@ -496,10 +538,10 @@ class BackupManager:
                 "fix_request_id": metadata.fix_request_id,
                 "issues_fixed": metadata.issues_fixed,
                 "created_by": metadata.created_by,
-                "additional_info": metadata.additional_info
+                "additional_info": metadata.additional_info,
             }
 
-            self.metadata['backups'].append(backup_dict)
+            self.metadata["backups"].append(backup_dict)
             self._save_metadata_file()
 
         except Exception as e:
@@ -507,23 +549,23 @@ class BackupManager:
 
     def _get_backup_metadata(self, backup_id: str) -> Optional[BackupMetadata]:
         """获取备份元数据"""
-        for backup_data in self.metadata.get('backups', []):
-            if backup_data['backup_id'] == backup_id:
+        for backup_data in self.metadata.get("backups", []):
+            if backup_data["backup_id"] == backup_id:
                 return self._dict_to_metadata(backup_data)
         return None
 
     def _dict_to_metadata(self, data: Dict[str, Any]) -> BackupMetadata:
         """将字典转换为BackupMetadata对象"""
         return BackupMetadata(
-            backup_id=data['backup_id'],
-            original_file_path=data['original_file_path'],
-            backup_file_path=data['backup_file_path'],
-            timestamp=data['timestamp'],
-            file_hash=data['file_hash'],
-            file_size=data['file_size'],
-            reason=data['reason'],
-            fix_request_id=data.get('fix_request_id'),
-            issues_fixed=data.get('issues_fixed', []),
-            created_by=data.get('created_by', 'fix_system'),
-            additional_info=data.get('additional_info', {})
+            backup_id=data["backup_id"],
+            original_file_path=data["original_file_path"],
+            backup_file_path=data["backup_file_path"],
+            timestamp=data["timestamp"],
+            file_hash=data["file_hash"],
+            file_size=data["file_size"],
+            reason=data["reason"],
+            fix_request_id=data.get("fix_request_id"),
+            issues_fixed=data.get("issues_fixed", []),
+            created_by=data.get("created_by", "fix_system"),
+            additional_info=data.get("additional_info", {}),
         )

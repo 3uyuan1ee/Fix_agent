@@ -3,21 +3,22 @@
 负责基于LLM生成代码修复方案
 """
 
-import re
 import json
-from typing import Dict, List, Any, Optional, Tuple
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
-from ..utils.logger import get_logger
-from ..utils.config import get_config_manager
 from ..llm.client import LLMClient
 from ..prompts.manager import PromptManager
+from ..utils.config import get_config_manager
+from ..utils.logger import get_logger
 
 
 @dataclass
 class FixRequest:
     """修复请求"""
+
     file_path: str
     issues: List[Dict[str, Any]]  # 问题列表
     original_content: str
@@ -32,6 +33,7 @@ class FixRequest:
 @dataclass
 class FixSuggestion:
     """修复建议"""
+
     issue_id: str
     issue_type: str
     description: str
@@ -46,6 +48,7 @@ class FixSuggestion:
 @dataclass
 class FixResult:
     """修复结果"""
+
     file_path: str
     success: bool
     suggestions: List[FixSuggestion] = field(default_factory=list)
@@ -67,7 +70,7 @@ class FixResult:
             "model_used": self.model_used,
             "token_usage": self.token_usage,
             "error": self.error,
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }
 
     def _suggestion_to_dict(self, suggestion: FixSuggestion) -> Dict[str, Any]:
@@ -81,7 +84,7 @@ class FixResult:
             "fixed_code": suggestion.fixed_code,
             "explanation": suggestion.explanation,
             "confidence": suggestion.confidence,
-            "tags": suggestion.tags
+            "tags": suggestion.tags,
         }
 
 
@@ -107,14 +110,14 @@ class FixGenerator:
 
         # 获取配置
         try:
-            self.config = self.config_manager.get_section('fix_generation')
+            self.config = self.config_manager.get_section("fix_generation")
         except:
             self.config = {}
 
-        self.default_model = self.config.get('default_model', 'gpt-4')
-        self.default_temperature = self.config.get('temperature', 0.2)
-        self.max_tokens = self.config.get('max_tokens', 6000)
-        self.max_file_size = self.config.get('max_file_size', 50 * 1024)  # 50KB
+        self.default_model = self.config.get("default_model", "gpt-4")
+        self.default_temperature = self.config.get("temperature", 0.2)
+        self.max_tokens = self.config.get("max_tokens", 6000)
+        self.max_file_size = self.config.get("max_file_size", 50 * 1024)  # 50KB
 
         self.logger.info(f"FixGenerator initialized with model: {self.default_model}")
 
@@ -129,14 +132,12 @@ class FixGenerator:
             修复结果
         """
         import time
+
         start_time = time.time()
 
         self.logger.info(f"Starting fix generation for {request.file_path}")
 
-        result = FixResult(
-            file_path=request.file_path,
-            success=False
-        )
+        result = FixResult(file_path=request.file_path, success=False)
 
         try:
             # 1. 验证输入
@@ -157,13 +158,15 @@ class FixGenerator:
                 messages=fix_prompt,
                 model=request.model or self.default_model,
                 temperature=request.temperature,
-                max_tokens=request.max_tokens
+                max_tokens=request.max_tokens,
             )
 
             llm_response = await self.llm_client.complete(llm_request)
 
             # 4. 解析LLM响应获取修复建议和完整文件内容
-            suggestions, complete_fixed_content = self._parse_llm_response(llm_response.content, request)
+            suggestions, complete_fixed_content = self._parse_llm_response(
+                llm_response.content, request
+            )
 
             # 5. 如果没有完整文件内容，则生成
             if not complete_fixed_content:
@@ -175,16 +178,20 @@ class FixGenerator:
             result.success = True
             result.suggestions = suggestions
             result.complete_fixed_content = complete_fixed_content
-            result.model_used = llm_response.model or request.model or self.default_model
+            result.model_used = (
+                llm_response.model or request.model or self.default_model
+            )
             result.token_usage = llm_response.usage or {}
             result.metadata = {
                 "request_analysis_type": request.analysis_type,
                 "issues_count": len(request.issues),
                 "suggestions_count": len(suggestions),
-                "has_user_instructions": bool(request.user_instructions)
+                "has_user_instructions": bool(request.user_instructions),
             }
 
-            self.logger.info(f"Fix generation completed for {request.file_path} in {result.execution_time:.2f}s")
+            self.logger.info(
+                f"Fix generation completed for {request.file_path} in {result.execution_time:.2f}s"
+            )
 
         except Exception as e:
             result.error = str(e)
@@ -213,7 +220,9 @@ class FixGenerator:
 
             # 检查文件大小
             if len(request.original_content) > self.max_file_size:
-                self.logger.warning(f"File too large ({len(request.original_content)} bytes), truncating")
+                self.logger.warning(
+                    f"File too large ({len(request.original_content)} bytes), truncating"
+                )
                 return True  # 继续处理，但会截断
 
             return True
@@ -229,22 +238,25 @@ class FixGenerator:
             system_template = self.prompt_manager.get_template("fix_system")
             if system_template:
                 render_result = self.prompt_manager.render_template(
-                    "fix_system",
-                    {"analysis_type": request.analysis_type}
+                    "fix_system", {"analysis_type": request.analysis_type}
                 )
                 if render_result.success:
                     system_message = render_result.content
                 else:
-                    system_message = self._get_default_fix_system_message(request.analysis_type)
+                    system_message = self._get_default_fix_system_message(
+                        request.analysis_type
+                    )
             else:
-                system_message = self._get_default_fix_system_message(request.analysis_type)
+                system_message = self._get_default_fix_system_message(
+                    request.analysis_type
+                )
 
             # 构造用户消息
             user_message = self._construct_fix_user_message(request)
 
             messages = [
                 {"role": "system", "content": system_message},
-                {"role": "user", "content": user_message}
+                {"role": "user", "content": user_message},
             ]
 
             return messages
@@ -269,7 +281,7 @@ Guidelines:
             "security": "\n7. Prioritize security fixes and vulnerability remediation",
             "performance": "\n7. Focus on performance optimizations and efficiency improvements",
             "style": "\n7. Ensure code follows PEP8 and style guidelines",
-            "logic": "\n7. Fix logical errors and bugs in the code flow"
+            "logic": "\n7. Fix logical errors and bugs in the code flow",
         }
 
         return base_message + type_specific.get(analysis_type, "")
@@ -279,7 +291,10 @@ Guidelines:
         # 截断过大的文件
         content = request.original_content
         if len(content) > self.max_file_size:
-            content = content[:self.max_file_size] + "\n\n... (content truncated due to size limit)"
+            content = (
+                content[: self.max_file_size]
+                + "\n\n... (content truncated due to size limit)"
+            )
 
         # 构造问题描述
         issues_description = self._format_issues_for_prompt(request.issues)
@@ -332,43 +347,45 @@ Please provide your response in the following JSON format:
         for i, issue in enumerate(issues, 1):
             issue_text = f"{i}. **{issue.get('type', 'Unknown Issue')}**"
 
-            if 'line' in issue:
+            if "line" in issue:
                 issue_text += f" (Line {issue['line']}"
-                if 'column' in issue:
+                if "column" in issue:
                     issue_text += f", Column {issue['column']}"
                 issue_text += ")"
 
-            if 'message' in issue:
+            if "message" in issue:
                 issue_text += f": {issue['message']}"
 
-            if 'severity' in issue:
+            if "severity" in issue:
                 issue_text += f" [Severity: {issue['severity']}]"
 
             formatted_issues.append(issue_text)
 
         return "\n".join(formatted_issues)
 
-    def _parse_llm_response(self, llm_response: str, request: FixRequest) -> Tuple[List[FixSuggestion], str]:
+    def _parse_llm_response(
+        self, llm_response: str, request: FixRequest
+    ) -> Tuple[List[FixSuggestion], str]:
         """解析LLM响应，返回修复建议和完整文件内容"""
         suggestions = []
         complete_fixed_content = ""
 
         try:
             # 尝试解析JSON格式响应
-            if llm_response.strip().startswith('{'):
+            if llm_response.strip().startswith("{"):
                 data = json.loads(llm_response)
                 suggestions = self._parse_json_fixes(data, request)
-                complete_fixed_content = data.get('complete_fixed_file', '')
+                complete_fixed_content = data.get("complete_fixed_file", "")
                 return suggestions, complete_fixed_content
 
             # 尝试提取JSON部分
-            json_start = llm_response.find('{')
-            json_end = llm_response.rfind('}') + 1
+            json_start = llm_response.find("{")
+            json_end = llm_response.rfind("}") + 1
             if json_start != -1 and json_end > json_start:
                 json_content = llm_response[json_start:json_end]
                 data = json.loads(json_content)
                 suggestions = self._parse_json_fixes(data, request)
-                complete_fixed_content = data.get('complete_fixed_file', '')
+                complete_fixed_content = data.get("complete_fixed_file", "")
                 return suggestions, complete_fixed_content
 
             # 如果不是JSON格式，尝试解析文本格式
@@ -383,17 +400,19 @@ Please provide your response in the following JSON format:
             self.logger.error(f"Error parsing LLM response: {e}")
             return [], ""
 
-    def _parse_fix_suggestions(self, llm_response: str, request: FixRequest) -> List[FixSuggestion]:
+    def _parse_fix_suggestions(
+        self, llm_response: str, request: FixRequest
+    ) -> List[FixSuggestion]:
         """解析LLM响应中的修复建议"""
         try:
             # 尝试解析JSON格式响应
-            if llm_response.strip().startswith('{'):
+            if llm_response.strip().startswith("{"):
                 data = json.loads(llm_response)
                 return self._parse_json_fixes(data, request)
 
             # 尝试提取JSON部分
-            json_start = llm_response.find('{')
-            json_end = llm_response.rfind('}') + 1
+            json_start = llm_response.find("{")
+            json_end = llm_response.rfind("}") + 1
             if json_start != -1 and json_end > json_start:
                 json_content = llm_response[json_start:json_end]
                 data = json.loads(json_content)
@@ -409,23 +428,25 @@ Please provide your response in the following JSON format:
             self.logger.error(f"Error parsing fix suggestions: {e}")
             return []
 
-    def _parse_json_fixes(self, data: Dict[str, Any], request: FixRequest) -> List[FixSuggestion]:
+    def _parse_json_fixes(
+        self, data: Dict[str, Any], request: FixRequest
+    ) -> List[FixSuggestion]:
         """解析JSON格式的修复建议"""
         suggestions = []
 
         try:
-            fixes = data.get('fixes', [])
+            fixes = data.get("fixes", [])
             for fix_data in fixes:
                 suggestion = FixSuggestion(
-                    issue_id=fix_data.get('issue_id', f"fix_{len(suggestions)}"),
-                    issue_type=fix_data.get('issue_type', 'unknown'),
-                    description=fix_data.get('description', ''),
-                    location=fix_data.get('location', {}),
-                    severity=fix_data.get('severity', 'medium'),
-                    fixed_code=fix_data.get('fixed_code', ''),
-                    explanation=fix_data.get('explanation', ''),
-                    confidence=float(fix_data.get('confidence', 0.8)),
-                    tags=fix_data.get('tags', [])
+                    issue_id=fix_data.get("issue_id", f"fix_{len(suggestions)}"),
+                    issue_type=fix_data.get("issue_type", "unknown"),
+                    description=fix_data.get("description", ""),
+                    location=fix_data.get("location", {}),
+                    severity=fix_data.get("severity", "medium"),
+                    fixed_code=fix_data.get("fixed_code", ""),
+                    explanation=fix_data.get("explanation", ""),
+                    confidence=float(fix_data.get("confidence", 0.8)),
+                    tags=fix_data.get("tags", []),
                 )
                 suggestions.append(suggestion)
 
@@ -434,13 +455,17 @@ Please provide your response in the following JSON format:
 
         return suggestions
 
-    def _parse_text_fixes(self, text_response: str, request: FixRequest) -> List[FixSuggestion]:
+    def _parse_text_fixes(
+        self, text_response: str, request: FixRequest
+    ) -> List[FixSuggestion]:
         """解析文本格式的修复建议"""
         suggestions = []
 
         try:
             # 尝试从文本中提取代码块和说明
-            code_blocks = re.findall(r'```(?:python)?\n(.*?)\n```', text_response, re.DOTALL)
+            code_blocks = re.findall(
+                r"```(?:python)?\n(.*?)\n```", text_response, re.DOTALL
+            )
 
             for i, code_block in enumerate(code_blocks):
                 # 为每个代码块创建一个修复建议
@@ -453,7 +478,7 @@ Please provide your response in the following JSON format:
                     fixed_code=code_block.strip(),
                     explanation="Generated from text-based fix suggestion",
                     confidence=0.7,
-                    tags=["text_parsed"]
+                    tags=["text_parsed"],
                 )
                 suggestions.append(suggestion)
 
@@ -462,7 +487,9 @@ Please provide your response in the following JSON format:
 
         return suggestions
 
-    def _generate_complete_fixed_content(self, original_content: str, suggestions: List[FixSuggestion]) -> str:
+    def _generate_complete_fixed_content(
+        self, original_content: str, suggestions: List[FixSuggestion]
+    ) -> str:
         """生成完整的修复后内容"""
         if not suggestions:
             return original_content
@@ -470,29 +497,29 @@ Please provide your response in the following JSON format:
         try:
             # 按行号排序建议，从后往前应用修复（避免行号偏移）
             sorted_suggestions = sorted(
-                [s for s in suggestions if s.location.get('line') and s.fixed_code],
-                key=lambda x: x.location['line'],
-                reverse=True
+                [s for s in suggestions if s.location.get("line") and s.fixed_code],
+                key=lambda x: x.location["line"],
+                reverse=True,
             )
 
             # 将原始内容分割为行
-            lines = original_content.split('\n')
+            lines = original_content.split("\n")
 
             # 应用修复
             for suggestion in sorted_suggestions:
-                line_num = suggestion.location['line'] - 1  # 转换为0-based索引
+                line_num = suggestion.location["line"] - 1  # 转换为0-based索引
 
                 if 0 <= line_num < len(lines):
                     # 替换指定行
-                    if '\n' in suggestion.fixed_code:
+                    if "\n" in suggestion.fixed_code:
                         # 多行修复
-                        fixed_lines = suggestion.fixed_code.split('\n')
-                        lines[line_num:line_num+1] = fixed_lines
+                        fixed_lines = suggestion.fixed_code.split("\n")
+                        lines[line_num : line_num + 1] = fixed_lines
                     else:
                         # 单行修复
                         lines[line_num] = suggestion.fixed_code
 
-            return '\n'.join(lines)
+            return "\n".join(lines)
 
         except Exception as e:
             self.logger.error(f"Error generating complete fixed content: {e}")
@@ -507,7 +534,7 @@ Please provide your response in the following JSON format:
             "logic",
             "best_practices",
             "documentation",
-            "error_handling"
+            "error_handling",
         ]
 
     def validate_fix_safety(self, suggestion: FixSuggestion) -> Tuple[bool, str]:
@@ -515,20 +542,23 @@ Please provide your response in the following JSON format:
         try:
             # 检查是否包含危险操作
             dangerous_patterns = [
-                r'eval\s*\(',
-                r'exec\s*\(',
-                r'__import__\s*\(',
+                r"eval\s*\(",
+                r"exec\s*\(",
+                r"__import__\s*\(",
                 r'open\s*\([^)]*[\'"]\s*[+/]',  # 路径遍历
-                r'subprocess\.\w*\([^)]*shell\s*=\s*True'  # shell注入
+                r"subprocess\.\w*\([^)]*shell\s*=\s*True",  # shell注入
             ]
 
             for pattern in dangerous_patterns:
                 if re.search(pattern, suggestion.fixed_code, re.IGNORECASE):
-                    return False, f"Fix contains potentially dangerous pattern: {pattern}"
+                    return (
+                        False,
+                        f"Fix contains potentially dangerous pattern: {pattern}",
+                    )
 
             # 检查语法
             try:
-                compile(suggestion.fixed_code, '<string>', 'exec')
+                compile(suggestion.fixed_code, "<string>", "exec")
             except SyntaxError as e:
                 return False, f"Fix contains syntax error: {e}"
 

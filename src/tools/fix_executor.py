@@ -4,24 +4,25 @@
 """
 
 import os
-import time
 import shutil
 import tempfile
-from typing import Dict, List, Any, Optional, Tuple
+import time
 from dataclasses import dataclass, field
-from pathlib import Path
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
-from ..utils.logger import get_logger
 from ..utils.config import get_config_manager
+from ..utils.logger import get_logger
 from .backup_manager import BackupManager, BackupResult
-from .fix_generator import FixResult, FixSuggestion
+from .diff_viewer import DiffResult, DiffViewer
 from .fix_confirmation import ConfirmationResponse, ConfirmationStatus
-from .diff_viewer import DiffViewer, DiffResult
+from .fix_generator import FixResult, FixSuggestion
 
 
 class ExecutionStatus(Enum):
     """执行状态"""
+
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
@@ -32,6 +33,7 @@ class ExecutionStatus(Enum):
 @dataclass
 class ExecutionResult:
     """执行结果"""
+
     fix_id: str
     file_path: str
     status: ExecutionStatus
@@ -57,13 +59,14 @@ class ExecutionResult:
             "error_message": self.error_message,
             "rollback_successful": self.rollback_successful,
             "applied_suggestions_count": len(self.applied_suggestions),
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }
 
 
 @dataclass
 class BatchExecutionResult:
     """批量执行结果"""
+
     batch_id: str
     total_files: int
     successful_files: int
@@ -95,21 +98,30 @@ class FixExecutor:
 
         # 获取配置
         try:
-            self.config = self.config_manager.get_section('fix_executor')
+            self.config = self.config_manager.get_section("fix_executor")
         except:
             self.config = {}
 
-        self.create_backup_before_fix = self.config.get('create_backup_before_fix', True)
-        self.validate_syntax_after_fix = self.config.get('validate_syntax_after_fix', True)
-        self.auto_rollback_on_error = self.config.get('auto_rollback_on_error', True)
-        self.use_temp_file_for_write = self.config.get('use_temp_file_for_write', True)
-        self.preserve_permissions = self.config.get('preserve_permissions', True)
+        self.create_backup_before_fix = self.config.get(
+            "create_backup_before_fix", True
+        )
+        self.validate_syntax_after_fix = self.config.get(
+            "validate_syntax_after_fix", True
+        )
+        self.auto_rollback_on_error = self.config.get("auto_rollback_on_error", True)
+        self.use_temp_file_for_write = self.config.get("use_temp_file_for_write", True)
+        self.preserve_permissions = self.config.get("preserve_permissions", True)
 
         self.logger.info("FixExecutor initialized")
 
-    async def execute_fix(self, fix_id: str, file_path: str, fix_result: FixResult,
-                         confirmation_response: ConfirmationResponse,
-                         backup_id: Optional[str] = None) -> ExecutionResult:
+    async def execute_fix(
+        self,
+        fix_id: str,
+        file_path: str,
+        fix_result: FixResult,
+        confirmation_response: ConfirmationResponse,
+        backup_id: Optional[str] = None,
+    ) -> ExecutionResult:
         """
         执行单个文件修复
 
@@ -134,7 +146,7 @@ class FixExecutor:
             success=False,
             backup_id=backup_id or "",
             original_content="",
-            fixed_content=""
+            fixed_content="",
         )
 
         try:
@@ -146,20 +158,20 @@ class FixExecutor:
                 result.status = ExecutionStatus.FAILED
                 return result
 
-            result.original_content = file_path.read_text(encoding='utf-8')
+            result.original_content = file_path.read_text(encoding="utf-8")
 
             # 2. 创建备份（如果需要且尚未创建）
             if self.create_backup_before_fix and not backup_id:
                 backup_result = self.backup_manager.create_backup(
-                    str(file_path),
-                    reason="pre_fix_execution",
-                    fix_request_id=fix_id
+                    str(file_path), reason="pre_fix_execution", fix_request_id=fix_id
                 )
                 if backup_result.success:
                     result.backup_id = backup_result.backup_id
                     self.logger.info(f"Created backup: {backup_result.backup_id}")
                 else:
-                    self.logger.warning(f"Failed to create backup: {backup_result.error}")
+                    self.logger.warning(
+                        f"Failed to create backup: {backup_result.error}"
+                    )
 
             # 3. 根据确认响应确定要应用的修复
             applied_suggestions = self._select_suggestions_to_apply(
@@ -190,7 +202,9 @@ class FixExecutor:
             self._write_fixed_file(file_path, fixed_content, result.original_content)
 
             # 7. 验证修复结果
-            if not self._verify_fix_result(file_path, result.original_content, fixed_content):
+            if not self._verify_fix_result(
+                file_path, result.original_content, fixed_content
+            ):
                 result.error_message = "Fix verification failed"
                 if self.auto_rollback_on_error:
                     self._rollback_fix(file_path, result.original_content)
@@ -208,7 +222,7 @@ class FixExecutor:
                 "total_suggestions_count": len(fix_result.suggestions),
                 "file_size": len(fixed_content),
                 "backup_created": bool(result.backup_id),
-                "syntax_validated": self.validate_syntax_after_fix
+                "syntax_validated": self.validate_syntax_after_fix,
             }
 
             self.logger.info(f"Fix {fix_id} executed successfully for {file_path}")
@@ -226,12 +240,19 @@ class FixExecutor:
                     result.status = ExecutionStatus.ROLLED_BACK
                     self.logger.info(f"Auto-rollback completed for {file_path}")
                 except Exception as rollback_error:
-                    self.logger.error(f"Auto-rollback failed for {file_path}: {rollback_error}")
+                    self.logger.error(
+                        f"Auto-rollback failed for {file_path}: {rollback_error}"
+                    )
 
         result.execution_time = time.time() - start_time
         return result
 
-    def execute_batch_fixes(self, fix_requests: List[Tuple[str, str, FixResult, ConfirmationResponse, Optional[str]]]) -> BatchExecutionResult:
+    def execute_batch_fixes(
+        self,
+        fix_requests: List[
+            Tuple[str, str, FixResult, ConfirmationResponse, Optional[str]]
+        ],
+    ) -> BatchExecutionResult:
         """
         批量执行修复
 
@@ -241,28 +262,38 @@ class FixExecutor:
         Returns:
             批量执行结果
         """
-        import uuid
         import asyncio
+        import uuid
 
         start_time = time.time()
         batch_id = str(uuid.uuid4())
 
-        self.logger.info(f"Starting batch fix execution {batch_id} for {len(fix_requests)} files")
+        self.logger.info(
+            f"Starting batch fix execution {batch_id} for {len(fix_requests)} files"
+        )
 
         batch_result = BatchExecutionResult(
             batch_id=batch_id,
             total_files=len(fix_requests),
-            start_time=time.strftime("%Y-%m-%d %H:%M:%S")
+            start_time=time.strftime("%Y-%m-%d %H:%M:%S"),
         )
 
         try:
             # 逐个执行修复（避免并发问题）
-            for fix_id, file_path, fix_result, confirmation_response, backup_id in fix_requests:
+            for (
+                fix_id,
+                file_path,
+                fix_result,
+                confirmation_response,
+                backup_id,
+            ) in fix_requests:
                 self.logger.info(f"Executing fix {fix_id} for {file_path}")
 
                 # 同步执行单个修复
                 execution_result = asyncio.run(
-                    self.execute_fix(fix_id, file_path, fix_result, confirmation_response, backup_id)
+                    self.execute_fix(
+                        fix_id, file_path, fix_result, confirmation_response, backup_id
+                    )
                 )
 
                 batch_result.execution_results.append(execution_result)
@@ -276,9 +307,16 @@ class FixExecutor:
                         batch_result.rolled_back_files += 1
 
                 # 如果某个修复失败严重，询问是否继续
-                if not execution_result.success and execution_result.status != ExecutionStatus.ROLLED_BACK:
-                    if not self._ask_continue_on_failure(file_path, execution_result.error_message):
-                        self.logger.info(f"Batch execution cancelled due to failure in {file_path}")
+                if (
+                    not execution_result.success
+                    and execution_result.status != ExecutionStatus.ROLLED_BACK
+                ):
+                    if not self._ask_continue_on_failure(
+                        file_path, execution_result.error_message
+                    ):
+                        self.logger.info(
+                            f"Batch execution cancelled due to failure in {file_path}"
+                        )
                         break
 
         except Exception as e:
@@ -289,7 +327,9 @@ class FixExecutor:
         batch_result.end_time = time.strftime("%Y-%m-%d %H:%M:%S")
         batch_result.summary = self._generate_batch_summary(batch_result)
 
-        self.logger.info(f"Batch fix execution {batch_id} completed: {batch_result.summary}")
+        self.logger.info(
+            f"Batch fix execution {batch_id} completed: {batch_result.summary}"
+        )
 
         return batch_result
 
@@ -305,7 +345,9 @@ class FixExecutor:
             是否回滚成功
         """
         try:
-            self.logger.info(f"Rolling back fix for {file_path} using backup {backup_id}")
+            self.logger.info(
+                f"Rolling back fix for {file_path} using backup {backup_id}"
+            )
 
             success = self.backup_manager.restore_backup(backup_id, str(file_path))
 
@@ -320,7 +362,9 @@ class FixExecutor:
             self.logger.error(f"Error during rollback for {file_path}: {e}")
             return False
 
-    def rollback_batch_fixes(self, execution_results: List[ExecutionResult]) -> Dict[str, bool]:
+    def rollback_batch_fixes(
+        self, execution_results: List[ExecutionResult]
+    ) -> Dict[str, bool]:
         """
         批量回滚修复
 
@@ -341,13 +385,20 @@ class FixExecutor:
             else:
                 rollback_results[result.file_path] = True  # 无需回滚
 
-        successful_rollbacks = sum(1 for success in rollback_results.values() if success)
-        self.logger.info(f"Batch rollback completed: {successful_rollbacks}/{len(execution_results)} successful")
+        successful_rollbacks = sum(
+            1 for success in rollback_results.values() if success
+        )
+        self.logger.info(
+            f"Batch rollback completed: {successful_rollbacks}/{len(execution_results)} successful"
+        )
 
         return rollback_results
 
-    def _select_suggestions_to_apply(self, suggestions: List[FixSuggestion],
-                                   confirmation_response: ConfirmationResponse) -> List[FixSuggestion]:
+    def _select_suggestions_to_apply(
+        self,
+        suggestions: List[FixSuggestion],
+        confirmation_response: ConfirmationResponse,
+    ) -> List[FixSuggestion]:
         """选择要应用的修复建议"""
         if confirmation_response.status == ConfirmationStatus.APPROVED:
             # 批准所有建议
@@ -355,47 +406,55 @@ class FixExecutor:
         elif confirmation_response.status == ConfirmationStatus.PARTIAL:
             # 部分批准，使用选中的建议
             selected_indices = confirmation_response.selected_suggestions
-            return [suggestions[i] for i in selected_indices if 0 <= i < len(suggestions)]
+            return [
+                suggestions[i] for i in selected_indices if 0 <= i < len(suggestions)
+            ]
         else:
             # 拒绝或取消，不应用任何建议
             return []
 
-    def _apply_fixes(self, original_content: str, suggestions: List[FixSuggestion],
-                    confirmation_response: ConfirmationResponse) -> str:
+    def _apply_fixes(
+        self,
+        original_content: str,
+        suggestions: List[FixSuggestion],
+        confirmation_response: ConfirmationResponse,
+    ) -> str:
         """应用修复建议"""
         if not suggestions:
             return original_content
 
         try:
             # 如果有完整的修复内容，优先使用
-            if (confirmation_response.metadata and
-                'complete_fixed_content' in confirmation_response.metadata):
-                return confirmation_response.metadata['complete_fixed_content']
+            if (
+                confirmation_response.metadata
+                and "complete_fixed_content" in confirmation_response.metadata
+            ):
+                return confirmation_response.metadata["complete_fixed_content"]
 
             # 否则应用选中的建议
-            lines = original_content.split('\n')
+            lines = original_content.split("\n")
 
             # 按行号排序，从后往前应用（避免行号偏移）
             sorted_suggestions = sorted(
-                [s for s in suggestions if s.location.get('line') and s.fixed_code],
-                key=lambda x: x.location['line'],
-                reverse=True
+                [s for s in suggestions if s.location.get("line") and s.fixed_code],
+                key=lambda x: x.location["line"],
+                reverse=True,
             )
 
             for suggestion in sorted_suggestions:
-                line_num = suggestion.location['line'] - 1  # 转换为0-based索引
+                line_num = suggestion.location["line"] - 1  # 转换为0-based索引
 
                 if 0 <= line_num < len(lines):
                     # 替换指定行
-                    if '\n' in suggestion.fixed_code:
+                    if "\n" in suggestion.fixed_code:
                         # 多行修复
-                        fixed_lines = suggestion.fixed_code.split('\n')
-                        lines[line_num:line_num+1] = fixed_lines
+                        fixed_lines = suggestion.fixed_code.split("\n")
+                        lines[line_num : line_num + 1] = fixed_lines
                     else:
                         # 单行修复
                         lines[line_num] = suggestion.fixed_code
 
-            return '\n'.join(lines)
+            return "\n".join(lines)
 
         except Exception as e:
             self.logger.error(f"Error applying fixes: {e}")
@@ -404,7 +463,7 @@ class FixExecutor:
     def _validate_syntax(self, content: str, file_path: str) -> bool:
         """验证语法"""
         try:
-            compile(content, file_path, 'exec')
+            compile(content, file_path, "exec")
             return True
         except SyntaxError as e:
             self.logger.warning(f"Syntax error in fixed code: {e}")
@@ -413,16 +472,18 @@ class FixExecutor:
             self.logger.warning(f"Error validating syntax: {e}")
             return False
 
-    def _write_fixed_file(self, file_path: Path, fixed_content: str, original_content: str):
+    def _write_fixed_file(
+        self, file_path: Path, fixed_content: str, original_content: str
+    ):
         """写入修复后的文件"""
         try:
             if self.use_temp_file_for_write:
                 # 使用临时文件写入
-                temp_file = file_path.with_suffix(file_path.suffix + '.tmp')
-                temp_file.write_text(fixed_content, encoding='utf-8')
+                temp_file = file_path.with_suffix(file_path.suffix + ".tmp")
+                temp_file.write_text(fixed_content, encoding="utf-8")
 
                 # 验证临时文件
-                if temp_file.read_text(encoding='utf-8') == fixed_content:
+                if temp_file.read_text(encoding="utf-8") == fixed_content:
                     # 替换原文件
                     if self.preserve_permissions:
                         # 保留权限
@@ -432,7 +493,7 @@ class FixExecutor:
                     raise IOError("Temporary file verification failed")
             else:
                 # 直接写入
-                file_path.write_text(fixed_content, encoding='utf-8')
+                file_path.write_text(fixed_content, encoding="utf-8")
 
             self.logger.debug(f"Fixed file written: {file_path}")
 
@@ -440,11 +501,13 @@ class FixExecutor:
             self.logger.error(f"Failed to write fixed file {file_path}: {e}")
             raise
 
-    def _verify_fix_result(self, file_path: Path, original_content: str, fixed_content: str) -> bool:
+    def _verify_fix_result(
+        self, file_path: Path, original_content: str, fixed_content: str
+    ) -> bool:
         """验证修复结果"""
         try:
             # 读取写入的文件内容
-            written_content = file_path.read_text(encoding='utf-8')
+            written_content = file_path.read_text(encoding="utf-8")
 
             # 验证内容是否匹配
             if written_content != fixed_content:
@@ -465,7 +528,7 @@ class FixExecutor:
     def _rollback_fix(self, file_path: Path, original_content: str):
         """回滚修复"""
         try:
-            file_path.write_text(original_content, encoding='utf-8')
+            file_path.write_text(original_content, encoding="utf-8")
             self.logger.info(f"File rolled back: {file_path}")
         except Exception as e:
             self.logger.error(f"Failed to rollback file {file_path}: {e}")
@@ -477,7 +540,7 @@ class FixExecutor:
             print(f"\n修复失败: {file_path}")
             print(f"错误信息: {error_message}")
             choice = input("是否继续处理其他文件? (y/n): ").strip().lower()
-            return choice in ['y', 'yes']
+            return choice in ["y", "yes"]
         except (KeyboardInterrupt, EOFError):
             return False
 
@@ -497,13 +560,21 @@ class FixExecutor:
 
         return f"批量修复完成: {', '.join(parts)} (总耗时: {batch_result.total_execution_time:.2f}秒)"
 
-    def get_execution_statistics(self, execution_results: List[ExecutionResult]) -> Dict[str, Any]:
+    def get_execution_statistics(
+        self, execution_results: List[ExecutionResult]
+    ) -> Dict[str, Any]:
         """获取执行统计信息"""
         try:
             total_files = len(execution_results)
             successful_files = len([r for r in execution_results if r.success])
             failed_files = total_files - successful_files
-            rolled_back_files = len([r for r in execution_results if r.status == ExecutionStatus.ROLLED_BACK])
+            rolled_back_files = len(
+                [
+                    r
+                    for r in execution_results
+                    if r.status == ExecutionStatus.ROLLED_BACK
+                ]
+            )
 
             total_time = sum(r.execution_time for r in execution_results)
             avg_time = total_time / total_files if total_files > 0 else 0
@@ -518,7 +589,7 @@ class FixExecutor:
             error_counts = {}
             for result in execution_results:
                 if result.error_message:
-                    error_type = result.error_message.split(':')[0]
+                    error_type = result.error_message.split(":")[0]
                     error_counts[error_type] = error_counts.get(error_type, 0) + 1
 
             return {
@@ -526,11 +597,13 @@ class FixExecutor:
                 "successful_files": successful_files,
                 "failed_files": failed_files,
                 "rolled_back_files": rolled_back_files,
-                "success_rate": successful_files / total_files if total_files > 0 else 0,
+                "success_rate": (
+                    successful_files / total_files if total_files > 0 else 0
+                ),
                 "total_execution_time": total_time,
                 "average_execution_time": avg_time,
                 "status_distribution": status_counts,
-                "error_distribution": error_counts
+                "error_distribution": error_counts,
             }
 
         except Exception as e:

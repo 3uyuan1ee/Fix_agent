@@ -4,33 +4,37 @@
 整合完整的文件选择流程，为AI修复工作流准备选定的文件
 """
 
-import os
 import json
+import os
 import time
-from typing import Dict, List, Any, Optional, Tuple
-from pathlib import Path
 from dataclasses import dataclass, field
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
-from ..utils.logger import get_logger
 from ..utils.config import get_config_manager
+from ..utils.logger import get_logger
 from ..utils.path_resolver import get_path_resolver
 
 # 导入阶段A相关组件
 from .multilang_static_analyzer import MultilangStaticAnalyzer, StaticAnalysisResult
 
+
 # 提供基本的类定义以确保系统可用
 @dataclass
 class AggregatedAnalysisResult:
     """聚合分析结果"""
+
     files: List[Dict[str, Any]] = field(default_factory=list)
     total_issues: int = 0
     issues_by_severity: Dict[str, int] = field(default_factory=dict)
     issues_by_type: Dict[str, int] = field(default_factory=dict)
 
+
 @dataclass
 class UserDecisionResult:
     """用户决策结果"""
+
     selected_files: List[str] = field(default_factory=list)
     decision_type: str = ""
     confidence: float = 0.0
@@ -44,13 +48,15 @@ try:
     from .static_analysis_aggregator import StaticAnalysisAggregator
 except ImportError as e:
     logger.warning(f"静态分析聚合器导入失败: {e}")
+
     class StaticAnalysisAggregator:
         def aggregate_results(self, results):
             return AggregatedAnalysisResult()
 
+
 # 导入AI文件选择器（这是关键组件，必须导入成功）
 try:
-    from .ai_file_selector import AIFileSelector, AIFileSelectionResult
+    from .ai_file_selector import AIFileSelectionResult, AIFileSelector
 except ImportError as e:
     logger.error(f"AI文件选择器导入失败: {e}")
     raise ImportError(f"AI文件选择器是必需组件，无法导入: {e}")
@@ -60,6 +66,7 @@ try:
     from .user_decision_collector import UserDecisionCollector
 except ImportError as e:
     logger.warning(f"用户决策收集器导入失败: {e}")
+
     class UserDecisionCollector:
         def collect_decisions(self, file_selections, **kwargs):
             return UserDecisionResult()
@@ -68,10 +75,13 @@ except ImportError as e:
 @dataclass
 class PhaseAResult:
     """阶段A执行结果"""
+
     project_path: str
     static_analysis_results: List[StaticAnalysisResult] = field(default_factory=list)
     aggregated_results: Dict[str, Any] = field(default_factory=dict)
-    ai_file_selections: AIFileSelectionResult = field(default_factory=AIFileSelectionResult)
+    ai_file_selections: AIFileSelectionResult = field(
+        default_factory=AIFileSelectionResult
+    )
     user_decisions: Dict[str, Any] = field(default_factory=dict)
     final_selected_files: List[str] = field(default_factory=list)
     phase_a_summary: Dict[str, Any] = field(default_factory=dict)
@@ -84,9 +94,16 @@ class PhaseAResult:
         """转换为字典格式"""
         return {
             "project_path": self.project_path,
-            "static_analysis_results": [result.to_dict() if hasattr(result, 'to_dict') else str(result) for result in self.static_analysis_results],
+            "static_analysis_results": [
+                result.to_dict() if hasattr(result, "to_dict") else str(result)
+                for result in self.static_analysis_results
+            ],
             "aggregated_results": self.aggregated_results,
-            "ai_file_selections": self.ai_file_selections.to_dict() if hasattr(self.ai_file_selections, 'to_dict') else str(self.ai_file_selections),
+            "ai_file_selections": (
+                self.ai_file_selections.to_dict()
+                if hasattr(self.ai_file_selections, "to_dict")
+                else str(self.ai_file_selections)
+            ),
             "user_decisions": self.user_decisions,
             "final_selected_files": self.final_selected_files,
             "phase_a_summary": self.phase_a_summary,
@@ -94,13 +111,14 @@ class PhaseAResult:
             "execution_time": self.execution_time,
             "error_message": self.error_message,
             "execution_timestamp": self.execution_timestamp,
-            "total_files_selected": len(self.final_selected_files)
+            "total_files_selected": len(self.final_selected_files),
         }
 
 
 @dataclass
 class ProjectContext:
     """项目上下文信息"""
+
     project_path: str
     project_name: str
     total_files: int
@@ -120,7 +138,7 @@ class ProjectContext:
             "project_structure": self.project_structure,
             "analysis_scope": self.analysis_scope,
             "user_requirements": self.user_requirements,
-            "analysis_focus": self.analysis_focus
+            "analysis_focus": self.analysis_focus,
         }
 
 
@@ -152,7 +170,9 @@ class PhaseACoordinator:
         self.user_decision_collector = UserDecisionCollector()
 
         # 分析结果存储（使用PathResolver解析）
-        results_dir_path = self.config.get("analysis_results_dir", ".fix_backups/phase_a_results")
+        results_dir_path = self.config.get(
+            "analysis_results_dir", ".fix_backups/phase_a_results"
+        )
         resolved_results_dir = self.path_resolver.resolve_path(results_dir_path)
         if not resolved_results_dir:
             # 如果解析失败，使用当前工作目录下的路径
@@ -166,7 +186,7 @@ class PhaseACoordinator:
         user_requirements: str = "",
         analysis_focus: List[str] = None,
         interactive: bool = True,
-        verbose: bool = False
+        verbose: bool = False,
     ) -> PhaseAResult:
         """
         执行完整的阶段A流程
@@ -203,7 +223,9 @@ class PhaseACoordinator:
             print("=" * 60)
 
         # 创建项目上下文
-        project_context = self._create_project_context(project_path, user_requirements, analysis_focus or [])
+        project_context = self._create_project_context(
+            project_path, user_requirements, analysis_focus or []
+        )
 
         try:
             # Phase 1: 静态项目分析 (使用multilang_static_analyzer)
@@ -211,10 +233,15 @@ class PhaseACoordinator:
                 print("\n📍 Phase 1: 静态项目分析")
                 print("   正在执行多语言静态分析...")
 
-            static_results = self._execute_comprehensive_static_analysis(project_context, verbose)
+            static_results = self._execute_comprehensive_static_analysis(
+                project_context, verbose
+            )
 
             if verbose:
-                total_issues = sum(len(result.issues) if hasattr(result, 'issues') else 0 for result in static_results)
+                total_issues = sum(
+                    len(result.issues) if hasattr(result, "issues") else 0
+                    for result in static_results
+                )
                 print(f"   ✅ 静态分析完成，发现 {total_issues} 个问题")
 
             # Phase 1.5: 项目运行和错误收集
@@ -222,7 +249,9 @@ class PhaseACoordinator:
                 print("\n📍 Phase 1.5: 项目运行分析")
                 print("   正在尝试运行项目，收集运行时错误...")
 
-            runtime_errors = self._execute_project_runtime_analysis(project_context, verbose)
+            runtime_errors = self._execute_project_runtime_analysis(
+                project_context, verbose
+            )
 
             if verbose:
                 print(f"   ✅ 运行分析完成，收集到 {len(runtime_errors)} 个运行时问题")
@@ -237,7 +266,9 @@ class PhaseACoordinator:
             )
 
             if verbose:
-                print(f"   ✅ AI筛选完成，建议重点分析 {len(ai_selections.selected_files) if hasattr(ai_selections, 'selected_files') else 0} 个文件")
+                print(
+                    f"   ✅ AI筛选完成，建议重点分析 {len(ai_selections.selected_files) if hasattr(ai_selections, 'selected_files') else 0} 个文件"
+                )
 
             # Phase 3: 用户决策与文件选择
             if verbose:
@@ -245,21 +276,32 @@ class PhaseACoordinator:
                 print("   请审核AI的文件筛选建议...")
 
             user_decisions = self._execute_user_approval_process(
-                project_context, static_results, runtime_errors, ai_selections, interactive, verbose
+                project_context,
+                static_results,
+                runtime_errors,
+                ai_selections,
+                interactive,
+                verbose,
             )
 
             if verbose:
-                print(f"   ✅ 用户审批完成，最终确定 {len(user_decisions.get('final_files', []))} 个文件进行深度分析")
+                print(
+                    f"   ✅ 用户审批完成，最终确定 {len(user_decisions.get('final_files', []))} 个文件进行深度分析"
+                )
 
             # Phase 4: 准备进入阶段B (AI深度问题分析)
-            final_files = user_decisions.get('final_files', [])
-            if not final_files and hasattr(ai_selections, 'selected_files'):
+            final_files = user_decisions.get("final_files", [])
+            if not final_files and hasattr(ai_selections, "selected_files"):
                 # 如果用户没有做出决策，使用AI的建议
                 final_files = [file.file_path for file in ai_selections.selected_files]
 
             # 生成阶段A摘要
             phase_a_summary = self._generate_phase_a_summary(
-                project_context, static_results, ai_selections, user_decisions, final_files
+                project_context,
+                static_results,
+                ai_selections,
+                user_decisions,
+                final_files,
             )
 
             execution_time = time.time() - start_time
@@ -268,14 +310,18 @@ class PhaseACoordinator:
             result = PhaseAResult(
                 project_path=str(project_path),
                 static_analysis_results=static_results,
-                aggregated_results=static_results[0].to_dict() if static_results and hasattr(static_results[0], 'to_dict') else {},
+                aggregated_results=(
+                    static_results[0].to_dict()
+                    if static_results and hasattr(static_results[0], "to_dict")
+                    else {}
+                ),
                 ai_file_selections=ai_selections,
                 user_decisions=user_decisions,
                 final_selected_files=final_files,
                 phase_a_summary=phase_a_summary,
                 execution_success=True,
                 execution_time=execution_time,
-                execution_timestamp=datetime.now().isoformat()
+                execution_timestamp=datetime.now().isoformat(),
             )
 
             # 保存结果
@@ -299,14 +345,11 @@ class PhaseACoordinator:
                 execution_success=False,
                 execution_time=execution_time,
                 error_message=error_msg,
-                execution_timestamp=datetime.now().isoformat()
+                execution_timestamp=datetime.now().isoformat(),
             )
 
     def _create_project_context(
-        self,
-        project_path: Path,
-        user_requirements: str,
-        analysis_focus: List[str]
+        self, project_path: Path, user_requirements: str, analysis_focus: List[str]
     ) -> ProjectContext:
         """创建项目上下文"""
         # 扫描项目结构
@@ -320,28 +363,32 @@ class PhaseACoordinator:
             programming_languages=programming_languages,
             project_structure=project_structure,
             user_requirements=user_requirements,
-            analysis_focus=analysis_focus
+            analysis_focus=analysis_focus,
         )
 
     def _scan_project_structure(self, project_path: Path) -> Dict[str, Any]:
         """扫描项目结构"""
-        structure = {
-            "directories": [],
-            "files_by_extension": {},
-            "key_files": []
-        }
+        structure = {"directories": [], "files_by_extension": {}, "key_files": []}
 
         for item in project_path.rglob("*"):
             if item.is_file():
                 ext = item.suffix.lower()
                 if ext not in structure["files_by_extension"]:
                     structure["files_by_extension"][ext] = []
-                structure["files_by_extension"][ext].append(str(item.relative_to(project_path)))
+                structure["files_by_extension"][ext].append(
+                    str(item.relative_to(project_path))
+                )
 
                 # 识别关键文件
-                if item.name.lower() in ["readme.md", "requirements.txt", "package.json", "setup.py", "dockerfile"]:
+                if item.name.lower() in [
+                    "readme.md",
+                    "requirements.txt",
+                    "package.json",
+                    "setup.py",
+                    "dockerfile",
+                ]:
                     structure["key_files"].append(str(item.relative_to(project_path)))
-            elif item.is_dir() and not item.name.startswith('.'):
+            elif item.is_dir() and not item.name.startswith("."):
                 structure["directories"].append(str(item.relative_to(project_path)))
 
         return structure
@@ -363,7 +410,7 @@ class PhaseACoordinator:
             "css": [".css", ".scss", ".sass"],
             "json": [".json"],
             "yaml": [".yaml", ".yml"],
-            "markdown": [".md"]
+            "markdown": [".md"],
         }
 
         language_counts = {}
@@ -388,14 +435,14 @@ class PhaseACoordinator:
         return language_counts
 
     def _execute_static_analysis(
-        self,
-        project_context: ProjectContext,
-        verbose: bool = False
+        self, project_context: ProjectContext, verbose: bool = False
     ) -> List[StaticAnalysisResult]:
         """执行静态项目分析 - Phase 1"""
         try:
             # 使用PathResolver解析项目路径
-            resolved_project_path = self.path_resolver.resolve_path(project_context.project_path)
+            resolved_project_path = self.path_resolver.resolve_path(
+                project_context.project_path
+            )
             if not resolved_project_path:
                 self.logger.error(f"无法解析项目路径: {project_context.project_path}")
                 return []
@@ -404,10 +451,14 @@ class PhaseACoordinator:
 
             if project_path.is_file():
                 # 如果是单个文件，获取文件所在目录
-                static_results = self.static_analyzer.analyze_files([str(project_path)], verbose=verbose)
+                static_results = self.static_analyzer.analyze_files(
+                    [str(project_path)], verbose=verbose
+                )
             else:
                 # 如果是目录，分析整个项目
-                static_results = self.static_analyzer.analyze_project(str(project_path), verbose=verbose)
+                static_results = self.static_analyzer.analyze_project(
+                    str(project_path), verbose=verbose
+                )
 
             # 转换为列表格式
             if isinstance(static_results, dict):
@@ -423,7 +474,7 @@ class PhaseACoordinator:
         self,
         project_context: ProjectContext,
         static_results: List[StaticAnalysisResult],
-        verbose: bool = False
+        verbose: bool = False,
     ) -> AIFileSelectionResult:
         """执行AI文件选择 - Phase 2"""
         try:
@@ -432,7 +483,7 @@ class PhaseACoordinator:
                 project_path=project_context.project_path,
                 analysis_results=static_results,
                 user_requirements=project_context.user_requirements,
-                analysis_focus=project_context.analysis_focus
+                analysis_focus=project_context.analysis_focus,
             )
 
             return ai_selections
@@ -447,25 +498,32 @@ class PhaseACoordinator:
         static_results: List[StaticAnalysisResult],
         ai_selections: AIFileSelectionResult,
         interactive: bool = True,
-        verbose: bool = False
+        verbose: bool = False,
     ) -> Dict[str, Any]:
         """执行用户决策制定 - Phase 3"""
         try:
-            if interactive and hasattr(ai_selections, 'selected_files') and ai_selections.selected_files:
+            if (
+                interactive
+                and hasattr(ai_selections, "selected_files")
+                and ai_selections.selected_files
+            ):
                 # 使用用户决策收集器
                 user_decisions = self.user_decision_collector.collect_decisions(
                     ai_selections=ai_selections,
                     project_context=project_context,
-                    static_results=static_results
+                    static_results=static_results,
                 )
             else:
                 # 非交互模式，使用AI的建议
-                final_files = [file.file_path for file in getattr(ai_selections, 'selected_files', [])]
+                final_files = [
+                    file.file_path
+                    for file in getattr(ai_selections, "selected_files", [])
+                ]
                 user_decisions = {
                     "final_files": final_files,
                     "decision_type": "auto_accept",
                     "user_modifications": [],
-                    "decision_summary": "自动接受AI建议"
+                    "decision_summary": "自动接受AI建议",
                 }
 
             return user_decisions
@@ -473,11 +531,13 @@ class PhaseACoordinator:
         except Exception as e:
             self.logger.error(f"用户决策制定失败: {e}")
             # 返回基本的决策结果
-            final_files = [file.file_path for file in getattr(ai_selections, 'selected_files', [])]
+            final_files = [
+                file.file_path for file in getattr(ai_selections, "selected_files", [])
+            ]
             return {
                 "final_files": final_files,
                 "decision_type": "fallback",
-                "error": str(e)
+                "error": str(e),
             }
 
     def _generate_phase_a_summary(
@@ -486,11 +546,14 @@ class PhaseACoordinator:
         static_results: List[StaticAnalysisResult],
         ai_selections: AIFileSelectionResult,
         user_decisions: Dict[str, Any],
-        final_files: List[str]
+        final_files: List[str],
     ) -> Dict[str, Any]:
         """生成阶段A摘要"""
-        total_issues = sum(len(result.issues) if hasattr(result, 'issues') else 0 for result in static_results)
-        ai_selected_count = len(getattr(ai_selections, 'selected_files', []))
+        total_issues = sum(
+            len(result.issues) if hasattr(result, "issues") else 0
+            for result in static_results
+        )
+        ai_selected_count = len(getattr(ai_selections, "selected_files", []))
         user_selected_count = len(final_files)
 
         return {
@@ -498,25 +561,29 @@ class PhaseACoordinator:
                 "name": project_context.project_name,
                 "path": project_context.project_path,
                 "total_files": project_context.total_files,
-                "languages": project_context.programming_languages
+                "languages": project_context.programming_languages,
             },
             "static_analysis_summary": {
                 "total_issues": total_issues,
                 "tools_used": len(static_results),
-                "analysis_success": len(static_results) > 0
+                "analysis_success": len(static_results) > 0,
             },
             "ai_selection_summary": {
                 "ai_selected_files": ai_selected_count,
-                "selection_confidence": getattr(ai_selections, 'selection_summary', {}).get('confidence', 0.0),
-                "selection_criteria": getattr(ai_selections, 'selection_summary', {}).get('criteria', [])
+                "selection_confidence": getattr(
+                    ai_selections, "selection_summary", {}
+                ).get("confidence", 0.0),
+                "selection_criteria": getattr(
+                    ai_selections, "selection_summary", {}
+                ).get("criteria", []),
             },
             "user_decision_summary": {
                 "final_selected_files": user_selected_count,
-                "decision_type": user_decisions.get('decision_type', 'unknown'),
-                "user_modifications": len(user_decisions.get('user_modifications', []))
+                "decision_type": user_decisions.get("decision_type", "unknown"),
+                "user_modifications": len(user_decisions.get("user_modifications", [])),
             },
             "phase_a_status": "completed",
-            "ready_for_phase_b": user_selected_count > 0
+            "ready_for_phase_b": user_selected_count > 0,
         }
 
     def _save_phase_a_result(self, result: PhaseAResult):
@@ -525,8 +592,10 @@ class PhaseACoordinator:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             result_file = self.results_dir / f"phase_a_result_{timestamp}.json"
 
-            with open(result_file, 'w', encoding='utf-8') as f:
-                json.dump(result.to_dict(), f, indent=2, ensure_ascii=False, default=str)
+            with open(result_file, "w", encoding="utf-8") as f:
+                json.dump(
+                    result.to_dict(), f, indent=2, ensure_ascii=False, default=str
+                )
 
             self.logger.info(f"阶段A结果已保存到: {result_file}")
 
@@ -543,27 +612,39 @@ class PhaseACoordinator:
         print(f"📊 项目信息:")
         print(f"   • 项目名称: {summary['project_info']['name']}")
         print(f"   • 总文件数: {summary['project_info']['total_files']}")
-        print(f"   • 编程语言: {', '.join(summary['project_info']['languages'].keys())}")
+        print(
+            f"   • 编程语言: {', '.join(summary['project_info']['languages'].keys())}"
+        )
 
         print(f"\n🔍 静态分析结果:")
         print(f"   • 发现问题: {summary['static_analysis_summary']['total_issues']} 个")
         print(f"   • 使用工具: {summary['static_analysis_summary']['tools_used']} 个")
 
         print(f"\n🤖 AI文件选择:")
-        print(f"   • AI选择文件: {summary['ai_selection_summary']['ai_selected_files']} 个")
-        print(f"   • 选择置信度: {summary['ai_selection_summary']['selection_confidence']:.2f}")
+        print(
+            f"   • AI选择文件: {summary['ai_selection_summary']['ai_selected_files']} 个"
+        )
+        print(
+            f"   • 选择置信度: {summary['ai_selection_summary']['selection_confidence']:.2f}"
+        )
 
         print(f"\n👤 用户决策:")
-        print(f"   • 最终选择文件: {summary['user_decision_summary']['final_selected_files']} 个")
+        print(
+            f"   • 最终选择文件: {summary['user_decision_summary']['final_selected_files']} 个"
+        )
         print(f"   • 决策类型: {summary['user_decision_summary']['decision_type']}")
 
         print(f"\n📋 状态:")
         print(f"   • 阶段A状态: {summary['phase_a_status']}")
-        print(f"   • 准备进入阶段B: {'✅ 是' if summary['ready_for_phase_b'] else '❌ 否'}")
+        print(
+            f"   • 准备进入阶段B: {'✅ 是' if summary['ready_for_phase_b'] else '❌ 否'}"
+        )
 
         if result.final_selected_files:
             print(f"\n📁 选中的文件:")
-            for i, file_path in enumerate(result.final_selected_files[:10], 1):  # 最多显示10个
+            for i, file_path in enumerate(
+                result.final_selected_files[:10], 1
+            ):  # 最多显示10个
                 print(f"   {i}. {file_path}")
             if len(result.final_selected_files) > 10:
                 print(f"   ... 还有 {len(result.final_selected_files) - 10} 个文件")
@@ -571,9 +652,7 @@ class PhaseACoordinator:
         print("=" * 60)
 
     def _execute_comprehensive_static_analysis(
-        self,
-        project_context: ProjectContext,
-        verbose: bool = False
+        self, project_context: ProjectContext, verbose: bool = False
     ) -> List[StaticAnalysisResult]:
         """执行综合静态分析 - Phase 1 (使用multilang_static_analyzer)"""
         try:
@@ -582,7 +661,9 @@ class PhaseACoordinator:
                 print(f"   正在使用多语言静态分析器分析项目...")
 
             # 使用PathResolver解析项目路径
-            resolved_project_path = self.path_resolver.resolve_path(project_context.project_path)
+            resolved_project_path = self.path_resolver.resolve_path(
+                project_context.project_path
+            )
             if not resolved_project_path:
                 self.logger.error(f"无法解析项目路径: {project_context.project_path}")
                 return []
@@ -591,10 +672,14 @@ class PhaseACoordinator:
 
             if project_path.is_file():
                 # 如果是单个文件，获取文件所在目录
-                static_results = self.static_analyzer.analyze_files([str(project_path)], verbose=verbose)
+                static_results = self.static_analyzer.analyze_files(
+                    [str(project_path)], verbose=verbose
+                )
             else:
                 # 如果是目录，分析整个项目
-                static_results = self.static_analyzer.analyze_project(str(project_path), verbose=verbose)
+                static_results = self.static_analyzer.analyze_project(
+                    str(project_path), verbose=verbose
+                )
 
             # 转换为列表格式
             if isinstance(static_results, dict):
@@ -602,10 +687,14 @@ class PhaseACoordinator:
 
             if verbose and static_results:
                 for result in static_results:
-                    if hasattr(result, 'issues'):
-                        print(f"   • {result.tool_name}: 发现 {len(result.issues)} 个问题")
+                    if hasattr(result, "issues"):
+                        print(
+                            f"   • {result.tool_name}: 发现 {len(result.issues)} 个问题"
+                        )
                     else:
-                        print(f"   • {getattr(result, 'tool_name', 'Unknown tool')}: 分析完成")
+                        print(
+                            f"   • {getattr(result, 'tool_name', 'Unknown tool')}: 分析完成"
+                        )
 
             return static_results if static_results else []
 
@@ -616,9 +705,7 @@ class PhaseACoordinator:
             return []
 
     def _execute_project_runtime_analysis(
-        self,
-        project_context: ProjectContext,
-        verbose: bool = False
+        self, project_context: ProjectContext, verbose: bool = False
     ) -> List[Dict[str, Any]]:
         """执行多语言项目运行分析 - Phase 1.5"""
         try:
@@ -633,56 +720,56 @@ class PhaseACoordinator:
                 print(f"   开始多语言项目运行分析...")
 
             # Python项目运行分析
-            if languages.get('python', 0) > 0:
+            if languages.get("python", 0) > 0:
                 if verbose:
                     print("   📝 Python项目运行分析...")
                 python_errors = self._analyze_python_project(project_path, verbose)
                 runtime_errors.extend(python_errors)
 
             # JavaScript/Node.js项目运行分析
-            if languages.get('javascript', 0) > 0 or languages.get('typescript', 0) > 0:
+            if languages.get("javascript", 0) > 0 or languages.get("typescript", 0) > 0:
                 if verbose:
                     print("   📝 JavaScript/TypeScript项目运行分析...")
                 js_errors = self._analyze_javascript_project(project_path, verbose)
                 runtime_errors.extend(js_errors)
 
             # Java项目运行分析
-            if languages.get('java', 0) > 0:
+            if languages.get("java", 0) > 0:
                 if verbose:
                     print("   📝 Java项目运行分析...")
                 java_errors = self._analyze_java_project(project_path, verbose)
                 runtime_errors.extend(java_errors)
 
             # Go项目运行分析
-            if languages.get('go', 0) > 0:
+            if languages.get("go", 0) > 0:
                 if verbose:
                     print("   📝 Go项目运行分析...")
                 go_errors = self._analyze_go_project(project_path, verbose)
                 runtime_errors.extend(go_errors)
 
             # C/C++项目运行分析
-            if languages.get('cpp', 0) > 0:
+            if languages.get("cpp", 0) > 0:
                 if verbose:
                     print("   📝 C/C++项目运行分析...")
                 cpp_errors = self._analyze_cpp_project(project_path, verbose)
                 runtime_errors.extend(cpp_errors)
 
             # Rust项目运行分析
-            if languages.get('rust', 0) > 0:
+            if languages.get("rust", 0) > 0:
                 if verbose:
                     print("   📝 Rust项目运行分析...")
                 rust_errors = self._analyze_rust_project(project_path, verbose)
                 runtime_errors.extend(rust_errors)
 
             # PHP项目运行分析
-            if languages.get('php', 0) > 0:
+            if languages.get("php", 0) > 0:
                 if verbose:
                     print("   📝 PHP项目运行分析...")
                 php_errors = self._analyze_php_project(project_path, verbose)
                 runtime_errors.extend(php_errors)
 
             # Ruby项目运行分析
-            if languages.get('ruby', 0) > 0:
+            if languages.get("ruby", 0) > 0:
                 if verbose:
                     print("   📝 Ruby项目运行分析...")
                 ruby_errors = self._analyze_ruby_project(project_path, verbose)
@@ -699,12 +786,14 @@ class PhaseACoordinator:
                 print(f"   ⚠️ 运行分析失败: {e}")
             return []
 
-    def _analyze_python_project(self, project_path: Path, verbose: bool = False) -> List[Dict[str, Any]]:
+    def _analyze_python_project(
+        self, project_path: Path, verbose: bool = False
+    ) -> List[Dict[str, Any]]:
         """分析Python项目"""
         runtime_errors = []
 
         # 查找主入口文件
-        main_files = ['main.py', 'app.py', 'run.py', 'index.py', '__main__.py']
+        main_files = ["main.py", "app.py", "run.py", "index.py", "__main__.py"]
 
         for main_file in main_files:
             main_file_path = project_path / main_file
@@ -714,60 +803,69 @@ class PhaseACoordinator:
 
                 try:
                     import subprocess
+
                     result = subprocess.run(
-                        ['python', str(main_file_path)],
+                        ["python", str(main_file_path)],
                         capture_output=True,
                         text=True,
                         timeout=10,
-                        cwd=project_path
+                        cwd=project_path,
                     )
 
                     if result.stderr:
-                        error_lines = result.stderr.strip().split('\n')
+                        error_lines = result.stderr.strip().split("\n")
                         for line in error_lines:
-                            if 'Error' in line or 'Exception' in line:
-                                runtime_errors.append({
-                                    'file': main_file,
-                                    'language': 'python',
-                                    'error_type': 'runtime_error',
-                                    'message': line.strip(),
-                                    'full_output': result.stderr
-                                })
+                            if "Error" in line or "Exception" in line:
+                                runtime_errors.append(
+                                    {
+                                        "file": main_file,
+                                        "language": "python",
+                                        "error_type": "runtime_error",
+                                        "message": line.strip(),
+                                        "full_output": result.stderr,
+                                    }
+                                )
 
                 except subprocess.TimeoutExpired:
                     if verbose:
                         print(f"      ⚠️ {main_file} 运行超时")
                 except Exception as e:
-                    runtime_errors.append({
-                        'file': main_file,
-                        'language': 'python',
-                        'error_type': 'execution_error',
-                        'message': str(e),
-                        'full_output': str(e)
-                    })
+                    runtime_errors.append(
+                        {
+                            "file": main_file,
+                            "language": "python",
+                            "error_type": "execution_error",
+                            "message": str(e),
+                            "full_output": str(e),
+                        }
+                    )
 
                 break
 
         # 检查Python语法错误
         for file_path in project_path.rglob("*.py"):
-            if file_path.is_file() and not file_path.name.startswith('.'):
+            if file_path.is_file() and not file_path.name.startswith("."):
                 try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, "r", encoding="utf-8") as f:
                         code = f.read()
-                    compile(code, str(file_path), 'exec')
+                    compile(code, str(file_path), "exec")
                 except SyntaxError as e:
-                    runtime_errors.append({
-                        'file': str(file_path.relative_to(project_path)),
-                        'language': 'python',
-                        'error_type': 'syntax_error',
-                        'message': f"第{e.lineno}行: {e.msg}",
-                        'line_number': e.lineno,
-                        'full_output': str(e)
-                    })
+                    runtime_errors.append(
+                        {
+                            "file": str(file_path.relative_to(project_path)),
+                            "language": "python",
+                            "error_type": "syntax_error",
+                            "message": f"第{e.lineno}行: {e.msg}",
+                            "line_number": e.lineno,
+                            "full_output": str(e),
+                        }
+                    )
 
         return runtime_errors
 
-    def _analyze_javascript_project(self, project_path: Path, verbose: bool = False) -> List[Dict[str, Any]]:
+    def _analyze_javascript_project(
+        self, project_path: Path, verbose: bool = False
+    ) -> List[Dict[str, Any]]:
         """分析JavaScript/TypeScript项目"""
         runtime_errors = []
 
@@ -776,58 +874,66 @@ class PhaseACoordinator:
         if package_json.exists():
             try:
                 import subprocess
+
                 # 尝试npm检查
                 result = subprocess.run(
-                    ['npm', 'install'],
+                    ["npm", "install"],
                     capture_output=True,
                     text=True,
                     timeout=30,
-                    cwd=project_path
+                    cwd=project_path,
                 )
 
                 if result.returncode != 0:
-                    runtime_errors.append({
-                        'file': 'package.json',
-                        'language': 'javascript',
-                        'error_type': 'dependency_error',
-                        'message': 'npm install失败',
-                        'full_output': result.stderr
-                    })
+                    runtime_errors.append(
+                        {
+                            "file": "package.json",
+                            "language": "javascript",
+                            "error_type": "dependency_error",
+                            "message": "npm install失败",
+                            "full_output": result.stderr,
+                        }
+                    )
 
                 # 尝试运行脚本
                 try:
-                    with open(package_json, 'r', encoding='utf-8') as f:
+                    with open(package_json, "r", encoding="utf-8") as f:
                         import json
+
                         package_data = json.load(f)
 
-                    scripts = package_data.get('scripts', {})
-                    if 'start' in scripts:
+                    scripts = package_data.get("scripts", {})
+                    if "start" in scripts:
                         if verbose:
                             print(f"      尝试运行: npm start")
                         result = subprocess.run(
-                            ['npm', 'start'],
+                            ["npm", "start"],
                             capture_output=True,
                             text=True,
                             timeout=15,
-                            cwd=project_path
+                            cwd=project_path,
                         )
                         if result.returncode != 0:
-                            runtime_errors.append({
-                                'file': 'package.json',
-                                'language': 'javascript',
-                                'error_type': 'runtime_error',
-                                'message': 'npm start失败',
-                                'full_output': result.stderr
-                            })
+                            runtime_errors.append(
+                                {
+                                    "file": "package.json",
+                                    "language": "javascript",
+                                    "error_type": "runtime_error",
+                                    "message": "npm start失败",
+                                    "full_output": result.stderr,
+                                }
+                            )
 
                 except Exception as e:
-                    runtime_errors.append({
-                        'file': 'package.json',
-                        'language': 'javascript',
-                        'error_type': 'config_error',
-                        'message': f'package.json解析失败: {e}',
-                        'full_output': str(e)
-                    })
+                    runtime_errors.append(
+                        {
+                            "file": "package.json",
+                            "language": "javascript",
+                            "error_type": "config_error",
+                            "message": f"package.json解析失败: {e}",
+                            "full_output": str(e),
+                        }
+                    )
 
             except subprocess.TimeoutExpired:
                 if verbose:
@@ -838,12 +944,15 @@ class PhaseACoordinator:
 
         return runtime_errors
 
-    def _analyze_java_project(self, project_path: Path, verbose: bool = False) -> List[Dict[str, Any]]:
+    def _analyze_java_project(
+        self, project_path: Path, verbose: bool = False
+    ) -> List[Dict[str, Any]]:
         """分析Java项目"""
         runtime_errors = []
 
         try:
             import subprocess
+
             # 查找Java文件
             java_files = list(project_path.rglob("*.java"))
 
@@ -855,21 +964,23 @@ class PhaseACoordinator:
                 for java_file in java_files[:5]:  # 限制编译数量
                     try:
                         result = subprocess.run(
-                            ['javac', str(java_file)],
+                            ["javac", str(java_file)],
                             capture_output=True,
                             text=True,
                             timeout=20,
-                            cwd=project_path
+                            cwd=project_path,
                         )
 
                         if result.returncode != 0:
-                            runtime_errors.append({
-                                'file': str(java_file.relative_to(project_path)),
-                                'language': 'java',
-                                'error_type': 'compilation_error',
-                                'message': '编译失败',
-                                'full_output': result.stderr
-                            })
+                            runtime_errors.append(
+                                {
+                                    "file": str(java_file.relative_to(project_path)),
+                                    "language": "java",
+                                    "error_type": "compilation_error",
+                                    "message": "编译失败",
+                                    "full_output": result.stderr,
+                                }
+                            )
 
                     except subprocess.TimeoutExpired:
                         if verbose:
@@ -884,12 +995,15 @@ class PhaseACoordinator:
 
         return runtime_errors
 
-    def _analyze_go_project(self, project_path: Path, verbose: bool = False) -> List[Dict[str, Any]]:
+    def _analyze_go_project(
+        self, project_path: Path, verbose: bool = False
+    ) -> List[Dict[str, Any]]:
         """分析Go项目"""
         runtime_errors = []
 
         try:
             import subprocess
+
             # 查找main.go
             main_go = project_path / "main.go"
             if main_go.exists():
@@ -897,40 +1011,44 @@ class PhaseACoordinator:
                     print("      尝试编译Go项目")
 
                 result = subprocess.run(
-                    ['go', 'build', '.'],
+                    ["go", "build", "."],
                     capture_output=True,
                     text=True,
                     timeout=20,
-                    cwd=project_path
+                    cwd=project_path,
                 )
 
                 if result.returncode != 0:
-                    runtime_errors.append({
-                        'file': 'main.go',
-                        'language': 'go',
-                        'error_type': 'compilation_error',
-                        'message': 'Go编译失败',
-                        'full_output': result.stderr
-                    })
+                    runtime_errors.append(
+                        {
+                            "file": "main.go",
+                            "language": "go",
+                            "error_type": "compilation_error",
+                            "message": "Go编译失败",
+                            "full_output": result.stderr,
+                        }
+                    )
 
             # 尝试go mod tidy
             go_mod = project_path / "go.mod"
             if go_mod.exists():
                 result = subprocess.run(
-                    ['go', 'mod', 'tidy'],
+                    ["go", "mod", "tidy"],
                     capture_output=True,
                     text=True,
                     timeout=15,
-                    cwd=project_path
+                    cwd=project_path,
                 )
                 if result.returncode != 0:
-                    runtime_errors.append({
-                        'file': 'go.mod',
-                        'language': 'go',
-                        'error_type': 'dependency_error',
-                        'message': 'Go依赖管理失败',
-                        'full_output': result.stderr
-                    })
+                    runtime_errors.append(
+                        {
+                            "file": "go.mod",
+                            "language": "go",
+                            "error_type": "dependency_error",
+                            "message": "Go依赖管理失败",
+                            "full_output": result.stderr,
+                        }
+                    )
 
         except subprocess.TimeoutExpired:
             if verbose:
@@ -943,14 +1061,21 @@ class PhaseACoordinator:
 
         return runtime_errors
 
-    def _analyze_cpp_project(self, project_path: Path, verbose: bool = False) -> List[Dict[str, Any]]:
+    def _analyze_cpp_project(
+        self, project_path: Path, verbose: bool = False
+    ) -> List[Dict[str, Any]]:
         """分析C/C++项目"""
         runtime_errors = []
 
         try:
             import subprocess
+
             # 查找C/C++文件
-            cpp_files = list(project_path.rglob("*.cpp")) + list(project_path.rglob("*.cc")) + list(project_path.rglob("*.c"))
+            cpp_files = (
+                list(project_path.rglob("*.cpp"))
+                + list(project_path.rglob("*.cc"))
+                + list(project_path.rglob("*.c"))
+            )
 
             if cpp_files:
                 if verbose:
@@ -960,21 +1085,23 @@ class PhaseACoordinator:
                 for cpp_file in cpp_files[:3]:
                     try:
                         result = subprocess.run(
-                            ['g++', '-c', str(cpp_file)],
+                            ["g++", "-c", str(cpp_file)],
                             capture_output=True,
                             text=True,
                             timeout=20,
-                            cwd=project_path
+                            cwd=project_path,
                         )
 
                         if result.returncode != 0:
-                            runtime_errors.append({
-                                'file': str(cpp_file.relative_to(project_path)),
-                                'language': 'cpp',
-                                'error_type': 'compilation_error',
-                                'message': 'C++编译失败',
-                                'full_output': result.stderr
-                            })
+                            runtime_errors.append(
+                                {
+                                    "file": str(cpp_file.relative_to(project_path)),
+                                    "language": "cpp",
+                                    "error_type": "compilation_error",
+                                    "message": "C++编译失败",
+                                    "full_output": result.stderr,
+                                }
+                            )
 
                     except subprocess.TimeoutExpired:
                         if verbose:
@@ -989,12 +1116,15 @@ class PhaseACoordinator:
 
         return runtime_errors
 
-    def _analyze_rust_project(self, project_path: Path, verbose: bool = False) -> List[Dict[str, Any]]:
+    def _analyze_rust_project(
+        self, project_path: Path, verbose: bool = False
+    ) -> List[Dict[str, Any]]:
         """分析Rust项目"""
         runtime_errors = []
 
         try:
             import subprocess
+
             cargo_toml = project_path / "Cargo.toml"
 
             if cargo_toml.exists():
@@ -1002,21 +1132,23 @@ class PhaseACoordinator:
                     print("      尝试编译Rust项目")
 
                 result = subprocess.run(
-                    ['cargo', 'check'],
+                    ["cargo", "check"],
                     capture_output=True,
                     text=True,
                     timeout=30,
-                    cwd=project_path
+                    cwd=project_path,
                 )
 
                 if result.returncode != 0:
-                    runtime_errors.append({
-                        'file': 'Cargo.toml',
-                        'language': 'rust',
-                        'error_type': 'compilation_error',
-                        'message': 'Rust编译检查失败',
-                        'full_output': result.stderr
-                    })
+                    runtime_errors.append(
+                        {
+                            "file": "Cargo.toml",
+                            "language": "rust",
+                            "error_type": "compilation_error",
+                            "message": "Rust编译检查失败",
+                            "full_output": result.stderr,
+                        }
+                    )
 
         except subprocess.TimeoutExpired:
             if verbose:
@@ -1029,12 +1161,15 @@ class PhaseACoordinator:
 
         return runtime_errors
 
-    def _analyze_php_project(self, project_path: Path, verbose: bool = False) -> List[Dict[str, Any]]:
+    def _analyze_php_project(
+        self, project_path: Path, verbose: bool = False
+    ) -> List[Dict[str, Any]]:
         """分析PHP项目"""
         runtime_errors = []
 
         try:
             import subprocess
+
             # 查找PHP文件
             php_files = list(project_path.rglob("*.php"))
 
@@ -1046,21 +1181,23 @@ class PhaseACoordinator:
                 for php_file in php_files[:5]:
                     try:
                         result = subprocess.run(
-                            ['php', '-l', str(php_file)],
+                            ["php", "-l", str(php_file)],
                             capture_output=True,
                             text=True,
                             timeout=10,
-                            cwd=project_path
+                            cwd=project_path,
                         )
 
                         if result.returncode != 0:
-                            runtime_errors.append({
-                                'file': str(php_file.relative_to(project_path)),
-                                'language': 'php',
-                                'error_type': 'syntax_error',
-                                'message': 'PHP语法错误',
-                                'full_output': result.stderr
-                            })
+                            runtime_errors.append(
+                                {
+                                    "file": str(php_file.relative_to(project_path)),
+                                    "language": "php",
+                                    "error_type": "syntax_error",
+                                    "message": "PHP语法错误",
+                                    "full_output": result.stderr,
+                                }
+                            )
 
                     except subprocess.TimeoutExpired:
                         if verbose:
@@ -1075,12 +1212,15 @@ class PhaseACoordinator:
 
         return runtime_errors
 
-    def _analyze_ruby_project(self, project_path: Path, verbose: bool = False) -> List[Dict[str, Any]]:
+    def _analyze_ruby_project(
+        self, project_path: Path, verbose: bool = False
+    ) -> List[Dict[str, Any]]:
         """分析Ruby项目"""
         runtime_errors = []
 
         try:
             import subprocess
+
             # 查找Ruby文件
             ruby_files = list(project_path.rglob("*.rb"))
 
@@ -1092,21 +1232,23 @@ class PhaseACoordinator:
                 for ruby_file in ruby_files[:5]:
                     try:
                         result = subprocess.run(
-                            ['ruby', '-c', str(ruby_file)],
+                            ["ruby", "-c", str(ruby_file)],
                             capture_output=True,
                             text=True,
                             timeout=10,
-                            cwd=project_path
+                            cwd=project_path,
                         )
 
                         if result.returncode != 0:
-                            runtime_errors.append({
-                                'file': str(ruby_file.relative_to(project_path)),
-                                'language': 'ruby',
-                                'error_type': 'syntax_error',
-                                'message': 'Ruby语法错误',
-                                'full_output': result.stderr
-                            })
+                            runtime_errors.append(
+                                {
+                                    "file": str(ruby_file.relative_to(project_path)),
+                                    "language": "ruby",
+                                    "error_type": "syntax_error",
+                                    "message": "Ruby语法错误",
+                                    "full_output": result.stderr,
+                                }
+                            )
 
                     except subprocess.TimeoutExpired:
                         if verbose:
@@ -1126,7 +1268,7 @@ class PhaseACoordinator:
         project_context: ProjectContext,
         static_results: List[StaticAnalysisResult],
         runtime_errors: List[Dict[str, Any]],
-        verbose: bool = False
+        verbose: bool = False,
     ) -> AIFileSelectionResult:
         """执行AI智能文件筛选 - Phase 2"""
         try:
@@ -1138,8 +1280,10 @@ class PhaseACoordinator:
 
             # 将用户见解合并到项目上下文中
             if user_insights:
-                project_context.user_requirements = self._merge_user_insights_with_requirements(
-                    project_context.user_requirements, user_insights
+                project_context.user_requirements = (
+                    self._merge_user_insights_with_requirements(
+                        project_context.user_requirements, user_insights
+                    )
                 )
                 if verbose:
                     print(f"   ✅ 已收集用户见解: {len(user_insights)} 个要点")
@@ -1159,7 +1303,7 @@ class PhaseACoordinator:
                 user_requirements=project_context.user_requirements,
                 analysis_focus=project_context.analysis_focus,
                 runtime_errors=runtime_errors,
-                project_structure=project_context.project_structure
+                project_structure=project_context.project_structure,
             )
 
             return ai_selections
@@ -1174,38 +1318,40 @@ class PhaseACoordinator:
         self,
         project_context: ProjectContext,
         static_results: List[StaticAnalysisResult],
-        runtime_errors: List[Dict[str, Any]]
+        runtime_errors: List[Dict[str, Any]],
     ) -> Dict[str, Any]:
         """准备AI分析的输入数据"""
         input_data = {
             "project_context": project_context.to_dict(),
             "static_analysis_summary": {},
             "runtime_errors": runtime_errors,
-            "key_findings": []
+            "key_findings": [],
         }
 
         # 汇总静态分析结果
         total_issues = 0
         issues_by_file = {}
         for result in static_results:
-            if hasattr(result, 'issues') and result.issues:
-                tool_name = getattr(result, 'tool_name', 'unknown')
+            if hasattr(result, "issues") and result.issues:
+                tool_name = getattr(result, "tool_name", "unknown")
                 for issue in result.issues:
-                    file_path = getattr(issue, 'file_path', 'unknown')
+                    file_path = getattr(issue, "file_path", "unknown")
                     if file_path not in issues_by_file:
                         issues_by_file[file_path] = []
-                    issues_by_file[file_path].append({
-                        'tool': tool_name,
-                        'severity': getattr(issue, 'severity', 'unknown'),
-                        'message': getattr(issue, 'message', ''),
-                        'line': getattr(issue, 'line_number', None)
-                    })
+                    issues_by_file[file_path].append(
+                        {
+                            "tool": tool_name,
+                            "severity": getattr(issue, "severity", "unknown"),
+                            "message": getattr(issue, "message", ""),
+                            "line": getattr(issue, "line_number", None),
+                        }
+                    )
                     total_issues += 1
 
         input_data["static_analysis_summary"] = {
             "total_issues": total_issues,
             "issues_by_file": issues_by_file,
-            "tools_used": [getattr(r, 'tool_name', 'unknown') for r in static_results]
+            "tools_used": [getattr(r, "tool_name", "unknown") for r in static_results],
         }
 
         # 识别关键发现
@@ -1217,7 +1363,7 @@ class PhaseACoordinator:
         # 识别有问题的文件
         problematic_files = set()
         for error in runtime_errors:
-            problematic_files.add(error.get('file', ''))
+            problematic_files.add(error.get("file", ""))
         for file_path in issues_by_file.keys():
             if len(issues_by_file[file_path]) > 3:
                 problematic_files.add(file_path)
@@ -1233,18 +1379,21 @@ class PhaseACoordinator:
         runtime_errors: List[Dict[str, Any]],
         ai_selections: AIFileSelectionResult,
         interactive: bool = True,
-        verbose: bool = False
+        verbose: bool = False,
     ) -> Dict[str, Any]:
         """执行用户审批流程 - Phase 3"""
         try:
             if not interactive:
                 # 非交互模式，直接使用AI建议
-                final_files = [file.file_path for file in getattr(ai_selections, 'selected_files', [])]
+                final_files = [
+                    file.file_path
+                    for file in getattr(ai_selections, "selected_files", [])
+                ]
                 return {
                     "final_files": final_files,
                     "decision_type": "auto_accept",
                     "user_modifications": [],
-                    "decision_summary": "自动接受AI建议"
+                    "decision_summary": "自动接受AI建议",
                 }
 
             if verbose:
@@ -1254,12 +1403,17 @@ class PhaseACoordinator:
             self._show_analysis_summary(project_context, static_results, runtime_errors)
 
             # 显示AI建议
-            if hasattr(ai_selections, 'selected_files') and ai_selections.selected_files:
-                print(f"\n🤖 AI建议重点分析以下 {len(ai_selections.selected_files)} 个文件:")
+            if (
+                hasattr(ai_selections, "selected_files")
+                and ai_selections.selected_files
+            ):
+                print(
+                    f"\n🤖 AI建议重点分析以下 {len(ai_selections.selected_files)} 个文件:"
+                )
                 for i, file_selection in enumerate(ai_selections.selected_files, 1):
-                    reason = getattr(file_selection, 'reason', '无特定原因')
-                    confidence = getattr(file_selection, 'confidence', 0.0)
-                    priority = getattr(file_selection, 'priority', 'medium')
+                    reason = getattr(file_selection, "reason", "无特定原因")
+                    confidence = getattr(file_selection, "confidence", 0.0)
+                    priority = getattr(file_selection, "priority", "medium")
                     print(f"   {i}. {file_selection.file_path}")
                     print(f"      优先级: {priority}, 置信度: {confidence:.2f}")
                     print(f"      原因: {reason}")
@@ -1271,43 +1425,43 @@ class PhaseACoordinator:
                 return {
                     "final_files": [],
                     "decision_type": "no_suggestion",
-                    "decision_summary": "AI未提供文件选择建议"
+                    "decision_summary": "AI未提供文件选择建议",
                 }
 
         except Exception as e:
             self.logger.error(f"用户审批流程失败: {e}")
             if verbose:
                 print(f"   ⚠️ 用户审批流程失败: {e}")
-            return {
-                "final_files": [],
-                "decision_type": "error",
-                "error": str(e)
-            }
+            return {"final_files": [], "decision_type": "error", "error": str(e)}
 
     def _show_analysis_summary(
         self,
         project_context: ProjectContext,
         static_results: List[StaticAnalysisResult],
-        runtime_errors: List[Dict[str, Any]]
+        runtime_errors: List[Dict[str, Any]],
     ):
         """显示分析摘要"""
         print(f"\n📊 项目分析摘要:")
         print(f"   • 项目: {project_context.project_name}")
-        print(f"   • 编程语言: {', '.join(project_context.programming_languages.keys())}")
+        print(
+            f"   • 编程语言: {', '.join(project_context.programming_languages.keys())}"
+        )
 
-        total_issues = sum(len(getattr(result, 'issues', [])) for result in static_results)
+        total_issues = sum(
+            len(getattr(result, "issues", [])) for result in static_results
+        )
         print(f"   • 静态分析问题: {total_issues} 个")
         print(f"   • 运行时错误: {len(runtime_errors)} 个")
 
         if runtime_errors:
             print(f"\n⚠️ 发现的运行时问题:")
             for error in runtime_errors[:5]:  # 最多显示5个
-                print(f"   • {error.get('file', 'unknown')}: {error.get('message', '')[:80]}...")
+                print(
+                    f"   • {error.get('file', 'unknown')}: {error.get('message', '')[:80]}..."
+                )
 
     def _collect_user_approval(
-        self,
-        ai_selections: AIFileSelectionResult,
-        project_context: ProjectContext
+        self, ai_selections: AIFileSelectionResult, project_context: ProjectContext
     ) -> Dict[str, Any]:
         """收集用户审批决策"""
         try:
@@ -1323,17 +1477,21 @@ class PhaseACoordinator:
 
                     if choice == "1":
                         # 接受AI建议
-                        final_files = [file.file_path for file in ai_selections.selected_files]
+                        final_files = [
+                            file.file_path for file in ai_selections.selected_files
+                        ]
                         return {
                             "final_files": final_files,
                             "decision_type": "accept_ai_suggestion",
                             "user_modifications": [],
-                            "decision_summary": f"用户接受AI建议，选择{len(final_files)}个文件"
+                            "decision_summary": f"用户接受AI建议，选择{len(final_files)}个文件",
                         }
 
                     elif choice == "2":
                         # 自定义选择
-                        return self._custom_file_selection(ai_selections, project_context)
+                        return self._custom_file_selection(
+                            ai_selections, project_context
+                        )
 
                     elif choice == "3":
                         # 查看更多详情
@@ -1352,21 +1510,21 @@ class PhaseACoordinator:
                     return {
                         "final_files": [],
                         "decision_type": "cancelled",
-                        "decision_summary": "用户取消操作"
+                        "decision_summary": "用户取消操作",
                     }
 
         except Exception as e:
             self.logger.error(f"收集用户审批失败: {e}")
             return {
-                "final_files": [file.file_path for file in ai_selections.selected_files],
+                "final_files": [
+                    file.file_path for file in ai_selections.selected_files
+                ],
                 "decision_type": "fallback",
-                "error": str(e)
+                "error": str(e),
             }
 
     def _custom_file_selection(
-        self,
-        ai_selections: AIFileSelectionResult,
-        project_context: ProjectContext
+        self, ai_selections: AIFileSelectionResult, project_context: ProjectContext
     ) -> Dict[str, Any]:
         """自定义文件选择"""
         print(f"\n📝 自定义文件选择:")
@@ -1377,16 +1535,20 @@ class PhaseACoordinator:
 
         while True:
             try:
-                selection = input("\n请输入要选择的文件编号，用逗号分隔 (例如: 1,3,5): ").strip()
+                selection = input(
+                    "\n请输入要选择的文件编号，用逗号分隔 (例如: 1,3,5): "
+                ).strip()
                 if not selection:
                     continue
 
-                selected_indices = [int(x.strip()) for x in selection.split(',')]
+                selected_indices = [int(x.strip()) for x in selection.split(",")]
                 final_files = []
 
                 for idx in selected_indices:
                     if 1 <= idx <= len(ai_selections.selected_files):
-                        final_files.append(ai_selections.selected_files[idx-1].file_path)
+                        final_files.append(
+                            ai_selections.selected_files[idx - 1].file_path
+                        )
                     else:
                         print(f"⚠️ 跳过无效编号: {idx}")
 
@@ -1394,7 +1556,7 @@ class PhaseACoordinator:
                     "final_files": final_files,
                     "decision_type": "custom_selection",
                     "user_modifications": [f"选择了{len(final_files)}个文件"],
-                    "decision_summary": f"用户自定义选择{len(final_files)}个文件"
+                    "decision_summary": f"用户自定义选择{len(final_files)}个文件",
                 }
 
             except ValueError:
@@ -1403,7 +1565,7 @@ class PhaseACoordinator:
                 return {
                     "final_files": [],
                     "decision_type": "cancelled",
-                    "decision_summary": "用户取消自定义选择"
+                    "decision_summary": "用户取消自定义选择",
                 }
 
     def _show_detailed_analysis(self, ai_selections: AIFileSelectionResult):
@@ -1415,16 +1577,14 @@ class PhaseACoordinator:
             print(f"   置信度: {getattr(file_selection, 'confidence', 0.0):.2f}")
             print(f"   原因: {getattr(file_selection, 'reason', '无')}")
 
-            key_issues = getattr(file_selection, 'key_issues', [])
+            key_issues = getattr(file_selection, "key_issues", [])
             if key_issues:
                 print(f"   关键问题:")
                 for issue in key_issues:
                     print(f"     • {issue}")
 
     def _retry_ai_selection(
-        self,
-        ai_selections: AIFileSelectionResult,
-        project_context: ProjectContext
+        self, ai_selections: AIFileSelectionResult, project_context: ProjectContext
     ) -> Dict[str, Any]:
         """重新AI选择"""
         print(f"\n🔄 重新进行AI筛选...")
@@ -1434,7 +1594,7 @@ class PhaseACoordinator:
             "final_files": final_files,
             "decision_type": "retry_ai",
             "user_modifications": ["用户要求重新筛选"],
-            "decision_summary": f"重新AI筛选，选择{len(final_files)}个文件"
+            "decision_summary": f"重新AI筛选，选择{len(final_files)}个文件",
         }
 
     def get_phase_a_result(self, result_id: str = None) -> Optional[PhaseAResult]:
@@ -1449,7 +1609,7 @@ class PhaseACoordinator:
                     return None
                 result_file = max(result_files, key=lambda f: f.stat().st_mtime)
 
-            with open(result_file, 'r', encoding='utf-8') as f:
+            with open(result_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
             # 从字典重建结果对象（简化版本）
@@ -1460,7 +1620,7 @@ class PhaseACoordinator:
                 execution_success=data.get("execution_success", True),
                 execution_time=data.get("execution_time", 0.0),
                 error_message=data.get("error_message", ""),
-                execution_timestamp=data.get("execution_timestamp", "")
+                execution_timestamp=data.get("execution_timestamp", ""),
             )
 
             return result
@@ -1469,53 +1629,75 @@ class PhaseACoordinator:
             self.logger.error(f"获取阶段A结果失败: {e}")
             return None
 
-    def _collect_user_insights(self, project_context: ProjectContext, verbose: bool = False) -> Dict[str, Any]:
+    def _collect_user_insights(
+        self, project_context: ProjectContext, verbose: bool = False
+    ) -> Dict[str, Any]:
         """收集用户对项目的见解和疑问"""
         user_insights = {}
 
         try:
-            print(f"\n💭 为了更好地进行文件选择，请分享您对项目的见解:（若没有请回车跳过）")
+            print(
+                f"\n💭 为了更好地进行文件选择，请分享您对项目的见解:（若没有请回车跳过）"
+            )
             print("=" * 50)
 
             # 1. 项目重点关注区域
-            focus_area = input("1. 您最关注项目的哪些方面？(安全/性能/代码质量/业务逻辑/其他): ").strip()
+            focus_area = input(
+                "1. 您最关注项目的哪些方面？(安全/性能/代码质量/业务逻辑/其他): "
+            ).strip()
             if focus_area:
-                user_insights['focus_area'] = focus_area
+                user_insights["focus_area"] = focus_area
 
             # 2. 主要担忧
-            concerns = input("2. 对项目有什么主要担忧或问题？(例如：内存泄漏、安全漏洞、性能瓶颈等): ").strip()
+            concerns = input(
+                "2. 对项目有什么主要担忧或问题？(例如：内存泄漏、安全漏洞、性能瓶颈等): "
+            ).strip()
             if concerns:
-                user_insights['concerns'] = concerns
+                user_insights["concerns"] = concerns
 
             # 3. 特定文件关注
-            specific_files = input("3. 有特定需要关注的文件或模块吗？(多个文件用逗号分隔): ").strip()
+            specific_files = input(
+                "3. 有特定需要关注的文件或模块吗？(多个文件用逗号分隔): "
+            ).strip()
             if specific_files:
-                user_insights['specific_files'] = [f.strip() for f in specific_files.split(',')]
+                user_insights["specific_files"] = [
+                    f.strip() for f in specific_files.split(",")
+                ]
 
             # 4. 技术疑问
-            questions = input("4. 有什么技术疑问需要AI重点分析？(例如：某段代码的作用、潜在问题等): ").strip()
+            questions = input(
+                "4. 有什么技术疑问需要AI重点分析？(例如：某段代码的作用、潜在问题等): "
+            ).strip()
             if questions:
-                user_insights['technical_questions'] = questions
+                user_insights["technical_questions"] = questions
 
             # 5. 业务背景
-            business_context = input("5. 项目的业务背景或使用场景是什么？(可选): ").strip()
+            business_context = input(
+                "5. 项目的业务背景或使用场景是什么？(可选): "
+            ).strip()
             if business_context:
-                user_insights['business_context'] = business_context
+                user_insights["business_context"] = business_context
 
             # 6. 时间约束
-            time_constraint = input("6. 有什么时间约束或紧急程度吗？(低/中/高): ").strip()
+            time_constraint = input(
+                "6. 有什么时间约束或紧急程度吗？(低/中/高): "
+            ).strip()
             if time_constraint:
-                user_insights['time_constraint'] = time_constraint
+                user_insights["time_constraint"] = time_constraint
 
             # 7. 质量标准
-            quality_standard = input("7. 对代码质量有什么特殊要求或标准吗？(可选): ").strip()
+            quality_standard = input(
+                "7. 对代码质量有什么特殊要求或标准吗？(可选): "
+            ).strip()
             if quality_standard:
-                user_insights['quality_standard'] = quality_standard
+                user_insights["quality_standard"] = quality_standard
 
             # 8. 修复偏好
-            fix_preference = input("8. 希望AI提供什么样的修复建议？(保守/激进/最小改动): ").strip()
+            fix_preference = input(
+                "8. 希望AI提供什么样的修复建议？(保守/激进/最小改动): "
+            ).strip()
             if fix_preference:
-                user_insights['fix_preference'] = fix_preference
+                user_insights["fix_preference"] = fix_preference
 
             if verbose and user_insights:
                 print(f"\n✅ 已收集到 {len(user_insights)} 个方面的见解")
@@ -1536,34 +1718,38 @@ class PhaseACoordinator:
                 print(f"   ⚠️ 收集用户见解时出错: {e}")
             return {}
 
-    def _merge_user_insights_with_requirements(self, original_requirements: str, user_insights: Dict[str, Any]) -> str:
+    def _merge_user_insights_with_requirements(
+        self, original_requirements: str, user_insights: Dict[str, Any]
+    ) -> str:
         """将用户见解与原有需求合并"""
         try:
             # 构建用户见解文本
             insights_text = "\n\n用户补充见解和需求:\n"
 
-            if 'focus_area' in user_insights:
+            if "focus_area" in user_insights:
                 insights_text += f"- 重点关注领域: {user_insights['focus_area']}\n"
 
-            if 'concerns' in user_insights:
+            if "concerns" in user_insights:
                 insights_text += f"- 主要担忧: {user_insights['concerns']}\n"
 
-            if 'specific_files' in user_insights:
-                insights_text += f"- 特定关注文件: {', '.join(user_insights['specific_files'])}\n"
+            if "specific_files" in user_insights:
+                insights_text += (
+                    f"- 特定关注文件: {', '.join(user_insights['specific_files'])}\n"
+                )
 
-            if 'technical_questions' in user_insights:
+            if "technical_questions" in user_insights:
                 insights_text += f"- 技术疑问: {user_insights['technical_questions']}\n"
 
-            if 'business_context' in user_insights:
+            if "business_context" in user_insights:
                 insights_text += f"- 业务背景: {user_insights['business_context']}\n"
 
-            if 'time_constraint' in user_insights:
+            if "time_constraint" in user_insights:
                 insights_text += f"- 时间约束: {user_insights['time_constraint']}\n"
 
-            if 'quality_standard' in user_insights:
+            if "quality_standard" in user_insights:
                 insights_text += f"- 质量标准: {user_insights['quality_standard']}\n"
 
-            if 'fix_preference' in user_insights:
+            if "fix_preference" in user_insights:
                 insights_text += f"- 修复偏好: {user_insights['fix_preference']}\n"
 
             # 合并原有需求和用户见解

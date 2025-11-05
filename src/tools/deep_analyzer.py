@@ -4,24 +4,27 @@
 """
 
 import asyncio
+import json
 import time
-from typing import Dict, List, Any, Optional, Union
 from dataclasses import dataclass, field
 from pathlib import Path
-import json
+from typing import Any, Dict, List, Optional, Union
 
-from ..utils.logger import get_logger
-from ..utils.config import get_config_manager
-from ..llm.client import LLMClient
 from ..llm.base import Message, MessageRole
+from ..llm.client import LLMClient
 from ..prompts.manager import PromptManager
+from ..utils.config import get_config_manager
+from ..utils.logger import get_logger
 
 
 @dataclass
 class DeepAnalysisRequest:
     """深度分析请求"""
+
     file_path: str
-    analysis_type: str = "comprehensive"  # comprehensive, security, performance, architecture
+    analysis_type: str = (
+        "comprehensive"  # comprehensive, security, performance, architecture
+    )
     model: Optional[str] = None
     temperature: float = 0.3
     max_tokens: int = 4000
@@ -32,6 +35,7 @@ class DeepAnalysisRequest:
 @dataclass
 class DeepAnalysisResult:
     """深度分析结果"""
+
     file_path: str
     analysis_type: str
     success: bool
@@ -55,7 +59,7 @@ class DeepAnalysisResult:
             "model_used": self.model_used,
             "token_usage": self.token_usage,
             "error": self.error,
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }
 
 
@@ -81,14 +85,14 @@ class DeepAnalyzer:
 
         # 获取配置
         try:
-            self.config = self.config_manager.get_section('deep_analysis')
+            self.config = self.config_manager.get_section("deep_analysis")
         except:
             self.config = {}
 
-        self.default_model = self.config.get('default_model', 'gpt-4')
-        self.default_temperature = self.config.get('temperature', 0.3)
-        self.max_tokens = self.config.get('max_tokens', 4000)
-        self.max_file_size = self.config.get('max_file_size', 100 * 1024)  # 100KB
+        self.default_model = self.config.get("default_model", "gpt-4")
+        self.default_temperature = self.config.get("temperature", 0.3)
+        self.max_tokens = self.config.get("max_tokens", 4000)
+        self.max_file_size = self.config.get("max_file_size", 100 * 1024)  # 100KB
 
         self.logger.info(f"DeepAnalyzer initialized with model: {self.default_model}")
 
@@ -105,12 +109,12 @@ class DeepAnalyzer:
         start_time = time.time()
         file_path = Path(request.file_path)
 
-        self.logger.info(f"Starting deep analysis for {file_path} (type: {request.analysis_type})")
+        self.logger.info(
+            f"Starting deep analysis for {file_path} (type: {request.analysis_type})"
+        )
 
         result = DeepAnalysisResult(
-            file_path=str(file_path),
-            analysis_type=request.analysis_type,
-            success=False
+            file_path=str(file_path), analysis_type=request.analysis_type, success=False
         )
 
         try:
@@ -133,7 +137,7 @@ class DeepAnalyzer:
                 messages=messages,
                 model=request.model or self.default_model,
                 temperature=request.temperature,
-                max_tokens=request.max_tokens
+                max_tokens=request.max_tokens,
             )
 
             llm_response = await self.llm_client.complete(llm_request)
@@ -145,16 +149,20 @@ class DeepAnalyzer:
             result.success = True
             result.content = llm_response.content
             result.structured_analysis = parsed_result
-            result.model_used = llm_response.model or request.model or self.default_model
+            result.model_used = (
+                llm_response.model or request.model or self.default_model
+            )
             result.token_usage = llm_response.usage or {}
             result.metadata = {
                 "request_analysis_type": request.analysis_type,
                 "file_size": len(file_content),
                 "prompt_tokens": len(str(messages)),
-                "has_user_instructions": bool(request.user_instructions)
+                "has_user_instructions": bool(request.user_instructions),
             }
 
-            self.logger.info(f"Deep analysis completed for {file_path} in {result.execution_time:.2f}s")
+            self.logger.info(
+                f"Deep analysis completed for {file_path} in {result.execution_time:.2f}s"
+            )
 
         except Exception as e:
             result.error = str(e)
@@ -163,7 +171,9 @@ class DeepAnalyzer:
         result.execution_time = time.time() - start_time
         return result
 
-    def analyze_files(self, requests: List[DeepAnalysisRequest]) -> List[DeepAnalysisResult]:
+    def analyze_files(
+        self, requests: List[DeepAnalysisRequest]
+    ) -> List[DeepAnalysisResult]:
         """
         分析多个文件
 
@@ -179,11 +189,15 @@ class DeepAnalyzer:
         results = asyncio.run(self._analyze_files_async(requests))
 
         successful_count = len([r for r in results if r.success])
-        self.logger.info(f"Deep analysis completed: {successful_count}/{len(results)} files successful")
+        self.logger.info(
+            f"Deep analysis completed: {successful_count}/{len(results)} files successful"
+        )
 
         return results
 
-    async def _analyze_files_async(self, requests: List[DeepAnalysisRequest]) -> List[DeepAnalysisResult]:
+    async def _analyze_files_async(
+        self, requests: List[DeepAnalysisRequest]
+    ) -> List[DeepAnalysisResult]:
         """异步分析多个文件"""
         # 创建异步任务
         tasks = [self.analyze_file(request) for request in requests]
@@ -201,7 +215,7 @@ class DeepAnalyzer:
                     analysis_type=requests[i].analysis_type,
                     success=False,
                     error=str(result),
-                    execution_time=0.0
+                    execution_time=0.0,
                 )
                 processed_results.append(error_result)
             else:
@@ -232,15 +246,20 @@ class DeepAnalyzer:
 
             # 检查文件大小
             if file_path.stat().st_size > self.max_file_size:
-                self.logger.warning(f"File too large ({file_path.stat().st_size} bytes), truncating to {self.max_file_size} bytes")
+                self.logger.warning(
+                    f"File too large ({file_path.stat().st_size} bytes), truncating to {self.max_file_size} bytes"
+                )
 
             # 读取文件内容
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             # 如果文件太大，截断内容
             if len(content) > self.max_file_size:
-                content = content[:self.max_file_size] + "\n\n... (content truncated due to size limit)"
+                content = (
+                    content[: self.max_file_size]
+                    + "\n\n... (content truncated due to size limit)"
+                )
                 self.logger.warning(f"Truncated content for {file_path}")
 
             return content
@@ -252,7 +271,9 @@ class DeepAnalyzer:
             self.logger.error(f"Failed to read file {file_path}: {e}")
             return None
 
-    def _construct_prompt(self, file_content: str, request: DeepAnalysisRequest) -> List[Message]:
+    def _construct_prompt(
+        self, file_content: str, request: DeepAnalysisRequest
+    ) -> List[Message]:
         """
         构造分析prompt
 
@@ -268,8 +289,7 @@ class DeepAnalyzer:
             system_template = self.prompt_manager.get_template("deep_analysis_system")
             if system_template:
                 render_result = self.prompt_manager.render_template(
-                    "deep_analysis_system",
-                    {"analysis_type": request.analysis_type}
+                    "deep_analysis_system", {"analysis_type": request.analysis_type}
                 )
                 if render_result.success:
                     system_message = render_result.content
@@ -279,7 +299,9 @@ class DeepAnalyzer:
                 system_message = "You are an expert code analysis assistant. Provide comprehensive analysis of the given code."
 
             # 获取分析提示
-            analysis_template_name = self._get_analysis_template_name(request.analysis_type)
+            analysis_template_name = self._get_analysis_template_name(
+                request.analysis_type
+            )
             analysis_template = self.prompt_manager.get_template(analysis_template_name)
 
             if analysis_template:
@@ -289,8 +311,8 @@ class DeepAnalyzer:
                         "file_content": file_content,
                         "analysis_type": request.analysis_type,
                         "user_instructions": request.user_instructions or "",
-                        "context": request.context or {}
-                    }
+                        "context": request.context or {},
+                    },
                 )
 
                 if render_result.success:
@@ -302,7 +324,7 @@ class DeepAnalyzer:
 
             messages = [
                 Message(role=MessageRole.SYSTEM, content=system_message),
-                Message(role=MessageRole.USER, content=user_message)
+                Message(role=MessageRole.USER, content=user_message),
             ]
 
             return messages
@@ -319,11 +341,13 @@ class DeepAnalyzer:
             "performance": "deep_performance_analysis",
             "architecture": "deep_architecture_analysis",
             "code_review": "deep_code_review",
-            "refactoring": "deep_refactoring_suggestions"
+            "refactoring": "deep_refactoring_suggestions",
         }
         return template_mapping.get(analysis_type, "deep_code_analysis")
 
-    def _get_fallback_prompt(self, file_content: str, request: DeepAnalysisRequest) -> str:
+    def _get_fallback_prompt(
+        self, file_content: str, request: DeepAnalysisRequest
+    ) -> str:
         """获取fallback prompt"""
         prompt = f"""Please analyze the following Python code for {request.analysis_type} issues:
 
@@ -352,12 +376,12 @@ Please provide:
         """
         try:
             # 尝试解析JSON格式响应
-            if content.strip().startswith('{') or content.strip().startswith('['):
+            if content.strip().startswith("{") or content.strip().startswith("["):
                 return json.loads(content)
 
             # 尝试提取JSON部分
-            json_start = content.find('{')
-            json_end = content.rfind('}') + 1
+            json_start = content.find("{")
+            json_end = content.rfind("}") + 1
             if json_start != -1 and json_end > json_start:
                 json_content = content[json_start:json_end]
                 return json.loads(json_content)
@@ -367,7 +391,7 @@ Please provide:
                 "format": "text",
                 "summary": content[:500] + "..." if len(content) > 500 else content,
                 "analysis_text": content,
-                "structured": False
+                "structured": False,
             }
 
         except json.JSONDecodeError as e:
@@ -378,15 +402,11 @@ Please provide:
                 "summary": content[:500] + "..." if len(content) > 500 else content,
                 "analysis_text": content,
                 "structured": False,
-                "parse_error": str(e)
+                "parse_error": str(e),
             }
         except Exception as e:
             self.logger.error(f"Error parsing LLM response: {e}")
-            return {
-                "format": "error",
-                "error": str(e),
-                "raw_content": content
-            }
+            return {"format": "error", "error": str(e), "raw_content": content}
 
     def get_supported_analysis_types(self) -> List[str]:
         """获取支持的分析类型"""
@@ -396,7 +416,7 @@ Please provide:
             "performance",
             "architecture",
             "code_review",
-            "refactoring"
+            "refactoring",
         ]
 
     def get_analysis_summary(self, results: List[DeepAnalysisResult]) -> Dict[str, Any]:
@@ -421,13 +441,15 @@ Please provide:
             "total_execution_time": sum(r.execution_time for r in results),
             "analysis_types": {},
             "models_used": {},
-            "average_tokens": 0
+            "average_tokens": 0,
         }
 
         # 统计分析类型分布
         for result in results:
             analysis_type = result.analysis_type
-            summary["analysis_types"][analysis_type] = summary["analysis_types"].get(analysis_type, 0) + 1
+            summary["analysis_types"][analysis_type] = (
+                summary["analysis_types"].get(analysis_type, 0) + 1
+            )
 
         # 统计模型使用
         for result in results:
@@ -435,13 +457,17 @@ Please provide:
             summary["models_used"][model] = summary["models_used"].get(model, 0) + 1
 
         # 计算平均token使用
-        total_tokens = sum(r.token_usage.get('total_tokens', 0) for r in results if r.token_usage)
+        total_tokens = sum(
+            r.token_usage.get("total_tokens", 0) for r in results if r.token_usage
+        )
         if successful_files > 0:
             summary["average_tokens"] = total_tokens / successful_files
 
         return summary
 
-    def format_analysis_result(self, result: DeepAnalysisResult, format_type: str = "text") -> str:
+    def format_analysis_result(
+        self, result: DeepAnalysisResult, format_type: str = "text"
+    ) -> str:
         """
         格式化分析结果
 
@@ -492,7 +518,9 @@ Please provide:
         if result.structured_analysis and result.structured_analysis.get("structured"):
             lines.append("## 结构化分析结果")
             lines.append("```json")
-            lines.append(json.dumps(result.structured_analysis, indent=2, ensure_ascii=False))
+            lines.append(
+                json.dumps(result.structured_analysis, indent=2, ensure_ascii=False)
+            )
             lines.append("```")
 
         return "\n".join(lines)

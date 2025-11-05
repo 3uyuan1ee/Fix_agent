@@ -4,14 +4,18 @@ AI文件选择提示词构建器 - T005.1
 """
 
 import json
-from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
 
 from ..utils.logger import get_logger
+
 try:
-    from ..tools.project_analysis_types import ProgrammingLanguage, FileCategory
-    from ..tools.static_analysis_aggregator import ProjectAnalysisReport, FileAnalysisSummary
+    from ..tools.project_analysis_types import FileCategory, ProgrammingLanguage
+    from ..tools.static_analysis_aggregator import (
+        FileAnalysisSummary,
+        ProjectAnalysisReport,
+    )
 except ImportError:
     # 如果相关模块不可用，定义基本类型
     from enum import Enum
@@ -68,6 +72,7 @@ except ImportError:
 @dataclass
 class FileSelectionCriteria:
     """文件选择标准"""
+
     max_files: int = 20
     max_total_issues: int = 500
     min_importance_score: float = 10.0
@@ -80,6 +85,7 @@ class FileSelectionCriteria:
 @dataclass
 class AIFileSelectionPrompt:
     """AI文件选择提示词"""
+
     system_prompt: str
     user_prompt: str
     context_data: Dict[str, Any]
@@ -95,7 +101,7 @@ class AIFileSelectionPrompt:
             "context_data": self.context_data,
             "expected_output_format": self.expected_output_format,
             "token_estimate": self.token_estimate,
-            "build_timestamp": self.build_timestamp
+            "build_timestamp": self.build_timestamp,
         }
 
 
@@ -161,10 +167,12 @@ class AIFileSelectionPromptBuilder:
 请基于以上数据，选择最需要重点分析的文件，并输出JSON格式的结果。
 """
 
-    def build_prompt(self,
-                    project_report: Dict[str, Any],
-                    criteria: Optional[FileSelectionCriteria] = None,
-                    user_requirements: Optional[str] = None) -> AIFileSelectionPrompt:
+    def build_prompt(
+        self,
+        project_report: Dict[str, Any],
+        criteria: Optional[FileSelectionCriteria] = None,
+        user_requirements: Optional[str] = None,
+    ) -> AIFileSelectionPrompt:
         """
         构建AI文件选择提示词
 
@@ -196,17 +204,18 @@ class AIFileSelectionPromptBuilder:
 
         # 构建用户提示词
         user_prompt = self._build_user_prompt(
-            project_overview, file_summaries, high_risk_files,
-            criteria, user_requirements
+            project_overview,
+            file_summaries,
+            high_risk_files,
+            criteria,
+            user_requirements,
         )
 
         # 定义期望输出格式
         expected_output_format = self._build_output_format()
 
         # 估算token数量
-        token_estimate = self._estimate_tokens(
-            system_prompt, user_prompt, context_data
-        )
+        token_estimate = self._estimate_tokens(system_prompt, user_prompt, context_data)
 
         prompt = AIFileSelectionPrompt(
             system_prompt=system_prompt,
@@ -214,18 +223,20 @@ class AIFileSelectionPromptBuilder:
             context_data=context_data,
             expected_output_format=expected_output_format,
             token_estimate=token_estimate,
-            build_timestamp=datetime.now().isoformat()
+            build_timestamp=datetime.now().isoformat(),
         )
 
         self.logger.info(f"AI文件选择提示词构建完成，预估token数: {token_estimate}")
 
         return prompt
 
-    def _build_context_data(self,
-                           project_overview: Dict[str, Any],
-                           file_summaries: List[Dict[str, Any]],
-                           high_risk_files: List[str],
-                           criteria: FileSelectionCriteria) -> Dict[str, Any]:
+    def _build_context_data(
+        self,
+        project_overview: Dict[str, Any],
+        file_summaries: List[Dict[str, Any]],
+        high_risk_files: List[str],
+        criteria: FileSelectionCriteria,
+    ) -> Dict[str, Any]:
         """构建上下文数据"""
         # 过滤和排序文件摘要
         filtered_summaries = self._filter_file_summaries(file_summaries, criteria)
@@ -233,9 +244,7 @@ class AIFileSelectionPromptBuilder:
         # 限制文件数量以控制token使用
         max_files_for_context = min(50, len(filtered_summaries))
         top_summaries = sorted(
-            filtered_summaries,
-            key=lambda x: x.get("importance_score", 0),
-            reverse=True
+            filtered_summaries, key=lambda x: x.get("importance_score", 0), reverse=True
         )[:max_files_for_context]
 
         context_data = {
@@ -247,15 +256,15 @@ class AIFileSelectionPromptBuilder:
                 "min_importance_score": criteria.min_importance_score,
                 "preferred_languages": criteria.preferred_languages,
                 "exclude_patterns": criteria.exclude_patterns,
-                "focus_categories": criteria.focus_categories
-            }
+                "focus_categories": criteria.focus_categories,
+            },
         }
 
         return context_data
 
-    def _filter_file_summaries(self,
-                              file_summaries: List[Dict[str, Any]],
-                              criteria: FileSelectionCriteria) -> List[Dict[str, Any]]:
+    def _filter_file_summaries(
+        self, file_summaries: List[Dict[str, Any]], criteria: FileSelectionCriteria
+    ) -> List[Dict[str, Any]]:
         """过滤文件摘要"""
         filtered = []
 
@@ -288,14 +297,15 @@ class AIFileSelectionPromptBuilder:
     def _should_exclude_file(self, file_path: str, exclude_patterns: List[str]) -> bool:
         """检查文件是否应该被排除"""
         import re
+
         file_lower = file_path.lower()
 
         for pattern in exclude_patterns:
-            if pattern.startswith('*'):
+            if pattern.startswith("*"):
                 # 后缀匹配
                 if file_lower.endswith(pattern[1:].lower()):
                     return True
-            elif pattern.endswith('*'):
+            elif pattern.endswith("*"):
                 # 前缀匹配
                 if file_lower.startswith(pattern[:-1].lower()):
                     return True
@@ -314,7 +324,14 @@ class AIFileSelectionPromptBuilder:
     def _is_test_file(self, file_path: str) -> bool:
         """检查是否为测试文件"""
         test_indicators = [
-            '/test/', '/tests/', 'test_', '_test.', '.test.', '/spec/', '_spec.', '.spec.'
+            "/test/",
+            "/tests/",
+            "test_",
+            "_test.",
+            ".test.",
+            "/spec/",
+            "_spec.",
+            ".spec.",
         ]
 
         file_lower = file_path.lower()
@@ -336,12 +353,14 @@ class AIFileSelectionPromptBuilder:
 
         return base_prompt + criteria_section
 
-    def _build_user_prompt(self,
-                          project_overview: Dict[str, Any],
-                          file_summaries: List[Dict[str, Any]],
-                          high_risk_files: List[str],
-                          criteria: FileSelectionCriteria,
-                          user_requirements: Optional[str]) -> str:
+    def _build_user_prompt(
+        self,
+        project_overview: Dict[str, Any],
+        file_summaries: List[Dict[str, Any]],
+        high_risk_files: List[str],
+        criteria: FileSelectionCriteria,
+        user_requirements: Optional[str],
+    ) -> str:
         """构建用户提示词"""
         # 准备数据
         main_languages = project_overview.get("main_languages", {})
@@ -350,12 +369,16 @@ class AIFileSelectionPromptBuilder:
         # 格式化高风险文件
         high_risk_section = ""
         if high_risk_files:
-            high_risk_section = "\n".join([f"- {file}" for file in high_risk_files[:10]])
+            high_risk_section = "\n".join(
+                [f"- {file}" for file in high_risk_files[:10]]
+            )
         else:
             high_risk_section = "无特别高风险文件"
 
         # 准备文件分析数据
-        file_analysis_section = self._format_file_analysis_data(file_summaries, criteria)
+        file_analysis_section = self._format_file_analysis_data(
+            file_summaries, criteria
+        )
 
         # 准备分析重点
         analysis_focus = self._build_analysis_focus(criteria, user_requirements)
@@ -365,7 +388,9 @@ class AIFileSelectionPromptBuilder:
             project_path=project_overview.get("project_path", ""),
             total_files=project_overview.get("total_files", 0),
             total_issues=project_overview.get("total_issues", 0),
-            main_languages=", ".join([f"{lang}({count})" for lang, count in main_languages.items()]),
+            main_languages=", ".join(
+                [f"{lang}({count})" for lang, count in main_languages.items()]
+            ),
             avg_issues_per_file=analysis_summary.get("avg_issues_per_file", 0),
             high_severity_ratio=f"{analysis_summary.get('high_severity_ratio', 0)*100:.1f}%",
             analysis_focus=analysis_focus,
@@ -373,16 +398,28 @@ class AIFileSelectionPromptBuilder:
             file_analysis_data=file_analysis_section,
             max_files=criteria.max_files,
             min_importance_score=criteria.min_importance_score,
-            preferred_languages=", ".join(criteria.preferred_languages) if criteria.preferred_languages else "无",
-            focus_categories=", ".join(criteria.focus_categories) if criteria.focus_categories else "全部",
-            exclude_patterns=", ".join(criteria.exclude_patterns) if criteria.exclude_patterns else "无"
+            preferred_languages=(
+                ", ".join(criteria.preferred_languages)
+                if criteria.preferred_languages
+                else "无"
+            ),
+            focus_categories=(
+                ", ".join(criteria.focus_categories)
+                if criteria.focus_categories
+                else "全部"
+            ),
+            exclude_patterns=(
+                ", ".join(criteria.exclude_patterns)
+                if criteria.exclude_patterns
+                else "无"
+            ),
         )
 
         return user_prompt.strip()
 
-    def _format_file_analysis_data(self,
-                                  file_summaries: List[Dict[str, Any]],
-                                  criteria: FileSelectionCriteria) -> str:
+    def _format_file_analysis_data(
+        self, file_summaries: List[Dict[str, Any]], criteria: FileSelectionCriteria
+    ) -> str:
         """格式化文件分析数据"""
         if not file_summaries:
             return "无文件数据"
@@ -414,25 +451,33 @@ class AIFileSelectionPromptBuilder:
             data_lines.append(f"- 问题总数: {total_issues}")
             data_lines.append(f"- 重要性分数: {importance_score:.1f}")
             data_lines.append(f"- 问题密度: {issue_density:.2f}/100行")
-            data_lines.append(f"- 严重程度分布: 严重({critical}) 高({high}) 中({medium}) 低({low})")
+            data_lines.append(
+                f"- 严重程度分布: 严重({critical}) 高({high}) 中({medium}) 低({low})"
+            )
             data_lines.append("")
 
         if len(file_summaries) > max_display:
-            data_lines.append(f"... 还有 {len(file_summaries) - max_display} 个文件未显示")
+            data_lines.append(
+                f"... 还有 {len(file_summaries) - max_display} 个文件未显示"
+            )
 
         return "\n".join(data_lines)
 
-    def _build_analysis_focus(self,
-                            criteria: FileSelectionCriteria,
-                            user_requirements: Optional[str]) -> str:
+    def _build_analysis_focus(
+        self, criteria: FileSelectionCriteria, user_requirements: Optional[str]
+    ) -> str:
         """构建分析重点描述"""
         focus_items = []
 
         if criteria.focus_categories:
-            focus_items.append(f"重点关注问题类型: {', '.join(criteria.focus_categories)}")
+            focus_items.append(
+                f"重点关注问题类型: {', '.join(criteria.focus_categories)}"
+            )
 
         if criteria.preferred_languages:
-            focus_items.append(f"优先分析编程语言: {', '.join(criteria.preferred_languages)}")
+            focus_items.append(
+                f"优先分析编程语言: {', '.join(criteria.preferred_languages)}"
+            )
 
         if user_requirements:
             focus_items.append(f"用户特殊要求: {user_requirements}")
@@ -456,52 +501,55 @@ class AIFileSelectionPromptBuilder:
                             "properties": {
                                 "file_path": {
                                     "type": "string",
-                                    "description": "文件路径"
+                                    "description": "文件路径",
                                 },
                                 "priority": {
                                     "type": "string",
                                     "enum": ["high", "medium", "low"],
-                                    "description": "优先级"
+                                    "description": "优先级",
                                 },
-                                "reason": {
-                                    "type": "string",
-                                    "description": "选择理由"
-                                },
+                                "reason": {"type": "string", "description": "选择理由"},
                                 "confidence": {
                                     "type": "number",
                                     "minimum": 0.0,
                                     "maximum": 1.0,
-                                    "description": "置信度"
+                                    "description": "置信度",
                                 },
                                 "key_issues": {
                                     "type": "array",
                                     "items": {"type": "string"},
-                                    "description": "关键问题列表"
-                                }
+                                    "description": "关键问题列表",
+                                },
                             },
-                            "required": ["file_path", "priority", "reason", "confidence"]
-                        }
+                            "required": [
+                                "file_path",
+                                "priority",
+                                "reason",
+                                "confidence",
+                            ],
+                        },
                     },
                     "selection_summary": {
                         "type": "object",
                         "properties": {
                             "total_selected": {"type": "number"},
                             "selection_criteria_met": {"type": "boolean"},
-                            "additional_notes": {"type": "string"}
-                        }
-                    }
+                            "additional_notes": {"type": "string"},
+                        },
+                    },
                 },
-                "required": ["selected_files"]
-            }
+                "required": ["selected_files"],
+            },
         }
 
-    def _estimate_tokens(self,
-                        system_prompt: str,
-                        user_prompt: str,
-                        context_data: Dict[str, Any]) -> int:
+    def _estimate_tokens(
+        self, system_prompt: str, user_prompt: str, context_data: Dict[str, Any]
+    ) -> int:
         """估算token数量"""
         # 粗略估算：1个token约等于4个字符（英文）或1.5个汉字
-        total_text = system_prompt + user_prompt + json.dumps(context_data, ensure_ascii=False)
+        total_text = (
+            system_prompt + user_prompt + json.dumps(context_data, ensure_ascii=False)
+        )
 
         # 简单估算：中文按1字符=1token，英文按4字符=1token
         chinese_chars = len([c for c in total_text if ord(c) > 127])
@@ -511,9 +559,9 @@ class AIFileSelectionPromptBuilder:
 
         return estimated_tokens
 
-    def optimize_prompt_for_tokens(self,
-                                  prompt: AIFileSelectionPrompt,
-                                  target_tokens: int) -> AIFileSelectionPrompt:
+    def optimize_prompt_for_tokens(
+        self, prompt: AIFileSelectionPrompt, target_tokens: int
+    ) -> AIFileSelectionPrompt:
         """
         优化提示词以控制token数量
 
@@ -527,31 +575,37 @@ class AIFileSelectionPromptBuilder:
         if prompt.token_estimate <= target_tokens:
             return prompt
 
-        self.logger.info(f"优化提示词，当前token数: {prompt.token_estimate}, 目标: {target_tokens}")
+        self.logger.info(
+            f"优化提示词，当前token数: {prompt.token_estimate}, 目标: {target_tokens}"
+        )
 
         optimized_prompt = AIFileSelectionPrompt(
             system_prompt=prompt.system_prompt,
             user_prompt=prompt.user_prompt,
-            context_data=self._optimize_context_data(prompt.context_data, target_tokens),
+            context_data=self._optimize_context_data(
+                prompt.context_data, target_tokens
+            ),
             expected_output_format=prompt.expected_output_format,
             token_estimate=0,  # 重新计算
-            build_timestamp=prompt.build_timestamp
+            build_timestamp=prompt.build_timestamp,
         )
 
         # 重新估算token数量
         optimized_prompt.token_estimate = self._estimate_tokens(
             optimized_prompt.system_prompt,
             optimized_prompt.user_prompt,
-            optimized_prompt.context_data
+            optimized_prompt.context_data,
         )
 
-        self.logger.info(f"提示词优化完成，新token数: {optimized_prompt.token_estimate}")
+        self.logger.info(
+            f"提示词优化完成，新token数: {optimized_prompt.token_estimate}"
+        )
 
         return optimized_prompt
 
-    def _optimize_context_data(self,
-                              context_data: Dict[str, Any],
-                              target_tokens: int) -> Dict[str, Any]:
+    def _optimize_context_data(
+        self, context_data: Dict[str, Any], target_tokens: int
+    ) -> Dict[str, Any]:
         """优化上下文数据"""
         optimized_data = context_data.copy()
 
@@ -560,9 +614,7 @@ class AIFileSelectionPromptBuilder:
         if len(file_summaries) > 20:
             # 按重要性分数排序，保留最重要的文件
             sorted_summaries = sorted(
-                file_summaries,
-                key=lambda x: x.get("importance_score", 0),
-                reverse=True
+                file_summaries, key=lambda x: x.get("importance_score", 0), reverse=True
             )
             optimized_data["file_summaries"] = sorted_summaries[:20]
 
@@ -575,11 +627,13 @@ class AIFileSelectionPromptBuilder:
 
 
 # 便捷函数
-def build_file_selection_prompt(project_report: Dict[str, Any],
-                              max_files: int = 20,
-                              preferred_languages: List[str] = None,
-                              focus_categories: List[str] = None,
-                              user_requirements: str = None) -> Dict[str, Any]:
+def build_file_selection_prompt(
+    project_report: Dict[str, Any],
+    max_files: int = 20,
+    preferred_languages: List[str] = None,
+    focus_categories: List[str] = None,
+    user_requirements: str = None,
+) -> Dict[str, Any]:
     """
     便捷的AI文件选择提示词构建函数
 
@@ -596,7 +650,7 @@ def build_file_selection_prompt(project_report: Dict[str, Any],
     criteria = FileSelectionCriteria(
         max_files=max_files,
         preferred_languages=preferred_languages or [],
-        focus_categories=focus_categories or []
+        focus_categories=focus_categories or [],
     )
 
     builder = AIFileSelectionPromptBuilder()

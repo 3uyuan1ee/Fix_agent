@@ -4,14 +4,16 @@
 """
 
 import os
-import yaml
 from pathlib import Path
-from typing import Dict, Any, Optional
 from string import Template
+from typing import Any, Dict, Optional
+
+import yaml
 
 
 class ConfigException(Exception):
     """配置异常"""
+
     pass
 
 
@@ -73,14 +75,14 @@ class ConfigManager:
             if not default_config_path.exists():
                 raise ConfigException(f"默认配置文件不存在: {default_config_path}")
 
-            with open(default_config_path, 'r', encoding='utf-8') as f:
+            with open(default_config_path, "r", encoding="utf-8") as f:
                 self.default_config = yaml.safe_load(f)
 
             # 加载用户配置
             user_config_path = self.config_dir / "user_config.yaml"
             self.user_config = {}
             if user_config_path.exists():
-                with open(user_config_path, 'r', encoding='utf-8') as f:
+                with open(user_config_path, "r", encoding="utf-8") as f:
                     self.user_config = yaml.safe_load(f) or {}
 
             # 合并配置
@@ -96,7 +98,9 @@ class ConfigManager:
         except Exception as e:
             raise ConfigException(f"配置加载失败: {e}")
 
-    def _merge_configs(self, default: Dict[str, Any], user: Dict[str, Any]) -> Dict[str, Any]:
+    def _merge_configs(
+        self, default: Dict[str, Any], user: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
         合并默认配置和用户配置
 
@@ -110,7 +114,11 @@ class ConfigManager:
         result = default.copy()
 
         for key, value in user.items():
-            if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            if (
+                key in result
+                and isinstance(result[key], dict)
+                and isinstance(value, dict)
+            ):
                 result[key] = self._merge_configs(result[key], value)
             else:
                 result[key] = value
@@ -131,7 +139,9 @@ class ConfigManager:
             return {k: self._substitute_env_vars(v) for k, v in config.items()}
         elif isinstance(config, list):
             return [self._substitute_env_vars(item) for item in config]
-        elif isinstance(config, str) and config.startswith("${") and config.endswith("}"):
+        elif (
+            isinstance(config, str) and config.startswith("${") and config.endswith("}")
+        ):
             # 提取环境变量名
             env_var = config[2:-1]
             # 支持默认值，格式: ${VAR_NAME:default_value}
@@ -160,7 +170,7 @@ class ConfigManager:
         if self._config is None:
             raise ConfigException("配置未加载，请先调用 load_config()")
 
-        keys = key.split('.')
+        keys = key.split(".")
         value = self._config
 
         try:
@@ -198,19 +208,19 @@ class ConfigManager:
         Returns:
             配置是否有效
         """
-        required_sections = ['app', 'logging', 'llm', 'static_analysis']
+        required_sections = ["app", "logging", "llm", "static_analysis"]
 
         for section in required_sections:
             if section not in self._config:
                 raise ConfigException(f"缺少必需的配置段: {section}")
 
         # 验证LLM配置
-        llm_config = self.get_section('llm')
-        default_provider = llm_config.get('default_provider')
+        llm_config = self.get_section("llm")
+        default_provider = llm_config.get("default_provider")
         provider_config = llm_config.get(default_provider, {})
 
-        api_key = provider_config.get('api_key', '')
-        if not api_key or api_key.strip() == '':
+        api_key = provider_config.get("api_key", "")
+        if not api_key or api_key.strip() == "":
             # 检查环境变量
             env_var = f"{default_provider.upper()}_API_KEY"
             if not os.getenv(env_var):

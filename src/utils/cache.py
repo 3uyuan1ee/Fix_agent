@@ -3,14 +3,14 @@
 实现分析结果缓存机制，支持内存和Redis缓存
 """
 
-import json
-import time
 import hashlib
+import json
 import threading
+import time
 from abc import ABC, abstractmethod
-from typing import Any, Optional, Dict, List
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from .config import get_config_manager
 from .logger import get_logger
@@ -19,6 +19,7 @@ from .logger import get_logger
 @dataclass
 class CacheEntry:
     """缓存条目"""
+
     key: str
     value: Any
     timestamp: float
@@ -159,6 +160,7 @@ class RedisCacheBackend(CacheBackend):
         """
         try:
             import redis
+
             self.redis_client = redis.from_url(redis_url, decode_responses=False)
             # 测试连接
             self.redis_client.ping()
@@ -192,13 +194,15 @@ class RedisCacheBackend(CacheBackend):
             return False
 
         try:
-            data = json.dumps({
-                'key': entry.key,
-                'value': entry.value,
-                'timestamp': entry.timestamp,
-                'ttl': entry.ttl,
-                'size': entry.size
-            })
+            data = json.dumps(
+                {
+                    "key": entry.key,
+                    "value": entry.value,
+                    "timestamp": entry.timestamp,
+                    "ttl": entry.ttl,
+                    "size": entry.size,
+                }
+            )
             # 设置过期时间
             self.redis_client.setex(entry.key, entry.ttl, data)
             return True
@@ -264,20 +268,24 @@ class CacheManager:
 
     def _setup_backend(self):
         """设置缓存后端"""
-        cache_config = self.config_manager.get_section('cache')
-        cache_type = cache_config.get('type', 'memory')
-        max_size = cache_config.get('max_size', 1000)
+        cache_config = self.config_manager.get_section("cache")
+        cache_type = cache_config.get("type", "memory")
+        max_size = cache_config.get("max_size", 1000)
 
         try:
-            if cache_type == 'redis':
-                redis_url = cache_config.get('redis_url', 'redis://localhost:6379/0')
+            if cache_type == "redis":
+                redis_url = cache_config.get("redis_url", "redis://localhost:6379/0")
                 self.backend = RedisCacheBackend(redis_url)
                 self.logger.info(f"Redis cache backend initialized: {redis_url}")
             else:
                 self.backend = MemoryCacheBackend(max_size)
-                self.logger.info(f"Memory cache backend initialized, max_size: {max_size}")
+                self.logger.info(
+                    f"Memory cache backend initialized, max_size: {max_size}"
+                )
         except Exception as e:
-            self.logger.warning(f"Failed to initialize {cache_type} cache backend, falling back to memory: {e}")
+            self.logger.warning(
+                f"Failed to initialize {cache_type} cache backend, falling back to memory: {e}"
+            )
             self.backend = MemoryCacheBackend(max_size)
 
     def _generate_key(self, prefix: str, data: Any) -> str:
@@ -341,8 +349,8 @@ class CacheManager:
 
         # 获取默认TTL
         if ttl is None:
-            cache_config = self.config_manager.get_section('cache')
-            ttl = cache_config.get('ttl', 3600)
+            cache_config = self.config_manager.get_section("cache")
+            ttl = cache_config.get("ttl", 3600)
 
         # 计算值大小
         try:
@@ -352,11 +360,7 @@ class CacheManager:
 
         # 创建缓存条目
         entry = CacheEntry(
-            key=key,
-            value=value,
-            timestamp=time.time(),
-            ttl=ttl,
-            size=value_size
+            key=key, value=value, timestamp=time.time(), ttl=ttl, size=value_size
         )
 
         result = self.backend.set(entry)
@@ -427,8 +431,9 @@ class CacheManager:
             self.logger.error(f"Factory function failed for key {key}: {e}")
             raise
 
-    def cache_static_analysis(self, file_path: str, analysis_type: str,
-                             result: Dict[str, Any]) -> bool:
+    def cache_static_analysis(
+        self, file_path: str, analysis_type: str, result: Dict[str, Any]
+    ) -> bool:
         """
         缓存静态分析结果
 
@@ -440,14 +445,20 @@ class CacheManager:
         Returns:
             是否缓存成功
         """
-        key = self._generate_key(f"static:{analysis_type}", {
-            'file_path': file_path,
-            'mtime': Path(file_path).stat().st_mtime if Path(file_path).exists() else 0
-        })
+        key = self._generate_key(
+            f"static:{analysis_type}",
+            {
+                "file_path": file_path,
+                "mtime": (
+                    Path(file_path).stat().st_mtime if Path(file_path).exists() else 0
+                ),
+            },
+        )
         return self.set(key, result)
 
-    def get_static_analysis(self, file_path: str,
-                           analysis_type: str) -> Optional[Dict[str, Any]]:
+    def get_static_analysis(
+        self, file_path: str, analysis_type: str
+    ) -> Optional[Dict[str, Any]]:
         """
         获取静态分析缓存
 
@@ -458,14 +469,18 @@ class CacheManager:
         Returns:
             分析结果或None
         """
-        key = self._generate_key(f"static:{analysis_type}", {
-            'file_path': file_path,
-            'mtime': Path(file_path).stat().st_mtime if Path(file_path).exists() else 0
-        })
+        key = self._generate_key(
+            f"static:{analysis_type}",
+            {
+                "file_path": file_path,
+                "mtime": (
+                    Path(file_path).stat().st_mtime if Path(file_path).exists() else 0
+                ),
+            },
+        )
         return self.get(key)
 
-    def cache_llm_response(self, prompt: str, model: str,
-                          response: str) -> bool:
+    def cache_llm_response(self, prompt: str, model: str, response: str) -> bool:
         """
         缓存LLM响应
 
@@ -526,7 +541,7 @@ class CacheManager:
             统计信息字典
         """
         if not self.backend:
-            return {'backend_type': 'none', 'size': 0}
+            return {"backend_type": "none", "size": 0}
 
         keys = self.backend.keys()
         total_size = 0
@@ -539,14 +554,15 @@ class CacheManager:
                 if entry.is_expired():
                     expired_count += 1
 
-        backend_type = type(self.backend).__name__.replace('CacheBackend', '').lower()
+        backend_type = type(self.backend).__name__.replace("CacheBackend", "").lower()
 
         return {
-            'backend_type': backend_type,
-            'size': len(keys),
-            'total_size_bytes': total_size,
-            'expired_entries': expired_count,
-            'hit_rate': getattr(self, '_hit_count', 0) / max(getattr(self, '_access_count', 1), 1)
+            "backend_type": backend_type,
+            "size": len(keys),
+            "total_size_bytes": total_size,
+            "expired_entries": expired_count,
+            "hit_rate": getattr(self, "_hit_count", 0)
+            / max(getattr(self, "_access_count", 1), 1),
         }
 
 

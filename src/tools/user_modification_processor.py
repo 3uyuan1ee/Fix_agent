@@ -11,49 +11,59 @@ T011.2: 用户修改建议处理器
 
 import json
 import re
-from typing import Dict, List, Any, Optional, Tuple, Union
-from dataclasses import dataclass, asdict
-from enum import Enum
-from datetime import datetime
 import uuid
+from dataclasses import asdict, dataclass
+from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from ..utils.types import ProblemType, RiskLevel, FixType
 from ..utils.logger import get_logger
+from ..utils.types import FixType, ProblemType, RiskLevel
+from .fix_suggestion_displayer import SuggestionDisplayData
 from .workflow_data_types import (
-    AIFixSuggestion, WorkflowDataPacket, UserInteractionData
-)
-from .workflow_user_interaction_types import (
-    UserDecision, DecisionType, UserAction, DecisionRationale,
-    ModificationRequest, ModificationType, ModificationResult
+    AIFixSuggestion,
+    UserInteractionData,
+    WorkflowDataPacket,
 )
 from .workflow_flow_state_manager import WorkflowNode
-from .fix_suggestion_displayer import SuggestionDisplayData
+from .workflow_user_interaction_types import (
+    DecisionRationale,
+    DecisionType,
+    ModificationRequest,
+    ModificationResult,
+    ModificationType,
+    UserAction,
+    UserDecision,
+)
 
 logger = get_logger()
 
 
 class ModificationScope(Enum):
     """修改范围枚举"""
-    CODE_ONLY = "code_only"                    # 仅修改代码
-    EXPLANATION_ONLY = "explanation_only"      # 仅修改解释
-    BOTH = "both"                             # 代码和解释都修改
-    METADATA = "metadata"                     # 修改元数据
-    ALTERNATIVES = "alternatives"             # 修改替代方案
+
+    CODE_ONLY = "code_only"  # 仅修改代码
+    EXPLANATION_ONLY = "explanation_only"  # 仅修改解释
+    BOTH = "both"  # 代码和解释都修改
+    METADATA = "metadata"  # 修改元数据
+    ALTERNATIVES = "alternatives"  # 修改替代方案
 
 
 class ModificationValidationResult(Enum):
     """修改验证结果"""
-    VALID = "valid"                           # 修改有效
-    INVALID_SYNTAX = "invalid_syntax"         # 语法错误
-    INVALID_LOGIC = "invalid_logic"           # 逻辑错误
-    INCOMPLETE = "incomplete"                 # 修改不完整
-    REGRESSION = "regression"                 # 引入回归问题
-    NEEDS_REVIEW = "needs_review"             # 需要进一步审查
+
+    VALID = "valid"  # 修改有效
+    INVALID_SYNTAX = "invalid_syntax"  # 语法错误
+    INVALID_LOGIC = "invalid_logic"  # 逻辑错误
+    INCOMPLETE = "incomplete"  # 修改不完整
+    REGRESSION = "regression"  # 引入回归问题
+    NEEDS_REVIEW = "needs_review"  # 需要进一步审查
 
 
 @dataclass
 class UserModificationInput:
     """用户修改输入"""
+
     original_suggestion_id: str
     modification_type: ModificationType
     modified_code: Optional[str] = None
@@ -74,6 +84,7 @@ class UserModificationInput:
 @dataclass
 class ModificationAnalysis:
     """修改分析结果"""
+
     scope: ModificationScope
     complexity: str  # simple, moderate, complex
     risk_level: RiskLevel
@@ -89,6 +100,7 @@ class ModificationAnalysis:
 @dataclass
 class ModifiedSuggestion:
     """修改后的修复建议"""
+
     suggestion_id: str
     original_suggestion_id: str
     file_path: str
@@ -109,6 +121,7 @@ class ModifiedSuggestion:
 @dataclass
 class ModificationProcessingResult:
     """修改处理结果"""
+
     modification_id: str
     original_suggestion_id: str
     success: bool
@@ -129,8 +142,11 @@ class UserModificationProcessor:
         self._modification_history: List[ModificationProcessingResult] = []
         self._syntax_validators = self._init_syntax_validators()
 
-    def process_modification(self, modification_input: UserModificationInput,
-                           original_suggestion: AIFixSuggestion) -> ModificationProcessingResult:
+    def process_modification(
+        self,
+        modification_input: UserModificationInput,
+        original_suggestion: AIFixSuggestion,
+    ) -> ModificationProcessingResult:
         """
         处理用户修改请求
 
@@ -148,7 +164,9 @@ class UserModificationProcessor:
             logger.info(f"处理用户修改: {modification_id}")
 
             # 分析修改范围和复杂度
-            analysis = self._analyze_modification(modification_input, original_suggestion)
+            analysis = self._analyze_modification(
+                modification_input, original_suggestion
+            )
 
             # 验证修改
             validation_errors, warnings = self._validate_modification(
@@ -163,7 +181,9 @@ class UserModificationProcessor:
                 )
 
             # 生成建议
-            recommendations = self._generate_recommendations(analysis, validation_errors)
+            recommendations = self._generate_recommendations(
+                analysis, validation_errors
+            )
 
             processing_time = int((datetime.now() - start_time).total_seconds())
 
@@ -177,7 +197,7 @@ class UserModificationProcessor:
                 warnings=warnings,
                 recommendations=recommendations,
                 processing_time_seconds=processing_time,
-                timestamp=datetime.now()
+                timestamp=datetime.now(),
             )
 
             # 记录修改历史
@@ -190,8 +210,11 @@ class UserModificationProcessor:
             logger.error(f"处理用户修改失败: {e}")
             raise
 
-    def batch_process_modifications(self, modifications: List[UserModificationInput],
-                                  original_suggestions: List[AIFixSuggestion]) -> List[ModificationProcessingResult]:
+    def batch_process_modifications(
+        self,
+        modifications: List[UserModificationInput],
+        original_suggestions: List[AIFixSuggestion],
+    ) -> List[ModificationProcessingResult]:
         """
         批量处理用户修改
 
@@ -205,9 +228,13 @@ class UserModificationProcessor:
         results = []
         logger.info(f"开始批量处理 {len(modifications)} 个修改")
 
-        for modification_input, original_suggestion in zip(modifications, original_suggestions):
+        for modification_input, original_suggestion in zip(
+            modifications, original_suggestions
+        ):
             try:
-                result = self.process_modification(modification_input, original_suggestion)
+                result = self.process_modification(
+                    modification_input, original_suggestion
+                )
                 results.append(result)
             except Exception as e:
                 logger.error(f"批量处理修改失败: {e}")
@@ -222,7 +249,7 @@ class UserModificationProcessor:
                     warnings=[],
                     recommendations=[],
                     processing_time_seconds=0,
-                    timestamp=datetime.now()
+                    timestamp=datetime.now(),
                 )
                 results.append(failed_result)
 
@@ -231,8 +258,9 @@ class UserModificationProcessor:
 
         return results
 
-    def suggest_modifications(self, suggestion: AIFixSuggestion,
-                            common_issues: List[str] = None) -> List[ModificationRequest]:
+    def suggest_modifications(
+        self, suggestion: AIFixSuggestion, common_issues: List[str] = None
+    ) -> List[ModificationRequest]:
         """
         建议常见修改
 
@@ -250,14 +278,18 @@ class UserModificationProcessor:
             common_issues = self._identify_common_issues(suggestion)
 
         for issue in common_issues:
-            modification_request = self._create_modification_suggestion(suggestion, issue)
+            modification_request = self._create_modification_suggestion(
+                suggestion, issue
+            )
             if modification_request:
                 suggestions.append(modification_request)
 
         logger.info(f"生成 {len(suggestions)} 个修改建议")
         return suggestions
 
-    def get_modification_history(self, limit: Optional[int] = None) -> List[ModificationProcessingResult]:
+    def get_modification_history(
+        self, limit: Optional[int] = None
+    ) -> List[ModificationProcessingResult]:
         """
         获取修改历史
 
@@ -275,8 +307,11 @@ class UserModificationProcessor:
 
         return history
 
-    def _analyze_modification(self, modification_input: UserModificationInput,
-                            original_suggestion: AIFixSuggestion) -> ModificationAnalysis:
+    def _analyze_modification(
+        self,
+        modification_input: UserModificationInput,
+        original_suggestion: AIFixSuggestion,
+    ) -> ModificationAnalysis:
         """分析修改"""
         # 确定修改范围
         scope = self._determine_modification_scope(modification_input)
@@ -288,10 +323,14 @@ class UserModificationProcessor:
         risk_level = self._assess_risk_level(modification_input, original_suggestion)
 
         # 估算影响
-        estimated_impact = self._estimate_impact(modification_input, original_suggestion)
+        estimated_impact = self._estimate_impact(
+            modification_input, original_suggestion
+        )
 
         # 语法验证
-        syntax_validation = self._validate_syntax(modification_input, original_suggestion)
+        syntax_validation = self._validate_syntax(
+            modification_input, original_suggestion
+        )
 
         # 逻辑验证
         logic_validation = self._validate_logic(modification_input, original_suggestion)
@@ -300,10 +339,14 @@ class UserModificationProcessor:
         completeness_validation = self._validate_completeness(modification_input)
 
         # 生成变更摘要
-        changes_summary = self._generate_changes_summary(modification_input, original_suggestion)
+        changes_summary = self._generate_changes_summary(
+            modification_input, original_suggestion
+        )
 
         # 识别潜在副作用
-        potential_side_effects = self._identify_side_effects(modification_input, original_suggestion)
+        potential_side_effects = self._identify_side_effects(
+            modification_input, original_suggestion
+        )
 
         # 确定额外测试要求
         additional_testing_required = self._determine_additional_testing(
@@ -320,10 +363,12 @@ class UserModificationProcessor:
             completeness_validation=completeness_validation,
             changes_summary=changes_summary,
             potential_side_effects=potential_side_effects,
-            additional_testing_required=additional_testing_required
+            additional_testing_required=additional_testing_required,
         )
 
-    def _determine_modification_scope(self, modification_input: UserModificationInput) -> ModificationScope:
+    def _determine_modification_scope(
+        self, modification_input: UserModificationInput
+    ) -> ModificationScope:
         """确定修改范围"""
         has_code_modification = bool(modification_input.modified_code)
         has_explanation_modification = bool(modification_input.modified_explanation)
@@ -340,8 +385,11 @@ class UserModificationProcessor:
         else:
             return ModificationScope.METADATA
 
-    def _assess_complexity(self, modification_input: UserModificationInput,
-                          original_suggestion: AIFixSuggestion) -> str:
+    def _assess_complexity(
+        self,
+        modification_input: UserModificationInput,
+        original_suggestion: AIFixSuggestion,
+    ) -> str:
         """评估修改复杂度"""
         complexity_score = 0
 
@@ -359,13 +407,25 @@ class UserModificationProcessor:
                 complexity_score += 1
 
             # 检查关键字修改
-            if any(keyword in modification_input.modified_code.lower()
-                   for keyword in ['import', 'class', 'def', 'function', 'if', 'for', 'while']):
+            if any(
+                keyword in modification_input.modified_code.lower()
+                for keyword in [
+                    "import",
+                    "class",
+                    "def",
+                    "function",
+                    "if",
+                    "for",
+                    "while",
+                ]
+            ):
                 complexity_score += 1
 
         # 解释修改复杂度
         if modification_input.modified_explanation:
-            explanation_diff = len(modification_input.modified_explanation) - len(original_suggestion.explanation)
+            explanation_diff = len(modification_input.modified_explanation) - len(
+                original_suggestion.explanation
+            )
             if abs(explanation_diff) > 100:
                 complexity_score += 1
 
@@ -380,8 +440,11 @@ class UserModificationProcessor:
         else:
             return "simple"
 
-    def _assess_risk_level(self, modification_input: UserModificationInput,
-                          original_suggestion: AIFixSuggestion) -> RiskLevel:
+    def _assess_risk_level(
+        self,
+        modification_input: UserModificationInput,
+        original_suggestion: AIFixSuggestion,
+    ) -> RiskLevel:
         """评估风险等级"""
         risk_score = 0
 
@@ -404,8 +467,11 @@ class UserModificationProcessor:
 
         # 基于原风险等级评估风险
         original_risk_values = {
-            RiskLevel.NEGLIGIBLE: 0, RiskLevel.LOW: 1, RiskLevel.MEDIUM: 2,
-            RiskLevel.HIGH: 3, RiskLevel.CRITICAL: 4
+            RiskLevel.NEGLIGIBLE: 0,
+            RiskLevel.LOW: 1,
+            RiskLevel.MEDIUM: 2,
+            RiskLevel.HIGH: 3,
+            RiskLevel.CRITICAL: 4,
         }
         risk_score += original_risk_values.get(original_suggestion.risk_level, 2)
 
@@ -420,15 +486,21 @@ class UserModificationProcessor:
         else:
             return RiskLevel.NEGLIGIBLE
 
-    def _estimate_impact(self, modification_input: UserModificationInput,
-                        original_suggestion: AIFixSuggestion) -> str:
+    def _estimate_impact(
+        self,
+        modification_input: UserModificationInput,
+        original_suggestion: AIFixSuggestion,
+    ) -> str:
         """估算影响"""
         scope = self._determine_modification_scope(modification_input)
         complexity = self._assess_complexity(modification_input, original_suggestion)
 
         if scope == ModificationScope.BOTH and complexity == "complex":
             return "重大影响：可能影响系统架构和多个功能模块"
-        elif scope == ModificationScope.CODE_ONLY and complexity in ["complex", "moderate"]:
+        elif scope == ModificationScope.CODE_ONLY and complexity in [
+            "complex",
+            "moderate",
+        ]:
             return "较大影响：可能影响相关功能和性能"
         elif scope == ModificationScope.CODE_ONLY and complexity == "simple":
             return "中等影响：主要影响当前修复功能"
@@ -437,8 +509,11 @@ class UserModificationProcessor:
         else:
             return "影响较小：主要是元数据更新"
 
-    def _validate_syntax(self, modification_input: UserModificationInput,
-                        original_suggestion: AIFixSuggestion) -> ModificationValidationResult:
+    def _validate_syntax(
+        self,
+        modification_input: UserModificationInput,
+        original_suggestion: AIFixSuggestion,
+    ) -> ModificationValidationResult:
         """验证语法"""
         if not modification_input.modified_code:
             return ModificationValidationResult.VALID
@@ -451,15 +526,22 @@ class UserModificationProcessor:
             validator = self._syntax_validators[language]
             try:
                 is_valid = validator(modification_input.modified_code)
-                return ModificationValidationResult.VALID if is_valid else ModificationValidationResult.INVALID_SYNTAX
+                return (
+                    ModificationValidationResult.VALID
+                    if is_valid
+                    else ModificationValidationResult.INVALID_SYNTAX
+                )
             except Exception:
                 return ModificationValidationResult.INVALID_SYNTAX
 
         # 简单的语法检查
         return self._basic_syntax_check(modification_input.modified_code, language)
 
-    def _validate_logic(self, modification_input: UserModificationInput,
-                      original_suggestion: AIFixSuggestion) -> ModificationValidationResult:
+    def _validate_logic(
+        self,
+        modification_input: UserModificationInput,
+        original_suggestion: AIFixSuggestion,
+    ) -> ModificationValidationResult:
         """验证逻辑"""
         # 基本逻辑检查
         if modification_input.modified_code:
@@ -468,25 +550,35 @@ class UserModificationProcessor:
                 return ModificationValidationResult.INVALID_LOGIC
 
             # 检查是否与原始问题匹配
-            if not self._matches_problem_context(modification_input.modified_code, original_suggestion):
+            if not self._matches_problem_context(
+                modification_input.modified_code, original_suggestion
+            ):
                 return ModificationValidationResult.NEEDS_REVIEW
 
         return ModificationValidationResult.VALID
 
-    def _validate_completeness(self, modification_input: UserModificationInput) -> ModificationValidationResult:
+    def _validate_completeness(
+        self, modification_input: UserModificationInput
+    ) -> ModificationValidationResult:
         """验证完整性"""
         if modification_input.modification_type == ModificationType.ALTERNATIVE:
             if not modification_input.added_alternatives:
                 return ModificationValidationResult.INCOMPLETE
 
-        if modification_input.modified_code and not modification_input.modified_explanation:
+        if (
+            modification_input.modified_code
+            and not modification_input.modified_explanation
+        ):
             return ModificationValidationResult.NEEDS_REVIEW
 
         return ModificationValidationResult.VALID
 
-    def _validate_modification(self, modification_input: UserModificationInput,
-                             original_suggestion: AIFixSuggestion,
-                             analysis: ModificationAnalysis) -> Tuple[List[str], List[str]]:
+    def _validate_modification(
+        self,
+        modification_input: UserModificationInput,
+        original_suggestion: AIFixSuggestion,
+        analysis: ModificationAnalysis,
+    ) -> Tuple[List[str], List[str]]:
         """验证修改"""
         errors = []
         warnings = []
@@ -515,24 +607,33 @@ class UserModificationProcessor:
 
         return errors, warnings
 
-    def _create_modified_suggestion(self, modification_input: UserModificationInput,
-                                  original_suggestion: AIFixSuggestion,
-                                  analysis: ModificationAnalysis) -> ModifiedSuggestion:
+    def _create_modified_suggestion(
+        self,
+        modification_input: UserModificationInput,
+        original_suggestion: AIFixSuggestion,
+        analysis: ModificationAnalysis,
+    ) -> ModifiedSuggestion:
         """创建修改后的建议"""
         modified_suggestion = ModifiedSuggestion(
             suggestion_id=str(uuid.uuid4()),
             original_suggestion_id=original_suggestion.suggestion_id,
             file_path=original_suggestion.file_path,
             line_number=original_suggestion.line_number,
-            modified_code=modification_input.modified_code or original_suggestion.suggested_code,
+            modified_code=modification_input.modified_code
+            or original_suggestion.suggested_code,
             original_code=original_suggestion.original_code,
-            modified_explanation=modification_input.modified_explanation or original_suggestion.explanation,
-            modified_reasoning=modification_input.modified_reasoning or original_suggestion.reasoning,
-            confidence=max(0.1, original_suggestion.confidence - 0.1),  # 修改后置信度略微降低
+            modified_explanation=modification_input.modified_explanation
+            or original_suggestion.explanation,
+            modified_reasoning=modification_input.modified_reasoning
+            or original_suggestion.reasoning,
+            confidence=max(
+                0.1, original_suggestion.confidence - 0.1
+            ),  # 修改后置信度略微降低
             risk_level=analysis.risk_level,
             fix_type=original_suggestion.fix_type,
             side_effects=analysis.potential_side_effects,
-            alternatives=modification_input.added_alternatives or original_suggestion.alternatives,
+            alternatives=modification_input.added_alternatives
+            or original_suggestion.alternatives,
             testing_requirements=analysis.additional_testing_required,
             modification_metadata={
                 "modification_id": str(uuid.uuid4()),
@@ -541,14 +642,17 @@ class UserModificationProcessor:
                 "expected_impact": modification_input.expected_impact,
                 "complexity": analysis.complexity,
                 "scope": analysis.scope.value,
-                "timestamp": datetime.now().isoformat()
-            }
+                "timestamp": datetime.now().isoformat(),
+            },
         )
 
         return modified_suggestion
 
-    def _generate_changes_summary(self, modification_input: UserModificationInput,
-                                original_suggestion: AIFixSuggestion) -> str:
+    def _generate_changes_summary(
+        self,
+        modification_input: UserModificationInput,
+        original_suggestion: AIFixSuggestion,
+    ) -> str:
         """生成变更摘要"""
         changes = []
 
@@ -561,15 +665,20 @@ class UserModificationProcessor:
             changes.append("解释说明已更新")
 
         if modification_input.added_alternatives:
-            changes.append(f"新增 {len(modification_input.added_alternatives)} 个替代方案")
+            changes.append(
+                f"新增 {len(modification_input.added_alternatives)} 个替代方案"
+            )
 
         if modification_input.modified_reasoning:
             changes.append("推理过程已更新")
 
         return "；".join(changes) if changes else "无明显变更"
 
-    def _identify_side_effects(self, modification_input: UserModificationInput,
-                             original_suggestion: AIFixSuggestion) -> List[str]:
+    def _identify_side_effects(
+        self,
+        modification_input: UserModificationInput,
+        original_suggestion: AIFixSuggestion,
+    ) -> List[str]:
         """识别潜在副作用"""
         side_effects = []
 
@@ -594,33 +703,31 @@ class UserModificationProcessor:
 
         return side_effects
 
-    def _determine_additional_testing(self, modification_input: UserModificationInput,
-                                    scope: ModificationScope,
-                                    risk_level: RiskLevel) -> List[str]:
+    def _determine_additional_testing(
+        self,
+        modification_input: UserModificationInput,
+        scope: ModificationScope,
+        risk_level: RiskLevel,
+    ) -> List[str]:
         """确定额外测试要求"""
         testing_requirements = []
 
         if scope in [ModificationScope.CODE_ONLY, ModificationScope.BOTH]:
-            testing_requirements.extend([
-                "单元测试验证",
-                "功能回归测试",
-                "代码语法检查"
-            ])
+            testing_requirements.extend(
+                ["单元测试验证", "功能回归测试", "代码语法检查"]
+            )
 
         if risk_level in [RiskLevel.HIGH, RiskLevel.CRITICAL]:
-            testing_requirements.extend([
-                "集成测试",
-                "性能测试",
-                "安全性测试"
-            ])
+            testing_requirements.extend(["集成测试", "性能测试", "安全性测试"])
 
         if modification_input.modified_code:
             testing_requirements.append("静态代码分析")
 
         return testing_requirements
 
-    def _generate_recommendations(self, analysis: ModificationAnalysis,
-                                validation_errors: List[str]) -> List[str]:
+    def _generate_recommendations(
+        self, analysis: ModificationAnalysis, validation_errors: List[str]
+    ) -> List[str]:
         """生成建议"""
         recommendations = []
 
@@ -648,14 +755,18 @@ class UserModificationProcessor:
         try:
             # Python语法验证
             import ast
-            validators['python'] = lambda code: self._validate_python_syntax(code)
+
+            validators["python"] = lambda code: self._validate_python_syntax(code)
         except ImportError:
             pass
 
         try:
             # JavaScript语法验证
             import esprima
-            validators['javascript'] = lambda code: self._validate_javascript_syntax(code)
+
+            validators["javascript"] = lambda code: self._validate_javascript_syntax(
+                code
+            )
         except ImportError:
             pass
 
@@ -665,6 +776,7 @@ class UserModificationProcessor:
         """验证Python语法"""
         try:
             import ast
+
             ast.parse(code)
             return True
         except SyntaxError:
@@ -674,29 +786,34 @@ class UserModificationProcessor:
         """验证JavaScript语法"""
         try:
             import esprima
+
             esprima.parse(code)
             return True
         except:
             return False
 
-    def _basic_syntax_check(self, code: str, language: str) -> ModificationValidationResult:
+    def _basic_syntax_check(
+        self, code: str, language: str
+    ) -> ModificationValidationResult:
         """基本语法检查"""
         # 简单的语法检查规则
         if language == "python":
             # 检查括号匹配
-            if code.count('(') != code.count(')'):
+            if code.count("(") != code.count(")"):
                 return ModificationValidationResult.INVALID_SYNTAX
-            if code.count('[') != code.count(']'):
+            if code.count("[") != code.count("]"):
                 return ModificationValidationResult.INVALID_SYNTAX
-            if code.count('{') != code.count('}'):
+            if code.count("{") != code.count("}"):
                 return ModificationValidationResult.INVALID_SYNTAX
 
         # 检查基本结构
-        lines = code.strip().split('\n')
+        lines = code.strip().split("\n")
         for line in lines:
-            if line.strip() and not line.strip().startswith('#'):
+            if line.strip() and not line.strip().startswith("#"):
                 # 基本的代码行检查
-                if not re.match(r'^[\s\w\(\)\[\]\{\}\+\-\*/\=\<\>\!\&\|\:\;\,\.\'"]+$', line):
+                if not re.match(
+                    r'^[\s\w\(\)\[\]\{\}\+\-\*/\=\<\>\!\&\|\:\;\,\.\'"]+$', line
+                ):
                     # 包含可疑字符，但可能有效
                     pass
 
@@ -708,16 +825,18 @@ class UserModificationProcessor:
 
         # 检查常见逻辑问题
         logic_issues = [
-            "while true",     # 无限循环
-            "if true:",       # 总是真的条件
-            "if false:",      # 总是假的条件
-            "return none",    # 总是返回None
-            "pass",          # 空实现
+            "while true",  # 无限循环
+            "if true:",  # 总是真的条件
+            "if false:",  # 总是假的条件
+            "return none",  # 总是返回None
+            "pass",  # 空实现
         ]
 
         return any(issue in code_lower for issue in logic_issues)
 
-    def _matches_problem_context(self, code: str, original_suggestion: AIFixSuggestion) -> bool:
+    def _matches_problem_context(
+        self, code: str, original_suggestion: AIFixSuggestion
+    ) -> bool:
         """检查是否匹配问题上下文"""
         # 简单的上下文匹配检查
         if not code:
@@ -741,19 +860,20 @@ class UserModificationProcessor:
     def _get_file_language(self, file_path: str) -> str:
         """获取文件语言"""
         from pathlib import Path
+
         extension = Path(file_path).suffix.lower()
 
         language_map = {
-            '.py': 'python',
-            '.js': 'javascript',
-            '.ts': 'typescript',
-            '.java': 'java',
-            '.go': 'go',
-            '.cpp': 'cpp',
-            '.c': 'c'
+            ".py": "python",
+            ".js": "javascript",
+            ".ts": "typescript",
+            ".java": "java",
+            ".go": "go",
+            ".cpp": "cpp",
+            ".c": "c",
         }
 
-        return language_map.get(extension, 'text')
+        return language_map.get(extension, "text")
 
     def _identify_common_issues(self, suggestion: AIFixSuggestion) -> List[str]:
         """识别常见问题"""
@@ -775,8 +895,9 @@ class UserModificationProcessor:
 
         return issues
 
-    def _create_modification_suggestion(self, suggestion: AIFixSuggestion,
-                                       issue: str) -> Optional[ModificationRequest]:
+    def _create_modification_suggestion(
+        self, suggestion: AIFixSuggestion, issue: str
+    ) -> Optional[ModificationRequest]:
         """创建修改建议"""
         if "未完成的标记" in issue:
             return ModificationRequest(
@@ -787,29 +908,25 @@ class UserModificationProcessor:
                     "explanation": "请补充完整的实现说明，移除TODO和FIXME标记"
                 },
                 reason="建议提供完整的修复方案",
-                priority="medium"
+                priority="medium",
             )
         elif "代码过长" in issue:
             return ModificationRequest(
                 request_id=str(uuid.uuid4()),
                 suggestion_id=suggestion.suggestion_id,
                 modification_type=ModificationType.CODE_REFACTOR,
-                suggested_changes={
-                    "code": "建议将长代码拆分为多个函数或类"
-                },
+                suggested_changes={"code": "建议将长代码拆分为多个函数或类"},
                 reason="提高代码可读性和可维护性",
-                priority="low"
+                priority="low",
             )
         elif "置信度较低" in issue:
             return ModificationRequest(
                 request_id=str(uuid.uuid4()),
                 suggestion_id=suggestion.suggestion_id,
                 modification_type=ModificationType.IMPROVE_CONFIDENCE,
-                suggested_changes={
-                    "reasoning": "建议提供更详细的推理过程"
-                },
+                suggested_changes={"reasoning": "建议提供更详细的推理过程"},
                 reason="提高建议的可信度",
-                priority="high"
+                priority="high",
             )
 
         return None
@@ -826,7 +943,7 @@ class UserModificationProcessor:
             completeness_validation=ModificationValidationResult.INCOMPLETE,
             changes_summary="处理失败",
             potential_side_effects=[],
-            additional_testing_required=[]
+            additional_testing_required=[],
         )
 
     def _record_modification(self, result: ModificationProcessingResult) -> None:

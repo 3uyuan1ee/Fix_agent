@@ -4,12 +4,12 @@ Anthropic API适配器
 
 import asyncio
 import time
-from typing import Dict, Any, AsyncGenerator, List
+from typing import Any, AsyncGenerator, Dict, List
 
-from .base import LLMProvider, LLMRequest, LLMResponse
-from .http_client import HTTPClient, RetryConfig
-from .exceptions import LLMError, LLMTimeoutError, LLMRateLimitError
 from ..utils.logger import get_logger
+from .base import LLMProvider, LLMRequest, LLMResponse
+from .exceptions import LLMError, LLMRateLimitError, LLMTimeoutError
+from .http_client import HTTPClient, RetryConfig
 
 
 class AnthropicProvider(LLMProvider):
@@ -25,10 +25,7 @@ class AnthropicProvider(LLMProvider):
         super().__init__(config)
         self.logger = get_logger()
         self.http_client = HTTPClient(
-            RetryConfig(
-                max_retries=config.max_retries,
-                base_delay=config.retry_delay
-            )
+            RetryConfig(max_retries=config.max_retries, base_delay=config.retry_delay)
         )
 
     @property
@@ -61,21 +58,25 @@ class AnthropicProvider(LLMProvider):
                 url=url,
                 headers=headers,
                 data=data,
-                timeout=request.config.timeout or self.config.timeout
+                timeout=request.config.timeout or self.config.timeout,
             )
 
             # 解析响应
             response = self._parse_response(response_data)
             response.response_time = time.time() - start_time
 
-            self.logger.debug(f"Anthropic request completed in {response.response_time:.2f}s")
+            self.logger.debug(
+                f"Anthropic request completed in {response.response_time:.2f}s"
+            )
             return response
 
         except Exception as e:
             self.logger.error(f"Anthropic request failed: {e}")
             raise
 
-    async def stream_complete(self, request: LLMRequest) -> AsyncGenerator[LLMResponse, None]:
+    async def stream_complete(
+        self, request: LLMRequest
+    ) -> AsyncGenerator[LLMResponse, None]:
         """
         流式完成文本生成请求
 
@@ -103,7 +104,7 @@ class AnthropicProvider(LLMProvider):
                 url=url,
                 headers=headers,
                 data=data,
-                timeout=request.config.timeout or self.config.timeout
+                timeout=request.config.timeout or self.config.timeout,
             ):
                 response = self._parse_stream_chunk(chunk_data, request_id)
                 if response.request_id:
@@ -133,10 +134,13 @@ class AnthropicProvider(LLMProvider):
         if request.messages[0].role.value != "system":
             # 如果没有system消息，添加一个默认的
             from .base import Message, MessageRole
-            request.messages.insert(0, Message(
-                role=MessageRole.SYSTEM,
-                content="You are a helpful AI assistant."
-            ))
+
+            request.messages.insert(
+                0,
+                Message(
+                    role=MessageRole.SYSTEM, content="You are a helpful AI assistant."
+                ),
+            )
             self.logger.info("Added default system message for Anthropic")
 
         # 验证消息格式
@@ -150,11 +154,13 @@ class AnthropicProvider(LLMProvider):
             "Content-Type": "application/json",
             "x-api-key": self.config.api_key,
             "anthropic-version": "2023-06-01",
-            "User-Agent": "AIDefectDetector/1.0"
+            "User-Agent": "AIDefectDetector/1.0",
         }
 
         if self.config.api_base:
-            headers["Host"] = self.config.api_base.replace("https://", "").replace("http://", "")
+            headers["Host"] = self.config.api_base.replace("https://", "").replace(
+                "http://", ""
+            )
 
         return headers
 
@@ -167,10 +173,7 @@ class AnthropicProvider(LLMProvider):
         """准备请求数据"""
         messages = []
         for msg in request.messages:
-            message_dict = {
-                "role": msg.role.value,
-                "content": msg.content
-            }
+            message_dict = {"role": msg.role.value, "content": msg.content}
             messages.append(message_dict)
 
         data = {
@@ -179,12 +182,16 @@ class AnthropicProvider(LLMProvider):
             "max_tokens": self.config.max_tokens or 1000,
             "temperature": self.config.temperature,
             "top_p": self.config.top_p,
-            "stream": request.config.stream or self.config.stream
+            "stream": request.config.stream or self.config.stream,
         }
 
         # Anthropic特有的参数
         if self.config.stop:
-            data["stop_sequences"] = self.config.stop if isinstance(self.config.stop, list) else [self.config.stop]
+            data["stop_sequences"] = (
+                self.config.stop
+                if isinstance(self.config.stop, list)
+                else [self.config.stop]
+            )
 
         # 添加工具调用相关参数
         if request.tools:
@@ -212,12 +219,15 @@ class AnthropicProvider(LLMProvider):
             usage={
                 "prompt_tokens": usage.get("input_tokens", 0),
                 "completion_tokens": usage.get("output_tokens", 0),
-                "total_tokens": usage.get("input_tokens", 0) + usage.get("output_tokens", 0)
+                "total_tokens": usage.get("input_tokens", 0)
+                + usage.get("output_tokens", 0),
             },
-            created_at=data.get("created_at", time.time())
+            created_at=data.get("created_at", time.time()),
         )
 
-    def _parse_stream_chunk(self, chunk: Dict[str, Any], request_id: str = "") -> LLMResponse:
+    def _parse_stream_chunk(
+        self, chunk: Dict[str, Any], request_id: str = ""
+    ) -> LLMResponse:
         """解析流式响应片段"""
         if "type" not in chunk:
             return LLMResponse(
@@ -226,7 +236,7 @@ class AnthropicProvider(LLMProvider):
                 model=self.config.model,
                 content="",
                 is_stream=True,
-                is_complete=False
+                is_complete=False,
             )
 
         if chunk["type"] == "message_start":
@@ -236,7 +246,7 @@ class AnthropicProvider(LLMProvider):
                 model=chunk.get("model", self.config.model),
                 content="",
                 is_stream=True,
-                is_complete=False
+                is_complete=False,
             )
 
         elif chunk["type"] == "content_block_delta":
@@ -247,7 +257,7 @@ class AnthropicProvider(LLMProvider):
                 content=chunk.get("delta", {}).get("text", ""),
                 delta=chunk.get("delta", {}).get("text", ""),
                 is_stream=True,
-                is_complete=False
+                is_complete=False,
             )
 
         elif chunk["type"] == "message_delta":
@@ -259,7 +269,7 @@ class AnthropicProvider(LLMProvider):
                 content=chunk.get("delta", {}).get("text", ""),
                 delta=chunk.get("delta", {}).get("text", ""),
                 is_stream=True,
-                is_complete=True
+                is_complete=True,
             )
 
         elif chunk["type"] == "message_stop":
@@ -270,7 +280,7 @@ class AnthropicProvider(LLMProvider):
                 content="",
                 finish_reason=chunk.get("stop_reason", "end_turn"),
                 is_stream=True,
-                is_complete=True
+                is_complete=True,
             )
 
         return LLMResponse(
@@ -279,7 +289,7 @@ class AnthropicProvider(LLMProvider):
             model=self.config.model,
             content="",
             is_stream=True,
-            is_complete=False
+            is_complete=False,
         )
 
     def get_default_config(self) -> Dict[str, Any]:
@@ -291,7 +301,7 @@ class AnthropicProvider(LLMProvider):
             "timeout": 30,
             "max_retries": 3,
             "retry_delay": 1.0,
-            "api_base": "https://api.anthropic.com/v1"
+            "api_base": "https://api.anthropic.com/v1",
         }
 
     def estimate_tokens(self, text: str) -> int:
@@ -315,7 +325,7 @@ class AnthropicProvider(LLMProvider):
         for char in text:
             if ord(char) < 128:  # ASCII字符
                 ascii_chars += 1
-            elif '\u4e00' <= char <= '\u9fff':  # 中文字符
+            elif "\u4e00" <= char <= "\u9fff":  # 中文字符
                 chinese_chars += 1
             else:
                 other_chars += 1
@@ -351,7 +361,7 @@ class AnthropicProvider(LLMProvider):
             "claude-3-haiku-20240307": {"input": 0.25, "output": 1.25},
             "claude-2.1": {"input": 8.0, "output": 24.0},
             "claude-2.0": {"input": 8.0, "output": 24.0},
-            "claude-instant-1.2": {"input": 0.8, "output": 2.4}
+            "claude-instant-1.2": {"input": 0.8, "output": 2.4},
         }
 
         model_name = response.model.lower()
@@ -368,7 +378,9 @@ class AnthropicProvider(LLMProvider):
             output_tokens = response.usage.get("completion_tokens", 0)
         else:
             # 估算tokens
-            input_tokens = sum(self.estimate_tokens(msg.content) for msg in request.messages)
+            input_tokens = sum(
+                self.estimate_tokens(msg.content) for msg in request.messages
+            )
             output_tokens = self.estimate_tokens(response.content)
 
         # 将价格从每1M tokens转换为每1K tokens
@@ -384,7 +396,7 @@ class AnthropicProvider(LLMProvider):
             "claude-2.1",
             "claude-2.0",
             "claude-instant-1.2",
-            "claude-instant-1.1"
+            "claude-instant-1.1",
         ]
 
     def check_model_availability(self, model: str) -> bool:

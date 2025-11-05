@@ -3,34 +3,37 @@
 提供节点F自动修复执行的安全基础
 """
 
-import uuid
+import ast
+import difflib
 import hashlib
+import shutil
 import time
-from typing import Dict, List, Any, Optional, Tuple
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-import shutil
-import difflib
-import ast
+from typing import Any, Dict, List, Optional, Tuple
 
-from ..utils.logger import get_logger
 from ..utils.config import get_config_manager
+from ..utils.logger import get_logger
 
 
 class FixExecutionError(Exception):
     """修复执行异常"""
+
     pass
 
 
 class FixValidationError(Exception):
     """修复验证异常"""
+
     pass
 
 
 @dataclass
 class FixOperation:
     """修复操作数据结构"""
+
     operation_id: str
     file_path: str
     line_start: int
@@ -56,7 +59,7 @@ class FixOperation:
             "backup_path": self.backup_path,
             "timestamp": self.timestamp.isoformat(),
             "applied": self.applied,
-            "rollback_data": self.rollback_data
+            "rollback_data": self.rollback_data,
         }
 
     def calculate_hash(self) -> str:
@@ -68,6 +71,7 @@ class FixOperation:
 @dataclass
 class FixExecutionResult:
     """修复执行结果"""
+
     operation_id: str
     success: bool
     error_message: str = ""
@@ -148,7 +152,7 @@ class SafeCodeModifier:
                 operation.backup_path = self.create_backup(operation.file_path)
 
             # 读取原文件内容
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 original_lines = f.readlines()
 
             # 验证行号范围
@@ -160,31 +164,35 @@ class SafeCodeModifier:
 
             # 准备修复数据
             fixed_lines = operation.fixed_code.splitlines(keepends=True)
-            original_lines_section = original_lines[operation.line_start-1:operation.line_end]
+            original_lines_section = original_lines[
+                operation.line_start - 1 : operation.line_end
+            ]
 
             # 保存回滚数据
             operation.rollback_data = {
                 "original_lines": original_lines_section,
                 "line_start": operation.line_start,
-                "line_end": operation.line_end
+                "line_end": operation.line_end,
             }
 
             # 应用修复
             new_lines = (
-                original_lines[:operation.line_start-1] +
-                fixed_lines +
-                original_lines[operation.line_end:]
+                original_lines[: operation.line_start - 1]
+                + fixed_lines
+                + original_lines[operation.line_end :]
             )
 
             # 写入修复后的内容
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.writelines(new_lines)
 
             # 更新操作状态
             operation.applied = True
             self.operation_history.append(operation)
 
-            self.logger.info(f"应用修复: {operation.operation_id}, 文件: {operation.file_path}")
+            self.logger.info(
+                f"应用修复: {operation.operation_id}, 文件: {operation.file_path}"
+            )
             return True
 
         except Exception as e:
@@ -220,19 +228,19 @@ class SafeCodeModifier:
             file_path = Path(operation.file_path)
 
             # 读取当前文件内容
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 current_lines = f.readlines()
 
             # 恢复原始内容
             rollback_data = operation.rollback_data
             new_lines = (
-                current_lines[:rollback_data["line_start"]-1] +
-                rollback_data["original_lines"] +
-                current_lines[rollback_data["line_end"]:]
+                current_lines[: rollback_data["line_start"] - 1]
+                + rollback_data["original_lines"]
+                + current_lines[rollback_data["line_end"] :]
             )
 
             # 写入恢复的内容
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.writelines(new_lines)
 
             # 更新操作状态
@@ -259,10 +267,10 @@ class SafeCodeModifier:
             file_path = Path(file_path)
 
             # 只验证Python文件
-            if file_path.suffix != '.py':
+            if file_path.suffix != ".py":
                 return True
 
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             # 使用AST验证语法
@@ -306,7 +314,9 @@ class FixExecutionManager:
         self.code_modifier = SafeCodeModifier(backup_dir)
         self.execution_log: List[FixExecutionResult] = []
 
-    def execute_ai_fix_suggestion(self, suggestion: Dict[str, Any]) -> FixExecutionResult:
+    def execute_ai_fix_suggestion(
+        self, suggestion: Dict[str, Any]
+    ) -> FixExecutionResult:
         """
         执行AI修复建议
 
@@ -343,10 +353,14 @@ class FixExecutionManager:
                 operation_id=operation_id,
                 file_path=file_path,
                 line_start=line_number,
-                line_end=line_number if operation_type in ["insert", "delete"] else line_number,
+                line_end=(
+                    line_number
+                    if operation_type in ["insert", "delete"]
+                    else line_number
+                ),
                 original_code=original_code,
                 fixed_code=fixed_code,
-                operation_type=operation_type
+                operation_type=operation_type,
             )
 
             # 应用修复
@@ -373,7 +387,9 @@ class FixExecutionManager:
 
         return result
 
-    def batch_execute_fixes(self, suggestions: List[Dict[str, Any]]) -> List[FixExecutionResult]:
+    def batch_execute_fixes(
+        self, suggestions: List[Dict[str, Any]]
+    ) -> List[FixExecutionResult]:
         """
         批量执行修复
 
@@ -396,11 +412,13 @@ class FixExecutionManager:
 
             except Exception as e:
                 self.logger.error(f"批量修复异常: {e}")
-                results.append(FixExecutionResult(
-                    operation_id=f"batch_error_{uuid.uuid4().hex[:8]}",
-                    success=False,
-                    error_message=str(e)
-                ))
+                results.append(
+                    FixExecutionResult(
+                        operation_id=f"batch_error_{uuid.uuid4().hex[:8]}",
+                        success=False,
+                        error_message=str(e),
+                    )
+                )
 
         success_count = sum(1 for r in results if r.success)
         self.logger.info(f"批量修复完成: {success_count}/{len(results)} 成功")
@@ -460,10 +478,12 @@ class FixExecutionManager:
             "total_operations": total_operations,
             "successful_operations": successful_operations,
             "failed_operations": failed_operations,
-            "success_rate": successful_operations / total_operations if total_operations > 0 else 0,
+            "success_rate": (
+                successful_operations / total_operations if total_operations > 0 else 0
+            ),
             "total_execution_time": total_time,
             "average_execution_time": avg_time,
-            "pending_rollbacks": len(self.code_modifier.operation_history)
+            "pending_rollbacks": len(self.code_modifier.operation_history),
         }
 
     def clear_execution_log(self):
@@ -492,17 +512,18 @@ class FixExecutionManager:
                         "error_message": r.error_message,
                         "execution_time": r.execution_time,
                         "syntax_valid": r.syntax_valid,
-                        "backup_created": r.backup_created
+                        "backup_created": r.backup_created,
                     }
                     for r in self.execution_log
                 ],
                 "operation_history": [
                     op.to_dict() for op in self.code_modifier.operation_history
-                ]
+                ],
             }
 
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 import json
+
                 json.dump(report_data, f, ensure_ascii=False, indent=2)
 
             self.logger.info(f"导出执行报告: {file_path}")

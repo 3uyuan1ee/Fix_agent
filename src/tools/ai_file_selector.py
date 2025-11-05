@@ -3,14 +3,14 @@ AI文件选择执行器 - T005.2
 调用AI模型智能选择需要分析的核心文件
 """
 
+import itertools
 import json
+import threading
 import time
-from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime
-import threading
-import itertools
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 from ..utils.logger import get_logger
 from ..utils.path_resolver import PathResolver
@@ -27,15 +27,21 @@ except ImportError:
         def chat_completion(self, *args, **kwargs):
             return {"content": '{"selected_files": []}', "success": True}
 
+
 # AI文件选择提示词构建器
 class AIFileSelectionPromptBuilder:
     def __init__(self, *args, **kwargs):
         pass
 
-    def build_prompt(self, project_path: str, analysis_results: List[Any] = None,
-                     user_requirements: str = "", analysis_focus: List[str] = None,
-                     runtime_errors: List[Dict[str, Any]] = None,
-                     project_structure: Dict[str, Any] = None):
+    def build_prompt(
+        self,
+        project_path: str,
+        analysis_results: List[Any] = None,
+        user_requirements: str = "",
+        analysis_focus: List[str] = None,
+        runtime_errors: List[Dict[str, Any]] = None,
+        project_structure: Dict[str, Any] = None,
+    ):
         """构建AI文件选择提示词"""
 
         # 系统提示词
@@ -85,36 +91,35 @@ class AIFileSelectionPromptBuilder:
             f"- 项目路径: {project_path}",
             f"- 用户需求: {user_requirements}",
             f"- 分析重点: {', '.join(analysis_focus or [])}",
-            f""
+            f"",
         ]
 
         # 添加静态分析结果
         if analysis_results:
-            user_prompt_parts.extend([
-                "## 静态分析结果",
-                f"发现问题，需要重点关注："
-            ])
+            user_prompt_parts.extend(["## 静态分析结果", f"发现问题，需要重点关注："])
 
             problem_files = {}
 
             # 收集所有问题，按文件分组
             for result in analysis_results:
-                if hasattr(result, 'issues') and result.issues:
+                if hasattr(result, "issues") and result.issues:
                     for issue in result.issues:
-                        file_path = getattr(issue, 'file_path', 'unknown')
-                        if file_path != 'unknown':
+                        file_path = getattr(issue, "file_path", "unknown")
+                        if file_path != "unknown":
                             if file_path not in problem_files:
                                 problem_files[file_path] = []
 
-                            message = getattr(issue, 'message', '未知问题')
-                            severity = getattr(issue, 'severity', 'unknown')
-                            line_num = getattr(issue, 'line_number', '?')
+                            message = getattr(issue, "message", "未知问题")
+                            severity = getattr(issue, "severity", "unknown")
+                            line_num = getattr(issue, "line_number", "?")
 
-                            problem_files[file_path].append({
-                                'severity': severity,
-                                'message': message,
-                                'line': line_num
-                            })
+                            problem_files[file_path].append(
+                                {
+                                    "severity": severity,
+                                    "message": message,
+                                    "line": line_num,
+                                }
+                            )
 
             # 显示每个文件的问题
             for file_path, issues in problem_files.items():
@@ -125,49 +130,57 @@ class AIFileSelectionPromptBuilder:
                     )
 
                 # 计算严重程度
-                high_count = sum(1 for issue in issues if str(issue['severity']).upper() in ['HIGH', 'CRITICAL'])
-                medium_count = sum(1 for issue in issues if str(issue['severity']).upper() == 'MEDIUM')
+                high_count = sum(
+                    1
+                    for issue in issues
+                    if str(issue["severity"]).upper() in ["HIGH", "CRITICAL"]
+                )
+                medium_count = sum(
+                    1 for issue in issues if str(issue["severity"]).upper() == "MEDIUM"
+                )
 
                 if high_count > 0:
-                    user_prompt_parts.append(f"   ⚠️  包含 {high_count} 个高严重程度问题")
+                    user_prompt_parts.append(
+                        f"   ⚠️  包含 {high_count} 个高严重程度问题"
+                    )
                 if medium_count > 0:
-                    user_prompt_parts.append(f"   ⚠️  包含 {medium_count} 个中等严重程度问题")
+                    user_prompt_parts.append(
+                        f"   ⚠️  包含 {medium_count} 个中等严重程度问题"
+                    )
 
             if not problem_files:
                 user_prompt_parts.append("   未发现具体的静态分析问题")
 
             user_prompt_parts.append("")
         else:
-            user_prompt_parts.extend([
-                "## 静态分析结果",
-                "⚠️ 未收到静态分析结果，请基于项目结构和用户需求进行文件选择",
-                ""
-            ])
+            user_prompt_parts.extend(
+                [
+                    "## 静态分析结果",
+                    "⚠️ 未收到静态分析结果，请基于项目结构和用户需求进行文件选择",
+                    "",
+                ]
+            )
 
         # 添加运行时错误
         if runtime_errors:
-            user_prompt_parts.extend([
-                "## 运行时错误",
-                "发现以下运行时问题："
-            ])
+            user_prompt_parts.extend(["## 运行时错误", "发现以下运行时问题："])
             for error in runtime_errors[:5]:
-                file_path = error.get('file', 'unknown')
-                message = error.get('message', '未知错误')
+                file_path = error.get("file", "unknown")
+                message = error.get("message", "未知错误")
                 user_prompt_parts.append(f"- {file_path}: {message[:100]}")
             user_prompt_parts.append("")
 
         # 添加项目结构信息
         if project_structure:
-            user_prompt_parts.extend([
-                "## 项目结构",
-                f"完整的项目结构信息："
-            ])
+            user_prompt_parts.extend(["## 项目结构", f"完整的项目结构信息："])
             # 详细显示项目结构
             if isinstance(project_structure, dict):
                 # 显示目录结构
                 if "directories" in project_structure:
                     user_prompt_parts.append("### 目录结构:")
-                    for directory in sorted(project_structure["directories"][:20]):  # 限制显示数量
+                    for directory in sorted(
+                        project_structure["directories"][:20]
+                    ):  # 限制显示数量
                         user_prompt_parts.append(f"- 📁 {directory}/")
                     user_prompt_parts.append("")
 
@@ -176,7 +189,9 @@ class AIFileSelectionPromptBuilder:
                     user_prompt_parts.append("### 文件类型分布:")
                     for ext, files in project_structure["files_by_extension"].items():
                         count = len(files)
-                        user_prompt_parts.append(f"- {ext or '无扩展名'}: {count} 个文件")
+                        user_prompt_parts.append(
+                            f"- {ext or '无扩展名'}: {count} 个文件"
+                        )
                     user_prompt_parts.append("")
 
                 # 显示关键文件
@@ -189,31 +204,47 @@ class AIFileSelectionPromptBuilder:
                 # 显示编程语言统计
                 if "programming_languages" in project_structure:
                     user_prompt_parts.append("### 编程语言:")
-                    for language, count in project_structure["programming_languages"].items():
+                    for language, count in project_structure[
+                        "programming_languages"
+                    ].items():
                         user_prompt_parts.append(f"- {language}: {count} 个文件")
                     user_prompt_parts.append("")
 
                 # 显示总文件数
-                total_files = sum(len(files) for files in project_structure.get("files_by_extension", {}).values())
-                user_prompt_parts.append(f"**总计**: {total_files} 个文件，{len(project_structure.get('directories', []))} 个目录")
+                total_files = sum(
+                    len(files)
+                    for files in project_structure.get(
+                        "files_by_extension", {}
+                    ).values()
+                )
+                user_prompt_parts.append(
+                    f"**总计**: {total_files} 个文件，{len(project_structure.get('directories', []))} 个目录"
+                )
 
             user_prompt_parts.append("")
 
-        user_prompt_parts.extend([
-            "## 任务要求",
-            f"基于以上信息，请选择需要重点分析的文件。",
-            f"优先选择有安全风险、严重错误或核心业务逻辑的文件。",
-            f"确保选择的文件覆盖最重要的问题。",
-            f""
-        ])
+        user_prompt_parts.extend(
+            [
+                "## 任务要求",
+                f"基于以上信息，请选择需要重点分析的文件。",
+                f"优先选择有安全风险、严重错误或核心业务逻辑的文件。",
+                f"确保选择的文件覆盖最重要的问题。",
+                f"",
+            ]
+        )
 
         user_prompt = "\n".join(user_prompt_parts)
 
         # 返回提示词对象
-        return type('Prompt', (), {
-            'system_prompt': system_prompt.strip(),
-            'user_prompt': user_prompt.strip()
-        })()
+        return type(
+            "Prompt",
+            (),
+            {
+                "system_prompt": system_prompt.strip(),
+                "user_prompt": user_prompt.strip(),
+            },
+        )()
+
 
 class FileSelectionCriteria:
     def __init__(self, *args, **kwargs):
@@ -223,6 +254,7 @@ class FileSelectionCriteria:
 @dataclass
 class FileSelectionResult:
     """文件选择结果"""
+
     file_path: str
     priority: str  # high, medium, low
     reason: str
@@ -238,13 +270,14 @@ class FileSelectionResult:
             "reason": self.reason,
             "confidence": self.confidence,
             "key_issues": self.key_issues,
-            "selection_score": self.selection_score
+            "selection_score": self.selection_score,
         }
 
 
 @dataclass
 class AIFileSelectionResult:
     """AI文件选择执行结果"""
+
     selected_files: List[FileSelectionResult] = field(default_factory=list)
     selection_summary: Dict[str, Any] = field(default_factory=dict)
     execution_success: bool = True
@@ -265,13 +298,14 @@ class AIFileSelectionResult:
             "ai_response_raw": self.ai_response_raw,
             "token_usage": self.token_usage,
             "execution_timestamp": self.execution_timestamp,
-            "total_selected": len(self.selected_files)
+            "total_selected": len(self.selected_files),
         }
 
 
 @dataclass
 class SelectionStatistics:
     """选择统计信息"""
+
     total_selected: int = 0
     high_priority_count: int = 0
     medium_priority_count: int = 0
@@ -290,7 +324,7 @@ class ProgressAnimator:
         self.animation_thread = None
 
         # 动画字符序列
-        self.spinner_chars = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+        self.spinner_chars = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
 
     def start(self):
         """启动动画"""
@@ -318,7 +352,7 @@ class ProgressAnimator:
             spinner = self.spinner_chars[char_index % len(self.spinner_chars)]
 
             # 在同一行显示进度消息（使用\r回到行首）
-            print(f"\r{spinner} {self.message}...", end='', flush=True)
+            print(f"\r{spinner} {self.message}...", end="", flush=True)
 
             # 更新索引
             char_index += 1
@@ -330,10 +364,12 @@ class ProgressAnimator:
 class AIFileSelector:
     """AI文件选择执行器"""
 
-    def __init__(self,
-                 llm_client: Optional[Any] = None,
-                 max_retries: int = 3,
-                 retry_delay: float = 1.0):
+    def __init__(
+        self,
+        llm_client: Optional[Any] = None,
+        max_retries: int = 3,
+        retry_delay: float = 1.0,
+    ):
         self.llm_client = llm_client
         self.max_retries = max_retries
         self.retry_delay = retry_delay
@@ -346,22 +382,20 @@ class AIFileSelector:
         self.path_resolver = PathResolver()
 
         # 优先级权重
-        self.priority_weights = {
-            "high": 3.0,
-            "medium": 2.0,
-            "low": 1.0
-        }
+        self.priority_weights = {"high": 3.0, "medium": 2.0, "low": 1.0}
 
         # 动画显示控制
         self._animation_stop_event = threading.Event()
 
-    def select_files(self,
-                    project_path: str,
-                    analysis_results: List[Any] = None,
-                    user_requirements: str = "",
-                    analysis_focus: List[str] = None,
-                    runtime_errors: List[Dict[str, Any]] = None,
-                    project_structure: Dict[str, Any] = None) -> AIFileSelectionResult:
+    def select_files(
+        self,
+        project_path: str,
+        analysis_results: List[Any] = None,
+        user_requirements: str = "",
+        analysis_focus: List[str] = None,
+        runtime_errors: List[Dict[str, Any]] = None,
+        project_structure: Dict[str, Any] = None,
+    ) -> AIFileSelectionResult:
         """
         执行AI文件选择
 
@@ -379,9 +413,7 @@ class AIFileSelector:
         start_time = time.time()
         self.logger.info("开始执行AI文件选择")
 
-        result = AIFileSelectionResult(
-            execution_timestamp=datetime.now().isoformat()
-        )
+        result = AIFileSelectionResult(execution_timestamp=datetime.now().isoformat())
 
         try:
             # 使用AI进行文件选择
@@ -400,7 +432,7 @@ class AIFileSelector:
                 user_requirements=user_requirements,
                 analysis_focus=analysis_focus or [],
                 runtime_errors=runtime_errors or [],
-                project_structure=project_structure or {}
+                project_structure=project_structure or {},
             )
 
             # 调用AI进行文件选择
@@ -421,13 +453,19 @@ class AIFileSelector:
                         # 从AI响应中提取选择的文件
                         ai_selected = ai_data.get("selected_files", [])
                         for file_data in ai_selected:
-                            selected_files.append({
-                                "file_path": file_data.get("file_path", ""),
-                                "priority": file_data.get("priority", "medium"),
-                                "reason": file_data.get("reason", "AI建议分析此文件"),
-                                "confidence": float(file_data.get("confidence", 0.7)),
-                                "key_issues": file_data.get("key_issues", [])
-                            })
+                            selected_files.append(
+                                {
+                                    "file_path": file_data.get("file_path", ""),
+                                    "priority": file_data.get("priority", "medium"),
+                                    "reason": file_data.get(
+                                        "reason", "AI建议分析此文件"
+                                    ),
+                                    "confidence": float(
+                                        file_data.get("confidence", 0.7)
+                                    ),
+                                    "key_issues": file_data.get("key_issues", []),
+                                }
+                            )
 
                         self.logger.info(f"AI成功选择了 {len(selected_files)} 个文件")
                     else:
@@ -443,7 +481,9 @@ class AIFileSelector:
                         project_root, analysis_results, runtime_errors
                     )
             else:
-                self.logger.warning(f"AI调用失败: {ai_response.get('error_message', '未知错误')}")
+                self.logger.warning(
+                    f"AI调用失败: {ai_response.get('error_message', '未知错误')}"
+                )
                 # 如果AI调用失败，使用备用逻辑
                 selected_files = self._fallback_file_selection(
                     project_root, analysis_results, runtime_errors
@@ -489,10 +529,10 @@ class AIFileSelector:
                 call_params = {
                     "messages": [
                         {"role": "system", "content": prompt.system_prompt},
-                        {"role": "user", "content": prompt.user_prompt}
+                        {"role": "user", "content": prompt.user_prompt},
                     ],
                     "temperature": 0.3,  # 较低温度以获得更一致的结果
-                    "max_tokens": 2000
+                    "max_tokens": 2000,
                     # 注意：response_format暂不支持，在系统提示词中指定JSON格式
                 }
 
@@ -523,19 +563,22 @@ class AIFileSelector:
 
             # 如果不是最后一次尝试，等待重试
             if attempt < self.max_retries - 1:
-                self.logger.info(f"等待 {self.retry_delay * (2 ** attempt):.1f} 秒后重试...")
-                time.sleep(self.retry_delay * (2 ** attempt))  # 指数退避
+                self.logger.info(
+                    f"等待 {self.retry_delay * (2 ** attempt):.1f} 秒后重试..."
+                )
+                time.sleep(self.retry_delay * (2**attempt))  # 指数退避
 
         self.logger.error(f"AI调用最终失败: {last_error}")
         return {
             "success": False,
-            "error_message": f"AI调用失败，已重试 {self.max_retries} 次: {last_error}"
+            "error_message": f"AI调用失败，已重试 {self.max_retries} 次: {last_error}",
         }
 
     def _create_default_llm_client(self):
         """创建默认LLM客户端"""
         try:
             from ..llm.client import LLMClient
+
             return LLMClient()
         except Exception as e:
             self.logger.error(f"无法创建默认LLM客户端: {e}")
@@ -575,8 +618,10 @@ class AIFileSelector:
 
         # 首先尝试移除markdown代码块标记
         # 匹配 ```json...``` 或 ```...``` 格式
-        code_block_pattern = r'```(?:json)?\s*(\{.*?\})\s*```'
-        code_matches = re.findall(code_block_pattern, content, re.DOTALL | re.IGNORECASE)
+        code_block_pattern = r"```(?:json)?\s*(\{.*?\})\s*```"
+        code_matches = re.findall(
+            code_block_pattern, content, re.DOTALL | re.IGNORECASE
+        )
 
         if code_matches:
             # 使用代码块中的内容
@@ -589,7 +634,7 @@ class AIFileSelector:
                 self.logger.warning("markdown代码块中的JSON格式无效，尝试其他方法")
 
         # 如果没有代码块或提取失败，尝试直接匹配JSON对象
-        json_pattern = r'\{.*\}'
+        json_pattern = r"\{.*\}"
         matches = re.findall(json_pattern, content, re.DOTALL)
 
         if matches:
@@ -609,10 +654,7 @@ class AIFileSelector:
 
     def _validate_and_normalize_response(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """验证和标准化响应数据"""
-        normalized = {
-            "selected_files": [],
-            "selection_summary": {}
-        }
+        normalized = {"selected_files": [], "selection_summary": {}}
 
         # 处理选择的文件
         selected_files = data.get("selected_files", [])
@@ -629,7 +671,7 @@ class AIFileSelector:
                 "priority": file_data.get("priority", "medium"),
                 "reason": file_data.get("reason", ""),
                 "confidence": float(file_data.get("confidence", 0.5)),
-                "key_issues": file_data.get("key_issues", [])
+                "key_issues": file_data.get("key_issues", []),
             }
 
             # 验证必需字段
@@ -641,7 +683,9 @@ class AIFileSelector:
                 normalized_file["priority"] = "medium"
 
             # 验证置信度范围
-            normalized_file["confidence"] = max(0.0, min(1.0, normalized_file["confidence"]))
+            normalized_file["confidence"] = max(
+                0.0, min(1.0, normalized_file["confidence"])
+            )
 
             normalized["selected_files"].append(normalized_file)
 
@@ -649,20 +693,26 @@ class AIFileSelector:
         selection_summary = data.get("selection_summary", {})
         if isinstance(selection_summary, dict):
             normalized["selection_summary"] = {
-                "total_selected": selection_summary.get("total_selected", len(normalized["selected_files"])),
-                "selection_criteria_met": selection_summary.get("selection_criteria_met", True),
-                "additional_notes": selection_summary.get("additional_notes", "")
+                "total_selected": selection_summary.get(
+                    "total_selected", len(normalized["selected_files"])
+                ),
+                "selection_criteria_met": selection_summary.get(
+                    "selection_criteria_met", True
+                ),
+                "additional_notes": selection_summary.get("additional_notes", ""),
             }
         else:
             normalized["selection_summary"] = {
                 "total_selected": len(normalized["selected_files"]),
                 "selection_criteria_met": True,
-                "additional_notes": ""
+                "additional_notes": "",
             }
 
         return normalized
 
-    def _process_selected_files(self, selected_files: List[Dict[str, Any]]) -> List[FileSelectionResult]:
+    def _process_selected_files(
+        self, selected_files: List[Dict[str, Any]]
+    ) -> List[FileSelectionResult]:
         """处理选择的文件"""
         processed_files = []
 
@@ -684,7 +734,7 @@ class AIFileSelector:
                 reason=file_data["reason"],
                 confidence=file_data["confidence"],
                 key_issues=file_data.get("key_issues", []),
-                selection_score=selection_score
+                selection_score=selection_score,
             )
 
             processed_files.append(result)
@@ -717,9 +767,9 @@ class AIFileSelector:
 
         return round(score, 2)
 
-    def _generate_selection_summary(self,
-                                  selected_files: List[FileSelectionResult],
-                                  ai_summary: Dict[str, Any]) -> Dict[str, Any]:
+    def _generate_selection_summary(
+        self, selected_files: List[FileSelectionResult], ai_summary: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """生成选择摘要"""
         statistics = self._calculate_selection_statistics(selected_files)
 
@@ -728,12 +778,18 @@ class AIFileSelector:
             "priority_distribution": {
                 "high": statistics.high_priority_count,
                 "medium": statistics.medium_priority_count,
-                "low": statistics.low_priority_count
+                "low": statistics.low_priority_count,
             },
             "average_confidence": round(statistics.average_confidence, 2),
-            "average_selection_score": round(
-                sum(f.selection_score for f in selected_files) / len(selected_files), 2
-            ) if selected_files else 0.0,
+            "average_selection_score": (
+                round(
+                    sum(f.selection_score for f in selected_files)
+                    / len(selected_files),
+                    2,
+                )
+                if selected_files
+                else 0.0
+            ),
             "language_distribution": statistics.language_distribution,
             "reason_categories": statistics.reason_categories,
             "top_selected_files": [
@@ -741,16 +797,20 @@ class AIFileSelector:
                     "file_path": f.file_path,
                     "selection_score": f.selection_score,
                     "priority": f.priority,
-                    "reason": f.reason[:100] + "..." if len(f.reason) > 100 else f.reason
+                    "reason": (
+                        f.reason[:100] + "..." if len(f.reason) > 100 else f.reason
+                    ),
                 }
                 for f in selected_files[:5]
             ],
-            "ai_summary": ai_summary
+            "ai_summary": ai_summary,
         }
 
         return summary
 
-    def _calculate_selection_statistics(self, selected_files: List[FileSelectionResult]) -> SelectionStatistics:
+    def _calculate_selection_statistics(
+        self, selected_files: List[FileSelectionResult]
+    ) -> SelectionStatistics:
         """计算选择统计信息"""
         stats = SelectionStatistics()
 
@@ -784,14 +844,17 @@ class AIFileSelector:
             ".cs": "C#",
             ".rs": "Rust",
             ".php": "PHP",
-            ".rb": "Ruby"
+            ".rb": "Ruby",
         }
 
         for file_result in selected_files:
             import os
+
             _, ext = os.path.splitext(file_result.file_path)
             language = language_extensions.get(ext.lower(), "Other")
-            stats.language_distribution[language] = stats.language_distribution.get(language, 0) + 1
+            stats.language_distribution[language] = (
+                stats.language_distribution.get(language, 0) + 1
+            )
 
         # 统计理由类别
         reason_keywords = {
@@ -799,7 +862,7 @@ class AIFileSelector:
             "performance": ["性能", "效率", "缓慢", "performance", "efficiency"],
             "quality": ["质量", "规范", "标准", "quality", "standard"],
             "complexity": ["复杂", "难度", "维护", "complexity", "maintenance"],
-            "importance": ["重要", "核心", "关键", "important", "core", "critical"]
+            "importance": ["重要", "核心", "关键", "important", "core", "critical"],
         }
 
         for file_result in selected_files:
@@ -808,18 +871,22 @@ class AIFileSelector:
 
             for category, keywords in reason_keywords.items():
                 if any(keyword in reason_lower for keyword in keywords):
-                    stats.reason_categories[category] = stats.reason_categories.get(category, 0) + 1
+                    stats.reason_categories[category] = (
+                        stats.reason_categories.get(category, 0) + 1
+                    )
                     categorized = True
                     break
 
             if not categorized:
-                stats.reason_categories["other"] = stats.reason_categories.get("other", 0) + 1
+                stats.reason_categories["other"] = (
+                    stats.reason_categories.get("other", 0) + 1
+                )
 
         return stats
 
-    def validate_selection_result(self,
-                                 result: AIFileSelectionResult,
-                                 criteria: FileSelectionCriteria) -> Dict[str, Any]:
+    def validate_selection_result(
+        self, result: AIFileSelectionResult, criteria: FileSelectionCriteria
+    ) -> Dict[str, Any]:
         """
         验证选择结果
 
@@ -830,12 +897,7 @@ class AIFileSelector:
         Returns:
             Dict[str, Any]: 验证结果
         """
-        validation = {
-            "is_valid": True,
-            "warnings": [],
-            "errors": [],
-            "metrics": {}
-        }
+        validation = {"is_valid": True, "warnings": [], "errors": [], "metrics": {}}
 
         # 检查执行成功
         if not result.execution_success:
@@ -873,13 +935,31 @@ class AIFileSelector:
         # 计算指标
         validation["metrics"] = {
             "total_files": len(selected_files),
-            "avg_confidence": round(sum(f.confidence for f in selected_files) / len(selected_files), 2) if selected_files else 0,
-            "high_priority_ratio": round(
-                len([f for f in selected_files if f.priority == "high"]) / len(selected_files), 2
-            ) if selected_files else 0,
-            "avg_selection_score": round(
-                sum(f.selection_score for f in selected_files) / len(selected_files), 2
-            ) if selected_files else 0
+            "avg_confidence": (
+                round(
+                    sum(f.confidence for f in selected_files) / len(selected_files), 2
+                )
+                if selected_files
+                else 0
+            ),
+            "high_priority_ratio": (
+                round(
+                    len([f for f in selected_files if f.priority == "high"])
+                    / len(selected_files),
+                    2,
+                )
+                if selected_files
+                else 0
+            ),
+            "avg_selection_score": (
+                round(
+                    sum(f.selection_score for f in selected_files)
+                    / len(selected_files),
+                    2,
+                )
+                if selected_files
+                else 0
+            ),
         }
 
         return validation
@@ -897,7 +977,7 @@ class AIFileSelector:
             return None
 
         # 确保项目根目录已设置
-        if hasattr(self, 'current_project_root') and self.current_project_root:
+        if hasattr(self, "current_project_root") and self.current_project_root:
             self.path_resolver.set_project_root(self.current_project_root)
 
         # 使用PathResolver解析路径
@@ -911,74 +991,96 @@ class AIFileSelector:
             self.logger.warning(f"无法找到有效文件路径: {file_path}")
             return None
 
-    def _fallback_file_selection(self, project_root: Path, analysis_results: List[Any] = None, runtime_errors: List[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    def _fallback_file_selection(
+        self,
+        project_root: Path,
+        analysis_results: List[Any] = None,
+        runtime_errors: List[Dict[str, Any]] = None,
+    ) -> List[Dict[str, Any]]:
         """备用文件选择逻辑（基于规则）"""
         selected_files = []
 
         # 从静态分析结果中选择文件
         if analysis_results:
             for analysis_result in analysis_results:
-                if hasattr(analysis_result, 'issues') and analysis_result.issues:
+                if hasattr(analysis_result, "issues") and analysis_result.issues:
                     # 如果有问题的文件，优先选择
                     for issue in analysis_result.issues[:5]:  # 限制数量
-                        file_path = getattr(issue, 'file_path', 'unknown')
-                        if file_path != 'unknown':
-                            selected_files.append({
-                                "file_path": file_path,
-                                "priority": "high",
-                                "reason": f"发现{getattr(issue, 'severity', 'unknown')}级别问题: {getattr(issue, 'message', '')[:50]}",
-                                "confidence": 0.8,
-                                "key_issues": [getattr(issue, 'message', '')]
-                            })
-                elif hasattr(analysis_result, 'file_path'):
+                        file_path = getattr(issue, "file_path", "unknown")
+                        if file_path != "unknown":
+                            selected_files.append(
+                                {
+                                    "file_path": file_path,
+                                    "priority": "high",
+                                    "reason": f"发现{getattr(issue, 'severity', 'unknown')}级别问题: {getattr(issue, 'message', '')[:50]}",
+                                    "confidence": 0.8,
+                                    "key_issues": [getattr(issue, "message", "")],
+                                }
+                            )
+                elif hasattr(analysis_result, "file_path"):
                     # 如果没有问题记录但有文件路径，也选择一些重要文件
                     file_path = analysis_result.file_path
-                    selected_files.append({
-                        "file_path": file_path,
-                        "priority": "medium",
-                        "reason": "重要文件，需要进一步分析",
-                        "confidence": 0.6,
-                        "key_issues": []
-                    })
+                    selected_files.append(
+                        {
+                            "file_path": file_path,
+                            "priority": "medium",
+                            "reason": "重要文件，需要进一步分析",
+                            "confidence": 0.6,
+                            "key_issues": [],
+                        }
+                    )
 
         # 从运行时错误中选择文件
         if runtime_errors:
             for error in runtime_errors:
-                file_path = error.get('file', '')
+                file_path = error.get("file", "")
                 if file_path:
-                    selected_files.append({
-                        "file_path": file_path,
-                        "priority": "high",
-                        "reason": f"运行时错误: {error.get('message', '')[:50]}",
-                        "confidence": 0.9,
-                        "key_issues": [error.get('message', '')]
-                    })
+                    selected_files.append(
+                        {
+                            "file_path": file_path,
+                            "priority": "high",
+                            "reason": f"运行时错误: {error.get('message', '')[:50]}",
+                            "confidence": 0.9,
+                            "key_issues": [error.get("message", "")],
+                        }
+                    )
 
         # 如果没有其他文件，选择项目中的主要文件
         if not selected_files and project_root.exists():
-            main_files = ['main.py', 'app.py', 'index.js', 'app.js', 'main.go', 'main.rs']
+            main_files = [
+                "main.py",
+                "app.py",
+                "index.js",
+                "app.js",
+                "main.go",
+                "main.rs",
+            ]
             for main_file in main_files:
                 main_file_path = project_root / main_file
                 if main_file_path.exists():
-                    selected_files.append({
-                        "file_path": main_file,
-                        "priority": "medium",
-                        "reason": "项目主入口文件",
-                        "confidence": 0.7,
-                        "key_issues": []
-                    })
+                    selected_files.append(
+                        {
+                            "file_path": main_file,
+                            "priority": "medium",
+                            "reason": "项目主入口文件",
+                            "confidence": 0.7,
+                            "key_issues": [],
+                        }
+                    )
                     break
 
         return selected_files
 
 
 # 便捷函数
-def select_files_with_ai(project_report: Dict[str, Any],
-                        max_files: int = 20,
-                        preferred_languages: List[str] = None,
-                        focus_categories: List[str] = None,
-                        user_requirements: str = None,
-                        llm_client: Any = None) -> Dict[str, Any]:
+def select_files_with_ai(
+    project_report: Dict[str, Any],
+    max_files: int = 20,
+    preferred_languages: List[str] = None,
+    focus_categories: List[str] = None,
+    user_requirements: str = None,
+    llm_client: Any = None,
+) -> Dict[str, Any]:
     """
     便捷的AI文件选择函数
 
@@ -996,14 +1098,11 @@ def select_files_with_ai(project_report: Dict[str, Any],
     criteria = FileSelectionCriteria(
         max_files=max_files,
         preferred_languages=preferred_languages or [],
-        focus_categories=focus_categories or []
+        focus_categories=focus_categories or [],
     )
 
     selector = AIFileSelector(llm_client)
     result = selector.select_files(project_report, criteria, user_requirements)
     validation = selector.validate_selection_result(result, criteria)
 
-    return {
-        "selection_result": result.to_dict(),
-        "validation": validation
-    }
+    return {"selection_result": result.to_dict(), "validation": validation}

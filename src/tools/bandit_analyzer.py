@@ -4,24 +4,27 @@ Bandit安全分析工具模块
 """
 
 import json
-import subprocess
 import re
+import subprocess
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
-from ..utils.logger import get_logger
 from ..utils.config import get_config_manager
+from ..utils.logger import get_logger
 
 
 class BanditAnalysisError(Exception):
     """Bandit分析异常"""
+
     pass
 
 
 class BanditAnalyzer:
     """Bandit安全分析器"""
 
-    def __init__(self, config_manager=None, config_file: Optional[str] = None, timeout: int = 60):
+    def __init__(
+        self, config_manager=None, config_file: Optional[str] = None, timeout: int = 60
+    ):
         """
         初始化Bandit分析器
 
@@ -36,80 +39,70 @@ class BanditAnalyzer:
         self.timeout = timeout
 
         # 获取配置
-        static_config = self.config_manager.get_section('static_analysis')
-        bandit_config = static_config.get('bandit', {})
+        static_config = self.config_manager.get_section("static_analysis")
+        bandit_config = static_config.get("bandit", {})
 
         # 配置参数
-        self.severity_level = bandit_config.get('severity_level', 'medium')
-        self.default_config_file = '.bandit'
+        self.severity_level = bandit_config.get("severity_level", "medium")
+        self.default_config_file = ".bandit"
 
         # 严重程度映射
-        self.severity_mapping = {
-            'low': 'low',
-            'medium': 'medium',
-            'high': 'high'
-        }
+        self.severity_mapping = {"low": "low", "medium": "medium", "high": "high"}
 
         # 安全漏洞类型映射
         self.vulnerability_types = {
             # 注入类漏洞
-            'hardcoded_password': 'credentials',
-            'hardcoded-password': 'credentials',
-            'hardcoded_sql_string': 'sql_injection',
-            'hardcoded-sql-string': 'sql_injection',
-            'hardcoded_temp_file': 'file_injection',
-            'hardcoded-temp-file': 'file_injection',
-            'subprocess_shell': 'shell_injection',
-            'subprocess-shell': 'shell_injection',
-            'shell_injection': 'shell_injection',
-            'shell-injection': 'shell_injection',
-            'sql_injection': 'sql_injection',
-            'sql-injection': 'sql_injection',
-
+            "hardcoded_password": "credentials",
+            "hardcoded-password": "credentials",
+            "hardcoded_sql_string": "sql_injection",
+            "hardcoded-sql-string": "sql_injection",
+            "hardcoded_temp_file": "file_injection",
+            "hardcoded-temp-file": "file_injection",
+            "subprocess_shell": "shell_injection",
+            "subprocess-shell": "shell_injection",
+            "shell_injection": "shell_injection",
+            "shell-injection": "shell_injection",
+            "sql_injection": "sql_injection",
+            "sql-injection": "sql_injection",
             # 文件操作漏洞
-            'tmp_path_symlink': 'file_security',
-            'tmp-path-symlink': 'file_security',
-            'bad_file_permissions': 'file_permissions',
-            'bad-file-permissions': 'file_permissions',
-            'tmp_file_access': 'file_access',
-            'tmp-file-access': 'file_access',
-
+            "tmp_path_symlink": "file_security",
+            "tmp-path-symlink": "file_security",
+            "bad_file_permissions": "file_permissions",
+            "bad-file-permissions": "file_permissions",
+            "tmp_file_access": "file_access",
+            "tmp-file-access": "file_access",
             # 密码学问题
-            'weak_crypto': 'weak_cryptography',
-            'weak-crypto': 'weak_cryptography',
-            'insecure_hash': 'weak_cryptography',
-            'insecure-hash': 'weak_cryptography',
-            'insecure_crypto': 'weak_cryptography',
-            'insecure-crypto': 'weak_cryptography',
-
+            "weak_crypto": "weak_cryptography",
+            "weak-crypto": "weak_cryptography",
+            "insecure_hash": "weak_cryptography",
+            "insecure-hash": "weak_cryptography",
+            "insecure_crypto": "weak_cryptography",
+            "insecure-crypto": "weak_cryptography",
             # 网络安全
-            'ssl_insecure_version': 'ssl_issues',
-            'ssl-insecure-version': 'ssl_issues',
-            'ssl_no_hostname': 'ssl_issues',
-            'ssl-no-hostname': 'ssl_issues',
-            'ssl_insecure_protocol': 'ssl_issues',
-            'ssl-insecure-protocol': 'ssl_issues',
-
+            "ssl_insecure_version": "ssl_issues",
+            "ssl-insecure-version": "ssl_issues",
+            "ssl_no_hostname": "ssl_issues",
+            "ssl-no-hostname": "ssl_issues",
+            "ssl_insecure_protocol": "ssl_issues",
+            "ssl-insecure-protocol": "ssl_issues",
             # 输入验证
-            'assert_used': 'input_validation',
-            'assert-used': 'input_validation',
-            'try_except_pass': 'exception_handling',
-            'try-except-pass': 'exception_handling',
-            'except_pass': 'exception_handling',
-            'except-pass': 'exception_handling',
-
+            "assert_used": "input_validation",
+            "assert-used": "input_validation",
+            "try_except_pass": "exception_handling",
+            "try-except-pass": "exception_handling",
+            "except_pass": "exception_handling",
+            "except-pass": "exception_handling",
             # 配置问题
-            'import_config': 'configuration_issues',
-            'import-config': 'configuration_issues',
-            'exec_used': 'code_injection',
-            'exec-used': 'code_injection',
-            'eval_used': 'code_injection',
-            'eval-used': 'code_injection',
-            'flask_debug_true': 'configuration_issues',
-            'flask-debug-true': 'configuration_issues',
-
+            "import_config": "configuration_issues",
+            "import-config": "configuration_issues",
+            "exec_used": "code_injection",
+            "exec-used": "code_injection",
+            "eval_used": "code_injection",
+            "eval-used": "code_injection",
+            "flask_debug_true": "configuration_issues",
+            "flask-debug-true": "configuration_issues",
             # 默认分类
-            'default': 'security_issue'
+            "default": "security_issue",
         }
 
     def analyze_file(self, file_path: Union[str, Path]) -> Dict[str, Any]:
@@ -145,11 +138,13 @@ class BanditAnalyzer:
                 capture_output=True,
                 text=True,
                 timeout=self.timeout,
-                cwd=file_path.parent
+                cwd=file_path.parent,
             )
 
             # 解析结果
-            analysis_result = self._parse_bandit_output(result.stdout, result.stderr, result.returncode, file_path)
+            analysis_result = self._parse_bandit_output(
+                result.stdout, result.stderr, result.returncode, file_path
+            )
 
             self.logger.debug(f"Bandit analysis completed: {file_path}")
             return analysis_result
@@ -161,12 +156,14 @@ class BanditAnalyzer:
                 "error": "Analysis timeout",
                 "vulnerabilities": [],
                 "messages": ["Analysis timed out"],
-                "metrics": {}
+                "metrics": {},
             }
 
         except FileNotFoundError as e:
             if "bandit" in str(e).lower():
-                raise BanditAnalysisError("Bandit is not installed. Please install it with: pip install bandit")
+                raise BanditAnalysisError(
+                    "Bandit is not installed. Please install it with: pip install bandit"
+                )
             else:
                 raise BanditAnalysisError(f"File not found: {e}")
 
@@ -197,14 +194,16 @@ class BanditAnalyzer:
 
         return cmd
 
-    def _parse_bandit_output(self, stdout: str, stderr: str, returncode: int, file_path: Path) -> Dict[str, Any]:
+    def _parse_bandit_output(
+        self, stdout: str, stderr: str, returncode: int, file_path: Path
+    ) -> Dict[str, Any]:
         """解析bandit输出"""
         result = {
             "file_path": str(file_path),
             "vulnerabilities": [],
             "messages": [],
             "metrics": {},
-            "return_code": returncode
+            "return_code": returncode,
         }
 
         # 尝试解析JSON输出
@@ -236,11 +235,13 @@ class BanditAnalyzer:
 
         return result
 
-    def _parse_vulnerabilities(self, bandit_result: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _parse_vulnerabilities(
+        self, bandit_result: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
         """解析bandit JSON结果中的漏洞信息"""
         vulnerabilities = []
 
-        results = bandit_result.get('results', [])
+        results = bandit_result.get("results", [])
         for item in results:
             vulnerability = {
                 "test_id": item.get("test_id", ""),
@@ -253,9 +254,13 @@ class BanditAnalyzer:
                 "line_range": item.get("line_range", []),
                 "test_id": item.get("test_id", ""),
                 "code": item.get("code", ""),
-                "vulnerability_type": self._get_vulnerability_type(item.get("test_name", "")),
+                "vulnerability_type": self._get_vulnerability_type(
+                    item.get("test_name", "")
+                ),
                 "severity": self._normalize_severity(item.get("issue_severity", "")),
-                "confidence": self._normalize_confidence(item.get("issue_confidence", ""))
+                "confidence": self._normalize_confidence(
+                    item.get("issue_confidence", "")
+                ),
             }
 
             vulnerabilities.append(vulnerability)
@@ -264,7 +269,7 @@ class BanditAnalyzer:
 
     def _parse_metrics(self, bandit_result: Dict[str, Any]) -> Dict[str, Any]:
         """解析bandit的指标信息"""
-        metrics = bandit_result.get('metrics', {})
+        metrics = bandit_result.get("metrics", {})
 
         # 提取关键指标
         return {
@@ -274,13 +279,13 @@ class BanditAnalyzer:
             "high_severity": metrics.get("_totals", {}).get("HIGH", 0),
             "medium_severity": metrics.get("_totals", {}).get("MEDIUM", 0),
             "low_severity": metrics.get("_totals", {}).get("LOW", 0),
-            "total_issues": metrics.get("_totals", {}).get("UNDEFINED", 0)
+            "total_issues": metrics.get("_totals", {}).get("UNDEFINED", 0),
         }
 
     def _parse_text_output(self, output: str, file_path: Path) -> List[Dict[str, Any]]:
         """解析bandit文本输出"""
         vulnerabilities = []
-        lines = output.strip().split('\n')
+        lines = output.strip().split("\n")
 
         current_vuln = None
         for line in lines:
@@ -290,7 +295,7 @@ class BanditAnalyzer:
 
             # 匹配问题标题行
             # 例如: >> Issue: [B101:hardcoded_password] Hardcoded password detected
-            title_match = re.match(r'>> Issue: \[([^\]]+)\] (.+)', line)
+            title_match = re.match(r">> Issue: \[([^\]]+)\] (.+)", line)
             if title_match:
                 # 如果之前有漏洞，先添加到列表
                 if current_vuln:
@@ -309,33 +314,37 @@ class BanditAnalyzer:
                     "issue_text": issue_text,
                     "file_path": str(file_path),
                     "vulnerability_type": self._get_vulnerability_type(test_name),
-                    "code": []
+                    "code": [],
                 }
                 continue
 
             # 匹配位置信息
             # 例如:   Severity: Medium   Confidence: High
             if current_vuln and "Severity:" in line:
-                severity_match = re.search(r'Severity:\s*(\w+)', line)
-                confidence_match = re.search(r'Confidence:\s*(\w+)', line)
+                severity_match = re.search(r"Severity:\s*(\w+)", line)
+                confidence_match = re.search(r"Confidence:\s*(\w+)", line)
 
                 if severity_match:
-                    current_vuln["severity"] = self._normalize_severity(severity_match.group(1))
+                    current_vuln["severity"] = self._normalize_severity(
+                        severity_match.group(1)
+                    )
                 if confidence_match:
-                    current_vuln["confidence"] = self._normalize_confidence(confidence_match.group(1))
+                    current_vuln["confidence"] = self._normalize_confidence(
+                        confidence_match.group(1)
+                    )
                 continue
 
             # 匹配文件位置
             # 例如:   Location: examples/test.py:5
             if current_vuln and "Location:" in line:
-                location_match = re.search(r'Location:\s*([^:]+):(\d+)', line)
+                location_match = re.search(r"Location:\s*([^:]+):(\d+)", line)
                 if location_match:
                     current_vuln["line_number"] = int(location_match.group(2))
                 continue
 
             # 匹配代码行
             # 例如:   4       password = "secret123"
-            if current_vuln and re.match(r'^\s*\d+\s+', line):
+            if current_vuln and re.match(r"^\s*\d+\s+", line):
                 current_vuln["code"].append(line)
                 continue
 
@@ -353,12 +362,12 @@ class BanditAnalyzer:
             if key in test_name_lower:
                 return value
 
-        return self.vulnerability_types['default']
+        return self.vulnerability_types["default"]
 
     def _normalize_severity(self, severity: str) -> str:
         """标准化严重程度"""
         severity = severity.lower().strip()
-        return self.severity_mapping.get(severity, 'unknown')
+        return self.severity_mapping.get(severity, "unknown")
 
     def _normalize_confidence(self, confidence: str) -> str:
         """标准化置信度"""
@@ -383,7 +392,7 @@ class BanditAnalyzer:
             "confidence_distribution": {},
             "has_high_risk": False,
             "high_risk_count": 0,
-            "metrics": result.get("metrics", {})
+            "metrics": result.get("metrics", {}),
         }
 
         # 统计漏洞分布
@@ -393,13 +402,19 @@ class BanditAnalyzer:
             confidence = vuln.get("confidence", "unknown")
 
             # 严重程度统计
-            summary["severity_distribution"][severity] = summary["severity_distribution"].get(severity, 0) + 1
+            summary["severity_distribution"][severity] = (
+                summary["severity_distribution"].get(severity, 0) + 1
+            )
 
             # 漏洞类型统计
-            summary["vulnerability_types"][vuln_type] = summary["vulnerability_types"].get(vuln_type, 0) + 1
+            summary["vulnerability_types"][vuln_type] = (
+                summary["vulnerability_types"].get(vuln_type, 0) + 1
+            )
 
             # 置信度统计
-            summary["confidence_distribution"][confidence] = summary["confidence_distribution"].get(confidence, 0) + 1
+            summary["confidence_distribution"][confidence] = (
+                summary["confidence_distribution"].get(confidence, 0) + 1
+            )
 
             # 高风险检查
             if severity == "high":

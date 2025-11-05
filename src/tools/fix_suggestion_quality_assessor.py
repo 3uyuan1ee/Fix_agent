@@ -7,16 +7,17 @@ import ast
 import os
 import re
 import subprocess
-from typing import Dict, List, Any, Optional, Tuple, Set
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
-from collections import defaultdict
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from ..utils.logger import get_logger
+
 try:
     from .ai_fix_suggestion_generator import AIFixSuggestion, FixSuggestionResult
-    from .workflow_data_types import FixType, RiskLevel
     from .fix_suggestion_context_builder import FixSuggestionContext
+    from .workflow_data_types import FixType, RiskLevel
 except ImportError:
     # 如果相关模块不可用，定义基本类型
     from enum import Enum
@@ -77,6 +78,7 @@ except ImportError:
 @dataclass
 class QualityAssessmentResult:
     """质量评估结果"""
+
     suggestion_id: str
     overall_score: float  # 0.0-1.0
     category_scores: Dict[str, float] = field(default_factory=dict)
@@ -100,17 +102,19 @@ class QualityAssessmentResult:
             "security_assessment": self.security_assessment,
             "is_recommended": self.is_recommended,
             "adjusted_risk_level": self.adjusted_risk_level.value,
-            "assessment_timestamp": self.assessment_timestamp
+            "assessment_timestamp": self.assessment_timestamp,
         }
 
 
 class FixSuggestionQualityAssessor:
     """修复建议质量评估器"""
 
-    def __init__(self,
-                 min_acceptance_score: float = 0.6,
-                 enable_syntax_validation: bool = True,
-                 enable_security_analysis: bool = True):
+    def __init__(
+        self,
+        min_acceptance_score: float = 0.6,
+        enable_syntax_validation: bool = True,
+        enable_security_analysis: bool = True,
+    ):
         self.min_acceptance_score = min_acceptance_score
         self.enable_syntax_validation = enable_syntax_validation
         self.enable_security_analysis = enable_security_analysis
@@ -118,13 +122,13 @@ class FixSuggestionQualityAssessor:
 
         # 质量评估权重配置
         self.assessment_weights = {
-            "syntax_correctness": 0.25,      # 语法正确性
-            "logic_soundness": 0.20,         # 逻辑合理性
+            "syntax_correctness": 0.25,  # 语法正确性
+            "logic_soundness": 0.20,  # 逻辑合理性
             "solution_completeness": 0.15,  # 解决方案完整性
-            "risk_assessment": 0.15,          # 风险评估准确性
-            "explanation_quality": 0.10,       # 解释说明质量
-            "alternative_quality": 0.10,        # 替代方案质量
-            "feasibility": 0.05                 # 可行性评估
+            "risk_assessment": 0.15,  # 风险评估准确性
+            "explanation_quality": 0.10,  # 解释说明质量
+            "alternative_quality": 0.10,  # 替代方案质量
+            "feasibility": 0.05,  # 可行性评估
         }
 
         # 语法验证配置
@@ -133,41 +137,50 @@ class FixSuggestionQualityAssessor:
                 "parser": ast.parse,
                 "file_extension": ".py",
                 "check_imports": True,
-                "check_style": False
+                "check_style": False,
             },
             "javascript": {
                 "node_check": False,  # 需要Node.js环境
                 "basic_syntax": True,
-                "file_extensions": [".js", ".jsx", ".ts", ".tsx"]
-            }
+                "file_extensions": [".js", ".jsx", ".ts", ".tsx"],
+            },
         }
 
         # 安全性检查模式
         self.security_patterns = {
             "insecure_functions": [
-                "eval", "exec", "compile", "execfile",
-                "subprocess.call", "os.system", "os.popen"
+                "eval",
+                "exec",
+                "compile",
+                "execfile",
+                "subprocess.call",
+                "os.system",
+                "os.popen",
             ],
             "dangerous_imports": [
-                "pickle", "cPickle", "marshal", "shelve",
-                "os.path", "tempfile.NamedTemporaryFile"
+                "pickle",
+                "cPickle",
+                "marshal",
+                "shelve",
+                "os.path",
+                "tempfile.NamedTemporaryFile",
             ],
             "sql_injection_patterns": [
                 r"execute\s*\(",
                 r"executemany\s*\(",
-                r"cursor\.execute\s*\("
+                r"cursor\.execute\s*\(",
             ],
             "path_traversal_patterns": [
                 r"\.\./",
                 r"\.\.\\",
                 r"\.\.\\\\",
-                r"open\s*\([\"'].*\.\.[\"']"
-            ]
+                r"open\s*\([\"'].*\.\.[\"']",
+            ],
         }
 
-    def assess_suggestion_quality(self,
-                                 suggestion: AIFixSuggestion,
-                                 suggestion_context: FixSuggestionContext) -> QualityAssessmentResult:
+    def assess_suggestion_quality(
+        self, suggestion: AIFixSuggestion, suggestion_context: FixSuggestionContext
+    ) -> QualityAssessmentResult:
         """
         评估修复建议质量
 
@@ -182,7 +195,7 @@ class FixSuggestionQualityAssessor:
 
         result = QualityAssessmentResult(
             suggestion_id=suggestion.suggestion_id,
-            assessment_timestamp=datetime.now().isoformat()
+            assessment_timestamp=datetime.now().isoformat(),
         )
 
         try:
@@ -198,7 +211,9 @@ class FixSuggestionQualityAssessor:
             result.category_scores["logic_soundness"] = logic_score
 
             # 3. 解决方案完整性评估
-            completeness_score = self._assess_solution_completeness(suggestion, suggestion_context)
+            completeness_score = self._assess_solution_completeness(
+                suggestion, suggestion_context
+            )
             result.category_scores["solution_completeness"] = completeness_score
 
             # 4. 风险评估准确性
@@ -224,17 +239,23 @@ class FixSuggestionQualityAssessor:
             result.assessment_issues = self._collect_assessment_issues(result)
 
             # 生成改进建议
-            result.improvement_suggestions = self._generate_improvement_suggestions(result)
+            result.improvement_suggestions = self._generate_improvement_suggestions(
+                result
+            )
 
             # 安全性评估
             if self.enable_security_analysis:
-                result.security_assessment = self._assess_security_aspects(suggestion, suggestion_context)
+                result.security_assessment = self._assess_security_aspects(
+                    suggestion, suggestion_context
+                )
 
             # 判断是否推荐
             result.is_recommended = self._is_suggestion_recommended(result)
 
             # 调整风险等级
-            result.adjusted_risk_level = self._adjust_risk_level(suggestion.risk_level, result.overall_score)
+            result.adjusted_risk_level = self._adjust_risk_level(
+                suggestion.risk_level, result.overall_score
+            )
 
             self.logger.debug(
                 f"修复建议质量评估完成: {suggestion.suggestion_id}, "
@@ -249,9 +270,9 @@ class FixSuggestionQualityAssessor:
 
         return result
 
-    def _assess_syntax_correctness(self,
-                                suggestion: AIFixSuggestion,
-                                suggestion_context: FixSuggestionContext) -> Tuple[float, Dict[str, Any]]:
+    def _assess_syntax_correctness(
+        self, suggestion: AIFixSuggestion, suggestion_context: FixSuggestionContext
+    ) -> Tuple[float, Dict[str, Any]]:
         """评估语法正确性"""
         if not self.enable_syntax_validation:
             return 1.0, {"status": "disabled"}
@@ -266,24 +287,31 @@ class FixSuggestionQualityAssessor:
             "style_issues": [],
             "language": language,
             "original_code_valid": False,
-            "suggested_code_valid": False
+            "suggested_code_valid": False,
         }
 
         try:
             # 验证原始代码语法
-            if self._validate_code_syntax(file_path, suggestion.original_code, validation_result):
+            if self._validate_code_syntax(
+                file_path, suggestion.original_code, validation_result
+            ):
                 validation_result["original_code_valid"] = True
             else:
                 validation_result["syntax_errors"].append("原始代码存在语法错误")
 
             # 验证建议代码语法
-            if self._validate_code_syntax(file_path, suggestion.suggested_code, validation_result):
+            if self._validate_code_syntax(
+                file_path, suggestion.suggested_code, validation_result
+            ):
                 validation_result["suggested_code_valid"] = True
             else:
                 validation_result["syntax_errors"].append("建议代码存在语法错误")
 
             # 计算语法分数
-            if validation_result["original_code_valid"] and validation_result["suggested_code_valid"]:
+            if (
+                validation_result["original_code_valid"]
+                and validation_result["suggested_code_valid"]
+            ):
                 syntax_score = 1.0
                 validation_result["status"] = "valid"
             elif validation_result["suggested_code_valid"]:
@@ -301,7 +329,9 @@ class FixSuggestionQualityAssessor:
 
         return syntax_score, validation_result
 
-    def _validate_code_syntax(self, file_path: str, code: str, validation_result: Dict[str, Any]) -> bool:
+    def _validate_code_syntax(
+        self, file_path: str, code: str, validation_result: Dict[str, Any]
+    ) -> bool:
         """验证代码语法"""
         language = validation_result["language"]
 
@@ -313,7 +343,9 @@ class FixSuggestionQualityAssessor:
             # 对于其他语言，进行基本检查
             return self._validate_basic_syntax(code, validation_result)
 
-    def _validate_python_syntax(self, code: str, validation_result: Dict[str, Any]) -> bool:
+    def _validate_python_syntax(
+        self, code: str, validation_result: Dict[str, Any]
+    ) -> bool:
         """验证Python语法"""
         try:
             ast.parse(code)
@@ -332,7 +364,9 @@ class FixSuggestionQualityAssessor:
             validation_result["syntax_errors"].append(f"解析错误: {e}")
             return False
 
-    def _validate_javascript_syntax(self, code: str, validation_result: Dict[str, Any]) -> bool:
+    def _validate_javascript_syntax(
+        self, code: str, validation_result: Dict[str, Any]
+    ) -> bool:
         """验证JavaScript/TypeScript语法"""
         # 基本的JavaScript语法检查
         try:
@@ -352,7 +386,9 @@ class FixSuggestionQualityAssessor:
             validation_result["syntax_errors"].append(f"语法检查错误: {e}")
             return False
 
-    def _validate_basic_syntax(self, code: str, validation_result: Dict[str, Any]) -> bool:
+    def _validate_basic_syntax(
+        self, code: str, validation_result: Dict[str, Any]
+    ) -> bool:
         """验证基本语法"""
         try:
             # 检查基本的语法平衡
@@ -373,7 +409,7 @@ class FixSuggestionQualityAssessor:
     def _check_brace_balance(self, code: str) -> bool:
         """检查括号平衡"""
         stack = []
-        bracket_pairs = {'(': ')', '[': ']', '{': '}'}
+        bracket_pairs = {"(": ")", "[": "]", "{": "}"}
 
         for char in code:
             if char in bracket_pairs:
@@ -402,13 +438,13 @@ class FixSuggestionQualityAssessor:
     def _check_python_imports(self, code: str) -> List[str]:
         """检查Python导入语句"""
         errors = []
-        lines = code.split('\n')
+        lines = code.split("\n")
 
         for i, line in lines:
             line = line.strip()
-            if line.startswith(('import ', 'from ')):
+            if line.startswith(("import ", "from ")):
                 try:
-                    if line.startswith('from '):
+                    if line.startswith("from "):
                         exec(line)  # 测试导入是否有效
                     else:
                         exec(line)
@@ -417,16 +453,16 @@ class FixSuggestionQualityAssessor:
 
         return errors
 
-    def _assess_logic_soundness(self,
-                              suggestion: AIFixSuggestion,
-                              suggestion_context: FixSuggestionContext) -> float:
+    def _assess_logic_soundness(
+        self, suggestion: AIFixSuggestion, suggestion_context: FixSuggestionContext
+    ) -> float:
         """评估逻辑合理性"""
         score = 0.0
         total_checks = 0
 
         # 检查修复是否针对问题
-        original_lines = len(suggestion.original_code.split('\n'))
-        suggested_lines = len(suggestion.suggested_code.split('\n'))
+        original_lines = len(suggestion.original_code.split("\n"))
+        suggested_lines = len(suggestion.suggested_code.split("\n"))
 
         total_checks += 1
         if suggested_lines <= original_lines * 2:  # 修复代码不过于冗长
@@ -462,7 +498,7 @@ class FixSuggestionQualityAssessor:
             FixType.CODE_DELETION: ["删除", "移除", "去除"],
             FixType.REFACTORING: ["重构", "重组", "优化"],
             FixType.CONFIGURATION: ["配置", "设置", "调整"],
-            FixType.DEPENDENCY_UPDATE: ["依赖", "库", "包"]
+            FixType.DEPENDENCY_UPDATE: ["依赖", "库", "包"],
         }
 
         fix_type = suggestion.fix_type
@@ -472,12 +508,16 @@ class FixSuggestionQualityAssessor:
         # 检查解释和推理中是否包含相关关键词
         if fix_type in problem_types:
             keywords = problem_types[fix_type]
-            if any(keyword in explanation or keyword in reasoning for keyword in keywords):
+            if any(
+                keyword in explanation or keyword in reasoning for keyword in keywords
+            ):
                 return True
 
         return False
 
-    def _maintains_code_style(self, suggestion: AIFixSuggestion, suggestion_context: FixSuggestionContext) -> bool:
+    def _maintains_code_style(
+        self, suggestion: AIFixSuggestion, suggestion_context: FixSuggestionContext
+    ) -> bool:
         """检查是否保持代码风格一致性"""
         # 简化的风格检查
         original_indentation = self._get_indentation_style(suggestion.original_code)
@@ -488,25 +528,25 @@ class FixSuggestionQualityAssessor:
 
     def _get_indentation_style(self, code: str) -> str:
         """获取缩进风格"""
-        lines = [line for line in code.split('\n') if line.strip()]
+        lines = [line for line in code.split("\n") if line.strip()]
         if not lines:
             return "unknown"
 
         # 统计每行的缩进
         indentations = []
         for line in lines:
-            if line.startswith((' ', '\t')):
-                indentations.append(line[:len(line) - len(line.lstrip())])
+            if line.startswith((" ", "\t")):
+                indentations.append(line[: len(line) - len(line.lstrip())])
 
         if not indentations:
             return "none"
 
         # 判断主要缩进风格
-        if all(indent == '    ' for indent in indentations):
+        if all(indent == "    " for indent in indentations):
             return "4_spaces"
-        elif all(indent == '  ' for indent in indentations):
+        elif all(indent == "  " for indent in indentations):
             return "2_spaces"
-        elif all(indent == '\t' for indent in indentations):
+        elif all(indent == "\t" for indent in indentations):
             return "tab"
         else:
             return "mixed"
@@ -518,8 +558,14 @@ class FixSuggestionQualityAssessor:
 
         # 检查是否包含可能的问题模式
         problem_patterns = [
-            "todo", "fixme", "xxx", "hack", "temporary",
-            "print(", "console.log", "debug("
+            "todo",
+            "fixme",
+            "xxx",
+            "hack",
+            "temporary",
+            "print(",
+            "console.log",
+            "debug(",
         ]
 
         for pattern in problem_patterns:
@@ -547,9 +593,9 @@ class FixSuggestionQualityAssessor:
 
         return False
 
-    def _assess_solution_completeness(self,
-                                    suggestion: AIFixSuggestion,
-                                    suggestion_context: FixSuggestionContext) -> float:
+    def _assess_solution_completeness(
+        self, suggestion: AIFixSuggestion, suggestion_context: FixSuggestionContext
+    ) -> float:
         """评估解决方案完整性"""
         score = 0.0
         total_checks = 0
@@ -586,9 +632,9 @@ class FixSuggestionQualityAssessor:
 
         return score / total_checks if total_checks > 0 else 0.0
 
-    def _assess_risk_assessment(self,
-                            suggestion: AIFixSuggestion,
-                            suggestion_context: FixSuggestionContext) -> float:
+    def _assess_risk_assessment(
+        self, suggestion: AIFixSuggestion, suggestion_context: FixSuggestionContext
+    ) -> float:
         """评估风险评估准确性"""
         score = 0.0
         total_checks = 0
@@ -616,13 +662,17 @@ class FixSuggestionQualityAssessor:
 
         return score / total_checks if total_checks > 0 else 0.0
 
-    def _is_risk_level_reasonable(self, suggestion: AIFixSuggestion, suggestion_context: FixSuggestionContext) -> bool:
+    def _is_risk_level_reasonable(
+        self, suggestion: AIFixSuggestion, suggestion_context: FixSuggestionContext
+    ) -> bool:
         """检查风险等级是否合理"""
         # 这里可以根据项目类型和约束来调整风险期望
         constraints = suggestion_context.fix_constraints
 
         # 如果是高风险问题，建议也应该是高风险
-        project_risk = suggestion_context.project_context.get("risk_assessment", {}).get("overall_risk", "medium")
+        project_risk = suggestion_context.project_context.get(
+            "risk_assessment", {}
+        ).get("overall_risk", "medium")
         suggestion_risk = suggestion.risk_level.value
 
         # 高风险项目应该更保守
@@ -643,22 +693,29 @@ class FixSuggestionQualityAssessor:
                 return False
 
             # 检查是否包含影响评估
-            if any(impact in side_effect.lower() for impact in ["影响", "改变", "修改"]):
+            if any(
+                impact in side_effect.lower() for impact in ["影响", "改变", "修改"]
+            ):
                 return True
 
         return len(suggestion.side_effects) <= 5  # 副作用数量合理
 
-    def _considers_dependencies(self, suggestion: AIFixSuggestion, suggestion_context: FixSuggestionContext) -> bool:
+    def _considers_dependencies(
+        self, suggestion: AIFixSuggestion, suggestion_context: FixSuggestionContext
+    ) -> bool:
         """检查是否考虑了文件依赖"""
         if not suggestion.dependencies:
             # 如果没有依赖，检查是否合理
             return suggestion.fix_type in [
-                FixType.CODE_DELETION, FixType.CODE_REPLACEMENT
+                FixType.CODE_DELETION,
+                FixType.CODE_REPLACEMENT,
             ]
 
         return len(suggestion.dependencies) <= 5  # 依赖数量合理
 
-    def _risk_severity_consistent(self, suggestion: AIFixSuggestion, suggestion_context: FixSuggestionContext) -> bool:
+    def _risk_severity_consistent(
+        self, suggestion: AIFixSuggestion, suggestion_context: FixSuggestionContext
+    ) -> bool:
         """检查风险等级与严重程度的一致性"""
         # 这里应该获取原始问题的严重程度
         # 简化处理：假设高风险修复对应高严重程度问题
@@ -687,7 +744,7 @@ class FixSuggestionQualityAssessor:
 
         # 检查是否包含具体信息
         total_checks += 1
-        if any(char in explanation for char in [':', '。', '！', '?']):
+        if any(char in explanation for char in [":", "。", "！", "?"]):
             score += 1
 
         # 检查是否包含技术细节
@@ -722,7 +779,9 @@ class FixSuggestionQualityAssessor:
 
         return min(score, 1.0)
 
-    def _assess_feasibility(self, suggestion: AIFixSuggestion, suggestion_context: FixSuggestionContext) -> float:
+    def _assess_feasibility(
+        self, suggestion: AIFixSuggestion, suggestion_context: FixSuggestionContext
+    ) -> float:
         """评估可行性"""
         score = 0.0
         total_checks = 0
@@ -786,7 +845,9 @@ class FixSuggestionQualityAssessor:
 
         return issues
 
-    def _generate_improvement_suggestions(self, result: QualityAssessmentResult) -> List[str]:
+    def _generate_improvement_suggestions(
+        self, result: QualityAssessmentResult
+    ) -> List[str]:
         """生成改进建议"""
         suggestions = []
 
@@ -809,15 +870,15 @@ class FixSuggestionQualityAssessor:
 
         return suggestions
 
-    def _assess_security_aspects(self,
-                               suggestion: AIFixSuggestion,
-                               suggestion_context: FixSuggestionContext) -> Dict[str, Any]:
+    def _assess_security_aspects(
+        self, suggestion: AIFixSuggestion, suggestion_context: FixSuggestionContext
+    ) -> Dict[str, Any]:
         """评估安全性方面"""
         security_assessment = {
             "has_security_issues": False,
             "vulnerability_types": [],
             "risk_patterns": [],
-            "recommendations": []
+            "recommendations": [],
         }
 
         # 检查建议代码中的安全问题模式
@@ -835,7 +896,9 @@ class FixSuggestionQualityAssessor:
             # 检查是否替换敏感信息
             if self._contains_sensitive_replacement(suggestion):
                 security_assessment["has_security_issues"] = True
-                security_assessment["vulnerability_types"].append("sensitive_replacement")
+                security_assessment["vulnerability_types"].append(
+                    "sensitive_replacement"
+                )
                 security_assessment["recommendations"].append("避免替换敏感信息")
 
         return security_assessment
@@ -843,8 +906,14 @@ class FixSuggestionQualityAssessor:
     def _contains_sensitive_replacement(self, suggestion: AIFixSuggestion) -> bool:
         """检查是否包含敏感信息替换"""
         sensitive_patterns = [
-            "password", "token", "key", "secret", "credential",
-            "api_key", "private_key", "certificate"
+            "password",
+            "token",
+            "key",
+            "secret",
+            "credential",
+            "api_key",
+            "private_key",
+            "certificate",
         ]
 
         suggested_lower = suggestion.suggested_code.lower()
@@ -859,12 +928,14 @@ class FixSuggestionQualityAssessor:
     def _is_suggestion_recommended(self, result: QualityAssessmentResult) -> bool:
         """判断建议是否推荐"""
         return (
-            result.overall_score >= self.min_acceptance_score and
-            result.syntax_validation.get("suggested_code_valid", False) and
-            len(result.assessment_issues) <= 3
+            result.overall_score >= self.min_acceptance_score
+            and result.syntax_validation.get("suggested_code_valid", False)
+            and len(result.assessment_issues) <= 3
         )
 
-    def _adjust_risk_level(self, original_risk: RiskLevel, overall_score: float) -> RiskLevel:
+    def _adjust_risk_level(
+        self, original_risk: RiskLevel, overall_score: float
+    ) -> RiskLevel:
         """调整风险等级"""
         # 如果质量分数很高，可以降低风险等级
         if overall_score >= 0.9 and original_risk == RiskLevel.HIGH:
@@ -898,16 +969,18 @@ class FixSuggestionQualityAssessor:
             ".cs": "csharp",
             ".rs": "rust",
             ".php": "php",
-            ".rb": "ruby"
+            ".rb": "ruby",
         }
 
         return language_map.get(ext, "unknown")
 
 
 # 便捷函数
-def assess_fix_suggestion_quality(suggestion: Dict[str, Any],
-                                 suggestion_context: Dict[str, Any],
-                                 min_acceptance_score: float = 0.6) -> Dict[str, Any]:
+def assess_fix_suggestion_quality(
+    suggestion: Dict[str, Any],
+    suggestion_context: Dict[str, Any],
+    min_acceptance_score: float = 0.6,
+) -> Dict[str, Any]:
     """
     便捷的修复建议质量评估函数
 
@@ -929,5 +1002,5 @@ def assess_fix_suggestion_quality(suggestion: Dict[str, Any],
         "suggestion_id": suggestion.get("suggestion_id", ""),
         "overall_score": 0.8,  # 估算值
         "is_recommended": True,
-        "assessment_timestamp": datetime.now().isoformat()
+        "assessment_timestamp": datetime.now().isoformat(),
     }

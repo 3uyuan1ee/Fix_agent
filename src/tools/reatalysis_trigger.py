@@ -6,18 +6,21 @@
 
 import json
 import uuid
+from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import Dict, List, Any, Optional
-from pathlib import Path
-from dataclasses import dataclass, asdict
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from ..utils.logger import get_logger
 from ..utils.config import get_config_manager
-from .workflow_flow_state_manager import WorkflowSession
+from ..utils.logger import get_logger
 from .workflow_data_types import AIDetectedProblem, AIFixSuggestion
+from .workflow_flow_state_manager import (
+    WorkflowFlowStateManager,
+    WorkflowNode,
+    WorkflowSession,
+)
 from .workflow_user_interaction_types import UserDecision
-from .workflow_flow_state_manager import WorkflowNode, WorkflowFlowStateManager
 
 logger = get_logger()
 
@@ -25,6 +28,7 @@ logger = get_logger()
 @dataclass
 class ReanalysisContext:
     """重新分析上下文"""
+
     reanalysis_id: str
     session_id: str
     original_issue_id: str
@@ -48,13 +52,14 @@ class ReanalysisContext:
             "previous_attempts": self.previous_attempts,
             "adjusted_strategy": self.adjusted_strategy,
             "reanalysis_timestamp": self.reanalysis_timestamp.isoformat(),
-            "retry_count": self.retry_count
+            "retry_count": self.retry_count,
         }
 
 
 @dataclass
 class FailureAnalysis:
     """失败分析结果"""
+
     analysis_id: str
     issue_id: str
     suggestion_id: str
@@ -74,17 +79,18 @@ class FailureAnalysis:
             "root_causes": self.root_causes,
             "learnings": self.learnings,
             "recommended_adjustments": self.recommended_adjustments,
-            "confidence_score": self.confidence_score
+            "confidence_score": self.confidence_score,
         }
 
 
 class ReanalysisStrategy(Enum):
     """重新分析策略"""
-    SAME_APPROACH = "same_approach"           # 相同方法
+
+    SAME_APPROACH = "same_approach"  # 相同方法
     ALTERNATIVE_APPROACH = "alternative_approach"  # 替代方法
-    MORE_CONTEXT = "more_context"              # 更多上下文
+    MORE_CONTEXT = "more_context"  # 更多上下文
     DIFFERENT_AI_MODEL = "different_ai_model"  # 不同AI模型
-    HUMAN_INTERVENTION = "human_intervention"   # 人工干预
+    HUMAN_INTERVENTION = "human_intervention"  # 人工干预
 
 
 class ReanalysisTrigger:
@@ -106,7 +112,9 @@ class ReanalysisTrigger:
 
         # 重新分析配置
         self.max_retry_attempts = self.config.get("max_retry_attempts", 3)
-        self.reanalysis_dir = Path(self.config.get("reanalysis_dir", ".fix_backups/reanalysis"))
+        self.reanalysis_dir = Path(
+            self.config.get("reanalysis_dir", ".fix_backups/reanalysis")
+        )
         self.reanalysis_dir.mkdir(parents=True, exist_ok=True)
 
     def trigger_reanalysis(
@@ -116,7 +124,7 @@ class ReanalysisTrigger:
         failed_suggestion_id: str,
         failure_reason: str,
         verification_results: Optional[Dict[str, Any]] = None,
-        user_feedback: Optional[str] = None
+        user_feedback: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         触发重新分析
@@ -152,7 +160,7 @@ class ReanalysisTrigger:
                 suggestion_id=failed_suggestion_id,
                 failure_reason=failure_reason,
                 verification_results=verification_results,
-                user_feedback=user_feedback
+                user_feedback=user_feedback,
             )
 
             # 获取历史尝试记录
@@ -162,7 +170,7 @@ class ReanalysisTrigger:
             adjusted_strategy = self._adjust_analysis_strategy(
                 failure_analysis=failure_analysis,
                 previous_attempts=previous_attempts,
-                retry_count=current_retry_count
+                retry_count=current_retry_count,
             )
 
             # 创建重新分析上下文
@@ -174,7 +182,7 @@ class ReanalysisTrigger:
                 failure_analysis=failure_analysis,
                 previous_attempts=previous_attempts,
                 adjusted_strategy=adjusted_strategy,
-                retry_count=current_retry_count + 1
+                retry_count=current_retry_count + 1,
             )
 
             # 保存重新分析上下文
@@ -187,7 +195,7 @@ class ReanalysisTrigger:
             self.state_manager.transition_to(
                 session_id,
                 WorkflowNode.PROBLEM_DETECTION,
-                f"触发重新分析: {issue_id} (第{current_retry_count + 1}次尝试)"
+                f"触发重新分析: {issue_id} (第{current_retry_count + 1}次尝试)",
             )
 
             # 生成触发结果
@@ -199,7 +207,7 @@ class ReanalysisTrigger:
                 "adjusted_strategy": adjusted_strategy,
                 "next_node": "PROBLEM_DETECTION",
                 "failure_analysis": failure_analysis.to_dict(),
-                "message": f"已触发问题 {issue_id} 的重新分析"
+                "message": f"已触发问题 {issue_id} 的重新分析",
             }
 
             self.logger.info(f"重新分析触发完成: {result}")
@@ -207,18 +215,14 @@ class ReanalysisTrigger:
 
         except Exception as e:
             self.logger.error(f"触发重新分析失败: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "message": "触发重新分析失败"
-            }
+            return {"success": False, "error": str(e), "message": "触发重新分析失败"}
 
     def _get_retry_count(self, session: WorkflowSession, issue_id: str) -> int:
         """获取重试次数"""
-        if not hasattr(session, 'reanalysis_history'):
+        if not hasattr(session, "reanalysis_history"):
             session.reanalysis_history = {}
 
-        return session.reanalysis_history.get(issue_id, {}).get('retry_count', 0)
+        return session.reanalysis_history.get(issue_id, {}).get("retry_count", 0)
 
     def _analyze_failure(
         self,
@@ -227,7 +231,7 @@ class ReanalysisTrigger:
         suggestion_id: str,
         failure_reason: str,
         verification_results: Optional[Dict[str, Any]],
-        user_feedback: Optional[str]
+        user_feedback: Optional[str],
     ) -> FailureAnalysis:
         """分析失败原因"""
         try:
@@ -272,7 +276,7 @@ class ReanalysisTrigger:
                 root_causes=root_causes,
                 learnings=learnings,
                 recommended_adjustments=recommended_adjustments,
-                confidence_score=confidence_score
+                confidence_score=confidence_score,
             )
 
         except Exception as e:
@@ -286,17 +290,21 @@ class ReanalysisTrigger:
                 root_causes=["unknown_error"],
                 learnings=["需要更多调试信息"],
                 recommended_adjustments={"strategy": "manual_review"},
-                confidence_score=0.1
+                confidence_score=0.1,
             )
 
-    def _get_problem_by_id(self, session: WorkflowSession, issue_id: str) -> Optional[AIDetectedProblem]:
+    def _get_problem_by_id(
+        self, session: WorkflowSession, issue_id: str
+    ) -> Optional[AIDetectedProblem]:
         """根据ID获取问题信息"""
         for problem in session.detected_problems:
             if problem.issue_id == issue_id:
                 return problem
         return None
 
-    def _get_fix_suggestion_by_id(self, session: WorkflowSession, suggestion_id: str) -> Optional[AIFixSuggestion]:
+    def _get_fix_suggestion_by_id(
+        self, session: WorkflowSession, suggestion_id: str
+    ) -> Optional[AIFixSuggestion]:
         """根据ID获取修复建议信息"""
         for suggestion in session.fix_suggestions:
             if suggestion.suggestion_id == suggestion_id:
@@ -307,7 +315,7 @@ class ReanalysisTrigger:
         self,
         failure_reason: str,
         verification_results: Optional[Dict[str, Any]],
-        user_feedback: Optional[str]
+        user_feedback: Optional[str],
     ) -> List[str]:
         """识别失败模式"""
         patterns = []
@@ -317,9 +325,15 @@ class ReanalysisTrigger:
             patterns.append("syntax_error")
         if "逻辑" in failure_reason.lower() or "logic" in failure_reason.lower():
             patterns.append("logic_error")
-        if "验证失败" in failure_reason.lower() or "verification_failed" in failure_reason.lower():
+        if (
+            "验证失败" in failure_reason.lower()
+            or "verification_failed" in failure_reason.lower()
+        ):
             patterns.append("verification_failure")
-        if "引入新问题" in failure_reason.lower() or "new_issues" in failure_reason.lower():
+        if (
+            "引入新问题" in failure_reason.lower()
+            or "new_issues" in failure_reason.lower()
+        ):
             patterns.append("regression")
 
         # 基于验证结果的模式
@@ -331,9 +345,15 @@ class ReanalysisTrigger:
 
         # 基于用户反馈的模式
         if user_feedback:
-            if "不正确" in user_feedback.lower() or "incorrect" in user_feedback.lower():
+            if (
+                "不正确" in user_feedback.lower()
+                or "incorrect" in user_feedback.lower()
+            ):
                 patterns.append("incorrect_fix")
-            if "不完整" in user_feedback.lower() or "incomplete" in user_feedback.lower():
+            if (
+                "不完整" in user_feedback.lower()
+                or "incomplete" in user_feedback.lower()
+            ):
                 patterns.append("incomplete_fix")
 
         return patterns if patterns else ["unknown_pattern"]
@@ -342,7 +362,7 @@ class ReanalysisTrigger:
         self,
         problem: AIDetectedProblem,
         suggestion: AIFixSuggestion,
-        failure_patterns: List[str]
+        failure_patterns: List[str],
     ) -> List[str]:
         """识别根本原因"""
         causes = []
@@ -372,7 +392,9 @@ class ReanalysisTrigger:
 
         return causes if causes else ["unknown_cause"]
 
-    def _extract_learnings(self, failure_patterns: List[str], root_causes: List[str]) -> List[str]:
+    def _extract_learnings(
+        self, failure_patterns: List[str], root_causes: List[str]
+    ) -> List[str]:
         """提取学习要点"""
         learnings = []
 
@@ -393,17 +415,14 @@ class ReanalysisTrigger:
         return learnings if learnings else ["需要进一步分析失败原因"]
 
     def _recommend_adjustments(
-        self,
-        failure_patterns: List[str],
-        root_causes: List[str],
-        learnings: List[str]
+        self, failure_patterns: List[str], root_causes: List[str], learnings: List[str]
     ) -> Dict[str, Any]:
         """推荐调整方案"""
         adjustments = {
             "strategy": ReanalysisStrategy.ALTERNATIVE_APPROACH.value,
             "context_enhancement": [],
             "parameter_adjustments": {},
-            "quality_checks": []
+            "quality_checks": [],
         }
 
         # 基于失败模式调整策略
@@ -433,7 +452,7 @@ class ReanalysisTrigger:
         self,
         failure_patterns: List[str],
         root_causes: List[str],
-        verification_results: Optional[Dict[str, Any]]
+        verification_results: Optional[Dict[str, Any]],
     ) -> float:
         """计算分析置信度"""
         base_confidence = 0.5
@@ -452,19 +471,21 @@ class ReanalysisTrigger:
 
         return min(1.0, base_confidence)
 
-    def _get_previous_attempts(self, session: WorkflowSession, issue_id: str) -> List[Dict[str, Any]]:
+    def _get_previous_attempts(
+        self, session: WorkflowSession, issue_id: str
+    ) -> List[Dict[str, Any]]:
         """获取历史尝试记录"""
-        if not hasattr(session, 'reanalysis_history'):
+        if not hasattr(session, "reanalysis_history"):
             return []
 
         history = session.reanalysis_history.get(issue_id, {})
-        return history.get('attempts', [])
+        return history.get("attempts", [])
 
     def _adjust_analysis_strategy(
         self,
         failure_analysis: FailureAnalysis,
         previous_attempts: List[Dict[str, Any]],
-        retry_count: int
+        retry_count: int,
     ) -> Dict[str, Any]:
         """调整分析策略"""
         base_strategy = failure_analysis.recommended_adjustments.copy()
@@ -482,9 +503,13 @@ class ReanalysisTrigger:
                 if ReanalysisStrategy.MORE_CONTEXT.value not in used_strategies:
                     base_strategy["strategy"] = ReanalysisStrategy.MORE_CONTEXT.value
                 elif ReanalysisStrategy.DIFFERENT_AI_MODEL.value not in used_strategies:
-                    base_strategy["strategy"] = ReanalysisStrategy.DIFFERENT_AI_MODEL.value
+                    base_strategy["strategy"] = (
+                        ReanalysisStrategy.DIFFERENT_AI_MODEL.value
+                    )
                 else:
-                    base_strategy["strategy"] = ReanalysisStrategy.HUMAN_INTERVENTION.value
+                    base_strategy["strategy"] = (
+                        ReanalysisStrategy.HUMAN_INTERVENTION.value
+                    )
 
         # 添加重试计数信息
         base_strategy["retry_count"] = retry_count
@@ -501,7 +526,7 @@ class ReanalysisTrigger:
         failure_analysis: FailureAnalysis,
         previous_attempts: List[Dict[str, Any]],
         adjusted_strategy: Dict[str, Any],
-        retry_count: int
+        retry_count: int,
     ) -> ReanalysisContext:
         """创建重新分析上下文"""
         return ReanalysisContext(
@@ -514,15 +539,18 @@ class ReanalysisTrigger:
             previous_attempts=previous_attempts,
             adjusted_strategy=adjusted_strategy,
             reanalysis_timestamp=datetime.now(),
-            retry_count=retry_count
+            retry_count=retry_count,
         )
 
     def _save_reanalysis_context(self, context: ReanalysisContext) -> None:
         """保存重新分析上下文"""
         try:
-            context_file = self.reanalysis_dir / f"reanalysis_{context.session_id}_{context.original_issue_id}_{context.retry_count}.json"
+            context_file = (
+                self.reanalysis_dir
+                / f"reanalysis_{context.session_id}_{context.original_issue_id}_{context.retry_count}.json"
+            )
 
-            with open(context_file, 'w', encoding='utf-8') as f:
+            with open(context_file, "w", encoding="utf-8") as f:
                 json.dump(context.to_dict(), f, indent=2, ensure_ascii=False)
 
             self.logger.info(f"重新分析上下文已保存: {context.reanalysis_id}")
@@ -530,34 +558,40 @@ class ReanalysisTrigger:
         except Exception as e:
             self.logger.error(f"保存重新分析上下文失败: {e}")
 
-    def _update_session_for_reanalysis(self, session: WorkflowSession, context: ReanalysisContext) -> None:
+    def _update_session_for_reanalysis(
+        self, session: WorkflowSession, context: ReanalysisContext
+    ) -> None:
         """更新会话状态以支持重新分析"""
         # 初始化重新分析历史
-        if not hasattr(session, 'reanalysis_history'):
+        if not hasattr(session, "reanalysis_history"):
             session.reanalysis_history = {}
 
         # 更新特定问题的历史
         if context.original_issue_id not in session.reanalysis_history:
             session.reanalysis_history[context.original_issue_id] = {
-                'retry_count': 0,
-                'attempts': [],
-                'last_reanalysis': None
+                "retry_count": 0,
+                "attempts": [],
+                "last_reanalysis": None,
             }
 
         history = session.reanalysis_history[context.original_issue_id]
-        history['retry_count'] = context.retry_count
-        history['last_reanalysis'] = context.reanalysis_id
-        history['attempts'].append({
-            'reanalysis_id': context.reanalysis_id,
-            'timestamp': context.reanalysis_timestamp.isoformat(),
-            'strategy': context.adjusted_strategy.get('strategy'),
-            'failure_reason': context.failure_reason
-        })
+        history["retry_count"] = context.retry_count
+        history["last_reanalysis"] = context.reanalysis_id
+        history["attempts"].append(
+            {
+                "reanalysis_id": context.reanalysis_id,
+                "timestamp": context.reanalysis_timestamp.isoformat(),
+                "strategy": context.adjusted_strategy.get("strategy"),
+                "failure_reason": context.failure_reason,
+            }
+        )
 
         # 保存会话状态
         self.state_manager.save_session(session)
 
-    def _handle_max_retries_exceeded(self, session: WorkflowSession, issue_id: str) -> Dict[str, Any]:
+    def _handle_max_retries_exceeded(
+        self, session: WorkflowSession, issue_id: str
+    ) -> Dict[str, Any]:
         """处理超过最大重试次数的情况"""
         try:
             # 标记问题为需要人工干预
@@ -568,7 +602,7 @@ class ReanalysisTrigger:
             self.state_manager.transition_to(
                 session.session_id,
                 WorkflowNode.CHECK_REMAINING,
-                f"问题 {issue_id} 超过最大重试次数，需要人工干预"
+                f"问题 {issue_id} 超过最大重试次数，需要人工干预",
             )
 
             return {
@@ -576,7 +610,7 @@ class ReanalysisTrigger:
                 "max_retries_exceeded": True,
                 "issue_id": issue_id,
                 "next_node": "CHECK_REMAINING",
-                "message": f"问题 {issue_id} 已达到最大重试次数，需要人工干预"
+                "message": f"问题 {issue_id} 已达到最大重试次数，需要人工干预",
             }
 
         except Exception as e:
@@ -584,10 +618,12 @@ class ReanalysisTrigger:
             return {
                 "success": False,
                 "error": str(e),
-                "message": "处理最大重试次数超限失败"
+                "message": "处理最大重试次数超限失败",
             }
 
-    def get_reanalysis_history(self, session_id: str, issue_id: str = None) -> Dict[str, Any]:
+    def get_reanalysis_history(
+        self, session_id: str, issue_id: str = None
+    ) -> Dict[str, Any]:
         """
         获取重新分析历史
 
@@ -603,12 +639,14 @@ class ReanalysisTrigger:
             if not session:
                 return {"error": f"会话不存在: {session_id}"}
 
-            if not hasattr(session, 'reanalysis_history'):
+            if not hasattr(session, "reanalysis_history"):
                 return {"message": "无重新分析历史"}
 
             if issue_id:
                 # 返回特定问题的历史
-                return session.reanalysis_history.get(issue_id, {"message": "该问题无重新分析历史"})
+                return session.reanalysis_history.get(
+                    issue_id, {"message": "该问题无重新分析历史"}
+                )
             else:
                 # 返回所有问题的历史
                 return session.reanalysis_history

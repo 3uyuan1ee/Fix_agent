@@ -4,14 +4,15 @@ AI建议展示器 - T006.1
 """
 
 import os
-from typing import Dict, List, Any, Optional, Tuple
+from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
-from collections import defaultdict, Counter
+from typing import Any, Dict, List, Optional, Tuple
 
 from ..utils.logger import get_logger
+
 try:
-    from ..tools.ai_file_selector import FileSelectionResult, AIFileSelectionResult
+    from ..tools.ai_file_selector import AIFileSelectionResult, FileSelectionResult
     from ..tools.project_structure_scanner import ProjectStructure
 except ImportError:
     # 如果相关模块不可用，定义基本类型
@@ -31,7 +32,7 @@ except ImportError:
                 "reason": self.reason,
                 "confidence": self.confidence,
                 "key_issues": self.key_issues,
-                "selection_score": self.selection_score
+                "selection_score": self.selection_score,
             }
 
     @dataclass
@@ -59,6 +60,7 @@ except ImportError:
 @dataclass
 class DisplayFile:
     """展示用的文件信息"""
+
     file_path: str
     display_name: str
     relative_path: str
@@ -90,13 +92,14 @@ class DisplayFile:
             "reason": self.reason,
             "key_issues": self.key_issues,
             "preview_content": self.preview_content,
-            "issue_summary": self.issue_summary
+            "issue_summary": self.issue_summary,
         }
 
 
 @dataclass
 class DisplayStatistics:
     """展示统计信息"""
+
     total_files: int = 0
     high_priority_count: int = 0
     medium_priority_count: int = 0
@@ -114,19 +117,20 @@ class DisplayStatistics:
             "priority_distribution": {
                 "high": self.high_priority_count,
                 "medium": self.medium_priority_count,
-                "low": self.low_priority_count
+                "low": self.low_priority_count,
             },
             "average_confidence": self.confidence,
             "average_selection_score": self.average_selection_score,
             "language_distribution": self.language_distribution,
             "confidence_distribution": self.confidence_distribution,
-            "selection_reason_categories": self.selection_reason_categories
+            "selection_reason_categories": self.selection_reason_categories,
         }
 
 
 @dataclass
 class AIRecommendationDisplay:
     """AI建议展示数据"""
+
     display_files: List[DisplayFile] = field(default_factory=list)
     statistics: DisplayStatistics = field(default_factory=DisplayStatistics)
     metadata: Dict[str, Any] = field(default_factory=dict)
@@ -141,7 +145,7 @@ class AIRecommendationDisplay:
             "metadata": self.metadata,
             "display_options": self.display_options,
             "generation_timestamp": self.generation_timestamp,
-            "total_displayed": len(self.display_files)
+            "total_displayed": len(self.display_files),
         }
 
 
@@ -172,14 +176,14 @@ class AIRecommendationDisplayer:
             "yaml": "📄",
             "markdown": "📝",
             "config": "⚙️",
-            "default": "📄"
+            "default": "📄",
         }
 
         # 优先级颜色映射
         self.priority_colors = {
-            "high": "#ff4757",    # 红色
+            "high": "#ff4757",  # 红色
             "medium": "#ffa502",  # 橙色
-            "low": "#2ed573"      # 绿色
+            "low": "#2ed573",  # 绿色
         }
 
         # 语言扩展名映射
@@ -215,13 +219,15 @@ class AIRecommendationDisplayer:
             ".toml": "config",
             ".ini": "config",
             ".cfg": "config",
-            ".conf": "config"
+            ".conf": "config",
         }
 
-    def create_display(self,
-                       ai_selection_result: AIFileSelectionResult,
-                       project_structure: Optional[ProjectStructure] = None,
-                       display_options: Optional[Dict[str, Any]] = None) -> AIRecommendationDisplay:
+    def create_display(
+        self,
+        ai_selection_result: AIFileSelectionResult,
+        project_structure: Optional[ProjectStructure] = None,
+        display_options: Optional[Dict[str, Any]] = None,
+    ) -> AIRecommendationDisplay:
         """
         创建AI建议展示
 
@@ -240,7 +246,7 @@ class AIRecommendationDisplayer:
 
         display = AIRecommendationDisplay(
             generation_timestamp=datetime.now().isoformat(),
-            display_options=display_options
+            display_options=display_options,
         )
 
         try:
@@ -250,15 +256,21 @@ class AIRecommendationDisplayer:
             )
 
             # 计算统计信息
-            display.statistics = self._calculate_display_statistics(display.display_files)
+            display.statistics = self._calculate_display_statistics(
+                display.display_files
+            )
 
             # 设置元数据
-            display.metadata = self._create_metadata(ai_selection_result, project_structure)
+            display.metadata = self._create_metadata(
+                ai_selection_result, project_structure
+            )
 
             # 应用展示选项
             display = self._apply_display_options(display, display_options)
 
-            self.logger.info(f"AI建议展示创建完成，共 {len(display.display_files)} 个文件")
+            self.logger.info(
+                f"AI建议展示创建完成，共 {len(display.display_files)} 个文件"
+            )
 
         except Exception as e:
             self.logger.error(f"创建AI建议展示失败: {e}")
@@ -266,9 +278,9 @@ class AIRecommendationDisplayer:
 
         return display
 
-    def _convert_to_display_files(self,
-                                 selected_files: List[FileSelectionResult],
-                                 display_options: Dict[str, Any]) -> List[DisplayFile]:
+    def _convert_to_display_files(
+        self, selected_files: List[FileSelectionResult], display_options: Dict[str, Any]
+    ) -> List[DisplayFile]:
         """转换选择的文件为展示格式"""
         display_files = []
 
@@ -287,7 +299,7 @@ class AIRecommendationDisplayer:
                 confidence=file_result.confidence,
                 selection_score=file_result.selection_score,
                 reason=file_result.reason,
-                key_issues=file_result.key_issues
+                key_issues=file_result.key_issues,
             )
 
             # 获取文件信息
@@ -312,6 +324,7 @@ class AIRecommendationDisplayer:
     def _get_display_name(self, file_path: str) -> str:
         """获取显示名称"""
         import os
+
         return os.path.basename(file_path)
 
     def _get_relative_path(self, file_path: str) -> str:
@@ -331,7 +344,7 @@ class AIRecommendationDisplayer:
 
                 # 获取行数
                 try:
-                    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
                         display_file.line_count = sum(1 for _ in f)
                 except Exception:
                     display_file.line_count = 0
@@ -345,7 +358,7 @@ class AIRecommendationDisplayer:
             if not os.path.exists(file_path):
                 return None
 
-            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
                 lines = []
                 for i, line in enumerate(f):
                     if i >= self.max_preview_lines:
@@ -365,6 +378,7 @@ class AIRecommendationDisplayer:
     def _detect_language(self, file_path: str) -> str:
         """检测文件语言"""
         import os
+
         _, ext = os.path.splitext(file_path)
         return self.language_extensions.get(ext.lower(), "default")
 
@@ -373,13 +387,19 @@ class AIRecommendationDisplayer:
         return {
             "key_issues_count": len(file_result.key_issues),
             "key_issues": file_result.key_issues[:5],  # 最多显示5个关键问题
-            "has_security_issues": any("安全" in issue.lower() or "security" in issue.lower()
-                                     for issue in file_result.key_issues),
-            "has_performance_issues": any("性能" in issue.lower() or "performance" in issue.lower()
-                                        for issue in file_result.key_issues)
+            "has_security_issues": any(
+                "安全" in issue.lower() or "security" in issue.lower()
+                for issue in file_result.key_issues
+            ),
+            "has_performance_issues": any(
+                "性能" in issue.lower() or "performance" in issue.lower()
+                for issue in file_result.key_issues
+            ),
         }
 
-    def _calculate_display_statistics(self, display_files: List[DisplayFile]) -> DisplayStatistics:
+    def _calculate_display_statistics(
+        self, display_files: List[DisplayFile]
+    ) -> DisplayStatistics:
         """计算展示统计信息"""
         stats = DisplayStatistics()
 
@@ -408,13 +428,15 @@ class AIRecommendationDisplayer:
         # 统计语言分布
         for display_file in display_files:
             lang = display_file.language
-            stats.language_distribution[lang] = stats.language_distribution.get(lang, 0) + 1
+            stats.language_distribution[lang] = (
+                stats.language_distribution.get(lang, 0) + 1
+            )
 
         # 统计置信度分布
         confidence_ranges = {
             "high (0.8-1.0)": 0,
             "medium (0.5-0.8)": 0,
-            "low (0.0-0.5)": 0
+            "low (0.0-0.5)": 0,
         }
 
         for display_file in display_files:
@@ -434,17 +456,41 @@ class AIRecommendationDisplayer:
 
         return stats
 
-    def _categorize_selection_reasons(self, display_files: List[DisplayFile]) -> Dict[str, int]:
+    def _categorize_selection_reasons(
+        self, display_files: List[DisplayFile]
+    ) -> Dict[str, int]:
         """分类选择理由"""
         categories = defaultdict(int)
 
         reason_keywords = {
             "security": ["安全", "漏洞", "风险", "security", "vulnerability", "risk"],
-            "performance": ["性能", "效率", "缓慢", "performance", "efficiency", "slow"],
+            "performance": [
+                "性能",
+                "效率",
+                "缓慢",
+                "performance",
+                "efficiency",
+                "slow",
+            ],
             "quality": ["质量", "规范", "标准", "quality", "standard", "style"],
-            "complexity": ["复杂", "难度", "维护", "complexity", "maintenance", "difficult"],
-            "importance": ["重要", "核心", "关键", "important", "core", "critical", "main"],
-            "issues": ["问题", "错误", "缺陷", "issues", "errors", "bugs", "defects"]
+            "complexity": [
+                "复杂",
+                "难度",
+                "维护",
+                "complexity",
+                "maintenance",
+                "difficult",
+            ],
+            "importance": [
+                "重要",
+                "核心",
+                "关键",
+                "important",
+                "core",
+                "critical",
+                "main",
+            ],
+            "issues": ["问题", "错误", "缺陷", "issues", "errors", "bugs", "defects"],
         }
 
         for display_file in display_files:
@@ -462,19 +508,21 @@ class AIRecommendationDisplayer:
 
         return dict(categories)
 
-    def _create_metadata(self,
-                        ai_selection_result: AIFileSelectionResult,
-                        project_structure: Optional[ProjectStructure]) -> Dict[str, Any]:
+    def _create_metadata(
+        self,
+        ai_selection_result: AIFileSelectionResult,
+        project_structure: Optional[ProjectStructure],
+    ) -> Dict[str, Any]:
         """创建元数据"""
         metadata = {
             "ai_execution_info": {
                 "execution_success": ai_selection_result.execution_success,
                 "execution_time": ai_selection_result.execution_time,
                 "execution_timestamp": ai_selection_result.execution_timestamp,
-                "error_message": ai_selection_result.error_message
+                "error_message": ai_selection_result.error_message,
             },
             "selection_summary": ai_selection_result.selection_summary,
-            "token_usage": ai_selection_result.token_usage
+            "token_usage": ai_selection_result.token_usage,
         }
 
         if project_structure:
@@ -482,14 +530,14 @@ class AIRecommendationDisplayer:
                 "project_path": project_structure.project_path,
                 "total_files": project_structure.total_files,
                 "total_lines": project_structure.total_lines,
-                "language_distribution": project_structure.language_distribution
+                "language_distribution": project_structure.language_distribution,
             }
 
         return metadata
 
-    def _apply_display_options(self,
-                              display: AIRecommendationDisplay,
-                              display_options: Dict[str, Any]) -> AIRecommendationDisplay:
+    def _apply_display_options(
+        self, display: AIRecommendationDisplay, display_options: Dict[str, Any]
+    ) -> AIRecommendationDisplay:
         """应用展示选项"""
         # 排序选项
         sort_by = display_options.get("sort_by", "selection_score")
@@ -499,22 +547,19 @@ class AIRecommendationDisplayer:
             priority_order = {"high": 3, "medium": 2, "low": 1}
             display.display_files.sort(
                 key=lambda x: (priority_order.get(x.priority, 0), x.selection_score),
-                reverse=(sort_order == "desc")
+                reverse=(sort_order == "desc"),
             )
         elif sort_by == "confidence":
             display.display_files.sort(
-                key=lambda x: x.confidence,
-                reverse=(sort_order == "desc")
+                key=lambda x: x.confidence, reverse=(sort_order == "desc")
             )
         elif sort_by == "file_name":
             display.display_files.sort(
-                key=lambda x: x.display_name.lower(),
-                reverse=(sort_order == "desc")
+                key=lambda x: x.display_name.lower(), reverse=(sort_order == "desc")
             )
         else:  # selection_score (default)
             display.display_files.sort(
-                key=lambda x: x.selection_score,
-                reverse=(sort_order == "desc")
+                key=lambda x: x.selection_score, reverse=(sort_order == "desc")
             )
 
         # 过滤选项
@@ -523,15 +568,15 @@ class AIRecommendationDisplayer:
             priority_order = {"high": 3, "medium": 2, "low": 1}
             min_level = priority_order.get(min_priority, 0)
             display.display_files = [
-                f for f in display.display_files
+                f
+                for f in display.display_files
                 if priority_order.get(f.priority, 0) >= min_level
             ]
 
         min_confidence = display_options.get("min_confidence")
         if min_confidence is not None:
             display.display_files = [
-                f for f in display.display_files
-                if f.confidence >= min_confidence
+                f for f in display.display_files if f.confidence >= min_confidence
             ]
 
         max_files = display_options.get("max_files")
@@ -554,7 +599,9 @@ class AIRecommendationDisplayer:
         stats = display.statistics
         lines.append("📊 选择统计:")
         lines.append(f"   总文件数: {stats.total_files}")
-        lines.append(f"   优先级分布: 高({stats.high_priority_count}) 中({stats.medium_priority_count}) 低({stats.low_priority_count})")
+        lines.append(
+            f"   优先级分布: 高({stats.high_priority_count}) 中({stats.medium_priority_count}) 低({stats.low_priority_count})"
+        )
         lines.append(f"   平均置信度: {stats.average_confidence:.2f}")
         lines.append(f"   平均选择分数: {stats.average_selection_score:.2f}")
         lines.append("")
@@ -562,7 +609,9 @@ class AIRecommendationDisplayer:
         # 语言分布
         if stats.language_distribution:
             lines.append("🌍 语言分布:")
-            for lang, count in sorted(stats.language_distribution.items(), key=lambda x: x[1], reverse=True):
+            for lang, count in sorted(
+                stats.language_distribution.items(), key=lambda x: x[1], reverse=True
+            ):
                 icon = self.file_type_icons.get(lang, self.file_type_icons["default"])
                 lines.append(f"   {icon} {lang.capitalize()}: {count}")
             lines.append("")
@@ -572,15 +621,25 @@ class AIRecommendationDisplayer:
         lines.append("-" * 80)
 
         for i, display_file in enumerate(display.display_files, 1):
-            priority_icon = {"high": "🔴", "medium": "🟡", "low": "🟢"}[display_file.priority]
-            lang_icon = self.file_type_icons.get(display_file.language, self.file_type_icons["default"])
+            priority_icon = {"high": "🔴", "medium": "🟡", "low": "🟢"}[
+                display_file.priority
+            ]
+            lang_icon = self.file_type_icons.get(
+                display_file.language, self.file_type_icons["default"]
+            )
 
-            lines.append(f"{i:2d}. {priority_icon} {lang_icon} {display_file.display_name}")
+            lines.append(
+                f"{i:2d}. {priority_icon} {lang_icon} {display_file.display_name}"
+            )
             lines.append(f"    路径: {display_file.relative_path}")
-            lines.append(f"    优先级: {display_file.priority} | 置信度: {display_file.confidence:.2f} | 分数: {display_file.selection_score:.1f}")
+            lines.append(
+                f"    优先级: {display_file.priority} | 置信度: {display_file.confidence:.2f} | 分数: {display_file.selection_score:.1f}"
+            )
 
             if display_file.line_count > 0:
-                lines.append(f"    信息: {display_file.line_count}行 | {display_file.file_size}字节")
+                lines.append(
+                    f"    信息: {display_file.line_count}行 | {display_file.file_size}字节"
+                )
 
             lines.append(f"    理由: {display_file.reason}")
 
@@ -589,7 +648,7 @@ class AIRecommendationDisplayer:
 
             # 显示预览（前几行）
             if display_file.preview_content:
-                preview_lines = display_file.preview_content.split('\n')
+                preview_lines = display_file.preview_content.split("\n")
                 lines.append("    预览:")
                 for line in preview_lines[:3]:  # 只显示前3行
                     lines.append(f"      {line}")
@@ -603,7 +662,9 @@ class AIRecommendationDisplayer:
             exec_info = display.metadata["ai_execution_info"]
             lines.append("⚡ 执行信息:")
             lines.append(f"   执行时间: {exec_info['execution_time']:.2f}秒")
-            lines.append(f"   执行状态: {'成功' if exec_info['execution_success'] else '失败'}")
+            lines.append(
+                f"   执行状态: {'成功' if exec_info['execution_success'] else '失败'}"
+            )
             if exec_info.get("token_usage"):
                 usage = exec_info["token_usage"]
                 lines.append(f"   Token使用: {usage.get('total', 'N/A')}")
@@ -621,23 +682,29 @@ class AIRecommendationDisplayer:
                 "medium_priority_count": display.statistics.medium_priority_count,
                 "low_priority_count": display.statistics.low_priority_count,
                 "average_confidence": display.statistics.average_confidence,
-                "average_selection_score": display.statistics.average_selection_score
+                "average_selection_score": display.statistics.average_selection_score,
             },
             "charts": {
                 "language_distribution": display.statistics.language_distribution,
                 "confidence_distribution": display.statistics.confidence_distribution,
-                "reason_categories": display.statistics.selection_reason_categories
+                "reason_categories": display.statistics.selection_reason_categories,
             },
-            "files": []
+            "files": [],
         }
 
         # 转换文件数据
         for display_file in display.display_files:
             file_data = display_file.to_dict()
             # 添加展示用的额外信息
-            file_data["icon"] = self.file_type_icons.get(display_file.language, self.file_type_icons["default"])
-            file_data["priority_color"] = self.priority_colors.get(display_file.priority, "#666666")
-            file_data["priority_icon"] = {"high": "🔴", "medium": "🟡", "low": "🟢"}[display_file.priority]
+            file_data["icon"] = self.file_type_icons.get(
+                display_file.language, self.file_type_icons["default"]
+            )
+            file_data["priority_color"] = self.priority_colors.get(
+                display_file.priority, "#666666"
+            )
+            file_data["priority_icon"] = {"high": "🔴", "medium": "🟡", "low": "🟢"}[
+                display_file.priority
+            ]
 
             web_data["files"].append(file_data)
 
@@ -649,10 +716,12 @@ class AIRecommendationDisplayer:
 
 
 # 便捷函数
-def display_ai_recommendations(ai_selection_result: AIFileSelectionResult,
-                             project_root: str = "",
-                             format_type: str = "console",
-                             display_options: Dict[str, Any] = None) -> Any:
+def display_ai_recommendations(
+    ai_selection_result: AIFileSelectionResult,
+    project_root: str = "",
+    format_type: str = "console",
+    display_options: Dict[str, Any] = None,
+) -> Any:
     """
     便捷的AI建议展示函数
 
@@ -666,7 +735,9 @@ def display_ai_recommendations(ai_selection_result: AIFileSelectionResult,
         Any: 格式化后的展示数据
     """
     displayer = AIRecommendationDisplayer(project_root)
-    display = displayer.create_display(ai_selection_result, display_options=display_options)
+    display = displayer.create_display(
+        ai_selection_result, display_options=display_options
+    )
 
     if format_type == "console":
         return displayer.format_for_console(display)

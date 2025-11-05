@@ -4,10 +4,10 @@
 提供分析进度显示和时间统计功能
 """
 
-import time
 import sys
-from typing import Optional, Dict, Any
+import time
 from pathlib import Path
+from typing import Any, Dict, Optional
 
 
 class ProgressTracker:
@@ -55,15 +55,19 @@ class ProgressTracker:
 
         if self.verbose:
             elapsed = time.time() - self.start_time if self.start_time else 0
-            percent = (self.current_step / self.total_steps * 100) if self.total_steps > 0 else 0
+            percent = (
+                (self.current_step / self.total_steps * 100)
+                if self.total_steps > 0
+                else 0
+            )
             print(f"[{percent:5.1f}%] {description} (耗时: {elapsed:.1f}s)")
         elif not self.verbose and self.total_steps > 0:
             # 简化进度显示
-            percent = (self.current_step / self.total_steps * 100)
+            percent = self.current_step / self.total_steps * 100
             bar_length = 30
             filled_length = int(bar_length * percent / 100)
-            bar = '█' * filled_length + '░' * (bar_length - filled_length)
-            print(f"\r[{percent:5.1f}%] {bar}", end='', flush=True)
+            bar = "█" * filled_length + "░" * (bar_length - filled_length)
+            print(f"\r[{percent:5.1f}%] {bar}", end="", flush=True)
 
     def update_file_count(self, count: int):
         """更新文件计数"""
@@ -101,9 +105,11 @@ class ProgressTracker:
             else:
                 bar_length = 20
                 filled_length = int(bar_length * percent / 100)
-                bar = '█' * filled_length + '░' * (bar_length - filled_length)
-                filename = Path(current_file).name if len(current_file) > 30 else current_file
-                print(f"\r[{percent:5.1f}%] {bar} {filename}", end='', flush=True)
+                bar = "█" * filled_length + "░" * (bar_length - filled_length)
+                filename = (
+                    Path(current_file).name if len(current_file) > 30 else current_file
+                )
+                print(f"\r[{percent:5.1f}%] {bar} {filename}", end="", flush=True)
 
     def log(self, message: str):
         """记录日志信息"""
@@ -125,9 +131,9 @@ class ProgressTracker:
     def get_summary(self) -> Dict[str, Any]:
         """获取分析摘要"""
         return {
-            'total_files': self.file_count,
-            'total_issues': self.issue_count,
-            'total_time': time.time() - self.start_time if self.start_time else 0,
-            'steps_completed': self.current_step,
-            'total_steps': self.total_steps
+            "total_files": self.file_count,
+            "total_issues": self.issue_count,
+            "total_time": time.time() - self.start_time if self.start_time else 0,
+            "steps_completed": self.current_step,
+            "total_steps": self.total_steps,
         }

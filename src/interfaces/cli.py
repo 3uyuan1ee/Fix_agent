@@ -5,12 +5,12 @@ CLI命令行接口模块
 """
 
 import argparse
-import sys
-import os
-from pathlib import Path
-from typing import List, Optional, Dict, Any
-from dataclasses import dataclass
 import json
+import os
+import sys
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 try:
     from ..utils.config import ConfigManager
@@ -19,14 +19,22 @@ except ImportError:
     # Fallback for standalone testing
     class ConfigManager:
         def get_tools_config(self):
-            return {"static_analysis_tools": {"ast": {"enabled": True, "description": "AST语法分析"}}}
+            return {
+                "static_analysis_tools": {
+                    "ast": {"enabled": True, "description": "AST语法分析"}
+                }
+            }
 
     class MockLogger:
-        def error(self, msg): print(f"ERROR: {msg}")
-        def info(self, msg): print(f"INFO: {msg}")
+        def error(self, msg):
+            print(f"ERROR: {msg}")
+
+        def info(self, msg):
+            print(f"INFO: {msg}")
 
     def get_logger():
         return MockLogger()
+
 
 logger = get_logger()
 
@@ -34,6 +42,7 @@ logger = get_logger()
 @dataclass
 class CLIArguments:
     """CLI参数数据类"""
+
     # 基本参数
     mode: Optional[str] = None
     target: Optional[str] = None
@@ -96,17 +105,15 @@ class CLIArgumentParser:
     def _setup_parser(self):
         """设置参数解析器"""
         self.parser = argparse.ArgumentParser(
-            prog='aidetector',
-            description='AI缺陷检测系统 - 智能代码缺陷检测与修复工具',
+            prog="aidetector",
+            description="AI缺陷检测系统 - 智能代码缺陷检测与修复工具",
             formatter_class=argparse.RawDescriptionHelpFormatter,
-            epilog=self._get_examples_epilog()
+            epilog=self._get_examples_epilog(),
         )
 
         # 添加子命令解析器
         self.subparsers = self.parser.add_subparsers(
-            dest='command',
-            help='可用命令',
-            metavar='{analyze,web,version,help}'
+            dest="command", help="可用命令", metavar="{analyze,web,version,help}"
         )
 
         self._add_analyze_subcommand()
@@ -149,360 +156,268 @@ class CLIArgumentParser:
 
     def _add_global_arguments(self):
         """添加全局参数"""
-        global_group = self.parser.add_argument_group('全局选项')
+        global_group = self.parser.add_argument_group("全局选项")
 
         global_group.add_argument(
-            '--mode', '-m',
-            choices=['static', 'deep', 'fix'],
-            help='分析模式: static(静态分析), deep(LLM深度分析), fix(分析修复)'
+            "--mode",
+            "-m",
+            choices=["static", "deep", "fix"],
+            help="分析模式: static(静态分析), deep(LLM深度分析), fix(分析修复)",
+        )
+
+        global_group.add_argument("--target", "-t", help="目标文件或目录路径")
+
+        global_group.add_argument(
+            "--config", "-c", help="配置文件路径 (默认: config/user_config.yaml)"
         )
 
         global_group.add_argument(
-            '--target', '-t',
-            help='目标文件或目录路径'
+            "--verbose", "-v", action="store_true", help="显示详细输出信息"
         )
 
         global_group.add_argument(
-            '--config', '-c',
-            help='配置文件路径 (默认: config/user_config.yaml)'
+            "--quiet", "-q", action="store_true", help="静默模式，最小化输出"
         )
 
-        global_group.add_argument(
-            '--verbose', '-v',
-            action='store_true',
-            help='显示详细输出信息'
-        )
-
-        global_group.add_argument(
-            '--quiet', '-q',
-            action='store_true',
-            help='静默模式，最小化输出'
-        )
-
-        global_group.add_argument(
-            '--version',
-            action='store_true',
-            help='显示版本信息'
-        )
+        global_group.add_argument("--version", action="store_true", help="显示版本信息")
 
     def _add_analysis_arguments(self):
         """添加分析相关参数"""
-        analysis_group = self.parser.add_argument_group('分析选项')
+        analysis_group = self.parser.add_argument_group("分析选项")
 
         analysis_group.add_argument(
-            '--static-tools',
-            nargs='+',
-            help='指定静态分析工具 (默认: 使用配置文件中的工具)'
+            "--static-tools",
+            nargs="+",
+            help="指定静态分析工具 (默认: 使用配置文件中的工具)",
+        )
+
+        analysis_group.add_argument("--deep-model", help="指定深度分析使用的LLM模型")
+
+        analysis_group.add_argument(
+            "--no-confirm", action="store_true", help="修复模式下跳过确认步骤"
         )
 
         analysis_group.add_argument(
-            '--deep-model',
-            help='指定深度分析使用的LLM模型'
-        )
-
-        analysis_group.add_argument(
-            '--no-confirm',
-            action='store_true',
-            help='修复模式下跳过确认步骤'
-        )
-
-        analysis_group.add_argument(
-            '--dry-run',
-            action='store_true',
-            help='模拟运行，不执行实际的分析操作'
+            "--dry-run", action="store_true", help="模拟运行，不执行实际的分析操作"
         )
 
     def _add_output_arguments(self):
         """添加输出相关参数"""
-        output_group = self.parser.add_argument_group('输出选项')
+        output_group = self.parser.add_argument_group("输出选项")
+
+        output_group.add_argument("--output", "-o", help="输出文件路径")
 
         output_group.add_argument(
-            '--output', '-o',
-            help='输出文件路径'
+            "--format",
+            "-f",
+            choices=["simple", "detailed", "json", "table", "markdown"],
+            default="simple",
+            help="输出格式 (默认: simple)",
         )
 
         output_group.add_argument(
-            '--format', '-f',
-            choices=['simple', 'detailed', 'json', 'table', 'markdown'],
-            default='simple',
-            help='输出格式 (默认: simple)'
+            "--export", choices=["pdf", "html", "csv"], help="导出格式 (需要额外依赖)"
         )
 
         output_group.add_argument(
-            '--export',
-            choices=['pdf', 'html', 'csv'],
-            help='导出格式 (需要额外依赖)'
-        )
-
-        output_group.add_argument(
-            '--list-tools',
-            action='store_true',
-            help='列出所有可用的分析工具'
+            "--list-tools", action="store_true", help="列出所有可用的分析工具"
         )
 
     def _add_control_arguments(self):
         """添加控制相关参数"""
-        control_group = self.parser.add_argument_group('控制选项')
+        control_group = self.parser.add_argument_group("控制选项")
 
         control_group.add_argument(
-            '--interactive',
-            action='store_true',
-            help='强制交互式模式'
+            "--interactive", action="store_true", help="强制交互式模式"
         )
 
         control_group.add_argument(
-            '--no-interactive',
-            action='store_true',
-            help='禁用交互式模式'
+            "--no-interactive", action="store_true", help="禁用交互式模式"
         )
 
         control_group.add_argument(
-            '--batch',
-            dest='batch_file',
-            help='批处理文件，包含待执行的命令'
+            "--batch", dest="batch_file", help="批处理文件，包含待执行的命令"
         )
 
     def _add_analyze_subcommand(self):
         """添加analyze子命令"""
         analyze_parser = self.subparsers.add_parser(
-            'analyze',
-            help='执行代码分析',
-            description='执行静态分析、深度分析或修复分析'
+            "analyze",
+            help="执行代码分析",
+            description="执行静态分析、深度分析或修复分析",
         )
 
         # analyze子命令的子命令
         analyze_subparsers = analyze_parser.add_subparsers(
-            dest='analyze_command',
-            help='分析模式',
-            metavar='{static,deep,fix,workflow}'
+            dest="analyze_command",
+            help="分析模式",
+            metavar="{static,deep,fix,workflow}",
         )
 
         # static子命令
         static_parser = analyze_subparsers.add_parser(
-            'static',
-            help='执行静态分析',
-            description='使用传统静态分析工具进行代码质量检查'
+            "static",
+            help="执行静态分析",
+            description="使用传统静态分析工具进行代码质量检查",
+        )
+
+        static_parser.add_argument("target", help="目标文件或目录路径")
+
+        static_parser.add_argument(
+            "--tools", nargs="+", help="指定要使用的静态分析工具"
         )
 
         static_parser.add_argument(
-            'target',
-            help='目标文件或目录路径'
+            "--format",
+            "-f",
+            choices=["simple", "detailed", "json", "table", "markdown"],
+            default="simple",
+            help="输出格式 (默认: simple)",
+        )
+
+        static_parser.add_argument("--output", "-o", help="输出文件路径")
+
+        static_parser.add_argument(
+            "--verbose", "-v", action="store_true", help="显示详细输出信息"
         )
 
         static_parser.add_argument(
-            '--tools',
-            nargs='+',
-            help='指定要使用的静态分析工具'
+            "--quiet", "-q", action="store_true", help="静默模式，最小化输出"
         )
 
         static_parser.add_argument(
-            '--format', '-f',
-            choices=['simple', 'detailed', 'json', 'table', 'markdown'],
-            default='simple',
-            help='输出格式 (默认: simple)'
-        )
-
-        static_parser.add_argument(
-            '--output', '-o',
-            help='输出文件路径'
-        )
-
-        static_parser.add_argument(
-            '--verbose', '-v',
-            action='store_true',
-            help='显示详细输出信息'
-        )
-
-        static_parser.add_argument(
-            '--quiet', '-q',
-            action='store_true',
-            help='静默模式，最小化输出'
-        )
-
-        static_parser.add_argument(
-            '--dry-run',
-            action='store_true',
-            help='模拟运行，不执行实际的分析操作'
+            "--dry-run", action="store_true", help="模拟运行，不执行实际的分析操作"
         )
 
         # deep子命令
         deep_parser = analyze_subparsers.add_parser(
-            'deep',
-            help='执行深度分析',
-            description='使用大语言模型进行深度代码分析'
+            "deep", help="执行深度分析", description="使用大语言模型进行深度代码分析"
+        )
+
+        deep_parser.add_argument("target", help="目标文件或目录路径")
+
+        deep_parser.add_argument("--output", "-o", help="对话历史导出文件路径")
+
+        deep_parser.add_argument(
+            "--verbose", "-v", action="store_true", help="显示详细输出信息"
         )
 
         deep_parser.add_argument(
-            'target',
-            help='目标文件或目录路径'
-        )
-
-        deep_parser.add_argument(
-            '--output', '-o',
-            help='对话历史导出文件路径'
-        )
-
-        deep_parser.add_argument(
-            '--verbose', '-v',
-            action='store_true',
-            help='显示详细输出信息'
-        )
-
-        deep_parser.add_argument(
-            '--quiet', '-q',
-            action='store_true',
-            help='静默模式，最小化输出'
+            "--quiet", "-q", action="store_true", help="静默模式，最小化输出"
         )
 
         # fix子命令
         fix_parser = analyze_subparsers.add_parser(
-            'fix',
-            help='执行分析修复',
-            description='分析代码问题并提供修复建议和自动修复功能'
+            "fix",
+            help="执行分析修复",
+            description="分析代码问题并提供修复建议和自动修复功能",
+        )
+
+        fix_parser.add_argument("target", help="目标文件或目录路径")
+
+        fix_parser.add_argument(
+            "--no-confirm",
+            action="store_true",
+            help="跳过确认步骤，自动应用所有修复建议",
         )
 
         fix_parser.add_argument(
-            'target',
-            help='目标文件或目录路径'
+            "--backup-dir", help="指定备份文件目录 (默认: .fix_backups)"
         )
 
         fix_parser.add_argument(
-            '--no-confirm',
-            action='store_true',
-            help='跳过确认步骤，自动应用所有修复建议'
+            "--verbose", "-v", action="store_true", help="显示详细输出信息"
         )
 
         fix_parser.add_argument(
-            '--backup-dir',
-            help='指定备份文件目录 (默认: .fix_backups)'
+            "--quiet", "-q", action="store_true", help="静默模式，最小化输出"
         )
 
         fix_parser.add_argument(
-            '--verbose', '-v',
-            action='store_true',
-            help='显示详细输出信息'
-        )
-
-        fix_parser.add_argument(
-            '--quiet', '-q',
-            action='store_true',
-            help='静默模式，最小化输出'
-        )
-
-        fix_parser.add_argument(
-            '--dry-run',
-            action='store_true',
-            help='模拟运行，只显示修复建议不实际应用'
+            "--dry-run", action="store_true", help="模拟运行，只显示修复建议不实际应用"
         )
 
         # workflow子命令
         workflow_parser = analyze_subparsers.add_parser(
-            'workflow',
-            help='执行AI工作流修复',
-            description='执行完整的AI缺陷检测与修复工作流程 B→C→D→E→F/G→H→I→J/K→L→B/M'
+            "workflow",
+            help="执行AI工作流修复",
+            description="执行完整的AI缺陷检测与修复工作流程 B→C→D→E→F/G→H→I→J/K→L→B/M",
+        )
+
+        workflow_parser.add_argument("target", help="目标文件或目录路径")
+
+        workflow_parser.add_argument("--output", "-o", help="结果导出文件路径")
+
+        workflow_parser.add_argument(
+            "--verbose", "-v", action="store_true", help="显示详细输出信息"
         )
 
         workflow_parser.add_argument(
-            'target',
-            help='目标文件或目录路径'
+            "--quiet", "-q", action="store_true", help="静默模式，最小化输出"
         )
 
         workflow_parser.add_argument(
-            '--output', '-o',
-            help='结果导出文件路径'
-        )
-
-        workflow_parser.add_argument(
-            '--verbose', '-v',
-            action='store_true',
-            help='显示详细输出信息'
-        )
-
-        workflow_parser.add_argument(
-            '--quiet', '-q',
-            action='store_true',
-            help='静默模式，最小化输出'
-        )
-
-        workflow_parser.add_argument(
-            '--dry-run',
-            action='store_true',
-            help='模拟运行，不执行实际的分析操作'
+            "--dry-run", action="store_true", help="模拟运行，不执行实际的分析操作"
         )
 
     def _add_web_subcommand(self):
         """添加web子命令"""
         web_parser = self.subparsers.add_parser(
-            'web',
-            help='启动Web界面',
-            description='启动Web交互界面，通过浏览器使用系统功能'
+            "web",
+            help="启动Web界面",
+            description="启动Web交互界面，通过浏览器使用系统功能",
         )
 
         web_parser.add_argument(
-            '--host',
-            default='localhost',
-            help='服务器主机地址 (默认: localhost)'
+            "--host", default="localhost", help="服务器主机地址 (默认: localhost)"
         )
 
         web_parser.add_argument(
-            '--port',
-            type=int,
-            default=5000,
-            help='服务器端口号 (默认: 5000)'
+            "--port", type=int, default=5000, help="服务器端口号 (默认: 5000)"
         )
 
-        web_parser.add_argument(
-            '--debug',
-            action='store_true',
-            help='启用调试模式'
-        )
+        web_parser.add_argument("--debug", action="store_true", help="启用调试模式")
 
         web_parser.add_argument(
-            '--no-browser',
-            action='store_true',
-            help='不自动打开浏览器'
+            "--no-browser", action="store_true", help="不自动打开浏览器"
         )
 
     def _add_version_subcommand(self):
         """添加version子命令"""
         version_parser = self.subparsers.add_parser(
-            'version',
-            help='显示版本信息',
-            description='显示系统版本信息和构建详情'
+            "version", help="显示版本信息", description="显示系统版本信息和构建详情"
         )
 
     def _add_help_subcommand(self):
         """添加help子命令"""
         help_parser = self.subparsers.add_parser(
-            'help',
-            help='显示帮助信息',
-            description='显示系统帮助信息或特定子命令的帮助'
+            "help",
+            help="显示帮助信息",
+            description="显示系统帮助信息或特定子命令的帮助",
         )
 
         help_parser.add_argument(
-            'command',
-            nargs='?',
-            choices=['analyze', 'web', 'version'],
-            help='获取特定命令的帮助信息'
+            "command",
+            nargs="?",
+            choices=["analyze", "web", "version"],
+            help="获取特定命令的帮助信息",
         )
 
     def _add_advanced_arguments(self):
         """添加高级参数"""
-        advanced_group = self.parser.add_argument_group('高级选项')
+        advanced_group = self.parser.add_argument_group("高级选项")
 
         advanced_group.add_argument(
-            '--no-cache',
-            action='store_true',
-            help='禁用缓存功能'
+            "--no-cache", action="store_true", help="禁用缓存功能"
         )
 
         advanced_group.add_argument(
-            '--no-logging',
-            action='store_true',
-            help='禁用日志记录'
+            "--no-logging", action="store_true", help="禁用日志记录"
         )
 
-    def parse_args(self, args: Optional[List[str]] = None, validate_paths: bool = True) -> CLIArguments:
+    def parse_args(
+        self, args: Optional[List[str]] = None, validate_paths: bool = True
+    ) -> CLIArguments:
         """
         解析命令行参数
 
@@ -537,26 +452,30 @@ class CLIArgumentParser:
                 enable_cache=not parsed.no_cache,
                 enable_logging=not parsed.no_logging,
                 dry_run=parsed.dry_run,
-                help=getattr(parsed, 'help', False),
+                help=getattr(parsed, "help", False),
                 version=parsed.version,
                 list_tools=parsed.list_tools,
                 # 子命令参数
-                command=getattr(parsed, 'command', None),
-                analyze_command=getattr(parsed, 'analyze_command', None),
-                sub_target=getattr(parsed, 'target', None),
-                sub_tools=getattr(parsed, 'tools', None),
-                sub_format=getattr(parsed, 'format', None),
-                sub_output=getattr(parsed, 'output', None),
-                sub_verbose=getattr(parsed, 'verbose', False),
-                sub_quiet=getattr(parsed, 'quiet', False),
-                sub_dry_run=getattr(parsed, 'dry_run', False),
-                sub_no_confirm=getattr(parsed, 'no_confirm', False),
-                sub_backup_dir=getattr(parsed, 'backup_dir', None),
-                help_command=getattr(parsed, 'command', None) if hasattr(parsed, 'command') else None,
-                web_host=getattr(parsed, 'host', None),
-                web_port=getattr(parsed, 'port', None),
-                web_debug=getattr(parsed, 'debug', False),
-                web_no_browser=getattr(parsed, 'no_browser', False)
+                command=getattr(parsed, "command", None),
+                analyze_command=getattr(parsed, "analyze_command", None),
+                sub_target=getattr(parsed, "target", None),
+                sub_tools=getattr(parsed, "tools", None),
+                sub_format=getattr(parsed, "format", None),
+                sub_output=getattr(parsed, "output", None),
+                sub_verbose=getattr(parsed, "verbose", False),
+                sub_quiet=getattr(parsed, "quiet", False),
+                sub_dry_run=getattr(parsed, "dry_run", False),
+                sub_no_confirm=getattr(parsed, "no_confirm", False),
+                sub_backup_dir=getattr(parsed, "backup_dir", None),
+                help_command=(
+                    getattr(parsed, "command", None)
+                    if hasattr(parsed, "command")
+                    else None
+                ),
+                web_host=getattr(parsed, "host", None),
+                web_port=getattr(parsed, "port", None),
+                web_debug=getattr(parsed, "debug", False),
+                web_no_browser=getattr(parsed, "no_browser", False),
             )
 
             # 验证参数组合
@@ -629,10 +548,10 @@ class CLIArgumentParser:
     def _print_topic_help(self, topic: str):
         """打印特定主题的帮助"""
         help_topics = {
-            'modes': self._get_modes_help(),
-            'tools': self._get_tools_help(),
-            'formats': self._get_formats_help(),
-            'examples': self._get_examples_help()
+            "modes": self._get_modes_help(),
+            "tools": self._get_tools_help(),
+            "formats": self._get_formats_help(),
+            "examples": self._get_examples_help(),
         }
 
         if topic.lower() in help_topics:
@@ -670,10 +589,10 @@ class CLIArgumentParser:
 
             help_text = "可用分析工具:\n\n"
 
-            static_tools = tools.get('static_analysis_tools', {})
+            static_tools = tools.get("static_analysis_tools", {})
             for tool_name, tool_config in static_tools.items():
-                enabled = "✓" if tool_config.get('enabled', True) else "✗"
-                description = tool_config.get('description', '无描述')
+                enabled = "✓" if tool_config.get("enabled", True) else "✗"
+                description = tool_config.get("description", "无描述")
                 help_text += f"  {tool_name:12} {enabled} {description}\n"
 
             return help_text
@@ -751,26 +670,27 @@ class CLIArgumentParser:
             # 尝试从版本文件读取
             version_file = Path(__file__).parent.parent.parent / "VERSION"
             if version_file.exists():
-                with open(version_file, 'r', encoding='utf-8') as f:
+                with open(version_file, "r", encoding="utf-8") as f:
                     version = f.read().strip()
             else:
                 version = "0.1.0"
 
             import datetime
+
             build_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             return {
                 "version": version,
                 "build_time": build_time,
                 "python_version": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
-                "config_file": "config/user_config.yaml"
+                "config_file": "config/user_config.yaml",
             }
         except Exception:
             return {
                 "version": "0.1.0",
                 "build_time": "unknown",
                 "python_version": "unknown",
-                "config_file": "config/user_config.yaml"
+                "config_file": "config/user_config.yaml",
             }
 
     def list_tools(self):
@@ -783,19 +703,19 @@ class CLIArgumentParser:
             print("=" * 60)
 
             # 静态分析工具
-            static_tools = tools_config.get('static_analysis_tools', {})
+            static_tools = tools_config.get("static_analysis_tools", {})
             if static_tools:
                 print("\n静态分析工具:")
                 for tool_name, tool_config in static_tools.items():
-                    enabled = "启用" if tool_config.get('enabled', True) else "禁用"
-                    description = tool_config.get('description', '无描述')
+                    enabled = "启用" if tool_config.get("enabled", True) else "禁用"
+                    description = tool_config.get("description", "无描述")
                     print(f"  {tool_name:12} [{enabled:4}] {description}")
 
             # LLM模型
-            llm_config = tools_config.get('llm_interface', {})
+            llm_config = tools_config.get("llm_interface", {})
             if llm_config:
                 print("\nLLM模型:")
-                for model_name in ['gpt-4', 'gpt-3.5-turbo', 'claude-3']:
+                for model_name in ["gpt-4", "gpt-3.5-turbo", "claude-3"]:
                     configured = "✓" if model_name in str(llm_config) else "✗"
                     print(f"  {model_name:15} {configured}")
 
@@ -828,7 +748,7 @@ class CLIHelper:
             user_input.lower(),
             [cmd.lower() for cmd in available_commands],
             n=3,
-            cutoff=0.6
+            cutoff=0.6,
         )
 
         return suggestions
@@ -884,14 +804,14 @@ def main():
             return 0
 
         # 处理子命令
-        if args.command == 'analyze':
+        if args.command == "analyze":
             return handle_analyze_command(parser, args)
-        elif args.command == 'web':
+        elif args.command == "web":
             return handle_web_command(parser, args)
-        elif args.command == 'version':
+        elif args.command == "version":
             parser.print_version()
             return 0
-        elif args.command == 'help':
+        elif args.command == "help":
             return handle_help_command(parser, args)
 
         # 处理传统模式参数
@@ -914,13 +834,13 @@ def handle_analyze_command(parser: CLIArgumentParser, args: CLIArguments) -> int
         parser.parser.error("请指定分析模式: static, deep, fix, workflow")
         return 1
 
-    if args.analyze_command == 'static':
+    if args.analyze_command == "static":
         return execute_static_analysis(args)
-    elif args.analyze_command == 'deep':
+    elif args.analyze_command == "deep":
         return execute_deep_analysis(args)
-    elif args.analyze_command == 'fix':
+    elif args.analyze_command == "fix":
         return execute_fix_analysis(args)
-    elif args.analyze_command == 'workflow':
+    elif args.analyze_command == "workflow":
         return execute_workflow_analysis(args)
     else:
         parser.parser.error(f"未知的分析模式: {args.analyze_command}")
@@ -939,19 +859,20 @@ def handle_web_command(parser: CLIArgumentParser, args: CLIArguments) -> int:
 
     # 构建Web应用的参数
     import sys
-    sys.argv = ['web']
+
+    sys.argv = ["web"]
 
     # 从parse_args获取web相关参数
     parsed = parser.parser.parse_args()
 
-    if hasattr(parsed, 'host'):
-        sys.argv.extend(['--host', parsed.host])
-    if hasattr(parsed, 'port') and parsed.port != 5000:
-        sys.argv.extend(['--port', str(parsed.port)])
-    if hasattr(parsed, 'debug') and parsed.debug:
-        sys.argv.append('--debug')
-    if hasattr(parsed, 'no_browser') and parsed.no_browser:
-        sys.argv.append('--no-browser')
+    if hasattr(parsed, "host"):
+        sys.argv.extend(["--host", parsed.host])
+    if hasattr(parsed, "port") and parsed.port != 5000:
+        sys.argv.extend(["--port", str(parsed.port)])
+    if hasattr(parsed, "debug") and parsed.debug:
+        sys.argv.append("--debug")
+    if hasattr(parsed, "no_browser") and parsed.no_browser:
+        sys.argv.append("--no-browser")
 
     try:
         print("🌐 启动Web界面...")
@@ -965,11 +886,11 @@ def handle_help_command(parser: CLIArgumentParser, args: CLIArguments) -> int:
     """处理help子命令"""
     # 从CLIArguments获取help子命令的参数
     # help子命令的command参数存储在sub_target中
-    help_command = getattr(args, 'sub_target', None)
+    help_command = getattr(args, "sub_target", None)
 
     if help_command:
         # 显示特定命令的帮助
-        if help_command == 'analyze':
+        if help_command == "analyze":
             print("\nanalyze 命令详解:")
             print("=" * 50)
             print("执行代码分析，支持静态分析、深度分析和修复分析")
@@ -986,7 +907,7 @@ def handle_help_command(parser: CLIArgumentParser, args: CLIArguments) -> int:
             print()
             print("详细选项请使用: aidetector analyze <subcommand> --help")
 
-        elif help_command == 'web':
+        elif help_command == "web":
             print("\nweb 命令详解:")
             print("=" * 50)
             print("启动Web交互界面，通过浏览器使用系统功能")
@@ -1002,7 +923,7 @@ def handle_help_command(parser: CLIArgumentParser, args: CLIArguments) -> int:
             print("  aidetector web --host 0.0.0.0 --port 8080")
             print("  aidetector web --debug")
 
-        elif help_command == 'version':
+        elif help_command == "version":
             print("\nversion 命令详解:")
             print("=" * 50)
             print("显示系统版本信息和构建详情")
@@ -1023,7 +944,7 @@ def handle_legacy_mode(parser: CLIArgumentParser, args: CLIArguments) -> int:
         parser.parser.error("请指定目标文件或目录路径")
         return 1
 
-    if args.mode == 'static':
+    if args.mode == "static":
         static_args = CLIArguments(
             sub_target=target,
             sub_tools=args.static_tools or args.sub_tools,
@@ -1031,25 +952,25 @@ def handle_legacy_mode(parser: CLIArgumentParser, args: CLIArguments) -> int:
             sub_output=args.output or args.sub_output,
             sub_verbose=args.verbose or args.sub_verbose,
             sub_quiet=args.quiet or args.sub_quiet,
-            sub_dry_run=args.dry_run or args.sub_dry_run
+            sub_dry_run=args.dry_run or args.sub_dry_run,
         )
         return execute_static_analysis(static_args)
-    elif args.mode == 'deep':
+    elif args.mode == "deep":
         deep_args = CLIArguments(
             sub_target=target,
             sub_output=args.output or args.sub_output,
             sub_verbose=args.verbose or args.sub_verbose,
-            sub_quiet=args.quiet or args.sub_quiet
+            sub_quiet=args.quiet or args.sub_quiet,
         )
         return execute_deep_analysis(deep_args)
-    elif args.mode == 'fix':
+    elif args.mode == "fix":
         fix_args = CLIArguments(
             sub_target=target,
             sub_no_confirm=args.sub_no_confirm or not args.fix_confirm,
             sub_backup_dir=args.sub_backup_dir,
             sub_verbose=args.verbose or args.sub_verbose,
             sub_quiet=args.quiet or args.sub_quiet,
-            sub_dry_run=args.dry_run or args.sub_dry_run
+            sub_dry_run=args.dry_run or args.sub_dry_run,
         )
         return execute_fix_analysis(fix_args)
     else:
@@ -1084,11 +1005,11 @@ def handle_interactive_mode(parser: CLIArgumentParser, args: CLIArguments) -> in
             if not user_input:
                 continue
 
-            if user_input.lower() in ['quit', 'exit', 'q']:
+            if user_input.lower() in ["quit", "exit", "q"]:
                 print("👋 再见！")
                 break
 
-            if user_input.lower().startswith('help'):
+            if user_input.lower().startswith("help"):
                 # 处理 help 或 help <topic> 命令
                 parts = user_input.split()
                 if len(parts) == 1:
@@ -1099,26 +1020,28 @@ def handle_interactive_mode(parser: CLIArgumentParser, args: CLIArguments) -> in
                 continue
 
             # 处理analyze命令
-            if user_input.startswith('analyze '):
+            if user_input.startswith("analyze "):
                 parts = user_input.split()
                 if len(parts) >= 3:
                     mode = parts[1]
-                    target = ' '.join(parts[2:])
+                    target = " ".join(parts[2:])
 
-                    if mode == 'static':
+                    if mode == "static":
                         args.sub_target = target
                         return execute_static_analysis(args)
-                    elif mode == 'deep':
+                    elif mode == "deep":
                         args.sub_target = target
                         return execute_deep_analysis(args)
-                    elif mode == 'fix':
+                    elif mode == "fix":
                         args.sub_target = target
                         return execute_fix_analysis(args)
-                    elif mode == 'workflow':
+                    elif mode == "workflow":
                         args.sub_target = target
                         return execute_workflow_analysis(args)
                     else:
-                        print(f"❌ 未知模式: {mode}，请使用 static, deep, fix 或 workflow")
+                        print(
+                            f"❌ 未知模式: {mode}，请使用 static, deep, fix 或 workflow"
+                        )
                 else:
                     print("❌ 用法: analyze <static|deep|fix|workflow> <target>")
             else:
@@ -1193,10 +1116,11 @@ def _show_interactive_help():
 
 def _show_interactive_topic_help(topic: str):
     """显示特定主题的帮助信息"""
-    if topic == 'modes':
+    if topic == "modes":
         print("\n🔍 分析模式详解")
         print("=" * 40)
-        print("""
+        print(
+            """
 📊 静态分析 (Static Analysis):
   • 使用传统静态分析工具 (Pylint, Flake8, Bandit等)
   • 快速、准确、无API调用成本
@@ -1219,12 +1143,14 @@ def _show_interactive_topic_help(topic: str):
   • 日常开发检查 → 静态分析
   • 代码审查重构 → 深度分析
   • 快速修复问题 → 修复分析
-        """)
+        """
+        )
 
-    elif topic == 'tools':
+    elif topic == "tools":
         print("\n🛠️ 分析工具说明")
         print("=" * 40)
-        print("""
+        print(
+            """
 静态分析工具:
   • AST     - Python语法树分析，检查语法结构
   • Pylint  - 代码质量检查，发现潜在问题和编码规范
@@ -1242,12 +1168,14 @@ LLM模型:
   • json     - 结构化数据，便于程序处理
   • table    - 表格格式，便于阅读比较
   • markdown - 文档格式，支持发布到文档系统
-        """)
+        """
+        )
 
-    elif topic == 'formats':
+    elif topic == "formats":
         print("\n📄 输出格式说明")
         print("=" * 40)
-        print("""
+        print(
+            """
 Simple 格式:
   • 只显示关键问题和统计信息
   • 适用于快速查看结果概要
@@ -1272,12 +1200,14 @@ Markdown 格式:
   • 生成文档友好的报告
   • 支持直接发布到文档系统
   • 适合项目文档和README
-        """)
+        """
+        )
 
-    elif topic == 'examples':
+    elif topic == "examples":
         print("\n💡 使用示例")
         print("=" * 40)
-        print("""
+        print(
+            """
 基础用法:
   analyze static src/           # 分析src目录
   analyze static main.py        # 分析单个文件
@@ -1301,7 +1231,8 @@ Markdown 格式:
   • 代码提交前 → analyze static .
   • 重构前 → analyze deep main.py
   • 快速修复 → analyze fix src/
-        """)
+        """
+        )
 
     else:
         print(f"\n❌ 未知帮助主题: {topic}")
@@ -1342,6 +1273,7 @@ def execute_static_analysis(args: CLIArguments) -> int:
 
         # 执行分析
         from pathlib import Path
+
         if Path(target).is_file():
             result = coordinator.analyze_file(target)
             results = [result]
@@ -1367,7 +1299,9 @@ def execute_static_analysis(args: CLIArguments) -> int:
         # 保存结果
         if args.sub_output:
             try:
-                _save_static_analysis_results(results, args.sub_output, args.sub_format or 'simple')
+                _save_static_analysis_results(
+                    results, args.sub_output, args.sub_format or "simple"
+                )
                 if not args.sub_quiet:
                     print(f"\n💾 详细报告已保存到: {args.sub_output}")
                     print(f"📄 报告中包含所有问题的详细信息、位置描述和修复建议")
@@ -1379,10 +1313,11 @@ def execute_static_analysis(args: CLIArguments) -> int:
             try:
                 import datetime
                 from pathlib import Path
+
                 timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
                 default_output = f"static_analysis_report_{timestamp}.json"
                 default_output_path = Path(default_output).resolve()
-                _save_static_analysis_results(results, default_output, 'json')
+                _save_static_analysis_results(results, default_output, "json")
                 if not args.sub_quiet:
                     print(f"\n💾 详细报告已自动保存到: {default_output_path}")
                     print(f"📄 报告中包含所有问题的详细信息、位置描述和修复建议")
@@ -1396,14 +1331,15 @@ def execute_static_analysis(args: CLIArguments) -> int:
         print(f"❌ 静态分析失败: {e}")
         if args.verbose:
             import traceback
+
             traceback.print_exc()
         return 1
 
 
 def _save_static_analysis_results(results, output_file: str, format_type: str):
     """保存静态分析结果"""
-    from pathlib import Path
     import json
+    from pathlib import Path
 
     try:
         output_path = Path(output_file)
@@ -1414,33 +1350,33 @@ def _save_static_analysis_results(results, output_file: str, format_type: str):
         total_files = len(results)
         total_time = sum(result.execution_time for result in results)
 
-        if output_file.endswith('.json'):
+        if output_file.endswith(".json"):
             # JSON格式
             report_data = {
-                'target': 'analysis',
-                'files_analyzed': total_files,
-                'total_issues': total_issues,
-                'format': format_type,
-                'execution_time': total_time,
-                'files': []
+                "target": "analysis",
+                "files_analyzed": total_files,
+                "total_issues": total_issues,
+                "format": format_type,
+                "execution_time": total_time,
+                "files": [],
             }
 
             for result in results:
                 file_data = {
-                    'file_path': result.file_path,
-                    'issues_count': len(result.issues),
-                    'execution_time': result.execution_time,
-                    'summary': result.summary,
-                    'issues': [issue.to_dict() for issue in result.issues]
+                    "file_path": result.file_path,
+                    "issues_count": len(result.issues),
+                    "execution_time": result.execution_time,
+                    "summary": result.summary,
+                    "issues": [issue.to_dict() for issue in result.issues],
                 }
-                report_data['files'].append(file_data)
+                report_data["files"].append(file_data)
 
-            with open(output_path, 'w', encoding='utf-8') as f:
+            with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(report_data, f, indent=2, ensure_ascii=False)
 
-        elif output_file.endswith('.md'):
+        elif output_file.endswith(".md"):
             # Markdown格式
-            with open(output_path, 'w', encoding='utf-8') as f:
+            with open(output_path, "w", encoding="utf-8") as f:
                 f.write("# 静态分析报告\n\n")
                 f.write(f"**分析文件数**: {total_files}\n")
                 f.write(f"**发现问题数**: {total_issues}\n")
@@ -1455,14 +1391,18 @@ def _save_static_analysis_results(results, output_file: str, format_type: str):
                         if result.issues:
                             f.write("- **问题列表**:\n")
                             for issue in result.issues[:10]:  # 只显示前10个
-                                f.write(f"  - 第{issue.line}行 [{issue.severity.value}]: {issue.message}\n")
+                                f.write(
+                                    f"  - 第{issue.line}行 [{issue.severity.value}]: {issue.message}\n"
+                                )
                             if len(result.issues) > 10:
-                                f.write(f"  - ... 还有 {len(result.issues) - 10} 个问题\n")
+                                f.write(
+                                    f"  - ... 还有 {len(result.issues) - 10} 个问题\n"
+                                )
                         f.write("\n")
 
         else:
             # 简单文本格式
-            with open(output_path, 'w', encoding='utf-8') as f:
+            with open(output_path, "w", encoding="utf-8") as f:
                 f.write("静态分析报告\n")
                 f.write("=" * 50 + "\n")
                 f.write(f"分析文件数: {total_files}\n")
@@ -1502,11 +1442,12 @@ def execute_simple_static_analysis(args: CLIArguments) -> int:
 
         # 分析文件
         from pathlib import Path
+
         target_path = Path(target)
         files_found = []
         total_issues = 0
 
-        if target_path.is_file() and target_path.suffix == '.py':
+        if target_path.is_file() and target_path.suffix == ".py":
             files_found.append(str(target_path))
         elif target_path.is_dir():
             for py_file in target_path.rglob("*.py"):
@@ -1523,31 +1464,35 @@ def execute_simple_static_analysis(args: CLIArguments) -> int:
                 print(f"🔍 [{i}/{len(files_found)}] 分析: {Path(file_path).name}")
 
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     content = f.read()
-                    lines = content.split('\n')
+                    lines = content.split("\n")
 
                 # 简单的问题检测
                 issues = []
 
                 # 检查是否有print语句
-                if 'print(' in content:
+                if "print(" in content:
                     for line_num, line in enumerate(lines, 1):
-                        if 'print(' in line and not line.strip().startswith('#'):
-                            issues.append({
-                                'line': line_num,
-                                'tool': 'style',
-                                'severity': 'info',
-                                'message': '建议使用日志而不是print语句'
-                            })
+                        if "print(" in line and not line.strip().startswith("#"):
+                            issues.append(
+                                {
+                                    "line": line_num,
+                                    "tool": "style",
+                                    "severity": "info",
+                                    "message": "建议使用日志而不是print语句",
+                                }
+                            )
 
                 total_issues += len(issues)
-                results.append({
-                    'file_path': file_path,
-                    'lines_count': len(lines),
-                    'issues_count': len(issues),
-                    'issues': issues
-                })
+                results.append(
+                    {
+                        "file_path": file_path,
+                        "lines_count": len(lines),
+                        "issues_count": len(issues),
+                        "issues": issues,
+                    }
+                )
 
             except Exception as e:
                 if args.verbose:
@@ -1562,11 +1507,19 @@ def execute_simple_static_analysis(args: CLIArguments) -> int:
             # 显示简化的统计信息
             if total_issues > 0:
                 print(f"\n📋 问题分布:")
-                print(f"  • Print语句: {sum(1 for r in results for issue in r.get('issues', []) if 'print' in issue.get('message', '').lower())} 个")
-                print(f"  • 其他问题: {total_issues - sum(1 for r in results for issue in r.get('issues', []) if 'print' in issue.get('message', '').lower())} 个")
+                print(
+                    f"  • Print语句: {sum(1 for r in results for issue in r.get('issues', []) if 'print' in issue.get('message', '').lower())} 个"
+                )
+                print(
+                    f"  • 其他问题: {total_issues - sum(1 for r in results for issue in r.get('issues', []) if 'print' in issue.get('message', '').lower())} 个"
+                )
 
                 # 显示问题最多的文件
-                file_counts = [(r['file_path'], r['issues_count']) for r in results if r['issues_count'] > 0]
+                file_counts = [
+                    (r["file_path"], r["issues_count"])
+                    for r in results
+                    if r["issues_count"] > 0
+                ]
                 if file_counts:
                     file_counts.sort(key=lambda x: x[1], reverse=True)
                     print(f"\n📁 问题最多的文件:")
@@ -1577,7 +1530,9 @@ def execute_simple_static_analysis(args: CLIArguments) -> int:
         # 保存结果
         if args.sub_output:
             try:
-                _save_simple_static_analysis_results(results, args.sub_output, args.sub_format or 'simple')
+                _save_simple_static_analysis_results(
+                    results, args.sub_output, args.sub_format or "simple"
+                )
                 if not args.sub_quiet:
                     print(f"\n💾 详细报告已保存到: {args.sub_output}")
                     print(f"📄 报告中包含所有问题的详细信息、位置描述和修复建议")
@@ -1589,10 +1544,11 @@ def execute_simple_static_analysis(args: CLIArguments) -> int:
             try:
                 import datetime
                 from pathlib import Path
+
                 timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
                 default_output = f"static_analysis_report_{timestamp}.json"
                 default_output_path = Path(default_output).resolve()
-                _save_simple_static_analysis_results(results, default_output, 'json')
+                _save_simple_static_analysis_results(results, default_output, "json")
                 if not args.sub_quiet:
                     print(f"\n💾 详细报告已自动保存到: {default_output_path}")
                     print(f"📄 报告中包含所有问题的详细信息、位置描述和修复建议")
@@ -1606,48 +1562,49 @@ def execute_simple_static_analysis(args: CLIArguments) -> int:
         print(f"❌ 静态分析失败: {e}")
         if args.verbose:
             import traceback
+
             traceback.print_exc()
         return 1
 
 
 def _save_simple_static_analysis_results(results, output_file: str, format_type: str):
     """保存简化静态分析结果"""
-    from pathlib import Path
     import json
+    from pathlib import Path
 
     try:
         output_path = Path(output_file)
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
         # 统计总结果
-        total_issues = sum(result['issues_count'] for result in results)
+        total_issues = sum(result["issues_count"] for result in results)
         total_files = len(results)
 
-        if output_file.endswith('.json'):
+        if output_file.endswith(".json"):
             # JSON格式
             report_data = {
-                'target': 'analysis',
-                'files_analyzed': total_files,
-                'total_issues': total_issues,
-                'format': format_type,
-                'files': []
+                "target": "analysis",
+                "files_analyzed": total_files,
+                "total_issues": total_issues,
+                "format": format_type,
+                "files": [],
             }
 
             for result in results:
                 file_data = {
-                    'file_path': result['file_path'],
-                    'issues_count': result['issues_count'],
-                    'lines_count': result['lines_count'],
-                    'issues': result['issues']
+                    "file_path": result["file_path"],
+                    "issues_count": result["issues_count"],
+                    "lines_count": result["lines_count"],
+                    "issues": result["issues"],
                 }
-                report_data['files'].append(file_data)
+                report_data["files"].append(file_data)
 
-            with open(output_path, 'w', encoding='utf-8') as f:
+            with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(report_data, f, indent=2, ensure_ascii=False)
 
-        elif output_file.endswith('.md'):
+        elif output_file.endswith(".md"):
             # Markdown格式
-            with open(output_path, 'w', encoding='utf-8') as f:
+            with open(output_path, "w", encoding="utf-8") as f:
                 f.write("# 静态分析报告\n\n")
                 f.write(f"**分析文件数**: {total_files}\n")
                 f.write(f"**发现问题数**: {total_issues}\n\n")
@@ -1658,17 +1615,21 @@ def _save_simple_static_analysis_results(results, output_file: str, format_type:
                         f.write(f"### {Path(result['file_path']).name}\n\n")
                         f.write(f"- **问题数**: {result['issues_count']}\n")
                         f.write(f"- **行数**: {result['lines_count']}\n")
-                        if result['issues']:
+                        if result["issues"]:
                             f.write("- **问题列表**:\n")
-                            for issue in result['issues'][:10]:  # 只显示前10个
-                                f.write(f"  - 第{issue['line']}行 [{issue['severity']}]: {issue['message']}\n")
-                            if len(result['issues']) > 10:
-                                f.write(f"  - ... 还有 {len(result['issues']) - 10} 个问题\n")
+                            for issue in result["issues"][:10]:  # 只显示前10个
+                                f.write(
+                                    f"  - 第{issue['line']}行 [{issue['severity']}]: {issue['message']}\n"
+                                )
+                            if len(result["issues"]) > 10:
+                                f.write(
+                                    f"  - ... 还有 {len(result['issues']) - 10} 个问题\n"
+                                )
                         f.write("\n")
 
         else:
             # 简单文本格式
-            with open(output_path, 'w', encoding='utf-8') as f:
+            with open(output_path, "w", encoding="utf-8") as f:
                 f.write("静态分析报告\n")
                 f.write("=" * 50 + "\n")
                 f.write(f"分析文件数: {total_files}\n")
@@ -1707,6 +1668,7 @@ def execute_deep_analysis(args: CLIArguments) -> int:
 
     # 验证路径存在性
     from pathlib import Path
+
     target_path = Path(target)
     if not target_path.exists():
         print(f"❌ 错误: 目标路径不存在: {target}")
@@ -1714,10 +1676,10 @@ def execute_deep_analysis(args: CLIArguments) -> int:
         return 1
 
     # 检查路径类型
-    if target_path.is_file() and target_path.suffix != '.py':
+    if target_path.is_file() and target_path.suffix != ".py":
         print(f"⚠️ 警告: {target} 不是Python文件，深度分析可能效果有限")
         response = input("是否继续? (y/n): ").strip().lower()
-        if response not in ['y', 'yes']:
+        if response not in ["y", "yes"]:
             print("❌ 取消深度分析")
             return 1
 
@@ -1740,9 +1702,7 @@ def execute_deep_analysis(args: CLIArguments) -> int:
 
         # 创建深度分析协调器
         coordinator = CLIInteractiveCoordinator(
-            mode='deep',
-            output_file=args.sub_output,
-            progress=progress
+            mode="deep", output_file=args.sub_output, progress=progress
         )
 
         # 显示启动提示
@@ -1756,7 +1716,7 @@ def execute_deep_analysis(args: CLIArguments) -> int:
         result = coordinator.run_interactive(target)
 
         # 处理分析结果
-        if result.get('error'):
+        if result.get("error"):
             print(f"❌ 深度分析失败: {result['error']}")
             return 1
 
@@ -1764,23 +1724,38 @@ def execute_deep_analysis(args: CLIArguments) -> int:
         if not args.sub_quiet:
             print("\n✅ 深度分析会话结束")
 
-            if result.get('status') == 'completed':
+            if result.get("status") == "completed":
                 print(f"📊 会话统计:")
                 print(f"  🧠 分析文件: {result.get('files_analyzed', 0)} 个")
-                print(f"  💬 对话轮次: {len(result.get('conversation_history', []))} 轮")
+                print(
+                    f"  💬 对话轮次: {len(result.get('conversation_history', []))} 轮"
+                )
                 print(f"  ⏱️ 会话时长: {result.get('total_execution_time', 0):.2f}秒")
 
                 # 分析总结
-                conversation_history = result.get('conversation_history', [])
-                file_analyses = [entry for entry in conversation_history if entry.get('type') == 'file_analysis']
+                conversation_history = result.get("conversation_history", [])
+                file_analyses = [
+                    entry
+                    for entry in conversation_history
+                    if entry.get("type") == "file_analysis"
+                ]
                 if file_analyses:
-                    successful_analyses = len([entry for entry in file_analyses if entry.get('result', {}).get('success', False)])
-                    print(f"  ✅ 成功分析: {successful_analyses}/{len(file_analyses)} 文件")
+                    successful_analyses = len(
+                        [
+                            entry
+                            for entry in file_analyses
+                            if entry.get("result", {}).get("success", False)
+                        ]
+                    )
+                    print(
+                        f"  ✅ 成功分析: {successful_analyses}/{len(file_analyses)} 文件"
+                    )
 
             # 自动生成输出文件（如果未指定）
-            if not args.sub_output and result.get('conversation_history'):
+            if not args.sub_output and result.get("conversation_history"):
                 try:
                     import datetime
+
                     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
                     default_output = f"deep_analysis_conversation_{timestamp}.json"
                     default_output_path = Path(default_output).resolve()
@@ -1806,6 +1781,7 @@ def execute_deep_analysis(args: CLIArguments) -> int:
         if args.verbose or args.sub_verbose:
             print("📋 详细错误信息:")
             import traceback
+
             traceback.print_exc()
         else:
             print("💡 使用 --verbose 参数可查看详细错误信息")
@@ -1828,7 +1804,7 @@ def _display_issue_summary(results, verbose: bool = False):
         results: 静态分析结果列表
         verbose: 是否显示详细信息
     """
-    from collections import defaultdict, Counter
+    from collections import Counter, defaultdict
 
     # 统计问题类型
     severity_counter = Counter()
@@ -1844,9 +1820,17 @@ def _display_issue_summary(results, verbose: bool = False):
 
         for issue in result.issues:
             # 处理不同类型的issue对象
-            severity_val = getattr(issue.severity, 'value', str(issue.severity)) if hasattr(issue, 'severity') else 'unknown'
-            issue_type_val = getattr(issue.issue_type, 'value', str(issue.issue_type)) if hasattr(issue, 'issue_type') else 'unknown'
-            tool_name = getattr(issue, 'tool_name', 'unknown')
+            severity_val = (
+                getattr(issue.severity, "value", str(issue.severity))
+                if hasattr(issue, "severity")
+                else "unknown"
+            )
+            issue_type_val = (
+                getattr(issue.issue_type, "value", str(issue.issue_type))
+                if hasattr(issue, "issue_type")
+                else "unknown"
+            )
+            tool_name = getattr(issue, "tool_name", "unknown")
 
             severity_counter[severity_val] += 1
             tool_counter[tool_name] += 1
@@ -1862,10 +1846,10 @@ def _display_issue_summary(results, verbose: bool = False):
 
     # 按严重程度统计
     print("\n🎯 按严重程度分布:")
-    for severity in ['error', 'warning', 'info']:
+    for severity in ["error", "warning", "info"]:
         count = severity_counter.get(severity, 0)
         if count > 0:
-            emoji = {'error': '🔴', 'warning': '🟡', 'info': '🔵'}[severity]
+            emoji = {"error": "🔴", "warning": "🟡", "info": "🔵"}[severity]
             print(f"  {emoji} {severity.capitalize()}: {count} 个")
 
     # 按工具统计
@@ -1891,17 +1875,29 @@ def _display_issue_summary(results, verbose: bool = False):
         print("\n🔍 问题详情:")
         print("-" * 50)
         for i, issue in enumerate(all_issues[:10], 1):  # 只显示前10个
-            file_name = Path(getattr(issue, 'file_path', 'unknown')).name
+            file_name = Path(getattr(issue, "file_path", "unknown")).name
             # 安全获取severity值
-            severity_val = getattr(issue.severity, 'value', str(issue.severity)) if hasattr(issue, 'severity') else 'unknown'
-            severity_emoji = {'error': '🔴', 'warning': '🟡', 'info': '🔵'}.get(severity_val, '⚪')
-            line_num = getattr(issue, 'line', '?')
-            print(f"{i:2d}. {severity_emoji} [{severity_val.upper()}] {file_name}:{line_num}")
+            severity_val = (
+                getattr(issue.severity, "value", str(issue.severity))
+                if hasattr(issue, "severity")
+                else "unknown"
+            )
+            severity_emoji = {"error": "🔴", "warning": "🟡", "info": "🔵"}.get(
+                severity_val, "⚪"
+            )
+            line_num = getattr(issue, "line", "?")
+            print(
+                f"{i:2d}. {severity_emoji} [{severity_val.upper()}] {file_name}:{line_num}"
+            )
 
             # 安全获取工具和类型信息
-            tool_name = getattr(issue, 'tool_name', 'unknown')
-            issue_type_val = getattr(issue.issue_type, 'value', str(issue.issue_type)) if hasattr(issue, 'issue_type') else 'unknown'
-            message = getattr(issue, 'message', '无描述')
+            tool_name = getattr(issue, "tool_name", "unknown")
+            issue_type_val = (
+                getattr(issue.issue_type, "value", str(issue.issue_type))
+                if hasattr(issue, "issue_type")
+                else "unknown"
+            )
+            message = getattr(issue, "message", "无描述")
 
             print(f"     工具: {tool_name} | 类型: {issue_type_val}")
             print(f"     描述: {message}")
@@ -1928,43 +1924,68 @@ def _filter_python_files(target_path: Path) -> List[str]:
     # 定义需要排除的目录和文件模式
     exclude_patterns = [
         # 虚拟环境目录
-        '.venv', 'venv', 'env', '.env', 'virtualenv',
+        ".venv",
+        "venv",
+        "env",
+        ".env",
+        "virtualenv",
         # 构建和输出目录
-        '__pycache__', 'build', 'dist', '.pytest_cache', '.tox',
+        "__pycache__",
+        "build",
+        "dist",
+        ".pytest_cache",
+        ".tox",
         # 版本控制目录
-        '.git', '.svn', '.hg',
+        ".git",
+        ".svn",
+        ".hg",
         # IDE和编辑器目录
-        '.idea', '.vscode', '.eclipse', '*.swp', '*.swo',
+        ".idea",
+        ".vscode",
+        ".eclipse",
+        "*.swp",
+        "*.swo",
         # 临时文件目录
-        'tmp', 'temp', '.tmp',
+        "tmp",
+        "temp",
+        ".tmp",
         # 依赖目录
-        'node_modules', '.npm', '.pip',
+        "node_modules",
+        ".npm",
+        ".pip",
         # 系统文件
-        '.DS_Store', 'Thumbs.db',
+        ".DS_Store",
+        "Thumbs.db",
         # 其他不需要分析的目录
-        'migrations', 'static', 'media', 'docs', '_build', 'site'
+        "migrations",
+        "static",
+        "media",
+        "docs",
+        "_build",
+        "site",
     ]
 
     # 定义需要排除的文件模式
     exclude_file_patterns = [
-        '*_pb2.py',  # Protocol Buffer生成的文件
-        '*_pb2_grpc.py',  # gRPC生成的文件
-        'manage.py',  # Django管理脚本（通常不需要分析）
-        'settings.py',  # 配置文件
-        'wsgi.py',  # WSGI配置
-        'asgi.py',  # ASGI配置
+        "*_pb2.py",  # Protocol Buffer生成的文件
+        "*_pb2_grpc.py",  # gRPC生成的文件
+        "manage.py",  # Django管理脚本（通常不需要分析）
+        "settings.py",  # 配置文件
+        "wsgi.py",  # WSGI配置
+        "asgi.py",  # ASGI配置
     ]
 
     filtered_files = []
 
     # 如果是文件，直接检查
-    if target_path.is_file() and target_path.suffix == '.py':
+    if target_path.is_file() and target_path.suffix == ".py":
         file_path_str = str(target_path)
         file_name = target_path.name
 
         # 检查文件是否应该被排除
         should_exclude = False
         import fnmatch
+
         for pattern in exclude_file_patterns:
             if fnmatch.fnmatch(file_name, pattern):
                 should_exclude = True
@@ -1988,6 +2009,7 @@ def _filter_python_files(target_path: Path) -> List[str]:
         # 检查文件名是否匹配排除模式
         if not should_exclude:
             import fnmatch
+
             for pattern in exclude_file_patterns:
                 if fnmatch.fnmatch(py_file.name, pattern):
                     should_exclude = True
@@ -2024,9 +2046,7 @@ def execute_fix_analysis(args: CLIArguments) -> int:
 
         # 创建修复协调器
         coordinator = CLIInteractiveCoordinator(
-            mode='fix',
-            output_file=args.sub_output,
-            progress=progress
+            mode="fix", output_file=args.sub_output, progress=progress
         )
 
         # 执行修复
@@ -2035,7 +2055,7 @@ def execute_fix_analysis(args: CLIArguments) -> int:
         # 显示结果
         if not args.sub_quiet:
             print("\n✅ 修复分析完成")
-            if result.get('status') == 'completed':
+            if result.get("status") == "completed":
                 print(f"🔧 扫描文件: {result.get('files_scanned', 0)} 个")
                 print(f"⚠️ 发现问题: {result.get('total_issues_found', 0)} 个")
                 print(f"✨ 尝试修复: {result.get('fixes_attempted', 0)} 个")
@@ -2053,6 +2073,7 @@ def execute_fix_analysis(args: CLIArguments) -> int:
         print(f"❌ 修复分析失败: {e}")
         if args.verbose:
             import traceback
+
             traceback.print_exc()
         return 1
 
@@ -2075,6 +2096,7 @@ def execute_workflow_analysis(args: CLIArguments) -> int:
     # 使用PathResolver验证和解析路径
     try:
         from src.utils.path_resolver import get_path_resolver
+
         resolver = get_path_resolver()
 
         # 解析目标路径（支持相对路径和绝对路径）
@@ -2106,7 +2128,7 @@ def execute_workflow_analysis(args: CLIArguments) -> int:
             output_file=args.sub_output,
             verbose=args.sub_verbose or args.verbose,
             quiet=args.sub_quiet or args.quiet,
-            dry_run=args.sub_dry_run or args.dry_run
+            dry_run=args.sub_dry_run or args.dry_run,
         )
 
         if result.success:
@@ -2125,6 +2147,7 @@ def execute_workflow_analysis(args: CLIArguments) -> int:
         if args.verbose or args.sub_verbose:
             print("📋 详细错误信息:")
             import traceback
+
             traceback.print_exc()
         else:
             print("💡 使用 --verbose 参数可查看详细错误信息")

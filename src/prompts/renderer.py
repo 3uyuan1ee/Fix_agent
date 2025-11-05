@@ -2,21 +2,23 @@
 Prompt渲染器实现
 """
 
-import time
 import re
-from typing import Dict, Any, List, Optional, Union
+import time
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Union
 
-from .base import PromptTemplate, PromptRenderResult, PromptRenderer
+from .base import PromptRenderer, PromptRenderResult, PromptTemplate
 
 
 class AdvancedPromptRenderer(PromptRenderer):
     """高级Prompt渲染器，支持更多功能"""
 
-    def __init__(self,
-                 delimiter_start: str = "{{",
-                 delimiter_end: str = "}}",
-                 strict_mode: bool = True):
+    def __init__(
+        self,
+        delimiter_start: str = "{{",
+        delimiter_end: str = "}}",
+        strict_mode: bool = True,
+    ):
         """
         初始化渲染器
 
@@ -29,7 +31,9 @@ class AdvancedPromptRenderer(PromptRenderer):
         self.delimiter_end = delimiter_end
         self.strict_mode = strict_mode
 
-    def render(self, template: PromptTemplate, parameters: Dict[str, Any]) -> PromptRenderResult:
+    def render(
+        self, template: PromptTemplate, parameters: Dict[str, Any]
+    ) -> PromptRenderResult:
         """
         渲染模板
 
@@ -52,7 +56,7 @@ class AdvancedPromptRenderer(PromptRenderer):
                     parameters_used={},
                     success=False,
                     error_message=f"Missing required parameters: {', '.join(missing_params)}",
-                    missing_parameters=missing_params
+                    missing_parameters=missing_params,
                 )
 
             # 预处理参数
@@ -72,7 +76,7 @@ class AdvancedPromptRenderer(PromptRenderer):
                 parameters_used=processed_params,
                 render_time=render_time,
                 success=True,
-                missing_parameters=missing_params
+                missing_parameters=missing_params,
             )
 
         except Exception as e:
@@ -81,7 +85,7 @@ class AdvancedPromptRenderer(PromptRenderer):
                 template_name=template.name,
                 parameters_used={},
                 success=False,
-                error_message=str(e)
+                error_message=str(e),
             )
 
     def _preprocess_parameters(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
@@ -113,7 +117,9 @@ class AdvancedPromptRenderer(PromptRenderer):
         content = template
 
         # 构建正则表达式模式
-        pattern = re.escape(self.delimiter_start) + r'(\w+)' + re.escape(self.delimiter_end)
+        pattern = (
+            re.escape(self.delimiter_start) + r"(\w+)" + re.escape(self.delimiter_end)
+        )
 
         def replace_match(match):
             param_name = match.group(1)
@@ -132,7 +138,7 @@ class AdvancedPromptRenderer(PromptRenderer):
     def _postprocess_content(self, content: str) -> str:
         """后处理内容"""
         # 清理多余的空行
-        content = re.sub(r'\n\s*\n\s*\n', '\n\n', content)
+        content = re.sub(r"\n\s*\n\s*\n", "\n\n", content)
 
         # 清理首尾空白
         content = content.strip()
@@ -160,10 +166,10 @@ class AdvancedPromptRenderer(PromptRenderer):
 
         # 检查是否存在混合的分隔符类型
         delimiter_patterns = [
-            (r'\{\{', r'\}\}'),  # {{...}}
-            (r'\[\[', r'\]\]'),  # [[...]]
-            (r'\(\(', r'\)\)'),  # ((...))
-            (r'<\%', r'\%>'),  # <%...%>
+            (r"\{\{", r"\}\}"),  # {{...}}
+            (r"\[\[", r"\]\]"),  # [[...]]
+            (r"\(\(", r"\)\)"),  # ((...))
+            (r"<\%", r"\%>"),  # <%...%>
         ]
 
         used_delimiters = []
@@ -173,34 +179,46 @@ class AdvancedPromptRenderer(PromptRenderer):
             end_count = len(re.findall(end_pattern, template.template))
 
             if start_count > 0 or end_count > 0:
-                used_delimiters.append((start_pattern, end_pattern, start_count, end_count))
+                used_delimiters.append(
+                    (start_pattern, end_pattern, start_count, end_count)
+                )
 
                 # 检查这种分隔符是否匹配
                 if start_count != end_count:
                     # 移除转义字符用于显示
-                    start_display = start_pattern.replace('\\', '')
-                    end_display = end_pattern.replace('\\', '')
-                    errors.append(f"Mismatched delimiters: Found {start_count} opening '{start_display}' and {end_count} closing '{end_display}'")
+                    start_display = start_pattern.replace("\\", "")
+                    end_display = end_pattern.replace("\\", "")
+                    errors.append(
+                        f"Mismatched delimiters: Found {start_count} opening '{start_display}' and {end_count} closing '{end_display}'"
+                    )
 
         # 如果使用了多种分隔符，报告错误
         if len(used_delimiters) > 1:
             delimiter_list = []
             for start_pattern, end_pattern, count, _ in used_delimiters:
                 if count > 0:
-                    start_display = start_pattern.replace('\\', '')
-                    end_display = end_pattern.replace('\\', '')
+                    start_display = start_pattern.replace("\\", "")
+                    end_display = end_pattern.replace("\\", "")
                     delimiter_list.append(f"'{start_display}...{end_display}'")
 
             if len(delimiter_list) > 1:
-                errors.append(f"Mismatched delimiters: Found multiple delimiter types: {', '.join(delimiter_list)}. Use consistent delimiter style.")
+                errors.append(
+                    f"Mismatched delimiters: Found multiple delimiter types: {', '.join(delimiter_list)}. Use consistent delimiter style."
+                )
 
         # 参数格式验证（只验证配置的分隔符）
-        pattern = re.escape(self.delimiter_start) + r'([^}{]*)' + re.escape(self.delimiter_end)
+        pattern = (
+            re.escape(self.delimiter_start)
+            + r"([^}{]*)"
+            + re.escape(self.delimiter_end)
+        )
         matches = re.findall(pattern, template.template)
 
         for match in matches:
-            if not re.match(r'^[a-zA-Z_]\w*$', match):
-                errors.append(f"Invalid parameter name: '{match}'. Must start with letter or underscore and contain only alphanumeric characters and underscores.")
+            if not re.match(r"^[a-zA-Z_]\w*$", match):
+                errors.append(
+                    f"Invalid parameter name: '{match}'. Must start with letter or underscore and contain only alphanumeric characters and underscores."
+                )
 
         return errors
 
@@ -208,7 +226,9 @@ class AdvancedPromptRenderer(PromptRenderer):
 class ConditionalPromptRenderer(AdvancedPromptRenderer):
     """支持条件渲染的Prompt渲染器"""
 
-    def render(self, template: PromptTemplate, parameters: Dict[str, Any]) -> PromptRenderResult:
+    def render(
+        self, template: PromptTemplate, parameters: Dict[str, Any]
+    ) -> PromptRenderResult:
         """
         重写render方法以支持条件渲染的特殊参数验证逻辑
         """
@@ -224,7 +244,7 @@ class ConditionalPromptRenderer(AdvancedPromptRenderer):
                     parameters_used={},
                     success=False,
                     error_message=f"Missing required parameters: {', '.join(missing_params)}",
-                    missing_parameters=missing_params
+                    missing_parameters=missing_params,
                 )
 
             # 执行渲染，传入原始参数（不预处理，保持嵌套结构）
@@ -246,7 +266,7 @@ class ConditionalPromptRenderer(AdvancedPromptRenderer):
                 parameters_used=used_params,
                 render_time=render_time,
                 success=True,
-                missing_parameters=missing_params
+                missing_parameters=missing_params,
             )
 
         except Exception as e:
@@ -255,22 +275,30 @@ class ConditionalPromptRenderer(AdvancedPromptRenderer):
                 template_name=template.name,
                 parameters_used={},
                 success=False,
-                error_message=str(e)
+                error_message=str(e),
             )
 
-    def _validate_top_level_parameters(self, template: PromptTemplate, parameters: Dict[str, Any]) -> List[str]:
+    def _validate_top_level_parameters(
+        self, template: PromptTemplate, parameters: Dict[str, Any]
+    ) -> List[str]:
         """只验证顶级参数，不包括循环内部的参数"""
         # 提取顶级参数（不在循环内部的参数）
         top_level_params = set()
 
         # 先移除循环块
-        temp_content = re.sub(r'\{\{#each\s+\w+\}\}.*?\{\{/each\}', '', template.template, flags=re.DOTALL)
+        temp_content = re.sub(
+            r"\{\{#each\s+\w+\}\}.*?\{\{/each\}", "", template.template, flags=re.DOTALL
+        )
 
         # 再移除条件块
-        temp_content = re.sub(r'\{\{#if\s+\w+\}\}.*?\{\{/if\}', '', temp_content, flags=re.DOTALL)
+        temp_content = re.sub(
+            r"\{\{#if\s+\w+\}\}.*?\{\{/if\}", "", temp_content, flags=re.DOTALL
+        )
 
         # 提取剩余的参数
-        pattern = re.escape(self.delimiter_start) + r'(\w+)' + re.escape(self.delimiter_end)
+        pattern = (
+            re.escape(self.delimiter_start) + r"(\w+)" + re.escape(self.delimiter_end)
+        )
         matches = re.findall(pattern, temp_content)
         top_level_params.update(matches)
 
@@ -306,7 +334,7 @@ class ConditionalPromptRenderer(AdvancedPromptRenderer):
 
         while i < n:
             # 查找条件块开始
-            start_match = re.search(r'\{\{#if\s+(\w+)\}\}', content[i:])
+            start_match = re.search(r"\{\{#if\s+(\w+)\}\}", content[i:])
             if not start_match:
                 # 没有更多条件块，添加剩余内容
                 result.append(content[i:])
@@ -326,8 +354,8 @@ class ConditionalPromptRenderer(AdvancedPromptRenderer):
 
             while nesting_level > 0 and search_start < n:
                 # 查找下一个if或endif
-                next_if = content.find('{{#if', search_start)
-                next_endif = content.find('{{/if}}', search_start)
+                next_if = content.find("{{#if", search_start)
+                next_endif = content.find("{{/if}}", search_start)
 
                 if next_endif == -1:
                     # 没有找到结束标签，语法错误
@@ -349,7 +377,9 @@ class ConditionalPromptRenderer(AdvancedPromptRenderer):
 
                 if param_name in parameters and parameters[param_name]:
                     # 条件为真，递归渲染内容
-                    processed_content = self._render_conditionals(conditional_content, parameters)
+                    processed_content = self._render_conditionals(
+                        conditional_content, parameters
+                    )
                     result.append(processed_content)
                 # 条件为假时，不添加任何内容
 
@@ -360,7 +390,7 @@ class ConditionalPromptRenderer(AdvancedPromptRenderer):
                 result.append(content[start_pos:end_pos])
                 i = end_pos
 
-        return ''.join(result)
+        return "".join(result)
 
     def _render_loops(self, content: str, parameters: Dict[str, Any]) -> str:
         """渲染循环块"""
@@ -371,7 +401,7 @@ class ConditionalPromptRenderer(AdvancedPromptRenderer):
 
         while i < n:
             # 查找循环块开始
-            start_match = re.search(r'\{\{#each\s+(\w+)\}\}', content[i:])
+            start_match = re.search(r"\{\{#each\s+(\w+)\}\}", content[i:])
             if not start_match:
                 # 没有更多循环块，添加剩余内容
                 result.append(content[i:])
@@ -391,8 +421,8 @@ class ConditionalPromptRenderer(AdvancedPromptRenderer):
 
             while nesting_level > 0 and search_start < n:
                 # 查找下一个each或endeach
-                next_each = content.find('{{#each', search_start)
-                next_endeach = content.find('{{/each}}', search_start)
+                next_each = content.find("{{#each", search_start)
+                next_endeach = content.find("{{/each}}", search_start)
 
                 if next_endeach == -1:
                     # 没有找到结束标签，语法错误
@@ -412,7 +442,11 @@ class ConditionalPromptRenderer(AdvancedPromptRenderer):
                 # 提取循环块内容
                 loop_content = content[end_pos:corresponding_end]
 
-                if param_name in parameters and isinstance(parameters[param_name], list) and parameters[param_name]:
+                if (
+                    param_name in parameters
+                    and isinstance(parameters[param_name], list)
+                    and parameters[param_name]
+                ):
                     # 有数据时，保留之前的内容并正常渲染循环
                     result.append(before_content)
                     loop_result = []
@@ -421,15 +455,21 @@ class ConditionalPromptRenderer(AdvancedPromptRenderer):
                         if isinstance(item, dict):
                             # 替换对象属性
                             for key, value in item.items():
-                                item_content = item_content.replace(f"{{{{{key}}}}}", str(value))
+                                item_content = item_content.replace(
+                                    f"{{{{{key}}}}}", str(value)
+                                )
                             # 替换index相关
                             item_content = item_content.replace("{{index}}", str(index))
-                            item_content = item_content.replace("{{index + 1}}", str(index + 1))
+                            item_content = item_content.replace(
+                                "{{index + 1}}", str(index + 1)
+                            )
                         else:
                             item_content = item_content.replace("{{this}}", str(item))
                             item_content = item_content.replace("{{.}}", str(item))
                             item_content = item_content.replace("{{index}}", str(index))
-                            item_content = item_content.replace("{{index + 1}}", str(index + 1))
+                            item_content = item_content.replace(
+                                "{{index + 1}}", str(index + 1)
+                            )
                         loop_result.append(item_content)
 
                     rendered_loop = "\n".join(loop_result)
@@ -443,18 +483,18 @@ class ConditionalPromptRenderer(AdvancedPromptRenderer):
                 result.append(content[start_pos:end_pos])
                 i = end_pos
 
-        return ''.join(result)
+        return "".join(result)
 
     def _render_nested_content(self, content: str, parameters: Dict[str, Any]) -> str:
         """渲染嵌套内容，支持点号表示法"""
         result = content
 
         # 处理点号表示法的参数，如 {{summary.total_issues}}
-        nested_pattern = r'\{\{(\w+(?:\.\w+)*)\}\}'
+        nested_pattern = r"\{\{(\w+(?:\.\w+)*)\}\}"
 
         def replace_nested(match):
             param_path = match.group(1)
-            keys = param_path.split('.')
+            keys = param_path.split(".")
 
             value = parameters
             try:
@@ -467,7 +507,9 @@ class ConditionalPromptRenderer(AdvancedPromptRenderer):
         result = re.sub(nested_pattern, replace_nested, result)
 
         # 处理普通参数
-        simple_pattern = re.escape(self.delimiter_start) + r'(\w+)' + re.escape(self.delimiter_end)
+        simple_pattern = (
+            re.escape(self.delimiter_start) + r"(\w+)" + re.escape(self.delimiter_end)
+        )
 
         def replace_simple(match):
             param_name = match.group(1)
@@ -487,18 +529,18 @@ class TemplateFunctionRenderer(AdvancedPromptRenderer):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.functions = {
-            'upper': str.upper,
-            'lower': str.lower,
-            'capitalize': str.capitalize,
-            'title': str.title,
-            'length': len,
-            'default': self._default_function,
+            "upper": str.upper,
+            "lower": str.lower,
+            "capitalize": str.capitalize,
+            "title": str.title,
+            "length": len,
+            "default": self._default_function,
         }
 
     def _postprocess_content(self, content: str) -> str:
         """重写后处理方法，只清理多余空行，保留尾部空格"""
         # 清理多余的空行，但保留尾部空格
-        content = re.sub(r'\n\s*\n\s*\n', '\n\n', content)
+        content = re.sub(r"\n\s*\n\s*\n", "\n\n", content)
         return content
 
     def _default_function(self, value: str, default: str = "") -> str:
@@ -510,7 +552,7 @@ class TemplateFunctionRenderer(AdvancedPromptRenderer):
         content = template
 
         # 处理函数调用 {{function:param}}
-        pattern = r'\{\{(\w+):(\w+)\}\}'
+        pattern = r"\{\{(\w+):(\w+)\}\}"
 
         def replace_function(match):
             func_name = match.group(1)
@@ -520,7 +562,7 @@ class TemplateFunctionRenderer(AdvancedPromptRenderer):
                 func = self.functions[func_name]
                 value = str(parameters[param_name])
                 try:
-                    if func_name == 'default':
+                    if func_name == "default":
                         # 特殊处理默认值函数
                         return func(value, parameters.get(f"{param_name}_default", ""))
                     else:

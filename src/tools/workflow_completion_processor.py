@@ -6,18 +6,21 @@
 
 import json
 import uuid
+from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import Dict, List, Any, Optional
-from pathlib import Path
-from dataclasses import dataclass, asdict
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from ..utils.logger import get_logger
 from ..utils.config import get_config_manager
-from .workflow_flow_state_manager import WorkflowSession
+from ..utils.logger import get_logger
 from .workflow_data_types import AIDetectedProblem, AIFixSuggestion
+from .workflow_flow_state_manager import (
+    WorkflowFlowStateManager,
+    WorkflowNode,
+    WorkflowSession,
+)
 from .workflow_user_interaction_types import UserDecision
-from .workflow_flow_state_manager import WorkflowNode, WorkflowFlowStateManager
 
 logger = get_logger()
 
@@ -25,6 +28,7 @@ logger = get_logger()
 @dataclass
 class WorkflowExecutionSummary:
     """工作流执行摘要"""
+
     session_id: str
     start_time: datetime
     end_time: datetime
@@ -48,13 +52,14 @@ class WorkflowExecutionSummary:
             "skipped_problems": self.skipped_problems,
             "failed_problems": self.failed_problems,
             "success_rate": self.success_rate,
-            "workflow_completion_status": self.workflow_completion_status
+            "workflow_completion_status": self.workflow_completion_status,
         }
 
 
 @dataclass
 class ProblemAnalysisResult:
     """问题分析结果"""
+
     issue_id: str
     file_path: str
     line_number: int
@@ -76,13 +81,14 @@ class ProblemAnalysisResult:
             "status": self.status,
             "solution_id": self.solution_id,
             "fix_attempts": self.fix_attempts,
-            "final_outcome": self.final_outcome
+            "final_outcome": self.final_outcome,
         }
 
 
 @dataclass
 class WorkflowCompletionReport:
     """工作流完成报告"""
+
     report_id: str
     session_id: str
     generation_timestamp: datetime
@@ -106,17 +112,18 @@ class WorkflowCompletionReport:
             "user_interactions": self.user_interactions,
             "recommendations": self.recommendations,
             "improvement_suggestions": self.improvement_suggestions,
-            "lessons_learned": self.lessons_learned
+            "lessons_learned": self.lessons_learned,
         }
 
 
 class CompletionStatus(Enum):
     """完成状态"""
-    SUCCESS = "success"                   # 完全成功
-    PARTIAL_SUCCESS = "partial_success"   # 部分成功
+
+    SUCCESS = "success"  # 完全成功
+    PARTIAL_SUCCESS = "partial_success"  # 部分成功
     COMPLETED_WITH_ISSUES = "completed_with_issues"  # 完成但有问题
-    INCOMPLETE = "incomplete"             # 未完成
-    FAILED = "failed"                     # 失败
+    INCOMPLETE = "incomplete"  # 未完成
+    FAILED = "failed"  # 失败
 
 
 class WorkflowCompletionProcessor:
@@ -137,7 +144,9 @@ class WorkflowCompletionProcessor:
         self.config = self.config_manager.get("project_analysis", {})
 
         # 完成报告存储目录
-        self.reports_dir = Path(self.config.get("completion_reports_dir", ".fix_backups/completion_reports"))
+        self.reports_dir = Path(
+            self.config.get("completion_reports_dir", ".fix_backups/completion_reports")
+        )
         self.reports_dir.mkdir(parents=True, exist_ok=True)
 
     def process_workflow_completion(self, session_id: str) -> Dict[str, Any]:
@@ -165,14 +174,20 @@ class WorkflowCompletionProcessor:
             problem_results = self._analyze_all_problems(session)
 
             # 计算质量指标
-            quality_metrics = self._calculate_quality_metrics(session, execution_summary)
+            quality_metrics = self._calculate_quality_metrics(
+                session, execution_summary
+            )
 
             # 分析用户交互
             user_interactions = self._analyze_user_interactions(session)
 
             # 生成建议和改进意见
-            recommendations = self._generate_recommendations(execution_summary, quality_metrics)
-            improvement_suggestions = self._generate_improvement_suggestions(session, quality_metrics)
+            recommendations = self._generate_recommendations(
+                execution_summary, quality_metrics
+            )
+            improvement_suggestions = self._generate_improvement_suggestions(
+                session, quality_metrics
+            )
             lessons_learned = self._extract_lessons_learned(session, execution_summary)
 
             # 创建完成报告
@@ -186,7 +201,7 @@ class WorkflowCompletionProcessor:
                 user_interactions=user_interactions,
                 recommendations=recommendations,
                 improvement_suggestions=improvement_suggestions,
-                lessons_learned=lessons_learned
+                lessons_learned=lessons_learned,
             )
 
             # 保存完成报告
@@ -210,9 +225,9 @@ class WorkflowCompletionProcessor:
                     "total_problems": execution_summary.total_problems,
                     "solved_problems": execution_summary.solved_problems,
                     "success_rate": execution_summary.success_rate,
-                    "total_duration": execution_summary.total_duration
+                    "total_duration": execution_summary.total_duration,
                 },
-                "message": f"工作流已完成: {execution_summary.workflow_completion_status}"
+                "message": f"工作流已完成: {execution_summary.workflow_completion_status}",
             }
 
             self.logger.info(f"工作流完成处理完成: {result}")
@@ -220,34 +235,36 @@ class WorkflowCompletionProcessor:
 
         except Exception as e:
             self.logger.error(f"处理工作流完成失败: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "message": "处理工作流完成失败"
-            }
+            return {"success": False, "error": str(e), "message": "处理工作流完成失败"}
 
-    def _generate_execution_summary(self, session: WorkflowSession) -> WorkflowExecutionSummary:
+    def _generate_execution_summary(
+        self, session: WorkflowSession
+    ) -> WorkflowExecutionSummary:
         """生成执行摘要"""
         try:
             # 获取时间信息
-            start_time = getattr(session, 'created_at', datetime.now())
+            start_time = getattr(session, "created_at", datetime.now())
             end_time = datetime.now()
             total_duration = (end_time - start_time).total_seconds()
 
             # 统计问题数量
             total_problems = len(session.detected_problems)
-            solved_problems = len(getattr(session, 'solved_problems', []))
-            skipped_problems = len(getattr(session, 'skip_history', []))
+            solved_problems = len(getattr(session, "solved_problems", []))
+            skipped_problems = len(getattr(session, "skip_history", []))
 
             # 统计失败问题
             failed_problems = 0
-            if hasattr(session, 'reanalysis_history'):
+            if hasattr(session, "reanalysis_history"):
                 for issue_id, history in session.reanalysis_history.items():
-                    if history.get('retry_count', 0) >= self.config.get("max_retry_attempts", 3):
+                    if history.get("retry_count", 0) >= self.config.get(
+                        "max_retry_attempts", 3
+                    ):
                         failed_problems += 1
 
             # 计算成功率
-            success_rate = solved_problems / total_problems if total_problems > 0 else 0.0
+            success_rate = (
+                solved_problems / total_problems if total_problems > 0 else 0.0
+            )
 
             # 确定完成状态
             completion_status = self._determine_completion_status(
@@ -264,7 +281,7 @@ class WorkflowCompletionProcessor:
                 skipped_problems=skipped_problems,
                 failed_problems=failed_problems,
                 success_rate=success_rate,
-                workflow_completion_status=completion_status
+                workflow_completion_status=completion_status,
             )
 
         except Exception as e:
@@ -280,15 +297,11 @@ class WorkflowCompletionProcessor:
                 skipped_problems=0,
                 failed_problems=0,
                 success_rate=0.0,
-                workflow_completion_status="FAILED"
+                workflow_completion_status="FAILED",
             )
 
     def _determine_completion_status(
-        self,
-        total: int,
-        solved: int,
-        skipped: int,
-        failed: int
+        self, total: int, solved: int, skipped: int, failed: int
     ) -> str:
         """确定完成状态"""
         if total == 0:
@@ -304,7 +317,9 @@ class WorkflowCompletionProcessor:
         else:
             return CompletionStatus.INCOMPLETE.value
 
-    def _analyze_all_problems(self, session: WorkflowSession) -> List[ProblemAnalysisResult]:
+    def _analyze_all_problems(
+        self, session: WorkflowSession
+    ) -> List[ProblemAnalysisResult]:
         """分析所有问题结果"""
         try:
             problem_results = []
@@ -331,7 +346,7 @@ class WorkflowCompletionProcessor:
                     status=status,
                     solution_id=solution_id,
                     fix_attempts=fix_attempts,
-                    final_outcome=final_outcome
+                    final_outcome=final_outcome,
                 )
 
                 problem_results.append(result)
@@ -345,17 +360,26 @@ class WorkflowCompletionProcessor:
     def _determine_problem_status(self, session: WorkflowSession, issue_id: str) -> str:
         """确定问题状态"""
         # 检查是否已解决
-        if hasattr(session, 'solved_problems') and issue_id in [s.split('_')[-1] for s in session.solved_problems]:
+        if hasattr(session, "solved_problems") and issue_id in [
+            s.split("_")[-1] for s in session.solved_problems
+        ]:
             return "solved"
 
         # 检查是否被跳过
-        if hasattr(session, 'skip_history') and any(issue_id in skip for skip in session.skip_history):
+        if hasattr(session, "skip_history") and any(
+            issue_id in skip for skip in session.skip_history
+        ):
             return "skipped"
 
         # 检查是否失败
-        if hasattr(session, 'reanalysis_history') and issue_id in session.reanalysis_history:
+        if (
+            hasattr(session, "reanalysis_history")
+            and issue_id in session.reanalysis_history
+        ):
             history = session.reanalysis_history[issue_id]
-            if history.get('retry_count', 0) >= self.config.get("max_retry_attempts", 3):
+            if history.get("retry_count", 0) >= self.config.get(
+                "max_retry_attempts", 3
+            ):
                 return "failed"
 
         # 检查是否仍在待处理
@@ -364,9 +388,11 @@ class WorkflowCompletionProcessor:
 
         return "unknown"
 
-    def _get_solution_id(self, session: WorkflowSession, issue_id: str) -> Optional[str]:
+    def _get_solution_id(
+        self, session: WorkflowSession, issue_id: str
+    ) -> Optional[str]:
         """获取解决方案ID"""
-        if hasattr(session, 'solved_problems'):
+        if hasattr(session, "solved_problems"):
             for solution_id in session.solved_problems:
                 if issue_id in solution_id:
                     return solution_id
@@ -377,13 +403,16 @@ class WorkflowCompletionProcessor:
         count = 0
 
         # 统计修复建议数量
-        for suggestion in getattr(session, 'fix_suggestions', []):
-            if hasattr(suggestion, 'issue_id') and suggestion.issue_id == issue_id:
+        for suggestion in getattr(session, "fix_suggestions", []):
+            if hasattr(suggestion, "issue_id") and suggestion.issue_id == issue_id:
                 count += 1
 
         # 添加重新分析次数
-        if hasattr(session, 'reanalysis_history') and issue_id in session.reanalysis_history:
-            count += session.reanalysis_history[issue_id].get('retry_count', 0)
+        if (
+            hasattr(session, "reanalysis_history")
+            and issue_id in session.reanalysis_history
+        ):
+            count += session.reanalysis_history[issue_id].get("retry_count", 0)
 
         return count
 
@@ -401,26 +430,38 @@ class WorkflowCompletionProcessor:
             return f"状态未知 (尝试{fix_attempts}次)"
 
     def _calculate_quality_metrics(
-        self,
-        session: WorkflowSession,
-        summary: WorkflowExecutionSummary
+        self, session: WorkflowSession, summary: WorkflowExecutionSummary
     ) -> Dict[str, Any]:
         """计算质量指标"""
         try:
             metrics = {
                 "efficiency_metrics": {
-                    "problems_per_hour": summary.total_problems / (summary.total_duration / 3600) if summary.total_duration > 0 else 0,
-                    "average_time_per_problem": summary.total_duration / summary.total_problems if summary.total_problems > 0 else 0,
-                    "workflow_efficiency": summary.success_rate
+                    "problems_per_hour": (
+                        summary.total_problems / (summary.total_duration / 3600)
+                        if summary.total_duration > 0
+                        else 0
+                    ),
+                    "average_time_per_problem": (
+                        summary.total_duration / summary.total_problems
+                        if summary.total_problems > 0
+                        else 0
+                    ),
+                    "workflow_efficiency": summary.success_rate,
                 },
                 "quality_metrics": {
-                    "resolution_quality": summary.solved_problems / max(1, summary.solved_problems + summary.failed_problems),
-                    "completeness_rate": (summary.solved_problems + summary.skipped_problems) / max(1, summary.total_problems)
+                    "resolution_quality": summary.solved_problems
+                    / max(1, summary.solved_problems + summary.failed_problems),
+                    "completeness_rate": (
+                        summary.solved_problems + summary.skipped_problems
+                    )
+                    / max(1, summary.total_problems),
                 },
                 "user_satisfaction": {
-                    "decision_consistency": self._calculate_decision_consistency(session),
-                    "user_engagement": self._calculate_user_engagement(session)
-                }
+                    "decision_consistency": self._calculate_decision_consistency(
+                        session
+                    ),
+                    "user_engagement": self._calculate_user_engagement(session),
+                },
             }
 
             return metrics
@@ -445,9 +486,8 @@ class WorkflowCompletionProcessor:
     def _calculate_user_engagement(self, session: WorkflowSession) -> float:
         """计算用户参与度"""
         try:
-            total_interactions = (
-                len(getattr(session, 'user_decisions', [])) +
-                len(getattr(session, 'verification_decisions', []))
+            total_interactions = len(getattr(session, "user_decisions", [])) + len(
+                getattr(session, "verification_decisions", [])
             )
             total_problems = len(session.detected_problems)
 
@@ -460,11 +500,13 @@ class WorkflowCompletionProcessor:
         """分析用户交互"""
         try:
             interactions = {
-                "total_decisions": len(getattr(session, 'user_decisions', [])),
-                "verification_decisions": len(getattr(session, 'verification_decisions', [])),
-                "skip_decisions": len(getattr(session, 'skip_history', [])),
+                "total_decisions": len(getattr(session, "user_decisions", [])),
+                "verification_decisions": len(
+                    getattr(session, "verification_decisions", [])
+                ),
+                "skip_decisions": len(getattr(session, "skip_history", [])),
                 "decision_patterns": self._analyze_decision_patterns(session),
-                "feedback_summary": self._summarize_user_feedback(session)
+                "feedback_summary": self._summarize_user_feedback(session),
             }
 
             return interactions
@@ -479,7 +521,7 @@ class WorkflowCompletionProcessor:
             "acceptance_rate": 0.0,
             "rejection_rate": 0.0,
             "modification_rate": 0.0,
-            "skip_rate": 0.0
+            "skip_rate": 0.0,
         }
 
         # 实现决策模式分析逻辑
@@ -493,7 +535,7 @@ class WorkflowCompletionProcessor:
             "positive_feedback_count": 0,
             "negative_feedback_count": 0,
             "common_themes": [],
-            "overall_sentiment": "neutral"
+            "overall_sentiment": "neutral",
         }
 
         # 实现反馈总结逻辑
@@ -502,9 +544,7 @@ class WorkflowCompletionProcessor:
         return summary
 
     def _generate_recommendations(
-        self,
-        summary: WorkflowExecutionSummary,
-        metrics: Dict[str, Any]
+        self, summary: WorkflowExecutionSummary, metrics: Dict[str, Any]
     ) -> List[str]:
         """生成建议"""
         recommendations = []
@@ -532,9 +572,7 @@ class WorkflowCompletionProcessor:
         return recommendations
 
     def _generate_improvement_suggestions(
-        self,
-        session: WorkflowSession,
-        metrics: Dict[str, Any]
+        self, session: WorkflowSession, metrics: Dict[str, Any]
     ) -> List[str]:
         """生成改进建议"""
         suggestions = []
@@ -555,9 +593,7 @@ class WorkflowCompletionProcessor:
         return suggestions if suggestions else ["当前流程运行良好"]
 
     def _extract_lessons_learned(
-        self,
-        session: WorkflowSession,
-        summary: WorkflowExecutionSummary
+        self, session: WorkflowSession, summary: WorkflowExecutionSummary
     ) -> List[str]:
         """提取经验教训"""
         lessons = []
@@ -569,7 +605,9 @@ class WorkflowCompletionProcessor:
             lessons.append("需要改进问题识别或修复策略以提高成功率")
 
         if summary.skipped_problems > 0:
-            lessons.append(f"用户跳过了 {summary.skipped_problems} 个问题，可能需要更好的问题筛选")
+            lessons.append(
+                f"用户跳过了 {summary.skipped_problems} 个问题，可能需要更好的问题筛选"
+            )
 
         if summary.failed_problems > 0:
             lessons.append("某些问题超出了自动处理能力，需要人工介入机制")
@@ -583,9 +621,12 @@ class WorkflowCompletionProcessor:
     def _save_completion_report(self, report: WorkflowCompletionReport) -> None:
         """保存完成报告"""
         try:
-            report_file = self.reports_dir / f"completion_report_{report.session_id}_{report.generation_timestamp.strftime('%Y%m%d_%H%M%S')}.json"
+            report_file = (
+                self.reports_dir
+                / f"completion_report_{report.session_id}_{report.generation_timestamp.strftime('%Y%m%d_%H%M%S')}.json"
+            )
 
-            with open(report_file, 'w', encoding='utf-8') as f:
+            with open(report_file, "w", encoding="utf-8") as f:
                 json.dump(report.to_dict(), f, indent=2, ensure_ascii=False)
 
             self.logger.info(f"工作流完成报告已保存: {report.report_id}")
@@ -593,7 +634,9 @@ class WorkflowCompletionProcessor:
         except Exception as e:
             self.logger.error(f"保存完成报告失败: {e}")
 
-    def _generate_user_summary(self, report: WorkflowCompletionReport) -> Dict[str, Any]:
+    def _generate_user_summary(
+        self, report: WorkflowCompletionReport
+    ) -> Dict[str, Any]:
         """生成用户友好的总结"""
         try:
             summary = {
@@ -603,11 +646,13 @@ class WorkflowCompletionProcessor:
                     "总问题数": report.execution_summary.total_problems,
                     "已解决问题": report.execution_summary.solved_problems,
                     "成功率": f"{report.execution_summary.success_rate:.1%}",
-                    "执行时长": f"{report.execution_summary.total_duration:.1f}秒"
+                    "执行时长": f"{report.execution_summary.total_duration:.1f}秒",
                 },
-                "status_description": self._get_status_description(report.execution_summary),
+                "status_description": self._get_status_description(
+                    report.execution_summary
+                ),
                 "highlights": self._get_execution_highlights(report),
-                "next_steps": self._get_next_steps(report)
+                "next_steps": self._get_next_steps(report),
             }
 
             return summary
@@ -634,7 +679,9 @@ class WorkflowCompletionProcessor:
         highlights = []
 
         if report.execution_summary.solved_problems > 0:
-            highlights.append(f"成功解决了 {report.execution_summary.solved_problems} 个问题")
+            highlights.append(
+                f"成功解决了 {report.execution_summary.solved_problems} 个问题"
+            )
 
         if report.execution_summary.success_rate > 0.8:
             highlights.append("处理成功率高，质量表现优秀")
@@ -658,10 +705,14 @@ class WorkflowCompletionProcessor:
 
         return steps
 
-    def _update_session_completion_status(self, session: WorkflowSession, report: WorkflowCompletionReport) -> None:
+    def _update_session_completion_status(
+        self, session: WorkflowSession, report: WorkflowCompletionReport
+    ) -> None:
         """更新会话完成状态"""
         try:
-            session.completion_status = report.execution_summary.workflow_completion_status
+            session.completion_status = (
+                report.execution_summary.workflow_completion_status
+            )
             session.completion_timestamp = report.generation_timestamp
             session.completion_report_id = report.report_id
 
@@ -670,7 +721,9 @@ class WorkflowCompletionProcessor:
         except Exception as e:
             self.logger.error(f"更新会话完成状态失败: {e}")
 
-    def get_completion_report(self, session_id: str) -> Optional[WorkflowCompletionReport]:
+    def get_completion_report(
+        self, session_id: str
+    ) -> Optional[WorkflowCompletionReport]:
         """
         获取完成报告
 
@@ -690,7 +743,7 @@ class WorkflowCompletionProcessor:
 
             # 获取最新的报告
             latest_file = max(report_files, key=lambda f: f.stat().st_mtime)
-            with open(latest_file, 'r', encoding='utf-8') as f:
+            with open(latest_file, "r", encoding="utf-8") as f:
                 report_data = json.load(f)
 
             return self._reconstruct_completion_report(report_data)
@@ -699,7 +752,9 @@ class WorkflowCompletionProcessor:
             self.logger.error(f"获取完成报告失败: {e}")
             return None
 
-    def _reconstruct_completion_report(self, report_data: Dict[str, Any]) -> WorkflowCompletionReport:
+    def _reconstruct_completion_report(
+        self, report_data: Dict[str, Any]
+    ) -> WorkflowCompletionReport:
         """从字典数据重构完成报告"""
         try:
             # 重构执行摘要
@@ -714,35 +769,39 @@ class WorkflowCompletionProcessor:
                 skipped_problems=summary_data["skipped_problems"],
                 failed_problems=summary_data["failed_problems"],
                 success_rate=summary_data["success_rate"],
-                workflow_completion_status=summary_data["workflow_completion_status"]
+                workflow_completion_status=summary_data["workflow_completion_status"],
             )
 
             # 重构问题结果
             problem_results = []
             for result_data in report_data["problem_results"]:
-                problem_results.append(ProblemAnalysisResult(
-                    issue_id=result_data["issue_id"],
-                    file_path=result_data["file_path"],
-                    line_number=result_data["line_number"],
-                    problem_type=result_data["problem_type"],
-                    severity=result_data["severity"],
-                    status=result_data["status"],
-                    solution_id=result_data.get("solution_id"),
-                    fix_attempts=result_data["fix_attempts"],
-                    final_outcome=result_data["final_outcome"]
-                ))
+                problem_results.append(
+                    ProblemAnalysisResult(
+                        issue_id=result_data["issue_id"],
+                        file_path=result_data["file_path"],
+                        line_number=result_data["line_number"],
+                        problem_type=result_data["problem_type"],
+                        severity=result_data["severity"],
+                        status=result_data["status"],
+                        solution_id=result_data.get("solution_id"),
+                        fix_attempts=result_data["fix_attempts"],
+                        final_outcome=result_data["final_outcome"],
+                    )
+                )
 
             return WorkflowCompletionReport(
                 report_id=report_data["report_id"],
                 session_id=report_data["session_id"],
-                generation_timestamp=datetime.fromisoformat(report_data["generation_timestamp"]),
+                generation_timestamp=datetime.fromisoformat(
+                    report_data["generation_timestamp"]
+                ),
                 execution_summary=execution_summary,
                 problem_results=problem_results,
                 quality_metrics=report_data["quality_metrics"],
                 user_interactions=report_data["user_interactions"],
                 recommendations=report_data["recommendations"],
                 improvement_suggestions=report_data["improvement_suggestions"],
-                lessons_learned=report_data["lessons_learned"]
+                lessons_learned=report_data["lessons_learned"],
             )
 
         except Exception as e:

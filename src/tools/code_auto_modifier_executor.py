@@ -9,55 +9,61 @@ T012.2: 代码自动修改执行器
 输出: 代码修改执行结果 + 验证状态
 """
 
+import difflib
 import json
 import os
 import shutil
-import difflib
 import subprocess
-from typing import Dict, List, Any, Optional, Tuple, Union
-from dataclasses import dataclass, asdict
-from enum import Enum
-from datetime import datetime
-from pathlib import Path
-import uuid
 import tempfile
+import uuid
+from dataclasses import asdict, dataclass
+from datetime import datetime
+from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from ..utils.types import ProblemType, RiskLevel, FixType
 from ..utils.logger import get_logger
-from .workflow_data_types import AIFixSuggestion, WorkflowDataPacket
-from .workflow_user_interaction_types import UserAction, DecisionResult
-from .workflow_flow_state_manager import WorkflowNode
+from ..utils.types import FixType, ProblemType, RiskLevel
 from .fix_execution_preparer import (
-    FixExecutionPreparation, ExecutionPlan, BackupInfo,
-    PreparationStatus, ExecutionRiskLevel
+    BackupInfo,
+    ExecutionPlan,
+    ExecutionRiskLevel,
+    FixExecutionPreparation,
+    PreparationStatus,
 )
 from .user_modification_processor import ModifiedSuggestion
+from .workflow_data_types import AIFixSuggestion, WorkflowDataPacket
+from .workflow_flow_state_manager import WorkflowNode
+from .workflow_user_interaction_types import DecisionResult, UserAction
 
 logger = get_logger()
 
 
 class ExecutionStatus(Enum):
     """执行状态枚举"""
-    PENDING = "pending"                     # 等待执行
-    IN_PROGRESS = "in_progress"            # 执行中
-    COMPLETED = "completed"                # 执行完成
-    FAILED = "failed"                      # 执行失败
-    ROLLED_BACK = "rolled_back"            # 已回滚
-    CANCELLED = "cancelled"                # 已取消
+
+    PENDING = "pending"  # 等待执行
+    IN_PROGRESS = "in_progress"  # 执行中
+    COMPLETED = "completed"  # 执行完成
+    FAILED = "failed"  # 执行失败
+    ROLLED_BACK = "rolled_back"  # 已回滚
+    CANCELLED = "cancelled"  # 已取消
 
 
 class ModificationType(Enum):
     """修改类型枚举"""
-    INSERT = "insert"                     # 插入
-    DELETE = "delete"                     # 删除
-    REPLACE = "replace"                   # 替换
-    APPEND = "append"                     # 追加
-    PREPEND = "prepend"                   # 前置
+
+    INSERT = "insert"  # 插入
+    DELETE = "delete"  # 删除
+    REPLACE = "replace"  # 替换
+    APPEND = "append"  # 追加
+    PREPEND = "prepend"  # 前置
 
 
 @dataclass
 class FileModification:
     """文件修改记录"""
+
     file_path: str
     modification_type: ModificationType
     line_number: int
@@ -71,6 +77,7 @@ class FileModification:
 @dataclass
 class ExecutionStep:
     """执行步骤"""
+
     step_id: int
     description: str
     command: str
@@ -86,6 +93,7 @@ class ExecutionStep:
 @dataclass
 class ExecutionResult:
     """执行结果"""
+
     execution_id: str
     preparation_id: str
     fix_suggestion_id: str
@@ -118,8 +126,11 @@ class CodeAutoModifierExecutor:
         self._execution_history: List[ExecutionResult] = []
         self._current_execution: Optional[ExecutionResult] = None
 
-    def execute_modification(self, preparation: FixExecutionPreparation,
-                           suggestion: Union[AIFixSuggestion, ModifiedSuggestion]) -> ExecutionResult:
+    def execute_modification(
+        self,
+        preparation: FixExecutionPreparation,
+        suggestion: Union[AIFixSuggestion, ModifiedSuggestion],
+    ) -> ExecutionResult:
         """
         执行代码修改
 
@@ -152,7 +163,7 @@ class CodeAutoModifierExecutor:
                 errors=[],
                 warnings=[],
                 timestamp=start_time,
-                metadata={}
+                metadata={},
             )
 
             # 验证准备状态
@@ -160,13 +171,17 @@ class CodeAutoModifierExecutor:
                 raise ValueError(f"准备状态不正确: {preparation.status.value}")
 
             # 执行计划步骤
-            execution_steps = self._execute_execution_plan(preparation.execution_plan, suggestion)
+            execution_steps = self._execute_execution_plan(
+                preparation.execution_plan, suggestion
+            )
 
             # 应用代码修改
             modifications = self._apply_code_modification(suggestion)
 
             # 验证修改结果
-            validation_results = self._validate_modifications(modifications, preparation)
+            validation_results = self._validate_modifications(
+                modifications, preparation
+            )
 
             # 确定最终状态
             final_status = self._determine_final_status(
@@ -177,7 +192,9 @@ class CodeAutoModifierExecutor:
             total_time = int((datetime.now() - start_time).total_seconds())
 
             # 生成回滚信息
-            rollback_info = self._generate_rollback_info(modifications, preparation.backup_info)
+            rollback_info = self._generate_rollback_info(
+                modifications, preparation.backup_info
+            )
 
             # 更新执行结果
             self._current_execution.status = final_status
@@ -233,7 +250,9 @@ class CodeAutoModifierExecutor:
             if execution_result.backup_info:
                 success = self._rollback_from_backup(execution_result.backup_info)
             else:
-                success = self._rollback_from_modifications(execution_result.modifications)
+                success = self._rollback_from_modifications(
+                    execution_result.modifications
+                )
 
             if success:
                 execution_result.status = ExecutionStatus.ROLLED_BACK
@@ -247,8 +266,11 @@ class CodeAutoModifierExecutor:
             logger.error(f"回滚过程出错: {e}")
             return False
 
-    def batch_execute_modifications(self, preparations: List[FixExecutionPreparation],
-                                  suggestions: List[Union[AIFixSuggestion, ModifiedSuggestion]]) -> List[ExecutionResult]:
+    def batch_execute_modifications(
+        self,
+        preparations: List[FixExecutionPreparation],
+        suggestions: List[Union[AIFixSuggestion, ModifiedSuggestion]],
+    ) -> List[ExecutionResult]:
         """
         批量执行代码修改
 
@@ -269,7 +291,9 @@ class CodeAutoModifierExecutor:
             except Exception as e:
                 logger.error(f"批量执行修改失败 {i}: {e}")
                 # 创建失败结果
-                failed_result = self._create_failed_execution_result(preparation, str(e))
+                failed_result = self._create_failed_execution_result(
+                    preparation, str(e)
+                )
                 results.append(failed_result)
 
         successful_count = sum(1 for r in results if r.success)
@@ -277,7 +301,9 @@ class CodeAutoModifierExecutor:
 
         return results
 
-    def get_execution_history(self, limit: Optional[int] = None) -> List[ExecutionResult]:
+    def get_execution_history(
+        self, limit: Optional[int] = None
+    ) -> List[ExecutionResult]:
         """
         获取执行历史
 
@@ -295,8 +321,11 @@ class CodeAutoModifierExecutor:
 
         return history
 
-    def _execute_execution_plan(self, execution_plan: ExecutionPlan,
-                              suggestion: Union[AIFixSuggestion, ModifiedSuggestion]) -> List[ExecutionStep]:
+    def _execute_execution_plan(
+        self,
+        execution_plan: ExecutionPlan,
+        suggestion: Union[AIFixSuggestion, ModifiedSuggestion],
+    ) -> List[ExecutionStep]:
         """执行执行计划"""
         execution_steps = []
 
@@ -311,8 +340,11 @@ class CodeAutoModifierExecutor:
 
         return execution_steps
 
-    def _execute_single_step(self, step_config: Dict[str, Any],
-                           suggestion: Union[AIFixSuggestion, ModifiedSuggestion]) -> ExecutionStep:
+    def _execute_single_step(
+        self,
+        step_config: Dict[str, Any],
+        suggestion: Union[AIFixSuggestion, ModifiedSuggestion],
+    ) -> ExecutionStep:
         """执行单个步骤"""
         step_id = step_config["step_id"]
         description = step_config["description"]
@@ -376,10 +408,12 @@ class CodeAutoModifierExecutor:
             duration_seconds=duration,
             output=output,
             error=error,
-            success=success
+            success=success,
         )
 
-    def _check_file_access(self, suggestion: Union[AIFixSuggestion, ModifiedSuggestion]) -> bool:
+    def _check_file_access(
+        self, suggestion: Union[AIFixSuggestion, ModifiedSuggestion]
+    ) -> bool:
         """检查文件访问权限"""
         try:
             file_path = Path(suggestion.file_path)
@@ -392,11 +426,17 @@ class CodeAutoModifierExecutor:
         except:
             return False
 
-    def _apply_fix_command(self, suggestion: Union[AIFixSuggestion, ModifiedSuggestion]) -> Tuple[bool, str]:
+    def _apply_fix_command(
+        self, suggestion: Union[AIFixSuggestion, ModifiedSuggestion]
+    ) -> Tuple[bool, str]:
         """应用修复命令"""
         try:
             # 这个方法只是预检查，实际修改在 _apply_code_modification 中进行
-            code = suggestion.modified_code if hasattr(suggestion, 'modified_code') else suggestion.suggested_code
+            code = (
+                suggestion.modified_code
+                if hasattr(suggestion, "modified_code")
+                else suggestion.suggested_code
+            )
             if not code.strip():
                 return False, "修复代码为空"
 
@@ -404,14 +444,21 @@ class CodeAutoModifierExecutor:
         except Exception as e:
             return False, f"修复验证失败: {e}"
 
-    def _perform_syntax_check(self, suggestion: Union[AIFixSuggestion, ModifiedSuggestion]) -> Tuple[bool, str]:
+    def _perform_syntax_check(
+        self, suggestion: Union[AIFixSuggestion, ModifiedSuggestion]
+    ) -> Tuple[bool, str]:
         """执行语法检查"""
         try:
-            code = suggestion.modified_code if hasattr(suggestion, 'modified_code') else suggestion.suggested_code
+            code = (
+                suggestion.modified_code
+                if hasattr(suggestion, "modified_code")
+                else suggestion.suggested_code
+            )
             file_path = suggestion.file_path
 
-            if file_path.endswith('.py'):
+            if file_path.endswith(".py"):
                 import ast
+
                 ast.parse(code)
                 return True, "Python语法检查通过"
             else:
@@ -422,22 +469,30 @@ class CodeAutoModifierExecutor:
         except Exception as e:
             return False, f"语法检查失败: {e}"
 
-    def _run_basic_tests(self, suggestion: Union[AIFixSuggestion, ModifiedSuggestion]) -> Tuple[bool, str]:
+    def _run_basic_tests(
+        self, suggestion: Union[AIFixSuggestion, ModifiedSuggestion]
+    ) -> Tuple[bool, str]:
         """运行基本测试"""
         try:
             # 检查文件是否可以导入（如果是Python文件）
             file_path = suggestion.file_path
-            if file_path.endswith('.py'):
+            if file_path.endswith(".py"):
                 # 尝试编译检查
-                code = suggestion.modified_code if hasattr(suggestion, 'modified_code') else suggestion.suggested_code
-                compile(code, file_path, 'exec')
+                code = (
+                    suggestion.modified_code
+                    if hasattr(suggestion, "modified_code")
+                    else suggestion.suggested_code
+                )
+                compile(code, file_path, "exec")
                 return True, "基本编译检查通过"
 
             return True, "基本测试通过"
         except Exception as e:
             return False, f"基本测试失败: {e}"
 
-    def _create_restore_point(self, suggestion: Union[AIFixSuggestion, ModifiedSuggestion]) -> Tuple[bool, str]:
+    def _create_restore_point(
+        self, suggestion: Union[AIFixSuggestion, ModifiedSuggestion]
+    ) -> Tuple[bool, str]:
         """创建还原点"""
         try:
             restore_point_id = str(uuid.uuid4())
@@ -454,12 +509,16 @@ class CodeAutoModifierExecutor:
         except Exception as e:
             return False, f"创建还原点失败: {e}"
 
-    def _run_full_test_suite(self, suggestion: Union[AIFixSuggestion, ModifiedSuggestion]) -> Tuple[bool, str]:
+    def _run_full_test_suite(
+        self, suggestion: Union[AIFixSuggestion, ModifiedSuggestion]
+    ) -> Tuple[bool, str]:
         """运行完整测试套件"""
         try:
             # 检查是否存在测试文件并运行
             project_root = Path(suggestion.file_path).parent
-            test_files = list(project_root.glob("**/test*.py")) + list(project_root.glob("**/*test*.py"))
+            test_files = list(project_root.glob("**/test*.py")) + list(
+                project_root.glob("**/*test*.py")
+            )
 
             if test_files:
                 # 运行找到的第一个测试文件
@@ -468,7 +527,7 @@ class CodeAutoModifierExecutor:
                     ["python", "-m", "pytest", str(test_file), "-v"],
                     capture_output=True,
                     text=True,
-                    timeout=60
+                    timeout=60,
                 )
                 if result.returncode == 0:
                     return True, f"测试套件通过: {test_file}"
@@ -482,30 +541,40 @@ class CodeAutoModifierExecutor:
         except Exception as e:
             return False, f"运行测试套件失败: {e}"
 
-    def _apply_code_modification(self, suggestion: Union[AIFixSuggestion, ModifiedSuggestion]) -> List[FileModification]:
+    def _apply_code_modification(
+        self, suggestion: Union[AIFixSuggestion, ModifiedSuggestion]
+    ) -> List[FileModification]:
         """应用代码修改"""
         modifications = []
 
         try:
             file_path = Path(suggestion.file_path)
             original_code = suggestion.original_code
-            modified_code = suggestion.modified_code if hasattr(suggestion, 'modified_code') else suggestion.suggested_code
+            modified_code = (
+                suggestion.modified_code
+                if hasattr(suggestion, "modified_code")
+                else suggestion.suggested_code
+            )
 
             # 确保目录存在
             file_path.parent.mkdir(parents=True, exist_ok=True)
 
             # 读取原始文件内容（如果存在）
             if file_path.exists():
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     file_content = f.read()
             else:
                 file_content = ""
 
             # 分析修改类型
-            modification_type = self._analyze_modification_type(original_code, modified_code)
+            modification_type = self._analyze_modification_type(
+                original_code, modified_code
+            )
 
             # 获取上下文
-            context_before, context_after = self._extract_context(file_content, suggestion.line_number)
+            context_before, context_after = self._extract_context(
+                file_content, suggestion.line_number
+            )
 
             # 创建修改记录
             modification = FileModification(
@@ -516,7 +585,7 @@ class CodeAutoModifierExecutor:
                 modified_content=modified_code,
                 context_before=context_before,
                 context_after=context_after,
-                timestamp=datetime.now()
+                timestamp=datetime.now(),
             )
 
             # 应用修改
@@ -529,16 +598,16 @@ class CodeAutoModifierExecutor:
                     lines.insert(suggestion.line_number - 1, modified_code)
                 else:
                     lines.append(modified_code)
-                new_content = '\n'.join(lines)
+                new_content = "\n".join(lines)
             elif modification_type == ModificationType.APPEND:
-                new_content = file_content + '\n' + modified_code
+                new_content = file_content + "\n" + modified_code
             elif modification_type == ModificationType.PREPEND:
-                new_content = modified_code + '\n' + file_content
+                new_content = modified_code + "\n" + file_content
             else:
                 new_content = modified_code
 
             # 写入修改后的内容
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(new_content)
 
             modifications.append(modification)
@@ -550,7 +619,9 @@ class CodeAutoModifierExecutor:
 
         return modifications
 
-    def _analyze_modification_type(self, original: str, modified: str) -> ModificationType:
+    def _analyze_modification_type(
+        self, original: str, modified: str
+    ) -> ModificationType:
         """分析修改类型"""
         if not original.strip() and modified.strip():
             return ModificationType.INSERT
@@ -566,22 +637,27 @@ class CodeAutoModifierExecutor:
         else:
             return ModificationType.REPLACE
 
-    def _extract_context(self, file_content: str, line_number: int, context_lines: int = 3) -> Tuple[str, str]:
+    def _extract_context(
+        self, file_content: str, line_number: int, context_lines: int = 3
+    ) -> Tuple[str, str]:
         """提取上下文"""
         lines = file_content.splitlines()
 
         # 前置上下文
         start_line = max(0, line_number - context_lines - 1)
-        context_before = '\n'.join(lines[start_line:line_number - 1])
+        context_before = "\n".join(lines[start_line : line_number - 1])
 
         # 后置上下文
         end_line = min(len(lines), line_number + context_lines)
-        context_after = '\n'.join(lines[line_number:end_line])
+        context_after = "\n".join(lines[line_number:end_line])
 
         return context_before, context_after
 
-    def _validate_modifications(self, modifications: List[FileModification],
-                              preparation: FixExecutionPreparation) -> Dict[str, bool]:
+    def _validate_modifications(
+        self,
+        modifications: List[FileModification],
+        preparation: FixExecutionPreparation,
+    ) -> Dict[str, bool]:
         """验证修改结果"""
         validation_results = {}
 
@@ -590,10 +666,11 @@ class CodeAutoModifierExecutor:
             validation_results["syntax_check"] = True
             for modification in modifications:
                 file_path = Path(modification.file_path)
-                if file_path.exists() and file_path.suffix == '.py':
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                if file_path.exists() and file_path.suffix == ".py":
+                    with open(file_path, "r", encoding="utf-8") as f:
                         content = f.read()
                     import ast
+
                     ast.parse(content)
 
             # 文件完整性验证
@@ -608,7 +685,9 @@ class CodeAutoModifierExecutor:
             validation_results["backup_valid"] = preparation.backup_info is not None
 
             # 基本功能验证
-            validation_results["basic_functionality"] = self._test_basic_functionality(modifications)
+            validation_results["basic_functionality"] = self._test_basic_functionality(
+                modifications
+            )
 
         except Exception as e:
             logger.error(f"验证修改失败: {e}")
@@ -621,22 +700,26 @@ class CodeAutoModifierExecutor:
         try:
             for modification in modifications:
                 file_path = Path(modification.file_path)
-                if file_path.suffix == '.py':
+                if file_path.suffix == ".py":
                     # 尝试编译
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, "r", encoding="utf-8") as f:
                         content = f.read()
-                    compile(content, str(file_path), 'exec')
+                    compile(content, str(file_path), "exec")
             return True
         except:
             return False
 
-    def _determine_final_status(self, execution_steps: List[ExecutionStep],
-                              validation_results: Dict[str, bool],
-                              modifications: List[FileModification]) -> ExecutionStatus:
+    def _determine_final_status(
+        self,
+        execution_steps: List[ExecutionStep],
+        validation_results: Dict[str, bool],
+        modifications: List[FileModification],
+    ) -> ExecutionStatus:
         """确定最终状态"""
         # 检查是否有失败的关键步骤
         failed_critical_steps = [
-            step for step in execution_steps
+            step
+            for step in execution_steps
             if not step.success and step.command in ["apply_fix", "syntax_check"]
         ]
 
@@ -658,8 +741,9 @@ class CodeAutoModifierExecutor:
 
         return ExecutionStatus.COMPLETED
 
-    def _generate_rollback_info(self, modifications: List[FileModification],
-                              backup_info: Optional[BackupInfo]) -> Optional[Dict[str, Any]]:
+    def _generate_rollback_info(
+        self, modifications: List[FileModification], backup_info: Optional[BackupInfo]
+    ) -> Optional[Dict[str, Any]]:
         """生成回滚信息"""
         if not modifications and not backup_info:
             return None
@@ -668,7 +752,7 @@ class CodeAutoModifierExecutor:
             "rollback_id": str(uuid.uuid4()),
             "timestamp": datetime.now().isoformat(),
             "modifications_count": len(modifications),
-            "backup_available": backup_info is not None
+            "backup_available": backup_info is not None,
         }
 
         if backup_info:
@@ -680,7 +764,7 @@ class CodeAutoModifierExecutor:
                 {
                     "file_path": mod.file_path,
                     "original_content": mod.original_content,
-                    "modification_type": mod.modification_type.value
+                    "modification_type": mod.modification_type.value,
                 }
                 for mod in modifications
             ]
@@ -720,7 +804,9 @@ class CodeAutoModifierExecutor:
             logger.error(f"从备份回滚失败: {e}")
             return False
 
-    def _rollback_from_modifications(self, modifications: List[FileModification]) -> bool:
+    def _rollback_from_modifications(
+        self, modifications: List[FileModification]
+    ) -> bool:
         """从修改记录回滚"""
         try:
             for modification in modifications:
@@ -728,26 +814,28 @@ class CodeAutoModifierExecutor:
 
                 if modification.modification_type == ModificationType.INSERT:
                     # 删除插入的内容
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, "r", encoding="utf-8") as f:
                         content = f.read()
-                    new_content = content.replace(modification.modified_content, '')
-                    with open(file_path, 'w', encoding='utf-8') as f:
+                    new_content = content.replace(modification.modified_content, "")
+                    with open(file_path, "w", encoding="utf-8") as f:
                         f.write(new_content)
 
                 elif modification.modification_type == ModificationType.DELETE:
                     # 恢复删除的内容
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, "r", encoding="utf-8") as f:
                         content = f.read()
                     new_content = content + modification.original_content
-                    with open(file_path, 'w', encoding='utf-8') as f:
+                    with open(file_path, "w", encoding="utf-8") as f:
                         f.write(new_content)
 
                 elif modification.modification_type == ModificationType.REPLACE:
                     # 恢复原始内容
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, "r", encoding="utf-8") as f:
                         content = f.read()
-                    new_content = content.replace(modification.modified_content, modification.original_content)
-                    with open(file_path, 'w', encoding='utf-8') as f:
+                    new_content = content.replace(
+                        modification.modified_content, modification.original_content
+                    )
+                    with open(file_path, "w", encoding="utf-8") as f:
                         f.write(new_content)
 
                 logger.info(f"文件回滚成功: {file_path}")
@@ -758,7 +846,9 @@ class CodeAutoModifierExecutor:
             logger.error(f"从修改记录回滚失败: {e}")
             return False
 
-    def _create_failed_execution_result(self, preparation: FixExecutionPreparation, error_message: str) -> ExecutionResult:
+    def _create_failed_execution_result(
+        self, preparation: FixExecutionPreparation, error_message: str
+    ) -> ExecutionResult:
         """创建失败执行结果"""
         return ExecutionResult(
             execution_id=str(uuid.uuid4()),
@@ -775,7 +865,7 @@ class CodeAutoModifierExecutor:
             errors=[error_message],
             warnings=[],
             timestamp=datetime.now(),
-            metadata={"error": error_message}
+            metadata={"error": error_message},
         )
 
     def _record_execution(self, execution_result: ExecutionResult) -> None:
@@ -798,13 +888,19 @@ class CodeAutoModifierExecutor:
             # 转换执行步骤时间
             for step in record_dict["execution_steps"]:
                 if step["start_time"]:
-                    step["start_time"] = datetime.fromisoformat(step["start_time"]).isoformat()
+                    step["start_time"] = datetime.fromisoformat(
+                        step["start_time"]
+                    ).isoformat()
                 if step["end_time"]:
-                    step["end_time"] = datetime.fromisoformat(step["end_time"]).isoformat()
+                    step["end_time"] = datetime.fromisoformat(
+                        step["end_time"]
+                    ).isoformat()
 
             # 转换修改记录时间
             for modification in record_dict["modifications"]:
-                modification["timestamp"] = datetime.fromisoformat(modification["timestamp"]).isoformat()
+                modification["timestamp"] = datetime.fromisoformat(
+                    modification["timestamp"]
+                ).isoformat()
 
             # 转换备份信息时间
             if record_dict["backup_info"]:

@@ -7,19 +7,27 @@ ZhipuAI LLM提供者实现
 import asyncio
 import json
 import time
-from typing import Dict, List, Any, Optional, AsyncGenerator
+from typing import Any, AsyncGenerator, Dict, List, Optional
+
 from ..utils.logger import get_logger
-from .base import LLMProvider, LLMConfig, LLMRequest, LLMResponse, Message, MessageRole
+from .base import LLMConfig, LLMProvider, LLMRequest, LLMResponse, Message, MessageRole
 from .exceptions import (
-    LLMError, LLMTimeoutError, LLMRateLimitError,
-    LLMNetworkError, LLMAuthenticationError, LLMQuotaExceededError,
-    LLMModelNotFoundError, LLMTokenLimitError, LLMContentFilterError,
-    LLMProviderUnavailableError
+    LLMAuthenticationError,
+    LLMContentFilterError,
+    LLMError,
+    LLMModelNotFoundError,
+    LLMNetworkError,
+    LLMProviderUnavailableError,
+    LLMQuotaExceededError,
+    LLMRateLimitError,
+    LLMTimeoutError,
+    LLMTokenLimitError,
 )
 
 try:
     import zai
     from zai import ZhipuAiClient
+
     ZHIPU_AVAILABLE = True
 except ImportError:
     ZHIPU_AVAILABLE = False
@@ -49,8 +57,8 @@ class ZhipuProvider(LLMProvider):
         # 根据官方文档，使用标准参数
         self.client = ZhipuAiClient(
             api_key=config.api_key,
-            #api_key="99391fd6e23e4f718f9df45a5a780599.e0YS7Cwg3hVyBkZN",
-            base_url=config.api_base or "https://open.bigmodel.cn/api/paas/v4/"
+            # api_key="99391fd6e23e4f718f9df45a5a780599.e0YS7Cwg3hVyBkZN",
+            base_url=config.api_base or "https://open.bigmodel.cn/api/paas/v4/",
         )
 
         # 支持的模型列表
@@ -64,7 +72,7 @@ class ZhipuProvider(LLMProvider):
             "glm-4v",  # 视觉模型
             "glm-3-turbo",
             "embedding-2",
-            "embedding-3"
+            "embedding-3",
         ]
 
     @property
@@ -87,7 +95,9 @@ class ZhipuProvider(LLMProvider):
 
         # 验证模型是否支持
         if self.config.model not in self.supported_models:
-            logger.warning(f"Model {self.config.model} may not be supported. Supported models: {self.supported_models}")
+            logger.warning(
+                f"Model {self.config.model} may not be supported. Supported models: {self.supported_models}"
+            )
 
     async def complete(self, request: LLMRequest) -> LLMResponse:
         """
@@ -111,7 +121,7 @@ class ZhipuProvider(LLMProvider):
             "messages": messages,
             "temperature": self.config.temperature,
             "max_tokens": self.config.max_tokens,
-            "top_p": self.config.top_p
+            "top_p": self.config.top_p,
         }
 
         # 添加可选参数
@@ -127,9 +137,9 @@ class ZhipuProvider(LLMProvider):
         logger.info(f"  Temperature: {kwargs['temperature']}")
         logger.info(f"  Max tokens: {kwargs['max_tokens']}")
         logger.info(f"  Top P: {kwargs['top_p']}")
-        for i, msg in enumerate(kwargs['messages']):
+        for i, msg in enumerate(kwargs["messages"]):
             # kwargs['messages'] 已经转换为字典格式
-            content = msg['content']
+            content = msg["content"]
 
             # 对于包含重要信息的消息，显示更完整的内容
             if "用户需求:" in content:
@@ -143,12 +153,21 @@ class ZhipuProvider(LLMProvider):
 
                 # 显示消息开头和完整的用户需求行
                 if len(content) > 200:
-                    content_preview = content[:150] + "\n" + user_requirements_line + "\n" + "..." + content[-50:]
+                    content_preview = (
+                        content[:150]
+                        + "\n"
+                        + user_requirements_line
+                        + "\n"
+                        + "..."
+                        + content[-50:]
+                    )
                 else:
                     content_preview = content
             else:
                 # 对于其他消息，正常截断
-                content_preview = content[:100] + "..." if len(content) > 100 else content
+                content_preview = (
+                    content[:100] + "..." if len(content) > 100 else content
+                )
 
             logger.info(f"  Message {i+1}: {msg['role']} - {content_preview}")
 
@@ -169,14 +188,25 @@ class ZhipuProvider(LLMProvider):
 
                 # 显示消息开头和完整的用户需求行
                 if len(content) > 200:
-                    content_preview = content[:150] + "\n" + user_requirements_line + "\n" + "..." + content[-50:]
+                    content_preview = (
+                        content[:150]
+                        + "\n"
+                        + user_requirements_line
+                        + "\n"
+                        + "..."
+                        + content[-50:]
+                    )
                 else:
                     content_preview = content
             else:
                 # 对于其他消息，正常截断
-                content_preview = content[:100] + "..." if len(content) > 100 else content
+                content_preview = (
+                    content[:100] + "..." if len(content) > 100 else content
+                )
 
-            logger.info(f"  Original Message {i+1}: {msg.role.value} - {content_preview}")
+            logger.info(
+                f"  Original Message {i+1}: {msg.role.value} - {content_preview}"
+            )
 
         # 重试机制
         max_retries = 3
@@ -186,19 +216,27 @@ class ZhipuProvider(LLMProvider):
             try:
                 if attempt > 0:
                     delay = base_delay * (2 ** (attempt - 1))  # 指数退避
-                    logger.info(f"Retry attempt {attempt + 1}/{max_retries} after {delay:.1f}s delay")
+                    logger.info(
+                        f"Retry attempt {attempt + 1}/{max_retries} after {delay:.1f}s delay"
+                    )
                     await asyncio.sleep(delay)
 
                 # 发送请求 (使用asyncio.run_in_executor更可靠)
                 loop = asyncio.get_event_loop()
 
                 # 为大文件请求增加超时时间
-                total_content_size = sum(len(msg.get('content', '')) for msg in kwargs['messages'])
-                timeout = 120 + (total_content_size // 500)  # 基础120秒 + 每500字符增加1秒
+                total_content_size = sum(
+                    len(msg.get("content", "")) for msg in kwargs["messages"]
+                )
+                timeout = 120 + (
+                    total_content_size // 500
+                )  # 基础120秒 + 每500字符增加1秒
 
                 response = await asyncio.wait_for(
-                    loop.run_in_executor(None, lambda: self.client.chat.completions.create(**kwargs)),
-                    timeout=timeout
+                    loop.run_in_executor(
+                        None, lambda: self.client.chat.completions.create(**kwargs)
+                    ),
+                    timeout=timeout,
                 )
 
                 # 解析响应
@@ -206,8 +244,12 @@ class ZhipuProvider(LLMProvider):
 
                 # 详细调试日志：记录响应内容
                 logger.info(f"ZhipuAI response details:")
-                logger.info(f"  Response content: '{result.content[:200]}...'")  # 只显示前200字符
-                logger.info(f"  Content length: {len(result.content) if result.content else 0}")
+                logger.info(
+                    f"  Response content: '{result.content[:200]}...'"
+                )  # 只显示前200字符
+                logger.info(
+                    f"  Content length: {len(result.content) if result.content else 0}"
+                )
                 logger.info(f"  Finish reason: {result.finish_reason}")
                 logger.info(f"  Usage: {result.usage}")
                 logger.info(f"  Response time: {result.response_time:.2f}s")
@@ -222,7 +264,9 @@ class ZhipuProvider(LLMProvider):
                     raise LLMTimeoutError(f"Request timeout: {error_msg}")
 
             except zai.core.APIStatusError as e:
-                error_msg = f"API status error (attempt {attempt + 1}/{max_retries}): {e}"
+                error_msg = (
+                    f"API status error (attempt {attempt + 1}/{max_retries}): {e}"
+                )
                 logger.error(f"ZhipuAI {error_msg}")
                 if attempt == max_retries - 1:
                     raise LLMError(f"API status error: {e}")
@@ -234,31 +278,41 @@ class ZhipuProvider(LLMProvider):
                     raise LLMTimeoutError(f"API timeout: {e}")
 
             except zai.core.APIAuthenticationError as e:
-                error_msg = f"Authentication error (attempt {attempt + 1}/{max_retries}): {e}"
+                error_msg = (
+                    f"Authentication error (attempt {attempt + 1}/{max_retries}): {e}"
+                )
                 logger.error(f"ZhipuAI {error_msg}")
                 # 认证错误不重试
                 raise LLMAuthenticationError(f"Authentication failed: {e}")
 
             except zai.core.APIReachLimitError as e:
-                error_msg = f"Rate limit error (attempt {attempt + 1}/{max_retries}): {e}"
+                error_msg = (
+                    f"Rate limit error (attempt {attempt + 1}/{max_retries}): {e}"
+                )
                 logger.error(f"ZhipuAI {error_msg}")
                 if attempt == max_retries - 1:
                     raise LLMRateLimitError(f"Rate limit exceeded: {e}")
 
             except zai.core.APIRequestFailedError as e:
-                error_msg = f"Connection error (attempt {attempt + 1}/{max_retries}): {e}"
+                error_msg = (
+                    f"Connection error (attempt {attempt + 1}/{max_retries}): {e}"
+                )
                 logger.error(f"ZhipuAI {error_msg}")
                 if attempt == max_retries - 1:
                     raise LLMNetworkError(f"Connection error: {e}")
 
             except zai.core.APIInternalError as e:
-                error_msg = f"API internal error (attempt {attempt + 1}/{max_retries}): {e}"
+                error_msg = (
+                    f"API internal error (attempt {attempt + 1}/{max_retries}): {e}"
+                )
                 logger.error(f"ZhipuAI {error_msg}")
                 if attempt == max_retries - 1:
                     raise LLMError(f"API internal error: {e}")
 
             except Exception as e:
-                error_msg = f"Unexpected error (attempt {attempt + 1}/{max_retries}): {e}"
+                error_msg = (
+                    f"Unexpected error (attempt {attempt + 1}/{max_retries}): {e}"
+                )
                 logger.error(f"ZhipuAI {error_msg}")
                 if attempt == max_retries - 1:
                     raise LLMError(f"Unexpected error: {e}")
@@ -266,7 +320,9 @@ class ZhipuProvider(LLMProvider):
         # 这里不应该到达，但为了安全起见
         raise LLMError("All retry attempts failed")
 
-    async def stream_complete(self, request: LLMRequest) -> AsyncGenerator[LLMResponse, None]:
+    async def stream_complete(
+        self, request: LLMRequest
+    ) -> AsyncGenerator[LLMResponse, None]:
         """
         流式完成文本生成请求
 
@@ -290,7 +346,7 @@ class ZhipuProvider(LLMProvider):
                 "temperature": self.config.temperature,
                 "max_tokens": self.config.max_tokens,
                 "top_p": self.config.top_p,
-                "stream": True
+                "stream": True,
             }
 
             # 添加可选参数
@@ -301,12 +357,16 @@ class ZhipuProvider(LLMProvider):
 
             # 发送流式请求 (使用asyncio.run_in_executor更可靠)
             loop = asyncio.get_event_loop()
-            response_stream = await loop.run_in_executor(None, self.client.chat.completions.create, **kwargs)
+            response_stream = await loop.run_in_executor(
+                None, self.client.chat.completions.create, **kwargs
+            )
 
             # 处理流式响应
             for chunk in response_stream:
                 if chunk.choices and chunk.choices[0].delta.content:
-                    result = self._parse_stream_chunk(chunk, request.request_id, start_time)
+                    result = self._parse_stream_chunk(
+                        chunk, request.request_id, start_time
+                    )
                     yield result
 
         except zai.core.APIStatusError as e:
@@ -343,10 +403,7 @@ class ZhipuProvider(LLMProvider):
         """
         converted = []
         for msg in messages:
-            msg_dict = {
-                "role": msg.role.value,
-                "content": msg.content
-            }
+            msg_dict = {"role": msg.role.value, "content": msg.content}
             if msg.name:
                 msg_dict["name"] = msg.name
             if msg.function_call:
@@ -354,7 +411,9 @@ class ZhipuProvider(LLMProvider):
             converted.append(msg_dict)
         return converted
 
-    def _parse_response(self, response, request_id: str, start_time: float) -> LLMResponse:
+    def _parse_response(
+        self, response, request_id: str, start_time: float
+    ) -> LLMResponse:
         """
         解析响应
 
@@ -371,24 +430,28 @@ class ZhipuProvider(LLMProvider):
 
         # 解析使用情况
         usage = None
-        if hasattr(response, 'usage') and response.usage:
+        if hasattr(response, "usage") and response.usage:
             usage = {
-                "prompt_tokens": getattr(response.usage, 'prompt_tokens', 0),
-                "completion_tokens": getattr(response.usage, 'completion_tokens', 0),
-                "total_tokens": getattr(response.usage, 'total_tokens', 0)
+                "prompt_tokens": getattr(response.usage, "prompt_tokens", 0),
+                "completion_tokens": getattr(response.usage, "completion_tokens", 0),
+                "total_tokens": getattr(response.usage, "total_tokens", 0),
             }
 
         # 解析工具调用
         tool_calls = None
-        if choice and hasattr(choice.message, 'tool_calls') and choice.message.tool_calls:
+        if (
+            choice
+            and hasattr(choice.message, "tool_calls")
+            and choice.message.tool_calls
+        ):
             tool_calls = [
                 {
                     "id": tc.id,
                     "type": tc.type,
                     "function": {
                         "name": tc.function.name,
-                        "arguments": tc.function.arguments
-                    }
+                        "arguments": tc.function.arguments,
+                    },
                 }
                 for tc in choice.message.tool_calls
             ]
@@ -401,10 +464,12 @@ class ZhipuProvider(LLMProvider):
             finish_reason=choice.finish_reason if choice else None,
             usage=usage,
             response_time=time.time() - start_time,
-            tool_calls=tool_calls
+            tool_calls=tool_calls,
         )
 
-    def _parse_stream_chunk(self, chunk, request_id: str, start_time: float) -> LLMResponse:
+    def _parse_stream_chunk(
+        self, chunk, request_id: str, start_time: float
+    ) -> LLMResponse:
         """
         解析流式响应片段
 
@@ -423,26 +488,34 @@ class ZhipuProvider(LLMProvider):
                 model=self.config.model,
                 content="",
                 is_stream=True,
-                is_complete=False
+                is_complete=False,
             )
 
         choice = chunk.choices[0]
         delta = choice.delta
 
-        content = delta.content if hasattr(delta, 'content') and delta.content else ""
-        finish_reason = choice.finish_reason if hasattr(choice, 'finish_reason') else None
+        content = delta.content if hasattr(delta, "content") and delta.content else ""
+        finish_reason = (
+            choice.finish_reason if hasattr(choice, "finish_reason") else None
+        )
 
         # 解析工具调用
         tool_calls = None
-        if hasattr(delta, 'tool_calls') and delta.tool_calls:
+        if hasattr(delta, "tool_calls") and delta.tool_calls:
             tool_calls = [
                 {
-                    "id": tc.id if hasattr(tc, 'id') else None,
-                    "type": tc.type if hasattr(tc, 'type') else None,
+                    "id": tc.id if hasattr(tc, "id") else None,
+                    "type": tc.type if hasattr(tc, "type") else None,
                     "function": {
-                        "name": tc.function.name if hasattr(tc.function, 'name') else None,
-                        "arguments": tc.function.arguments if hasattr(tc.function, 'arguments') else None
-                    }
+                        "name": (
+                            tc.function.name if hasattr(tc.function, "name") else None
+                        ),
+                        "arguments": (
+                            tc.function.arguments
+                            if hasattr(tc.function, "arguments")
+                            else None
+                        ),
+                    },
                 }
                 for tc in delta.tool_calls
             ]
@@ -450,14 +523,14 @@ class ZhipuProvider(LLMProvider):
         return LLMResponse(
             request_id=request_id,
             provider=self.provider_name,
-            model=chunk.model if hasattr(chunk, 'model') else self.config.model,
+            model=chunk.model if hasattr(chunk, "model") else self.config.model,
             content=content,
             delta=content,
             finish_reason=finish_reason,
             is_stream=True,
             is_complete=finish_reason is not None,
             response_time=time.time() - start_time,
-            tool_calls=tool_calls
+            tool_calls=tool_calls,
         )
 
     def get_default_config(self) -> Dict[str, Any]:
@@ -468,12 +541,14 @@ class ZhipuProvider(LLMProvider):
             默认配置字典
         """
         config = super().get_default_config()
-        config.update({
-            "model": "glm-4.5-air",
-            "api_base": "https://open.bigmodel.cn/api/paas/v4/",
-            "max_tokens": 4000,
-            "temperature": 0.7
-        })
+        config.update(
+            {
+                "model": "glm-4.5-air",
+                "api_base": "https://open.bigmodel.cn/api/paas/v4/",
+                "max_tokens": 4000,
+                "temperature": 0.7,
+            }
+        )
         return config
 
     def estimate_tokens(self, text: str) -> int:
@@ -488,7 +563,7 @@ class ZhipuProvider(LLMProvider):
         """
         # 对于中文，大约1.5个字符=1个token
         # 对于英文，大约4个字符=1个token
-        chinese_chars = len([c for c in text if '\u4e00' <= c <= '\u9fff'])
+        chinese_chars = len([c for c in text if "\u4e00" <= c <= "\u9fff"])
         other_chars = len(text) - chinese_chars
         return max(1, int(chinese_chars / 1.5 + other_chars / 4))
 
@@ -509,16 +584,20 @@ class ZhipuProvider(LLMProvider):
             "glm-4": {"input": 0.01, "output": 0.025},
             "glm-4-air": {"input": 0.005, "output": 0.0125},
             "glm-4-flash": {"input": 0.001, "output": 0.002},
-            "glm-3-turbo": {"input": 0.005, "output": 0.0125}
+            "glm-3-turbo": {"input": 0.005, "output": 0.0125},
         }
 
         model_pricing = pricing.get(self.config.model, {"input": 0.01, "output": 0.025})
 
         input_tokens = response.usage.get("prompt_tokens", 0) if response.usage else 0
-        output_tokens = response.usage.get("completion_tokens", 0) if response.usage else 0
+        output_tokens = (
+            response.usage.get("completion_tokens", 0) if response.usage else 0
+        )
 
-        cost = (input_tokens * model_pricing["input"] +
-                output_tokens * model_pricing["output"]) / 1000
+        cost = (
+            input_tokens * model_pricing["input"]
+            + output_tokens * model_pricing["output"]
+        ) / 1000
 
         return cost
 

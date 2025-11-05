@@ -5,17 +5,18 @@
 
 import os
 import re
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
-from ..utils.logger import get_logger
 from ..utils.config import get_config_manager
+from ..utils.logger import get_logger
 
 
 class AnalysisMode(Enum):
     """分析模式枚举"""
+
     STATIC = "static"
     DEEP = "deep"
     FIX = "fix"
@@ -24,6 +25,7 @@ class AnalysisMode(Enum):
 @dataclass
 class UserRequest:
     """用户请求数据结构"""
+
     raw_input: str
     mode: AnalysisMode
     target_path: Optional[str] = None
@@ -35,6 +37,7 @@ class UserRequest:
 @dataclass
 class Task:
     """任务数据结构"""
+
     task_id: str
     task_type: str
     description: str
@@ -47,12 +50,13 @@ class Task:
 @dataclass
 class ExecutionPlan:
     """执行计划数据结构"""
+
     plan_id: str
     mode: AnalysisMode
     target_path: str
     tasks: List[Task]
     metadata: Dict[str, Any] = field(default_factory=dict)
-    created_at: float = field(default_factory=lambda: __import__('time').time())
+    created_at: float = field(default_factory=lambda: __import__("time").time())
 
 
 class TaskPlanner:
@@ -69,19 +73,58 @@ class TaskPlanner:
         self.config_manager = config_manager or get_config_manager()
 
         # 解析器配置
-        self.config = self.config_manager.get_section('planner') or {}
+        self.config = self.config_manager.get_section("planner") or {}
 
         # 支持的关键词
-        self.static_keywords = ['static', 'quick', 'fast', 'basic', 'simple', '静态', '快速', '基础', '简单']
-        self.deep_keywords = ['deep', 'detailed', 'thorough', 'comprehensive', '深度', '详细', '全面', '智能']
-        self.fix_keywords = ['fix', 'repair', 'resolve', 'correct', '修复', '修复', '解决', '更正']
+        self.static_keywords = [
+            "static",
+            "quick",
+            "fast",
+            "basic",
+            "simple",
+            "静态",
+            "快速",
+            "基础",
+            "简单",
+        ]
+        self.deep_keywords = [
+            "deep",
+            "detailed",
+            "thorough",
+            "comprehensive",
+            "深度",
+            "详细",
+            "全面",
+            "智能",
+        ]
+        self.fix_keywords = [
+            "fix",
+            "repair",
+            "resolve",
+            "correct",
+            "修复",
+            "修复",
+            "解决",
+            "更正",
+        ]
 
         # 支持的文件扩展名
-        self.supported_extensions = {'.py', '.js', '.ts', '.java', '.cpp', '.c', '.h', '.hpp'}
+        self.supported_extensions = {
+            ".py",
+            ".js",
+            ".ts",
+            ".java",
+            ".cpp",
+            ".c",
+            ".h",
+            ".hpp",
+        }
 
         self.logger.info("TaskPlanner initialized")
 
-    def parse_user_request(self, user_input: str, current_path: str = ".") -> UserRequest:
+    def parse_user_request(
+        self, user_input: str, current_path: str = "."
+    ) -> UserRequest:
         """
         解析用户输入需求
 
@@ -118,10 +161,12 @@ class TaskPlanner:
             target_path=target_path,
             options=options,
             keywords=keywords,
-            intent=intent
+            intent=intent,
         )
 
-        self.logger.info(f"Parsed request: mode={mode.value}, target={target_path}, intent={intent}")
+        self.logger.info(
+            f"Parsed request: mode={mode.value}, target={target_path}, intent={intent}"
+        )
         return request
 
     def create_execution_plan(self, request: UserRequest) -> ExecutionPlan:
@@ -148,17 +193,19 @@ class TaskPlanner:
             target_path=target_path,
             tasks=tasks,
             metadata={
-                'user_request': request.raw_input,
-                'keywords': request.keywords,
-                'intent': request.intent,
-                'options': request.options
-            }
+                "user_request": request.raw_input,
+                "keywords": request.keywords,
+                "intent": request.intent,
+                "options": request.options,
+            },
         )
 
         self.logger.info(f"Created execution plan {plan_id} with {len(tasks)} tasks")
         return plan
 
-    def validate_plan(self, plan: ExecutionPlan, allow_empty_tasks: bool = True) -> Tuple[bool, List[str]]:
+    def validate_plan(
+        self, plan: ExecutionPlan, allow_empty_tasks: bool = True
+    ) -> Tuple[bool, List[str]]:
         """
         验证执行计划
 
@@ -186,12 +233,16 @@ class TaskPlanner:
             for task in plan.tasks:
                 for dep in task.dependencies:
                     if dep not in task_ids:
-                        errors.append(f"Task {task.task_id} depends on non-existent task {dep}")
+                        errors.append(
+                            f"Task {task.task_id} depends on non-existent task {dep}"
+                        )
 
             # 检查优先级
             for task in plan.tasks:
                 if task.priority < 1 or task.priority > 10:
-                    errors.append(f"Task {task.task_id} has invalid priority: {task.priority}")
+                    errors.append(
+                        f"Task {task.task_id} has invalid priority: {task.priority}"
+                    )
 
         is_valid = len(errors) == 0
         if not is_valid:
@@ -220,16 +271,16 @@ class TaskPlanner:
         """提取目标路径"""
         # 匹配路径模式
         path_patterns = [
-            r'(?:path|dir|directory|folder)[\s:=]+([^\s]+)',
-            r'([\/\w\.-]+\/[^\s]*)',  # Unix路径
-            r'([A-Za-z]:\\[^\s]*)',   # Windows路径
-            r'\.\/([^\s]+)',          # 相对路径
+            r"(?:path|dir|directory|folder)[\s:=]+([^\s]+)",
+            r"([\/\w\.-]+\/[^\s]*)",  # Unix路径
+            r"([A-Za-z]:\\[^\s]*)",  # Windows路径
+            r"\.\/([^\s]+)",  # 相对路径
         ]
 
         for pattern in path_patterns:
             matches = re.findall(pattern, user_input, re.IGNORECASE)
             if matches:
-                path = matches[0].strip('\'"')
+                path = matches[0].strip("'\"")
                 # 转换为绝对路径
                 if not os.path.isabs(path):
                     path = os.path.abspath(os.path.join(current_path, path))
@@ -244,7 +295,7 @@ class TaskPlanner:
 
         # 匹配键值对选项 - 修复正则表达式
         # 格式：--key value, --key=value, -k value, -k=value
-        pattern = r'--?([a-zA-Z0-9_-]+)(?:[=\s]+([^\s-]+))?'
+        pattern = r"--?([a-zA-Z0-9_-]+)(?:[=\s]+([^\s-]+))?"
         matches = re.finditer(pattern, user_input)
 
         for match in matches:
@@ -254,11 +305,11 @@ class TaskPlanner:
             # 转换值类型
             if value is not True:
                 if isinstance(value, str):
-                    if value.lower() in ['true', 'false']:
-                        value = value.lower() == 'true'
+                    if value.lower() in ["true", "false"]:
+                        value = value.lower() == "true"
                     elif value.isdigit():
                         value = int(value)
-                    elif '.' in value and value.replace('.', '').isdigit():
+                    elif "." in value and value.replace(".", "").isdigit():
                         value = float(value)
 
             options[key] = value
@@ -271,16 +322,47 @@ class TaskPlanner:
 
         # 技术关键词
         tech_keywords = [
-            'security', 'performance', 'bug', 'error', 'vulnerability', 'issue',
-            'refactor', 'optimize', 'cleanup', 'test', 'documentation',
-            '安全', '性能', '漏洞', '错误', '问题', '重构', '优化', '清理', '测试', '文档'
+            "security",
+            "performance",
+            "bug",
+            "error",
+            "vulnerability",
+            "issue",
+            "refactor",
+            "optimize",
+            "cleanup",
+            "test",
+            "documentation",
+            "安全",
+            "性能",
+            "漏洞",
+            "错误",
+            "问题",
+            "重构",
+            "优化",
+            "清理",
+            "测试",
+            "文档",
         ]
 
         # 代码质量关键词
         quality_keywords = [
-            'maintainability', 'readability', 'complexity', 'duplication',
-            'style', 'convention', 'best practice', 'anti-pattern',
-            '可维护性', '可读性', '复杂度', '重复', '风格', '约定', '最佳实践', '反模式'
+            "maintainability",
+            "readability",
+            "complexity",
+            "duplication",
+            "style",
+            "convention",
+            "best practice",
+            "anti-pattern",
+            "可维护性",
+            "可读性",
+            "复杂度",
+            "重复",
+            "风格",
+            "约定",
+            "最佳实践",
+            "反模式",
         ]
 
         all_keywords = tech_keywords + quality_keywords
@@ -297,25 +379,25 @@ class TaskPlanner:
 
         if mode == AnalysisMode.STATIC:
             # 优先检查特定意图
-            if any(word in input_lower for word in ['style', 'format', 'convention']):
+            if any(word in input_lower for word in ["style", "format", "convention"]):
                 return "代码风格检查"
-            elif any(word in input_lower for word in ['security', 'vulnerable']):
+            elif any(word in input_lower for word in ["security", "vulnerable"]):
                 return "安全漏洞扫描"
-            elif any(word in input_lower for word in ['quick', 'fast', 'check']):
+            elif any(word in input_lower for word in ["quick", "fast", "check"]):
                 return "快速检查代码质量"
             else:
                 return "基础静态分析"
 
         elif mode == AnalysisMode.DEEP:
-            if any(word in input_lower for word in ['architecture', 'design']):
+            if any(word in input_lower for word in ["architecture", "design"]):
                 return "架构分析"
-            elif any(word in input_lower for word in ['performance', 'optimize']):
+            elif any(word in input_lower for word in ["performance", "optimize"]):
                 return "性能优化分析"
             else:
                 return "深度代码分析"
 
         elif mode == AnalysisMode.FIX:
-            if any(word in input_lower for word in ['auto', 'automatic']):
+            if any(word in input_lower for word in ["auto", "automatic"]):
                 return "自动修复问题"
             else:
                 return "问题修复建议"
@@ -325,6 +407,7 @@ class TaskPlanner:
     def _generate_plan_id(self) -> str:
         """生成计划ID"""
         import uuid
+
         return f"plan_{uuid.uuid4().hex[:8]}"
 
     def _create_tasks_for_mode(self, request: UserRequest) -> List[Task]:
@@ -354,8 +437,8 @@ class TaskPlanner:
             parameters={
                 "keywords": request.keywords,
                 "max_files": request.options.get("max_files", 100),
-                "target_path": request.target_path
-            }
+                "target_path": request.target_path,
+            },
         )
         tasks.append(file_selector_task)
 
@@ -366,10 +449,7 @@ class TaskPlanner:
             description="执行AST语法分析，检查语法错误和基本结构",
             priority=2,
             dependencies=["static_file_selection"],
-            parameters={
-                "check_syntax": True,
-                "extract_structure": True
-            }
+            parameters={"check_syntax": True, "extract_structure": True},
         )
         tasks.append(ast_task)
 
@@ -382,8 +462,8 @@ class TaskPlanner:
             dependencies=["static_file_selection"],
             parameters={
                 "disable_rules": request.options.get("pylint_disable", []),
-                "enable_rules": request.options.get("pylint_enable", [])
-            }
+                "enable_rules": request.options.get("pylint_enable", []),
+            },
         )
         tasks.append(pylint_task)
 
@@ -396,8 +476,8 @@ class TaskPlanner:
             dependencies=["static_file_selection"],
             parameters={
                 "max_line_length": request.options.get("max_line_length", 88),
-                "ignore_errors": request.options.get("flake8_ignore", [])
-            }
+                "ignore_errors": request.options.get("flake8_ignore", []),
+            },
         )
         tasks.append(flake8_task)
 
@@ -410,8 +490,8 @@ class TaskPlanner:
             dependencies=["static_file_selection"],
             parameters={
                 "severity_level": request.options.get("security_level", "medium"),
-                "confidence_level": request.options.get("confidence_level", "medium")
-            }
+                "confidence_level": request.options.get("confidence_level", "medium"),
+            },
         )
         tasks.append(bandit_task)
 
@@ -421,13 +501,17 @@ class TaskPlanner:
             task_type="report_generation",
             description="合并分析结果并生成综合报告",
             priority=4,
-            dependencies=["static_ast_analysis", "static_pylint_analysis",
-                         "static_flake8_analysis", "static_bandit_analysis"],
+            dependencies=[
+                "static_ast_analysis",
+                "static_pylint_analysis",
+                "static_flake8_analysis",
+                "static_bandit_analysis",
+            ],
             parameters={
                 "output_format": request.options.get("output_format", "json"),
                 "sort_by_severity": True,
-                "group_by_file": True
-            }
+                "group_by_file": True,
+            },
         )
         tasks.append(report_task)
 
@@ -448,8 +532,8 @@ class TaskPlanner:
                 "max_files": request.options.get("max_files", 20),
                 "target_path": request.target_path,
                 "analyze_dependencies": True,
-                "prioritize_recent": True
-            }
+                "prioritize_recent": True,
+            },
         )
         tasks.append(file_selector_task)
 
@@ -463,8 +547,8 @@ class TaskPlanner:
             parameters={
                 "analyze_complexity": True,
                 "extract_patterns": True,
-                "identify_smells": True
-            }
+                "identify_smells": True,
+            },
         )
         tasks.append(content_analysis_task)
 
@@ -478,8 +562,8 @@ class TaskPlanner:
             parameters={
                 "analysis_type": self._determine_analysis_type(request),
                 "include_context": True,
-                "prompt_template": "deep_analysis"
-            }
+                "prompt_template": "deep_analysis",
+            },
         )
         tasks.append(llm_prep_task)
 
@@ -493,8 +577,8 @@ class TaskPlanner:
             parameters={
                 "model": request.options.get("model", "gpt-3.5-turbo"),
                 "temperature": request.options.get("temperature", 0.3),
-                "max_tokens": request.options.get("max_tokens", 2000)
-            }
+                "max_tokens": request.options.get("max_tokens", 2000),
+            },
         )
         tasks.append(llm_analysis_task)
 
@@ -508,8 +592,8 @@ class TaskPlanner:
             parameters={
                 "output_format": request.options.get("output_format", "structured"),
                 "include_suggestions": True,
-                "include_examples": True
-            }
+                "include_examples": True,
+            },
         )
         tasks.append(result_format_task)
 
@@ -528,8 +612,8 @@ class TaskPlanner:
             parameters={
                 "target_path": request.target_path,
                 "analysis_scope": request.options.get("scope", "all"),
-                "severity_threshold": request.options.get("severity", "medium")
-            }
+                "severity_threshold": request.options.get("severity", "medium"),
+            },
         )
         tasks.append(problem_detection_task)
 
@@ -543,8 +627,8 @@ class TaskPlanner:
             parameters={
                 "group_by_type": True,
                 "sort_by_priority": True,
-                "auto_fixable_only": request.options.get("auto_fix_only", False)
-            }
+                "auto_fixable_only": request.options.get("auto_fix_only", False),
+            },
         )
         tasks.append(problem_classification_task)
 
@@ -558,8 +642,8 @@ class TaskPlanner:
             parameters={
                 "include_explanation": True,
                 "include_diff": True,
-                "verify_fix": True
-            }
+                "verify_fix": True,
+            },
         )
         tasks.append(fix_suggestion_task)
 
@@ -573,8 +657,8 @@ class TaskPlanner:
             parameters={
                 "show_diff": True,
                 "show_backup_info": True,
-                "allow_batch_confirmation": request.options.get("batch", False)
-            }
+                "allow_batch_confirmation": request.options.get("batch", False),
+            },
         )
         tasks.append(user_confirmation_task)
 
@@ -588,8 +672,8 @@ class TaskPlanner:
             parameters={
                 "create_backup": True,
                 "apply_fixes": True,
-                "verify_after_fix": True
-            }
+                "verify_after_fix": True,
+            },
         )
         tasks.append(fix_execution_task)
 
@@ -603,8 +687,8 @@ class TaskPlanner:
             parameters={
                 "include_summary": True,
                 "include_changes": True,
-                "include_validation": True
-            }
+                "include_validation": True,
+            },
         )
         tasks.append(fix_report_task)
 
@@ -615,15 +699,30 @@ class TaskPlanner:
         intent = request.intent.lower()
         keywords = [k.lower() for k in request.keywords]
 
-        if any(word in intent or word in keywords for word in ['architecture', 'design', '架构', '设计']):
+        if any(
+            word in intent or word in keywords
+            for word in ["architecture", "design", "架构", "设计"]
+        ):
             return "architecture"
-        elif any(word in intent or word in keywords for word in ['performance', 'optimize', '性能', '优化']):
+        elif any(
+            word in intent or word in keywords
+            for word in ["performance", "optimize", "性能", "优化"]
+        ):
             return "performance"
-        elif any(word in intent or word in keywords for word in ['security', 'vulnerability', '安全', '漏洞']):
+        elif any(
+            word in intent or word in keywords
+            for word in ["security", "vulnerability", "安全", "漏洞"]
+        ):
             return "security"
-        elif any(word in intent or word in keywords for word in ['maintainability', 'readability', '可维护性', '可读性']):
+        elif any(
+            word in intent or word in keywords
+            for word in ["maintainability", "readability", "可维护性", "可读性"]
+        ):
             return "maintainability"
-        elif any(word in intent or word in keywords for word in ['refactor', 'cleanup', '重构', '清理']):
+        elif any(
+            word in intent or word in keywords
+            for word in ["refactor", "cleanup", "重构", "清理"]
+        ):
             return "refactor"
         else:
             return "comprehensive"
@@ -637,6 +736,6 @@ class TaskPlanner:
         descriptions = {
             "static": "静态分析：使用工具快速检查代码质量、安全和风格问题",
             "deep": "深度分析：使用AI进行深入的代码分析和建议",
-            "fix": "修复分析：分析问题并提供修复建议和代码"
+            "fix": "修复分析：分析问题并提供修复建议和代码",
         }
         return descriptions.get(mode, "未知模式")

@@ -5,17 +5,25 @@ AI修复建议生成器 - T009.2
 
 import json
 import time
-from typing import Dict, List, Any, Optional, Tuple
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from datetime import datetime
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Any, Dict, List, Optional, Tuple
 
 from ..utils.logger import get_logger
+
 try:
+    from ..llm.unified_llm_client import UnifiedLLMClient
     from .fix_suggestion_context_builder import FixSuggestionContext
     from .problem_detection_validator import ValidatedProblem
-    from .workflow_data_types import AIFixSuggestion, AlternativeFix, ProblemType, SeverityLevel, FixType, RiskLevel
-    from ..llm.unified_llm_client import UnifiedLLMClient
+    from .workflow_data_types import (
+        AIFixSuggestion,
+        AlternativeFix,
+        FixType,
+        ProblemType,
+        RiskLevel,
+        SeverityLevel,
+    )
 except ImportError:
     # 如果相关模块不可用，定义基本类型
     from enum import Enum
@@ -109,6 +117,7 @@ except ImportError:
 @dataclass
 class FixSuggestionResult:
     """修复建议结果"""
+
     suggestion_id: str
     context_id: str
     fix_suggestions: List[AIFixSuggestion] = field(default_factory=list)
@@ -125,7 +134,9 @@ class FixSuggestionResult:
         return {
             "suggestion_id": self.suggestion_id,
             "context_id": self.context_id,
-            "fix_suggestions": [suggestion.to_dict() for suggestion in self.fix_suggestions],
+            "fix_suggestions": [
+                suggestion.to_dict() for suggestion in self.fix_suggestions
+            ],
             "suggestion_summary": self.suggestion_summary,
             "execution_success": self.execution_success,
             "execution_time": self.execution_time,
@@ -133,18 +144,20 @@ class FixSuggestionResult:
             "ai_responses": self.ai_responses,
             "token_usage": self.token_usage,
             "generation_timestamp": self.generation_timestamp,
-            "total_suggestions": len(self.fix_suggestions)
+            "total_suggestions": len(self.fix_suggestions),
         }
 
 
 class AIFixSuggestionGenerator:
     """AI修复建议生成器"""
 
-    def __init__(self,
-                 llm_client: Optional[Any] = None,
-                 max_concurrent_suggestions: int = 3,
-                 max_retries: int = 3,
-                 retry_delay: float = 1.0):
+    def __init__(
+        self,
+        llm_client: Optional[Any] = None,
+        max_concurrent_suggestions: int = 3,
+        max_retries: int = 3,
+        retry_delay: float = 1.0,
+    ):
         self.llm_client = llm_client
         self.max_concurrent_suggestions = max_concurrent_suggestions
         self.max_retries = max_retries
@@ -159,7 +172,7 @@ class AIFixSuggestionGenerator:
             "min_confidence": 0.6,  # 最小置信度阈值
             "max_alternatives": 3,  # 最大替代方案数量
             "include_risk_assessment": True,
-            "include_testing_requirements": True
+            "include_testing_requirements": True,
         }
 
         # 系统提示词模板
@@ -200,9 +213,11 @@ class AIFixSuggestionGenerator:
 - 确保修复代码语法正确且符合语言规范
 """
 
-    def generate_suggestions(self,
-                            suggestion_context: FixSuggestionContext,
-                            focus_problems: Optional[List[str]] = None) -> FixSuggestionResult:
+    def generate_suggestions(
+        self,
+        suggestion_context: FixSuggestionContext,
+        focus_problems: Optional[List[str]] = None,
+    ) -> FixSuggestionResult:
         """
         生成修复建议
 
@@ -219,7 +234,7 @@ class AIFixSuggestionGenerator:
         result = FixSuggestionResult(
             suggestion_id=self._generate_suggestion_id(),
             context_id=suggestion_context.context_id,
-            generation_timestamp=datetime.now().isoformat()
+            generation_timestamp=datetime.now().isoformat(),
         )
 
         try:
@@ -261,9 +276,11 @@ class AIFixSuggestionGenerator:
 
         return result
 
-    def _select_problems_for_suggestion(self,
-                                       validated_problems: List[ValidatedProblem],
-                                       focus_problems: Optional[List[str]]) -> List[ValidatedProblem]:
+    def _select_problems_for_suggestion(
+        self,
+        validated_problems: List[ValidatedProblem],
+        focus_problems: Optional[List[str]],
+    ) -> List[ValidatedProblem]:
         """选择要生成建议的问题"""
         if focus_problems:
             # 如果指定了重点问题，只处理这些问题
@@ -274,27 +291,26 @@ class AIFixSuggestionGenerator:
             return focused_problems
 
         # 否则按优先级选择，最多处理15个问题
-        sorted_problems = sorted(
-            validated_problems,
-            key=lambda x: x.priority_rank
-        )
+        sorted_problems = sorted(validated_problems, key=lambda x: x.priority_rank)
 
         return sorted_problems[:15]
 
-    def _generate_suggestions_parallel(self,
-                                      problems_to_process: List[ValidatedProblem],
-                                      suggestion_context: FixSuggestionContext) -> List[AIFixSuggestion]:
+    def _generate_suggestions_parallel(
+        self,
+        problems_to_process: List[ValidatedProblem],
+        suggestion_context: FixSuggestionContext,
+    ) -> List[AIFixSuggestion]:
         """并行生成修复建议"""
         all_suggestions = []
 
-        with ThreadPoolExecutor(max_workers=self.max_concurrent_suggestions) as executor:
+        with ThreadPoolExecutor(
+            max_workers=self.max_concurrent_suggestions
+        ) as executor:
             # 提交生成任务
             future_to_problem = {}
             for problem in problems_to_process:
                 future = executor.submit(
-                    self._generate_single_suggestion,
-                    problem,
-                    suggestion_context
+                    self._generate_single_suggestion, problem, suggestion_context
                 )
                 future_to_problem[future] = problem
 
@@ -316,9 +332,9 @@ class AIFixSuggestionGenerator:
 
         return all_suggestions
 
-    def _generate_single_suggestion(self,
-                                   problem: ValidatedProblem,
-                                   suggestion_context: FixSuggestionContext) -> List[AIFixSuggestion]:
+    def _generate_single_suggestion(
+        self, problem: ValidatedProblem, suggestion_context: FixSuggestionContext
+    ) -> List[AIFixSuggestion]:
         """为单个问题生成修复建议"""
         problem_data = problem.original_problem
         problem_id = problem_data.problem_id
@@ -332,7 +348,9 @@ class AIFixSuggestionGenerator:
         ai_response = self._call_ai_with_retry(user_prompt)
 
         if not ai_response.get("success", False):
-            self.logger.warning(f"AI生成建议失败: {ai_response.get('error_message', '未知错误')}")
+            self.logger.warning(
+                f"AI生成建议失败: {ai_response.get('error_message', '未知错误')}"
+            )
             return []
 
         # 解析AI响应
@@ -341,7 +359,9 @@ class AIFixSuggestionGenerator:
             suggestion_data = json.loads(response_content)
 
             # 转换为AIFixSuggestion对象
-            suggestions = self._parse_ai_suggestions(suggestion_data, problem, suggestion_context)
+            suggestions = self._parse_ai_suggestions(
+                suggestion_data, problem, suggestion_context
+            )
 
             return suggestions
 
@@ -349,9 +369,9 @@ class AIFixSuggestionGenerator:
             self.logger.error(f"解析AI响应失败 {problem_id}: {e}")
             return []
 
-    def _build_suggestion_prompt(self,
-                               problem: ValidatedProblem,
-                               suggestion_context: FixSuggestionContext) -> str:
+    def _build_suggestion_prompt(
+        self, problem: ValidatedProblem, suggestion_context: FixSuggestionContext
+    ) -> str:
         """构建修复建议提示词"""
         problem_data = problem.original_problem
         file_path = problem_data.file_path
@@ -382,72 +402,80 @@ class AIFixSuggestionGenerator:
             problem_data.code_snippet,
             "```",
             f"",
-            f"## 文件上下文"
+            f"## 文件上下文",
         ]
 
         # 添加文件内容
         if file_content:
-            lines = file_content.split('\n')
+            lines = file_content.split("\n")
             start_line = max(0, problem_data.line_number - 10)
             end_line = min(len(lines), problem_data.line_number + 10)
 
             context_lines = lines[start_line:end_line]
-            context_content = '\n'.join(context_lines)
+            context_content = "\n".join(context_lines)
 
-            prompt_parts.extend([
-                f"```{self._detect_file_language(file_path)}",
-                f"# 行 {start_line + 1}-{end_line} (问题在第 {problem_data.line_number} 行)",
-                context_content,
-                "```"
-            ])
+            prompt_parts.extend(
+                [
+                    f"```{self._detect_file_language(file_path)}",
+                    f"# 行 {start_line + 1}-{end_line} (问题在第 {problem_data.line_number} 行)",
+                    context_content,
+                    "```",
+                ]
+            )
 
         # 添加项目上下文
         if suggestion_context.project_context:
             project_info = suggestion_context.project_context
-            prompt_parts.extend([
-                f"",
-                f"## 项目上下文",
-                f"- 项目类型: {project_info.get('project_info', {}).get('project_type', '未知')}",
-                f"- 修复复杂性: {project_info.get('complexity_assessment', {}).get('overall_complexity', '中')}",
-                f"- 风险评估: {project_info.get('risk_assessment', {}).get('overall_risk', '中')}"
-            ])
+            prompt_parts.extend(
+                [
+                    f"",
+                    f"## 项目上下文",
+                    f"- 项目类型: {project_info.get('project_info', {}).get('project_type', '未知')}",
+                    f"- 修复复杂性: {project_info.get('complexity_assessment', {}).get('overall_complexity', '中')}",
+                    f"- 风险评估: {project_info.get('risk_assessment', {}).get('overall_risk', '中')}",
+                ]
+            )
 
         # 添加文件依赖
         if file_deps:
-            prompt_parts.extend([
-                f"",
-                f"## 文件依赖",
-                f"当前文件依赖: {', '.join(file_deps[:5])}"  # 限制依赖数量
-            ])
+            prompt_parts.extend(
+                [
+                    f"",
+                    f"## 文件依赖",
+                    f"当前文件依赖: {', '.join(file_deps[:5])}",  # 限制依赖数量
+                ]
+            )
 
         # 添加修复约束
         constraints = suggestion_context.fix_constraints
-        prompt_parts.extend([
-            f"",
-            f"## 修复约束",
-            f"- 最大修复文件数: {constraints.get('max_files_per_batch', 5)}",
-            f"- 要求备份: {'是' if constraints.get('require_backup') else '否'}",
-            f"- 要求测试: {'是' if constraints.get('require_testing') else '否'}",
-            f"- 最小置信度阈值: {constraints.get('min_confidence_threshold', 0.7)}",
-            f"- 允许破坏性变更: {'是' if constraints.get('allow_breaking_changes') else '否'}",
-            f"- 偏好最小变更: {'是' if constraints.get('prefer_minimal_changes') else '否'}",
-            f"",
-            f"## 修复要求",
-            f"请为上述问题生成详细的修复建议，包括：",
-            f"1. 具体的修复代码（保持语法正确）",
-            f"2. 详细的修复说明和理由",
-            f"3. 潜在的副作用和风险评估",
-            f"4. 如果有多个解决方案，请提供替代方案",
-            f"5. 修复的影响评估和测试要求",
-            f"",
-            f"注意事项：",
-            f"- 确保修复代码符合语言规范和最佳实践",
-            f"- 考虑修复对其他部分的潜在影响",
-            f"- 评估修复的复杂度和风险等级",
-            f"- 如果适用，提供测试验证方案",
-            f"",
-            f"请以JSON格式输出修复建议。"
-        ])
+        prompt_parts.extend(
+            [
+                f"",
+                f"## 修复约束",
+                f"- 最大修复文件数: {constraints.get('max_files_per_batch', 5)}",
+                f"- 要求备份: {'是' if constraints.get('require_backup') else '否'}",
+                f"- 要求测试: {'是' if constraints.get('require_testing') else '否'}",
+                f"- 最小置信度阈值: {constraints.get('min_confidence_threshold', 0.7)}",
+                f"- 允许破坏性变更: {'是' if constraints.get('allow_breaking_changes') else '否'}",
+                f"- 偏好最小变更: {'是' if constraints.get('prefer_minimal_changes') else '否'}",
+                f"",
+                f"## 修复要求",
+                f"请为上述问题生成详细的修复建议，包括：",
+                f"1. 具体的修复代码（保持语法正确）",
+                f"2. 详细的修复说明和理由",
+                f"3. 潜在的副作用和风险评估",
+                f"4. 如果有多个解决方案，请提供替代方案",
+                f"5. 修复的影响评估和测试要求",
+                f"",
+                f"注意事项：",
+                f"- 确保修复代码符合语言规范和最佳实践",
+                f"- 考虑修复对其他部分的潜在影响",
+                f"- 评估修复的复杂度和风险等级",
+                f"- 如果适用，提供测试验证方案",
+                f"",
+                f"请以JSON格式输出修复建议。",
+            ]
+        )
 
         return "\n".join(prompt_parts)
 
@@ -478,7 +506,7 @@ class AIFixSuggestionGenerator:
             ".css": "css",
             ".json": "json",
             ".yaml": "yaml",
-            ".yml": "yaml"
+            ".yml": "yaml",
         }
 
         return language_map.get(ext, "text")
@@ -498,11 +526,11 @@ class AIFixSuggestionGenerator:
                 call_params = {
                     "messages": [
                         {"role": "system", "content": self.system_prompt_template},
-                        {"role": "user", "content": user_prompt}
+                        {"role": "user", "content": user_prompt},
                     ],
                     "temperature": self.generation_config["temperature"],
                     "max_tokens": self.generation_config["max_tokens"],
-                    "response_format": {"type": "json_object"}
+                    "response_format": {"type": "json_object"},
                 }
 
                 # 调用AI
@@ -520,26 +548,29 @@ class AIFixSuggestionGenerator:
 
             # 如果不是最后一次尝试，等待重试
             if attempt < self.max_retries - 1:
-                time.sleep(self.retry_delay * (2 ** attempt))
+                time.sleep(self.retry_delay * (2**attempt))
 
         return {
             "success": False,
-            "error_message": f"AI调用失败，已重试 {self.max_retries} 次: {last_error}"
+            "error_message": f"AI调用失败，已重试 {self.max_retries} 次: {last_error}",
         }
 
     def _create_default_llm_client(self):
         """创建默认LLM客户端"""
         try:
             from ..llm.unified_llm_client import UnifiedLLMClient
+
             return UnifiedLLMClient()
         except Exception as e:
             self.logger.error(f"无法创建默认LLM客户端: {e}")
             raise
 
-    def _parse_ai_suggestions(self,
-                            suggestion_data: Dict[str, Any],
-                            problem: ValidatedProblem,
-                            suggestion_context: FixSuggestionContext) -> List[AIFixSuggestion]:
+    def _parse_ai_suggestions(
+        self,
+        suggestion_data: Dict[str, Any],
+        problem: ValidatedProblem,
+        suggestion_context: FixSuggestionContext,
+    ) -> List[AIFixSuggestion]:
         """解析AI修复建议"""
         suggestions = []
         fix_suggestions = suggestion_data.get("fix_suggestions", [])
@@ -547,13 +578,23 @@ class AIFixSuggestionGenerator:
         for suggestion_item in fix_suggestions:
             try:
                 # 验证必需字段
-                if not all(key in suggestion_item for key in [
-                    "suggestion_id", "original_code", "suggested_code", "explanation", "reasoning", "confidence"
-                ]):
+                if not all(
+                    key in suggestion_item
+                    for key in [
+                        "suggestion_id",
+                        "original_code",
+                        "suggested_code",
+                        "explanation",
+                        "reasoning",
+                        "confidence",
+                    ]
+                ):
                     continue
 
                 # 解析风险等级
-                risk_level = self._parse_risk_level(suggestion_item.get("risk_level", ""))
+                risk_level = self._parse_risk_level(
+                    suggestion_item.get("risk_level", "")
+                )
                 if not risk_level:
                     risk_level = RiskLevel.MEDIUM
 
@@ -574,9 +615,11 @@ class AIFixSuggestionGenerator:
                         code=alt_data.get("code", ""),
                         pros=alt_data.get("pros", []),
                         cons=alt_data.get("cons", []),
-                        risk_level=self._parse_risk_level(alt_data.get("risk_level", "medium")),
+                        risk_level=self._parse_risk_level(
+                            alt_data.get("risk_level", "medium")
+                        ),
                         estimated_time=int(alt_data.get("estimated_time", 0)),
-                        compatibility=alt_data.get("compatibility", {})
+                        compatibility=alt_data.get("compatibility", {}),
                     )
                     alternatives.append(alternative)
 
@@ -597,7 +640,9 @@ class AIFixSuggestionGenerator:
                     estimated_impact=suggestion_item.get("estimated_impact", ""),
                     fix_type=fix_type,
                     dependencies=suggestion_item.get("dependencies", []),
-                    testing_requirements=suggestion_item.get("testing_requirements", [])
+                    testing_requirements=suggestion_item.get(
+                        "testing_requirements", []
+                    ),
                 )
 
                 suggestions.append(suggestion)
@@ -613,7 +658,7 @@ class AIFixSuggestionGenerator:
         level_mapping = {
             "low": RiskLevel.LOW,
             "medium": RiskLevel.MEDIUM,
-            "high": RiskLevel.HIGH
+            "high": RiskLevel.HIGH,
         }
 
         risk_lower = risk_str.lower()
@@ -627,15 +672,17 @@ class AIFixSuggestionGenerator:
             "code_deletion": FixType.CODE_DELETION,
             "refactoring": FixType.REFACTORING,
             "configuration": FixType.CONFIGURATION,
-            "dependency_update": FixType.DEPENDENCY_UPDATE
+            "dependency_update": FixType.DEPENDENCY_UPDATE,
         }
 
         fix_type_lower = fix_type_str.lower()
         return type_mapping.get(fix_type_lower, FixType.CODE_REPLACEMENT)
 
-    def _validate_and_optimize_suggestions(self,
-                                         suggestions: List[AIFixSuggestion],
-                                         suggestion_context: FixSuggestionContext) -> List[AIFixSuggestion]:
+    def _validate_and_optimize_suggestions(
+        self,
+        suggestions: List[AIFixSuggestion],
+        suggestion_context: FixSuggestionContext,
+    ) -> List[AIFixSuggestion]:
         """验证和优化建议"""
         if not suggestions:
             return suggestions
@@ -647,7 +694,9 @@ class AIFixSuggestionGenerator:
                 # 验证建议质量
                 if self._validate_suggestion_quality(suggestion, suggestion_context):
                     # 优化建议
-                    optimized_suggestion = self._optimize_suggestion(suggestion, suggestion_context)
+                    optimized_suggestion = self._optimize_suggestion(
+                        suggestion, suggestion_context
+                    )
                     validated_suggestions.append(optimized_suggestion)
                 else:
                     self.logger.debug(f"过滤低质量建议: {suggestion.suggestion_id}")
@@ -660,17 +709,18 @@ class AIFixSuggestionGenerator:
         validated_suggestions.sort(
             key=lambda s: (
                 s.confidence,
-                self._get_risk_weight(s.risk_level) * -1,  # 风险越高权重越大，但排序时优先级靠前
-                len(s.explanation)  # 描述越详细越好
+                self._get_risk_weight(s.risk_level)
+                * -1,  # 风险越高权重越大，但排序时优先级靠前
+                len(s.explanation),  # 描述越详细越好
             ),
-            reverse=True
+            reverse=True,
         )
 
         return validated_suggestions
 
-    def _validate_suggestion_quality(self,
-                                    suggestion: AIFixSuggestion,
-                                    suggestion_context: FixSuggestionContext) -> bool:
+    def _validate_suggestion_quality(
+        self, suggestion: AIFixSuggestion, suggestion_context: FixSuggestionContext
+    ) -> bool:
         """验证建议质量"""
         # 检查基本字段
         if not suggestion.suggested_code or len(suggestion.suggested_code.strip()) < 5:
@@ -705,8 +755,13 @@ class AIFixSuggestionGenerator:
         """检查是否有破坏性变更"""
         # 简单的启发式检查
         breaking_keywords = [
-            "remove", "delete", "deprecate", "replace entire",
-            "change signature", "modify interface", "break compatibility"
+            "remove",
+            "delete",
+            "deprecate",
+            "replace entire",
+            "change signature",
+            "modify interface",
+            "break compatibility",
         ]
 
         text_to_check = (suggestion.explanation + " " + suggestion.reasoning).lower()
@@ -715,8 +770,8 @@ class AIFixSuggestionGenerator:
     def _is_minimal_change(self, suggestion: AIFixSuggestion) -> bool:
         """检查是否为最小变更"""
         # 简单的启发式检查
-        original_lines = len(suggestion.original_code.split('\n'))
-        suggested_lines = len(suggestion.suggested_code.split('\n'))
+        original_lines = len(suggestion.original_code.split("\n"))
+        suggested_lines = len(suggestion.suggested_code.split("\n"))
 
         # 如果建议代码行数增加超过50%，可能不是最小变更
         if suggested_lines > original_lines * 1.5:
@@ -724,20 +779,26 @@ class AIFixSuggestionGenerator:
 
         return True
 
-    def _optimize_suggestion(self,
-                            suggestion: AIFixSuggestion,
-                            suggestion_context: FixSuggestionContext) -> AIFixSuggestion:
+    def _optimize_suggestion(
+        self, suggestion: AIFixSuggestion, suggestion_context: FixSuggestionContext
+    ) -> AIFixSuggestion:
         """优化建议"""
         # 优化解释和推理
-        suggestion.explanation = self._optimize_text(suggestion.explanation, max_length=300)
+        suggestion.explanation = self._optimize_text(
+            suggestion.explanation, max_length=300
+        )
         suggestion.reasoning = self._optimize_text(suggestion.reasoning, max_length=500)
 
         # 优化副作用描述
-        suggestion.side_effects = [self._optimize_text(effect, max_length=100)
-                                 for effect in suggestion.side_effects[:3]]  # 限制副作用数量
+        suggestion.side_effects = [
+            self._optimize_text(effect, max_length=100)
+            for effect in suggestion.side_effects[:3]
+        ]  # 限制副作用数量
 
         # 优化替代方案
-        suggestion.alternatives = suggestion.alternatives[:self.generation_config["max_alternatives"]]
+        suggestion.alternatives = suggestion.alternatives[
+            : self.generation_config["max_alternatives"]
+        ]
 
         return suggestion
 
@@ -747,21 +808,19 @@ class AIFixSuggestionGenerator:
             return text
 
         # 截断并添加省略号
-        truncated = text[:max_length - 3].rstrip()
+        truncated = text[: max_length - 3].rstrip()
         return truncated + "..."
 
     def _get_risk_weight(self, risk_level: RiskLevel) -> int:
         """获取风险权重"""
-        weights = {
-            RiskLevel.HIGH: 3,
-            RiskLevel.MEDIUM: 2,
-            RiskLevel.LOW: 1
-        }
+        weights = {RiskLevel.HIGH: 3, RiskLevel.MEDIUM: 2, RiskLevel.LOW: 1}
         return weights.get(risk_level, 2)
 
-    def _generate_suggestion_summary(self,
-                                   suggestions: List[AIFixSuggestion],
-                                   suggestion_context: FixSuggestionContext) -> Dict[str, Any]:
+    def _generate_suggestion_summary(
+        self,
+        suggestions: List[AIFixSuggestion],
+        suggestion_context: FixSuggestionContext,
+    ) -> Dict[str, Any]:
         """生成建议摘要"""
         if not suggestions:
             return {
@@ -769,7 +828,7 @@ class AIFixSuggestionGenerator:
                 "risk_distribution": {},
                 "confidence_stats": {},
                 "average_confidence": 0,
-                "high_risk_suggestions": 0
+                "high_risk_suggestions": 0,
             }
 
         # 统计信息
@@ -791,7 +850,9 @@ class AIFixSuggestionGenerator:
             type_counts[fix_type] = type_counts.get(fix_type, 0) + 1
 
         # 计算统计指标
-        avg_confidence = sum(confidence_values) / len(confidence_values) if confidence_values else 0
+        avg_confidence = (
+            sum(confidence_values) / len(confidence_values) if confidence_values else 0
+        )
 
         summary = {
             "total_suggestions": len(suggestions),
@@ -800,14 +861,18 @@ class AIFixSuggestionGenerator:
             "confidence_stats": {
                 "average": round(avg_confidence, 3),
                 "min": round(min(confidence_values), 3) if confidence_values else 0,
-                "max": round(max(confidence_values), 3) if confidence_values else 0
+                "max": round(max(confidence_values), 3) if confidence_values else 0,
             },
             "average_confidence": round(avg_confidence, 3),
             "high_risk_suggestions": risk_counts.get("high", 0),
             "medium_risk_suggestions": risk_counts.get("medium", 0),
             "low_risk_suggestions": risk_counts.get("low", 0),
-            "suggestions_with_alternatives": sum(1 for s in suggestions if s.alternatives),
-            "suggestions_with_testing_requirements": sum(1 for s in suggestions if s.testing_requirements)
+            "suggestions_with_alternatives": sum(
+                1 for s in suggestions if s.alternatives
+            ),
+            "suggestions_with_testing_requirements": sum(
+                1 for s in suggestions if s.testing_requirements
+            ),
         }
 
         return summary
@@ -815,13 +880,16 @@ class AIFixSuggestionGenerator:
     def _generate_suggestion_id(self) -> str:
         """生成建议ID"""
         import uuid
+
         return f"suggestion_{uuid.uuid4().hex[:12]}_{int(datetime.now().timestamp())}"
 
 
 # 便捷函数
-def generate_fix_suggestions(suggestion_context: Dict[str, Any],
-                            focus_problems: Optional[List[str]] = None,
-                            llm_client: Any = None) -> Dict[str, Any]:
+def generate_fix_suggestions(
+    suggestion_context: Dict[str, Any],
+    focus_problems: Optional[List[str]] = None,
+    llm_client: Any = None,
+) -> Dict[str, Any]:
     """
     便捷的修复建议生成函数
 

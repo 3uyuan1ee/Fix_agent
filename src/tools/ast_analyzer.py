@@ -5,14 +5,15 @@ AST静态分析工具模块
 
 import ast
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
-from ..utils.logger import get_logger
 from ..utils.config import get_config_manager
+from ..utils.logger import get_logger
 
 
 class ASTAnalysisError(Exception):
     """AST分析异常"""
+
     pass
 
 
@@ -30,9 +31,9 @@ class ASTAnalyzer:
         self.logger = get_logger()
 
         # 获取配置
-        static_config = self.config_manager.get_section('static_analysis')
-        ast_config = static_config.get('ast', {})
-        self.max_file_size = ast_config.get('max_file_size', 1024 * 1024)  # 1MB
+        static_config = self.config_manager.get_section("static_analysis")
+        ast_config = static_config.get("ast", {})
+        self.max_file_size = ast_config.get("max_file_size", 1024 * 1024)  # 1MB
 
     def analyze_file(self, file_path: Union[str, Path]) -> Dict[str, Any]:
         """
@@ -59,11 +60,13 @@ class ASTAnalyzer:
 
         # 检查文件大小
         if file_path.stat().st_size > self.max_file_size:
-            raise ASTAnalysisError(f"File too large, exceeds limit {self.max_file_size} bytes")
+            raise ASTAnalysisError(
+                f"File too large, exceeds limit {self.max_file_size} bytes"
+            )
 
         try:
             # 读取文件内容
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             # 解析AST
@@ -76,7 +79,7 @@ class ASTAnalyzer:
                 "functions": [],
                 "classes": [],
                 "variables": [],
-                "imports": []
+                "imports": [],
             }
 
             # 收集分析信息
@@ -95,16 +98,18 @@ class ASTAnalyzer:
             self.logger.warning(f"AST syntax error {file_path}: {error_msg}")
             return {
                 "file_path": str(file_path),
-                "errors": [{
-                    "type": "Syntax Error",
-                    "message": error_msg,
-                    "line": e.lineno,
-                    "column": e.offset
-                }],
+                "errors": [
+                    {
+                        "type": "Syntax Error",
+                        "message": error_msg,
+                        "line": e.lineno,
+                        "column": e.offset,
+                    }
+                ],
                 "functions": [],
                 "classes": [],
                 "variables": [],
-                "imports": []
+                "imports": [],
             }
 
         except UnicodeDecodeError as e:
@@ -120,7 +125,9 @@ class ASTAnalyzer:
         for node in ast.walk(tree):
             if isinstance(node, ast.ClassDef):
                 # 添加类定义的所有行号
-                class_line_ranges.update(range(node.lineno, node.end_lineno or node.lineno))
+                class_line_ranges.update(
+                    range(node.lineno, node.end_lineno or node.lineno)
+                )
 
         # 然后收集不在类中的函数
         for node in ast.walk(tree):
@@ -134,7 +141,7 @@ class ASTAnalyzer:
                         "defaults": len(node.args.defaults),
                         "is_async": isinstance(node, ast.AsyncFunctionDef),
                         "docstring": ast.get_docstring(node),
-                        "complexity": 1  # 基础复杂度
+                        "complexity": 1,  # 基础复杂度
                     }
                     result["functions"].append(func_info)
 
@@ -151,14 +158,18 @@ class ASTAnalyzer:
                         bases.append(f"{base.value.id}.{base.attr}")
 
                 # 计算方法数量
-                methods = [n for n in node.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
+                methods = [
+                    n
+                    for n in node.body
+                    if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
+                ]
 
                 class_info = {
                     "name": node.name,
                     "line": node.lineno,
                     "bases": bases,
                     "method_count": len(methods),
-                    "docstring": ast.get_docstring(node)
+                    "docstring": ast.get_docstring(node),
                 }
                 result["classes"].append(class_info)
 
@@ -174,7 +185,7 @@ class ASTAnalyzer:
                                 var_info = {
                                     "name": target.id,
                                     "line": stmt.lineno,
-                                    "type": "assignment"
+                                    "type": "assignment",
                                 }
                                 result["variables"].append(var_info)
 
@@ -187,7 +198,7 @@ class ASTAnalyzer:
                         "type": "import",
                         "module": alias.name,
                         "alias": alias.asname,
-                        "line": node.lineno
+                        "line": node.lineno,
                     }
                     result["imports"].append(import_info)
 
@@ -200,7 +211,7 @@ class ASTAnalyzer:
                         "from_module": module,
                         "name": alias.name,
                         "alias": alias.asname,
-                        "line": node.lineno
+                        "line": node.lineno,
                     }
                     result["imports"].append(import_info)
 
@@ -222,7 +233,10 @@ class ASTAnalyzer:
         complexity = 1  # 基础复杂度
 
         for child in ast.walk(node):
-            if isinstance(child, (ast.If, ast.For, ast.While, ast.With, ast.AsyncFor, ast.AsyncWith)):
+            if isinstance(
+                child,
+                (ast.If, ast.For, ast.While, ast.With, ast.AsyncFor, ast.AsyncWith),
+            ):
                 complexity += 1
             elif isinstance(child, ast.ExceptHandler):
                 complexity += 1
@@ -251,11 +265,13 @@ class ASTAnalyzer:
             "total_imports": len(result["imports"]),
             "max_complexity": 0,
             "error_count": len(result["errors"]),
-            "has_errors": len(result["errors"]) > 0
+            "has_errors": len(result["errors"]) > 0,
         }
 
         # 计算最大复杂度
         if result["functions"]:
-            summary["max_complexity"] = max(func["complexity"] for func in result["functions"])
+            summary["max_complexity"] = max(
+                func["complexity"] for func in result["functions"]
+            )
 
         return summary

@@ -9,60 +9,69 @@ T012.1: 修复执行准备器
 输出: 修复执行准备结果 + 执行计划
 """
 
-import json
 import hashlib
-from typing import Dict, List, Any, Optional, Tuple, Union
-from dataclasses import dataclass, asdict
-from enum import Enum
-from datetime import datetime
-from pathlib import Path
-import uuid
+import json
 import shutil
+import uuid
+from dataclasses import asdict, dataclass
+from datetime import datetime
+from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from ..utils.types import ProblemType, RiskLevel, FixType
 from ..utils.logger import get_logger
-from .workflow_data_types import (
-    AIFixSuggestion, WorkflowDataPacket, UserInteractionData
-)
-from .workflow_user_interaction_types import (
-    UserDecision, DecisionType, UserAction, DecisionResult
-)
-from .workflow_flow_state_manager import WorkflowNode
+from ..utils.types import FixType, ProblemType, RiskLevel
 from .user_decision_processor import DecisionResult
 from .user_modification_processor import ModifiedSuggestion
+from .workflow_data_types import (
+    AIFixSuggestion,
+    UserInteractionData,
+    WorkflowDataPacket,
+)
+from .workflow_flow_state_manager import WorkflowNode
+from .workflow_user_interaction_types import (
+    DecisionResult,
+    DecisionType,
+    UserAction,
+    UserDecision,
+)
 
 logger = get_logger()
 
 
 class PreparationStatus(Enum):
     """准备状态枚举"""
-    PENDING = "pending"                     # 等待准备
-    IN_PROGRESS = "in_progress"            # 准备中
-    READY = "ready"                        # 准备就绪
-    FAILED = "failed"                      # 准备失败
-    CANCELLED = "cancelled"                # 已取消
-    NEEDS_REVIEW = "needs_review"          # 需要审查
+
+    PENDING = "pending"  # 等待准备
+    IN_PROGRESS = "in_progress"  # 准备中
+    READY = "ready"  # 准备就绪
+    FAILED = "failed"  # 准备失败
+    CANCELLED = "cancelled"  # 已取消
+    NEEDS_REVIEW = "needs_review"  # 需要审查
 
 
 class ExecutionRiskLevel(Enum):
     """执行风险等级"""
-    LOW = "low"                           # 低风险
-    MEDIUM = "medium"                     # 中等风险
-    HIGH = "high"                         # 高风险
-    CRITICAL = "critical"                 # 关键风险
+
+    LOW = "low"  # 低风险
+    MEDIUM = "medium"  # 中等风险
+    HIGH = "high"  # 高风险
+    CRITICAL = "critical"  # 关键风险
 
 
 class BackupLevel(Enum):
     """备份等级"""
-    NONE = "none"                         # 无备份
-    BASIC = "basic"                       # 基础备份
-    FULL = "full"                         # 完整备份
-    INCREMENTAL = "incremental"           # 增量备份
+
+    NONE = "none"  # 无备份
+    BASIC = "basic"  # 基础备份
+    FULL = "full"  # 完整备份
+    INCREMENTAL = "incremental"  # 增量备份
 
 
 @dataclass
 class ExecutionEnvironment:
     """执行环境信息"""
+
     python_version: str
     operating_system: str
     available_memory_mb: int
@@ -77,6 +86,7 @@ class ExecutionEnvironment:
 @dataclass
 class BackupInfo:
     """备份信息"""
+
     backup_id: str
     backup_level: BackupLevel
     backup_path: str
@@ -90,6 +100,7 @@ class BackupInfo:
 @dataclass
 class RiskAssessment:
     """风险评估"""
+
     overall_risk: ExecutionRiskLevel
     risk_factors: List[str]
     mitigation_strategies: List[str]
@@ -102,6 +113,7 @@ class RiskAssessment:
 @dataclass
 class ExecutionPlan:
     """执行计划"""
+
     plan_id: str
     fix_suggestion_id: str
     execution_steps: List[Dict[str, Any]]
@@ -115,6 +127,7 @@ class ExecutionPlan:
 @dataclass
 class FixExecutionPreparation:
     """修复执行准备结果"""
+
     preparation_id: str
     fix_suggestion_id: str
     status: PreparationStatus
@@ -144,9 +157,12 @@ class FixExecutionPreparer:
         self.backup_directory.mkdir(exist_ok=True)
         self._preparation_history: List[FixExecutionPreparation] = []
 
-    def prepare_execution(self, decision_result: DecisionResult,
-                         fix_suggestion: Optional[AIFixSuggestion] = None,
-                         modified_suggestion: Optional[ModifiedSuggestion] = None) -> FixExecutionPreparation:
+    def prepare_execution(
+        self,
+        decision_result: DecisionResult,
+        fix_suggestion: Optional[AIFixSuggestion] = None,
+        modified_suggestion: Optional[ModifiedSuggestion] = None,
+    ) -> FixExecutionPreparation:
         """
         准备修复执行
 
@@ -201,7 +217,9 @@ class FixExecutionPreparer:
             )
 
             # 确定准备状态
-            status = self._determine_preparation_status(errors, warnings, validation_results)
+            status = self._determine_preparation_status(
+                errors, warnings, validation_results
+            )
 
             preparation_time = int((datetime.now() - start_time).total_seconds())
 
@@ -221,9 +239,11 @@ class FixExecutionPreparer:
                 metadata={
                     "decision_id": decision_result.decision_id,
                     "user_confidence": decision_result.confidence.value,
-                    "original_suggestion_id": fix_suggestion.suggestion_id if fix_suggestion else None,
-                    "is_modified": modified_suggestion is not None
-                }
+                    "original_suggestion_id": (
+                        fix_suggestion.suggestion_id if fix_suggestion else None
+                    ),
+                    "is_modified": modified_suggestion is not None,
+                },
             )
 
             # 记录准备历史
@@ -236,9 +256,12 @@ class FixExecutionPreparer:
             logger.error(f"准备修复执行失败: {e}")
             raise
 
-    def batch_prepare_executions(self, decision_results: List[DecisionResult],
-                               fix_suggestions: List[AIFixSuggestion],
-                               modified_suggestions: List[ModifiedSuggestion] = None) -> List[FixExecutionPreparation]:
+    def batch_prepare_executions(
+        self,
+        decision_results: List[DecisionResult],
+        fix_suggestions: List[AIFixSuggestion],
+        modified_suggestions: List[ModifiedSuggestion] = None,
+    ) -> List[FixExecutionPreparation]:
         """
         批量准备修复执行
 
@@ -258,8 +281,12 @@ class FixExecutionPreparer:
 
         for i, decision_result in enumerate(decision_results):
             try:
-                fix_suggestion = fix_suggestions[i] if i < len(fix_suggestions) else None
-                modified_suggestion = modified_suggestions[i] if i < len(modified_suggestions) else None
+                fix_suggestion = (
+                    fix_suggestions[i] if i < len(fix_suggestions) else None
+                )
+                modified_suggestion = (
+                    modified_suggestions[i] if i < len(modified_suggestions) else None
+                )
 
                 preparation = self.prepare_execution(
                     decision_result, fix_suggestion, modified_suggestion
@@ -269,10 +296,14 @@ class FixExecutionPreparer:
             except Exception as e:
                 logger.error(f"批量准备执行失败 {i}: {e}")
                 # 创建失败结果
-                failed_preparation = self._create_failed_preparation(decision_result, str(e))
+                failed_preparation = self._create_failed_preparation(
+                    decision_result, str(e)
+                )
                 results.append(failed_preparation)
 
-        successful_count = sum(1 for r in results if r.status == PreparationStatus.READY)
+        successful_count = sum(
+            1 for r in results if r.status == PreparationStatus.READY
+        )
         logger.info(f"批量准备完成: 成功 {successful_count}/{len(results)}")
 
         return results
@@ -298,7 +329,7 @@ class FixExecutionPreparer:
             "environment_check",
             "backup_created",
             "syntax_validation",
-            "dependency_check"
+            "dependency_check",
         ]
 
         for validation in critical_validations:
@@ -306,13 +337,17 @@ class FixExecutionPreparer:
                 return False
 
         # 检查风险等级
-        if (preparation.risk_assessment.overall_risk == ExecutionRiskLevel.CRITICAL and
-            not preparation.risk_assessment.approval_required):
+        if (
+            preparation.risk_assessment.overall_risk == ExecutionRiskLevel.CRITICAL
+            and not preparation.risk_assessment.approval_required
+        ):
             return False
 
         return True
 
-    def get_preparation_history(self, limit: Optional[int] = None) -> List[FixExecutionPreparation]:
+    def get_preparation_history(
+        self, limit: Optional[int] = None
+    ) -> List[FixExecutionPreparation]:
         """
         获取准备历史
 
@@ -330,9 +365,12 @@ class FixExecutionPreparer:
 
         return history
 
-    def _determine_target_suggestion(self, fix_suggestion: Optional[AIFixSuggestion],
-                                   modified_suggestion: Optional[ModifiedSuggestion],
-                                   decision_result: DecisionResult) -> Optional[Union[AIFixSuggestion, ModifiedSuggestion]]:
+    def _determine_target_suggestion(
+        self,
+        fix_suggestion: Optional[AIFixSuggestion],
+        modified_suggestion: Optional[ModifiedSuggestion],
+        decision_result: DecisionResult,
+    ) -> Optional[Union[AIFixSuggestion, ModifiedSuggestion]]:
         """确定目标修复建议"""
         if decision_result.outcome.value in ["modify"] and modified_suggestion:
             return modified_suggestion
@@ -343,8 +381,9 @@ class FixExecutionPreparer:
 
     def _check_execution_environment(self) -> ExecutionEnvironment:
         """检查执行环境"""
-        import sys
         import platform
+        import sys
+
         import psutil
 
         try:
@@ -378,7 +417,7 @@ class FixExecutionPreparer:
                 git_repository=git_repository,
                 virtual_environment=virtual_environment,
                 dependencies_installed=dependencies_installed,
-                missing_dependencies=missing_dependencies
+                missing_dependencies=missing_dependencies,
             )
 
         except Exception as e:
@@ -392,18 +431,19 @@ class FixExecutionPreparer:
                 git_repository=False,
                 virtual_environment=False,
                 dependencies_installed=[],
-                missing_dependencies=["环境检查失败"]
+                missing_dependencies=["环境检查失败"],
             )
 
     def _check_git_repository(self) -> bool:
         """检查是否为Git仓库"""
         try:
             import subprocess
+
             result = subprocess.run(
                 ["git", "rev-parse", "--git-dir"],
                 capture_output=True,
                 text=True,
-                timeout=10
+                timeout=10,
             )
             return result.returncode == 0
         except:
@@ -412,7 +452,10 @@ class FixExecutionPreparer:
     def _check_virtual_environment(self) -> bool:
         """检查是否在虚拟环境中"""
         import sys
-        return hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix)
+
+        return hasattr(sys, "real_prefix") or (
+            hasattr(sys, "base_prefix") and sys.base_prefix != sys.prefix
+        )
 
     def _check_dependencies(self) -> Tuple[List[str], List[str]]:
         """检查依赖"""
@@ -429,9 +472,12 @@ class FixExecutionPreparer:
 
         return installed_packages, missing_packages
 
-    def _create_backup(self, suggestion: Union[AIFixSuggestion, ModifiedSuggestion],
-                      decision_result: DecisionResult,
-                      environment_info: ExecutionEnvironment) -> Optional[BackupInfo]:
+    def _create_backup(
+        self,
+        suggestion: Union[AIFixSuggestion, ModifiedSuggestion],
+        decision_result: DecisionResult,
+        environment_info: ExecutionEnvironment,
+    ) -> Optional[BackupInfo]:
         """创建备份"""
         try:
             backup_id = str(uuid.uuid4())
@@ -469,8 +515,12 @@ class FixExecutionPreparer:
                         "original_file": str(file_path),
                         "suggestion_id": suggestion.suggestion_id,
                         "decision_id": decision_result.decision_id,
-                        "git_commit": self._get_current_git_commit() if environment_info.git_repository else None
-                    }
+                        "git_commit": (
+                            self._get_current_git_commit()
+                            if environment_info.git_repository
+                            else None
+                        ),
+                    },
                 )
 
                 logger.info(f"创建备份: {backup_id}, 文件: {file_path}")
@@ -482,11 +532,14 @@ class FixExecutionPreparer:
             logger.error(f"创建备份失败: {e}")
             return None
 
-    def _determine_backup_level(self, suggestion: Union[AIFixSuggestion, ModifiedSuggestion],
-                              decision_result: DecisionResult) -> BackupLevel:
+    def _determine_backup_level(
+        self,
+        suggestion: Union[AIFixSuggestion, ModifiedSuggestion],
+        decision_result: DecisionResult,
+    ) -> BackupLevel:
         """确定备份等级"""
         # 基于风险等级确定备份等级
-        if hasattr(suggestion, 'risk_level'):
+        if hasattr(suggestion, "risk_level"):
             risk_level = suggestion.risk_level
         else:
             risk_level = RiskLevel.MEDIUM  # 默认中等风险
@@ -510,26 +563,27 @@ class FixExecutionPreparer:
         """获取当前Git提交"""
         try:
             import subprocess
+
             result = subprocess.run(
-                ["git", "rev-parse", "HEAD"],
-                capture_output=True,
-                text=True,
-                timeout=10
+                ["git", "rev-parse", "HEAD"], capture_output=True, text=True, timeout=10
             )
             return result.stdout.strip() if result.returncode == 0 else None
         except:
             return None
 
-    def _assess_execution_risks(self, suggestion: Union[AIFixSuggestion, ModifiedSuggestion],
-                               decision_result: DecisionResult,
-                               environment_info: ExecutionEnvironment) -> RiskAssessment:
+    def _assess_execution_risks(
+        self,
+        suggestion: Union[AIFixSuggestion, ModifiedSuggestion],
+        decision_result: DecisionResult,
+        environment_info: ExecutionEnvironment,
+    ) -> RiskAssessment:
         """评估执行风险"""
         risk_factors = []
         mitigation_strategies = []
         testing_requirements = []
 
         # 基础风险评估
-        if hasattr(suggestion, 'risk_level'):
+        if hasattr(suggestion, "risk_level"):
             base_risk = suggestion.risk_level
         else:
             base_risk = RiskLevel.MEDIUM
@@ -546,7 +600,9 @@ class FixExecutionPreparer:
 
         # 环境风险
         if environment_info.missing_dependencies:
-            risk_factors.append(f"缺少依赖: {', '.join(environment_info.missing_dependencies)}")
+            risk_factors.append(
+                f"缺少依赖: {', '.join(environment_info.missing_dependencies)}"
+            )
             mitigation_strategies.append("安装缺少的依赖包")
 
         if environment_info.available_memory_mb < 1024:  # 小于1GB
@@ -554,7 +610,11 @@ class FixExecutionPreparer:
             mitigation_strategies.append("释放系统内存或使用更强大的环境")
 
         # 代码复杂度风险
-        code_lines = len(suggestion.modified_code if hasattr(suggestion, 'modified_code') else suggestion.suggested_code.splitlines())
+        code_lines = len(
+            suggestion.modified_code
+            if hasattr(suggestion, "modified_code")
+            else suggestion.suggested_code.splitlines()
+        )
         if code_lines > 50:
             risk_factors.append("修复代码较长，复杂度较高")
             mitigation_strategies.append("考虑分步实施或拆分修复")
@@ -568,17 +628,10 @@ class FixExecutionPreparer:
         overall_risk = self._calculate_overall_risk(risk_factors, base_risk)
 
         # 测试要求
-        testing_requirements.extend([
-            "语法检查",
-            "基本功能测试",
-            "回归测试"
-        ])
+        testing_requirements.extend(["语法检查", "基本功能测试", "回归测试"])
 
         if overall_risk in [ExecutionRiskLevel.HIGH, ExecutionRiskLevel.CRITICAL]:
-            testing_requirements.extend([
-                "集成测试",
-                "性能测试"
-            ])
+            testing_requirements.extend(["集成测试", "性能测试"])
 
         return RiskAssessment(
             overall_risk=overall_risk,
@@ -587,17 +640,22 @@ class FixExecutionPreparer:
             potential_impact=self._describe_potential_impact(overall_risk),
             rollback_plan=self._create_rollback_plan(suggestion, environment_info),
             testing_requirements=testing_requirements,
-            approval_required=overall_risk == ExecutionRiskLevel.CRITICAL
+            approval_required=overall_risk == ExecutionRiskLevel.CRITICAL,
         )
 
-    def _calculate_overall_risk(self, risk_factors: List[str], base_risk: RiskLevel) -> ExecutionRiskLevel:
+    def _calculate_overall_risk(
+        self, risk_factors: List[str], base_risk: RiskLevel
+    ) -> ExecutionRiskLevel:
         """计算整体风险等级"""
         risk_score = 0
 
         # 基础风险分数
         risk_mapping = {
-            RiskLevel.NEGLIGIBLE: 0, RiskLevel.LOW: 1, RiskLevel.MEDIUM: 2,
-            RiskLevel.HIGH: 3, RiskLevel.CRITICAL: 4
+            RiskLevel.NEGLIGIBLE: 0,
+            RiskLevel.LOW: 1,
+            RiskLevel.MEDIUM: 2,
+            RiskLevel.HIGH: 3,
+            RiskLevel.CRITICAL: 4,
         }
         risk_score += risk_mapping.get(base_risk, 2)
 
@@ -620,12 +678,15 @@ class FixExecutionPreparer:
             ExecutionRiskLevel.LOW: "轻微影响：可能影响单个功能点",
             ExecutionRiskLevel.MEDIUM: "中等影响：可能影响相关功能模块",
             ExecutionRiskLevel.HIGH: "较大影响：可能影响系统整体功能",
-            ExecutionRiskLevel.CRITICAL: "严重影响：可能导致系统不稳定或数据丢失"
+            ExecutionRiskLevel.CRITICAL: "严重影响：可能导致系统不稳定或数据丢失",
         }
         return impact_descriptions.get(risk_level, "影响未知")
 
-    def _create_rollback_plan(self, suggestion: Union[AIFixSuggestion, ModifiedSuggestion],
-                            environment_info: ExecutionEnvironment) -> str:
+    def _create_rollback_plan(
+        self,
+        suggestion: Union[AIFixSuggestion, ModifiedSuggestion],
+        environment_info: ExecutionEnvironment,
+    ) -> str:
         """创建回滚计划"""
         plan_steps = []
 
@@ -639,9 +700,12 @@ class FixExecutionPreparer:
 
         return "；".join(plan_steps)
 
-    def _create_execution_plan(self, suggestion: Union[AIFixSuggestion, ModifiedSuggestion],
-                             risk_assessment: RiskAssessment,
-                             environment_info: ExecutionEnvironment) -> ExecutionPlan:
+    def _create_execution_plan(
+        self,
+        suggestion: Union[AIFixSuggestion, ModifiedSuggestion],
+        risk_assessment: RiskAssessment,
+        environment_info: ExecutionEnvironment,
+    ) -> ExecutionPlan:
         """创建执行计划"""
         plan_id = str(uuid.uuid4())
 
@@ -652,49 +716,54 @@ class FixExecutionPreparer:
                 "description": "验证文件权限和可访问性",
                 "command": "check_file_access",
                 "estimated_time": 1,
-                "critical": True
+                "critical": True,
             },
             {
                 "step_id": 2,
                 "description": "应用代码修复",
                 "command": "apply_fix",
                 "estimated_time": 2,
-                "critical": True
+                "critical": True,
             },
             {
                 "step_id": 3,
                 "description": "验证语法正确性",
                 "command": "syntax_check",
                 "estimated_time": 1,
-                "critical": True
+                "critical": True,
             },
             {
                 "step_id": 4,
                 "description": "运行基本测试",
                 "command": "run_tests",
                 "estimated_time": 5,
-                "critical": True
-            }
+                "critical": True,
+            },
         ]
 
         # 根据风险等级添加额外步骤
-        if risk_assessment.overall_risk in [ExecutionRiskLevel.HIGH, ExecutionRiskLevel.CRITICAL]:
-            execution_steps.extend([
-                {
-                    "step_id": 5,
-                    "description": "创建系统还原点",
-                    "command": "create_restore_point",
-                    "estimated_time": 2,
-                    "critical": False
-                },
-                {
-                    "step_id": 6,
-                    "description": "运行完整测试套件",
-                    "command": "full_test_suite",
-                    "estimated_time": 15,
-                    "critical": True
-                }
-            ])
+        if risk_assessment.overall_risk in [
+            ExecutionRiskLevel.HIGH,
+            ExecutionRiskLevel.CRITICAL,
+        ]:
+            execution_steps.extend(
+                [
+                    {
+                        "step_id": 5,
+                        "description": "创建系统还原点",
+                        "command": "create_restore_point",
+                        "estimated_time": 2,
+                        "critical": False,
+                    },
+                    {
+                        "step_id": 6,
+                        "description": "运行完整测试套件",
+                        "command": "full_test_suite",
+                        "estimated_time": 15,
+                        "critical": True,
+                    },
+                ]
+            )
 
         # 估算总时间
         estimated_duration = sum(step["estimated_time"] for step in execution_steps)
@@ -704,7 +773,7 @@ class FixExecutionPreparer:
             "memory_mb": min(512, environment_info.available_memory_mb // 4),
             "disk_space_mb": 100,
             "cpu_cores": 1,
-            "network_required": False
+            "network_required": False,
         }
 
         # 验证检查
@@ -712,7 +781,7 @@ class FixExecutionPreparer:
             "文件语法正确",
             "代码可以导入",
             "基本功能正常",
-            "无运行时错误"
+            "无运行时错误",
         ]
 
         # 回滚程序
@@ -720,7 +789,7 @@ class FixExecutionPreparer:
             "停止相关进程",
             "恢复原始文件",
             "清理临时文件",
-            "验证系统状态"
+            "验证系统状态",
         ]
 
         # 成功标准
@@ -728,7 +797,7 @@ class FixExecutionPreparer:
             "代码修复成功应用",
             "语法检查通过",
             "基本测试通过",
-            "系统功能正常"
+            "系统功能正常",
         ]
 
         return ExecutionPlan(
@@ -739,19 +808,22 @@ class FixExecutionPreparer:
             resource_requirements=resource_requirements,
             validation_checks=validation_checks,
             rollback_procedure=rollback_procedure,
-            success_criteria=success_criteria
+            success_criteria=success_criteria,
         )
 
-    def _perform_validation_checks(self, suggestion: Union[AIFixSuggestion, ModifiedSuggestion],
-                                 environment_info: ExecutionEnvironment) -> Dict[str, bool]:
+    def _perform_validation_checks(
+        self,
+        suggestion: Union[AIFixSuggestion, ModifiedSuggestion],
+        environment_info: ExecutionEnvironment,
+    ) -> Dict[str, bool]:
         """执行验证检查"""
         validation_results = {}
 
         # 环境检查
         validation_results["environment_check"] = (
-            len(environment_info.missing_dependencies) == 0 and
-            environment_info.available_memory_mb > 512 and
-            environment_info.disk_space_gb > 1
+            len(environment_info.missing_dependencies) == 0
+            and environment_info.available_memory_mb > 512
+            and environment_info.disk_space_gb > 1
         )
 
         # 备份检查
@@ -761,25 +833,36 @@ class FixExecutionPreparer:
         validation_results["syntax_validation"] = self._validate_syntax(suggestion)
 
         # 依赖检查
-        validation_results["dependency_check"] = len(environment_info.missing_dependencies) == 0
+        validation_results["dependency_check"] = (
+            len(environment_info.missing_dependencies) == 0
+        )
 
         # 文件权限检查
-        validation_results["file_permission_check"] = self._check_file_permissions(suggestion)
+        validation_results["file_permission_check"] = self._check_file_permissions(
+            suggestion
+        )
 
         # 磁盘空间检查
         validation_results["disk_space_check"] = environment_info.disk_space_gb > 1
 
         return validation_results
 
-    def _validate_syntax(self, suggestion: Union[AIFixSuggestion, ModifiedSuggestion]) -> bool:
+    def _validate_syntax(
+        self, suggestion: Union[AIFixSuggestion, ModifiedSuggestion]
+    ) -> bool:
         """验证语法"""
         try:
-            code = suggestion.modified_code if hasattr(suggestion, 'modified_code') else suggestion.suggested_code
+            code = (
+                suggestion.modified_code
+                if hasattr(suggestion, "modified_code")
+                else suggestion.suggested_code
+            )
             file_path = suggestion.file_path
 
             # 根据文件扩展名选择语法验证器
-            if file_path.endswith('.py'):
+            if file_path.endswith(".py"):
                 import ast
+
                 ast.parse(code)
                 return True
             else:
@@ -788,7 +871,9 @@ class FixExecutionPreparer:
         except:
             return False
 
-    def _check_file_permissions(self, suggestion: Union[AIFixSuggestion, ModifiedSuggestion]) -> bool:
+    def _check_file_permissions(
+        self, suggestion: Union[AIFixSuggestion, ModifiedSuggestion]
+    ) -> bool:
         """检查文件权限"""
         try:
             file_path = Path(suggestion.file_path)
@@ -801,9 +886,12 @@ class FixExecutionPreparer:
         except:
             return False
 
-    def _generate_warnings_and_errors(self, validation_results: Dict[str, bool],
-                                    risk_assessment: RiskAssessment,
-                                    environment_info: ExecutionEnvironment) -> Tuple[List[str], List[str]]:
+    def _generate_warnings_and_errors(
+        self,
+        validation_results: Dict[str, bool],
+        risk_assessment: RiskAssessment,
+        environment_info: ExecutionEnvironment,
+    ) -> Tuple[List[str], List[str]]:
         """生成警告和错误"""
         warnings = []
         errors = []
@@ -819,7 +907,9 @@ class FixExecutionPreparer:
             errors.append("语法验证失败，修复代码存在语法错误")
 
         if not validation_results.get("dependency_check"):
-            warnings.append(f"缺少依赖: {', '.join(environment_info.missing_dependencies)}")
+            warnings.append(
+                f"缺少依赖: {', '.join(environment_info.missing_dependencies)}"
+            )
 
         if not validation_results.get("file_permission_check"):
             errors.append("文件权限不足，无法执行修复")
@@ -837,14 +927,22 @@ class FixExecutionPreparer:
 
         return warnings, errors
 
-    def _determine_preparation_status(self, errors: List[str], warnings: List[str],
-                                    validation_results: Dict[str, bool]) -> PreparationStatus:
+    def _determine_preparation_status(
+        self,
+        errors: List[str],
+        warnings: List[str],
+        validation_results: Dict[str, bool],
+    ) -> PreparationStatus:
         """确定准备状态"""
         if errors:
             return PreparationStatus.FAILED
 
         failed_validations = [k for k, v in validation_results.items() if not v]
-        critical_failures = ["environment_check", "syntax_validation", "file_permission_check"]
+        critical_failures = [
+            "environment_check",
+            "syntax_validation",
+            "file_permission_check",
+        ]
 
         if any(failure in failed_validations for failure in critical_failures):
             return PreparationStatus.FAILED
@@ -854,7 +952,9 @@ class FixExecutionPreparer:
 
         return PreparationStatus.READY
 
-    def _create_failed_preparation(self, decision_result: DecisionResult, error_message: str) -> FixExecutionPreparation:
+    def _create_failed_preparation(
+        self, decision_result: DecisionResult, error_message: str
+    ) -> FixExecutionPreparation:
         """创建失败准备结果"""
         return FixExecutionPreparation(
             preparation_id=str(uuid.uuid4()),
@@ -869,7 +969,7 @@ class FixExecutionPreparer:
                 git_repository=False,
                 virtual_environment=False,
                 dependencies_installed=[],
-                missing_dependencies=[]
+                missing_dependencies=[],
             ),
             backup_info=None,
             risk_assessment=RiskAssessment(
@@ -879,7 +979,7 @@ class FixExecutionPreparer:
                 potential_impact="无法执行",
                 rollback_plan="无",
                 testing_requirements=[],
-                approval_required=False
+                approval_required=False,
             ),
             execution_plan=ExecutionPlan(
                 plan_id="failed",
@@ -889,14 +989,14 @@ class FixExecutionPreparer:
                 resource_requirements={},
                 validation_checks=[],
                 rollback_procedure=[],
-                success_criteria=[]
+                success_criteria=[],
             ),
             validation_results={},
             warnings=[],
             errors=[error_message],
             preparation_time_seconds=0,
             timestamp=datetime.now(),
-            metadata={"error": error_message}
+            metadata={"error": error_message},
         )
 
     def _record_preparation(self, preparation: FixExecutionPreparation) -> None:
@@ -916,7 +1016,9 @@ class FixExecutionPreparer:
             record_dict = asdict(record)
             record_dict["timestamp"] = record.timestamp.isoformat()
             if record.backup_info:
-                record_dict["backup_info"]["timestamp"] = record.backup_info.timestamp.isoformat()
+                record_dict["backup_info"][
+                    "timestamp"
+                ] = record.backup_info.timestamp.isoformat()
             exportable_history.append(record_dict)
 
         return json.dumps(exportable_history, ensure_ascii=False, indent=2)

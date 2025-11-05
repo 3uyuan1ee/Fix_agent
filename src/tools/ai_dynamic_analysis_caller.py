@@ -6,19 +6,19 @@ AI动态分析调用器 - T014.2
 
 import json
 import uuid
+from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import Dict, List, Any, Optional
-from pathlib import Path
-from dataclasses import dataclass, asdict
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from ..utils.logger import get_logger
-from ..utils.config import get_config_manager
 from ..llm.client import LLMClient
-from .verification_static_analyzer import StaticVerificationReport, FixComparison
-from .workflow_flow_state_manager import WorkflowSession
-from .workflow_data_types import AIFixSuggestion
+from ..utils.config import get_config_manager
+from ..utils.logger import get_logger
 from .project_analysis_types import StaticAnalysisResult
+from .verification_static_analyzer import FixComparison, StaticVerificationReport
+from .workflow_data_types import AIFixSuggestion
+from .workflow_flow_state_manager import WorkflowSession
 
 logger = get_logger()
 
@@ -26,6 +26,7 @@ logger = get_logger()
 @dataclass
 class AIDynamicAnalysisContext:
     """AI动态分析上下文"""
+
     context_id: str
     session_id: str
     suggestion_id: str
@@ -47,18 +48,21 @@ class AIDynamicAnalysisContext:
             "fix_suggestion": self.fix_suggestion,
             "static_verification": self.static_verification,
             "before_after_code": self.before_after_code,
-            "analysis_focus": self.analysis_focus
+            "analysis_focus": self.analysis_focus,
         }
 
 
 @dataclass
 class AIDynamicAnalysisResult:
     """AI动态分析结果"""
+
     analysis_id: str
     context_id: str
     analysis_timestamp: datetime
     fix_effectiveness_score: float  # 修复有效性分数 (0-1)
-    problem_resolution_status: str  # 问题解决状态 (fully_resolved, partially_resolved, not_resolved)
+    problem_resolution_status: (
+        str  # 问题解决状态 (fully_resolved, partially_resolved, not_resolved)
+    )
     new_issues_detected: List[Dict[str, Any]]  # 新发现的问题
     code_quality_impact: Dict[str, Any]  # 代码质量影响分析
     side_effects_analysis: Dict[str, Any]  # 副作用分析
@@ -79,16 +83,17 @@ class AIDynamicAnalysisResult:
             "side_effects_analysis": self.side_effects_analysis,
             "recommendations": self.recommendations,
             "confidence_score": self.confidence_score,
-            "reasoning": self.reasoning
+            "reasoning": self.reasoning,
         }
 
 
 class ProblemResolutionStatus(Enum):
     """问题解决状态"""
-    FULLY_RESOLVED = "fully_resolved"           # 完全解决
-    PARTIALLY_RESOLVED = "partially_resolved"   # 部分解决
-    NOT_RESOLVED = "not_resolved"               # 未解决
-    REGRESSED = "regressed"                     # 出现回退
+
+    FULLY_RESOLVED = "fully_resolved"  # 完全解决
+    PARTIALLY_RESOLVED = "partially_resolved"  # 部分解决
+    NOT_RESOLVED = "not_resolved"  # 未解决
+    REGRESSED = "regressed"  # 出现回退
 
 
 class AIDynamicAnalysisCaller:
@@ -112,16 +117,18 @@ class AIDynamicAnalysisCaller:
         self.llm_client = LLMClient()
 
         # 分析结果存储目录
-        self.analysis_dir = Path(self.config.get("ai_analysis_dir", ".fix_backups/ai_analysis"))
+        self.analysis_dir = Path(
+            self.config.get("ai_analysis_dir", ".fix_backups/ai_analysis")
+        )
         self.analysis_dir.mkdir(parents=True, exist_ok=True)
 
         # 预设的分析重点
         self.default_analysis_focus = [
-            "correctness",      # 正确性
-            "performance",     # 性能
-            "security",       # 安全性
-            "maintainability", # 可维护性
-            "side_effects"    # 副作用
+            "correctness",  # 正确性
+            "performance",  # 性能
+            "security",  # 安全性
+            "maintainability",  # 可维护性
+            "side_effects",  # 副作用
         ]
 
     def perform_ai_dynamic_analysis(
@@ -133,7 +140,7 @@ class AIDynamicAnalysisCaller:
         static_verification_report: StaticVerificationReport,
         before_code: str,
         after_code: str,
-        custom_focus: Optional[List[str]] = None
+        custom_focus: Optional[List[str]] = None,
     ) -> AIDynamicAnalysisResult:
         """
         执行AI动态分析
@@ -163,7 +170,7 @@ class AIDynamicAnalysisCaller:
                 static_verification_report=static_verification_report,
                 before_code=before_code,
                 after_code=after_code,
-                custom_focus=custom_focus
+                custom_focus=custom_focus,
             )
 
             # 2. 构建AI分析提示词
@@ -181,7 +188,9 @@ class AIDynamicAnalysisCaller:
             # 6. 保存分析结果
             self._save_analysis_result(validated_result)
 
-            self.logger.info(f"AI动态分析完成: 有效性={validated_result.fix_effectiveness_score:.2f}")
+            self.logger.info(
+                f"AI动态分析完成: 有效性={validated_result.fix_effectiveness_score:.2f}"
+            )
             return validated_result
 
         except Exception as e:
@@ -198,7 +207,7 @@ class AIDynamicAnalysisCaller:
         static_verification_report: StaticVerificationReport,
         before_code: str,
         after_code: str,
-        custom_focus: Optional[List[str]]
+        custom_focus: Optional[List[str]],
     ) -> AIDynamicAnalysisContext:
         """构建AI动态分析上下文"""
         context_id = str(uuid.uuid4())
@@ -210,7 +219,7 @@ class AIDynamicAnalysisCaller:
             "new_issues_count": static_verification_report.new_issues_count,
             "fixed_issues": static_verification_report.fix_comparison.fixed_issues,
             "remaining_issues": static_verification_report.fix_comparison.remaining_issues,
-            "overall_quality_score": static_verification_report.overall_quality_score
+            "overall_quality_score": static_verification_report.overall_quality_score,
         }
 
         return AIDynamicAnalysisContext(
@@ -221,11 +230,8 @@ class AIDynamicAnalysisCaller:
             original_problem=original_problem,
             fix_suggestion=fix_suggestion,
             static_verification=static_verification_data,
-            before_after_code={
-                "before": before_code,
-                "after": after_code
-            },
-            analysis_focus=analysis_focus
+            before_after_code={"before": before_code, "after": after_code},
+            analysis_focus=analysis_focus,
         )
 
     def _build_dynamic_analysis_prompt(self, context: AIDynamicAnalysisContext) -> str:
@@ -308,8 +314,8 @@ class AIDynamicAnalysisCaller:
         """生成代码差异"""
         try:
             # 简单的差异生成逻辑
-            before_lines = before_code.split('\n')
-            after_lines = after_code.split('\n')
+            before_lines = before_code.split("\n")
+            after_lines = after_code.split("\n")
 
             diff_lines = []
             max_lines = max(len(before_lines), len(after_lines))
@@ -327,7 +333,7 @@ class AIDynamicAnalysisCaller:
                     elif after_line:
                         diff_lines.append(f"+ {after_line}")
 
-            return '\n'.join(diff_lines) if diff_lines else "无显著变化"
+            return "\n".join(diff_lines) if diff_lines else "无显著变化"
 
         except Exception as e:
             self.logger.warning(f"生成代码差异失败: {e}")
@@ -338,9 +344,7 @@ class AIDynamicAnalysisCaller:
         try:
             # 使用LLM客户端调用AI
             response = self.llm_client.generate_response(
-                prompt=prompt,
-                max_tokens=4000,
-                temperature=0.3
+                prompt=prompt, max_tokens=4000, temperature=0.3
             )
             return response
 
@@ -348,16 +352,18 @@ class AIDynamicAnalysisCaller:
             self.logger.error(f"调用AI分析失败: {e}")
             raise RuntimeError(f"AI分析调用失败: {e}")
 
-    def _parse_ai_response(self, ai_response: str, context: AIDynamicAnalysisContext) -> AIDynamicAnalysisResult:
+    def _parse_ai_response(
+        self, ai_response: str, context: AIDynamicAnalysisContext
+    ) -> AIDynamicAnalysisResult:
         """解析AI响应"""
         try:
             # 尝试解析JSON响应
-            if ai_response.strip().startswith('{'):
+            if ai_response.strip().startswith("{"):
                 response_data = json.loads(ai_response)
             else:
                 # 如果不是纯JSON，尝试提取JSON部分
-                start_idx = ai_response.find('{')
-                end_idx = ai_response.rfind('}') + 1
+                start_idx = ai_response.find("{")
+                end_idx = ai_response.rfind("}") + 1
                 if start_idx != -1 and end_idx != -1:
                     json_str = ai_response[start_idx:end_idx]
                     response_data = json.loads(json_str)
@@ -369,14 +375,18 @@ class AIDynamicAnalysisCaller:
                 analysis_id=str(uuid.uuid4()),
                 context_id=context.context_id,
                 analysis_timestamp=datetime.now(),
-                fix_effectiveness_score=response_data.get("fix_effectiveness_score", 0.0),
-                problem_resolution_status=response_data.get("problem_resolution_status", "not_resolved"),
+                fix_effectiveness_score=response_data.get(
+                    "fix_effectiveness_score", 0.0
+                ),
+                problem_resolution_status=response_data.get(
+                    "problem_resolution_status", "not_resolved"
+                ),
                 new_issues_detected=response_data.get("new_issues_detected", []),
                 code_quality_impact=response_data.get("code_quality_impact", {}),
                 side_effects_analysis=response_data.get("side_effects_analysis", {}),
                 recommendations=response_data.get("recommendations", []),
                 confidence_score=response_data.get("confidence_score", 0.0),
-                reasoning=response_data.get("reasoning", "No reasoning provided")
+                reasoning=response_data.get("reasoning", "No reasoning provided"),
             )
 
         except json.JSONDecodeError as e:
@@ -388,17 +398,27 @@ class AIDynamicAnalysisCaller:
             self.logger.error(f"解析AI响应失败: {e}")
             raise
 
-    def _create_fallback_result(self, context: AIDynamicAnalysisContext, ai_response: str) -> AIDynamicAnalysisResult:
+    def _create_fallback_result(
+        self, context: AIDynamicAnalysisContext, ai_response: str
+    ) -> AIDynamicAnalysisResult:
         """创建基于文本分析的后备结果"""
         # 简单的关键词分析
         effectiveness_score = 0.5  # 默认分数
         resolution_status = "partially_resolved"
 
         response_lower = ai_response.lower()
-        if "成功" in response_lower or "有效" in response_lower or "resolved" in response_lower:
+        if (
+            "成功" in response_lower
+            or "有效" in response_lower
+            or "resolved" in response_lower
+        ):
             effectiveness_score = 0.8
             resolution_status = "fully_resolved"
-        elif "失败" in response_lower or "无效" in response_lower or "not resolved" in response_lower:
+        elif (
+            "失败" in response_lower
+            or "无效" in response_lower
+            or "not resolved" in response_lower
+        ):
             effectiveness_score = 0.2
             resolution_status = "not_resolved"
 
@@ -413,13 +433,17 @@ class AIDynamicAnalysisCaller:
             side_effects_analysis={},
             recommendations=["建议进行更详细的人工分析"],
             confidence_score=0.3,
-            reasoning=f"基于AI响应文本的简化分析: {ai_response[:200]}..."
+            reasoning=f"基于AI响应文本的简化分析: {ai_response[:200]}...",
         )
 
-    def _validate_analysis_result(self, result: AIDynamicAnalysisResult, context: AIDynamicAnalysisContext) -> AIDynamicAnalysisResult:
+    def _validate_analysis_result(
+        self, result: AIDynamicAnalysisResult, context: AIDynamicAnalysisContext
+    ) -> AIDynamicAnalysisResult:
         """验证分析结果"""
         # 验证分数范围
-        result.fix_effectiveness_score = max(0.0, min(1.0, result.fix_effectiveness_score))
+        result.fix_effectiveness_score = max(
+            0.0, min(1.0, result.fix_effectiveness_score)
+        )
         result.confidence_score = max(0.0, min(1.0, result.confidence_score))
 
         # 验证解决状态
@@ -441,7 +465,7 @@ class AIDynamicAnalysisCaller:
         try:
             result_file = self.analysis_dir / f"ai_analysis_{result.context_id}.json"
 
-            with open(result_file, 'w', encoding='utf-8') as f:
+            with open(result_file, "w", encoding="utf-8") as f:
                 json.dump(result.to_dict(), f, indent=2, ensure_ascii=False)
 
             self.logger.info(f"AI分析结果已保存: {result_file}")
@@ -449,7 +473,9 @@ class AIDynamicAnalysisCaller:
         except Exception as e:
             self.logger.error(f"保存AI分析结果失败: {e}")
 
-    def _create_failure_result(self, session_id: str, suggestion_id: str, error_message: str) -> AIDynamicAnalysisResult:
+    def _create_failure_result(
+        self, session_id: str, suggestion_id: str, error_message: str
+    ) -> AIDynamicAnalysisResult:
         """创建失败结果"""
         return AIDynamicAnalysisResult(
             analysis_id=str(uuid.uuid4()),
@@ -462,7 +488,7 @@ class AIDynamicAnalysisCaller:
             side_effects_analysis={},
             recommendations=[f"分析失败: {error_message}"],
             confidence_score=0.0,
-            reasoning=f"AI动态分析执行失败: {error_message}"
+            reasoning=f"AI动态分析执行失败: {error_message}",
         )
 
     def get_analysis_result(self, context_id: str) -> Optional[AIDynamicAnalysisResult]:
@@ -481,14 +507,16 @@ class AIDynamicAnalysisCaller:
             if not result_file.exists():
                 return None
 
-            with open(result_file, 'r', encoding='utf-8') as f:
+            with open(result_file, "r", encoding="utf-8") as f:
                 result_data = json.load(f)
 
             # 重构分析结果对象
             return AIDynamicAnalysisResult(
                 analysis_id=result_data["analysis_id"],
                 context_id=result_data["context_id"],
-                analysis_timestamp=datetime.fromisoformat(result_data["analysis_timestamp"]),
+                analysis_timestamp=datetime.fromisoformat(
+                    result_data["analysis_timestamp"]
+                ),
                 fix_effectiveness_score=result_data["fix_effectiveness_score"],
                 problem_resolution_status=result_data["problem_resolution_status"],
                 new_issues_detected=result_data["new_issues_detected"],
@@ -496,7 +524,7 @@ class AIDynamicAnalysisCaller:
                 side_effects_analysis=result_data["side_effects_analysis"],
                 recommendations=result_data["recommendations"],
                 confidence_score=result_data["confidence_score"],
-                reasoning=result_data["reasoning"]
+                reasoning=result_data["reasoning"],
             )
 
         except Exception as e:
@@ -504,8 +532,7 @@ class AIDynamicAnalysisCaller:
             return None
 
     def batch_analyze_fixes(
-        self,
-        analysis_tasks: List[Dict[str, Any]]
+        self, analysis_tasks: List[Dict[str, Any]]
     ) -> List[AIDynamicAnalysisResult]:
         """
         批量执行AI动态分析
@@ -530,7 +557,7 @@ class AIDynamicAnalysisCaller:
                     failure_result = self._create_failure_result(
                         task.get("session_id", "unknown"),
                         task.get("suggestion_id", "unknown"),
-                        str(e)
+                        str(e),
                     )
                     results.append(failure_result)
 

@@ -3,20 +3,21 @@
 负责任务执行、工具调用和结果收集
 """
 
+import asyncio
 import os
 import time
-import asyncio
-from typing import Dict, List, Any, Optional, Callable, Union
+from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from enum import Enum
-from concurrent.futures import ThreadPoolExecutor, Future, as_completed
+from typing import Any, Callable, Dict, List, Optional, Union
 
-from ..utils.logger import get_logger
 from ..utils.config import get_config_manager
+from ..utils.logger import get_logger
 
 
 class TaskStatus(Enum):
     """任务状态枚举"""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -26,6 +27,7 @@ class TaskStatus(Enum):
 
 class ToolStatus(Enum):
     """工具状态枚举"""
+
     REGISTERED = "registered"
     AVAILABLE = "available"
     BUSY = "busy"
@@ -35,6 +37,7 @@ class ToolStatus(Enum):
 @dataclass
 class ExecutionResult:
     """执行结果数据结构"""
+
     task_id: str
     tool_name: str
     status: TaskStatus
@@ -56,6 +59,7 @@ class ExecutionResult:
 @dataclass
 class ToolInfo:
     """工具信息数据结构"""
+
     name: str
     description: str
     tool_class: Callable
@@ -83,7 +87,7 @@ class ExecutionEngine:
         self.config_manager = config_manager or get_config_manager()
 
         # 引擎配置
-        self.config = self.config_manager.get_section('execution_engine')
+        self.config = self.config_manager.get_section("execution_engine")
 
         # 工具注册表
         self.tools: Dict[str, ToolInfo] = {}
@@ -98,21 +102,23 @@ class ExecutionEngine:
 
         # 统计信息
         self.stats = {
-            'total_tasks': 0,
-            'completed_tasks': 0,
-            'failed_tasks': 0,
-            'total_execution_time': 0.0
+            "total_tasks": 0,
+            "completed_tasks": 0,
+            "failed_tasks": 0,
+            "total_execution_time": 0.0,
         }
 
         self.logger.info(f"ExecutionEngine initialized with {max_workers} workers")
 
-    def register_tool(self,
-                     name: str,
-                     tool_class: Callable,
-                     description: str = "",
-                     timeout: float = 300.0,
-                     is_async: bool = False,
-                     **kwargs) -> bool:
+    def register_tool(
+        self,
+        name: str,
+        tool_class: Callable,
+        description: str = "",
+        timeout: float = 300.0,
+        is_async: bool = False,
+        **kwargs,
+    ) -> bool:
         """
         注册工具
 
@@ -133,7 +139,7 @@ class ExecutionEngine:
 
             # 检查工具类型并存储实例或函数
             tool_instance = tool_class
-            if hasattr(tool_class, '__call__') and not isinstance(tool_class, type):
+            if hasattr(tool_class, "__call__") and not isinstance(tool_class, type):
                 # 如果是可调用对象（函数或实例）
                 tool_instance = tool_class
             elif isinstance(tool_class, type):
@@ -151,7 +157,7 @@ class ExecutionEngine:
                 status=ToolStatus.AVAILABLE,
                 timeout=timeout,
                 is_async=is_async,
-                parameters=kwargs
+                parameters=kwargs,
             )
 
             self.tools[name] = tool_info
@@ -201,7 +207,9 @@ class ExecutionEngine:
         """
         return list(self.tools.values())
 
-    def execute_task(self, task_id: str, tool_name: str, parameters: Dict[str, Any]) -> ExecutionResult:
+    def execute_task(
+        self, task_id: str, tool_name: str, parameters: Dict[str, Any]
+    ) -> ExecutionResult:
         """
         执行单个任务
 
@@ -225,7 +233,7 @@ class ExecutionEngine:
                 error=f"Tool {tool_name} not found",
                 error_type="ToolNotFoundError",
                 start_time=start_time,
-                end_time=time.time()
+                end_time=time.time(),
             )
             self._record_result(result)
             return result
@@ -242,7 +250,7 @@ class ExecutionEngine:
             # 执行工具
             if tool_info.is_async:
                 # 异步工具执行
-                if hasattr(tool_info.tool_class, 'execute'):
+                if hasattr(tool_info.tool_class, "execute"):
                     if callable(tool_info.tool_class.execute):
                         data = asyncio.run(tool_info.tool_class.execute(**parameters))
                     else:
@@ -253,7 +261,7 @@ class ExecutionEngine:
                     raise TypeError("Tool is not callable")
             else:
                 # 同步工具执行
-                if hasattr(tool_info.tool_class, 'execute'):
+                if hasattr(tool_info.tool_class, "execute"):
                     if callable(tool_info.tool_class.execute):
                         data = tool_info.tool_class.execute(**parameters)
                     else:
@@ -273,14 +281,16 @@ class ExecutionEngine:
                 data=data,
                 execution_time=end_time - start_time,
                 start_time=start_time,
-                end_time=end_time
+                end_time=end_time,
             )
 
             # 更新工具统计
             tool_info.usage_count += 1
             tool_info.status = ToolStatus.AVAILABLE
 
-            self.logger.info(f"Task {task_id} completed successfully in {result.execution_time:.2f}s")
+            self.logger.info(
+                f"Task {task_id} completed successfully in {result.execution_time:.2f}s"
+            )
 
         except Exception as e:
             # 执行失败
@@ -296,7 +306,7 @@ class ExecutionEngine:
                 error_type=error_type,
                 execution_time=end_time - start_time,
                 start_time=start_time,
-                end_time=end_time
+                end_time=end_time,
             )
 
             # 更新工具统计
@@ -310,7 +320,9 @@ class ExecutionEngine:
         self._record_result(result)
         return result
 
-    def execute_task_async(self, task_id: str, tool_name: str, parameters: Dict[str, Any]) -> Future:
+    def execute_task_async(
+        self, task_id: str, tool_name: str, parameters: Dict[str, Any]
+    ) -> Future:
         """
         异步执行任务
 
@@ -350,9 +362,9 @@ class ExecutionEngine:
         # 提交所有任务
         futures = []
         for task in tasks:
-            task_id = task.get('task_id')
-            tool_name = task.get('tool_name')
-            parameters = task.get('parameters', {})
+            task_id = task.get("task_id")
+            tool_name = task.get("tool_name")
+            parameters = task.get("parameters", {})
 
             if task_id and tool_name:
                 future = self.execute_task_async(task_id, tool_name, parameters)
@@ -366,7 +378,9 @@ class ExecutionEngine:
             except Exception as e:
                 self.logger.error(f"Task execution failed: {e}")
 
-        self.logger.info(f"Completed {len(results)} tasks with {len([r for r in results if r.success])} successes")
+        self.logger.info(
+            f"Completed {len(results)} tasks with {len([r for r in results if r.success])} successes"
+        )
         return results
 
     def execute_plan(self, plan) -> List[ExecutionResult]:
@@ -385,9 +399,9 @@ class ExecutionEngine:
         tasks = []
         for task in plan.tasks:
             task_data = {
-                'task_id': task.task_id,
-                'tool_name': task.task_type,
-                'parameters': task.parameters
+                "task_id": task.task_id,
+                "tool_name": task.task_type,
+                "parameters": task.parameters,
             }
             tasks.append(task_data)
 
@@ -395,9 +409,11 @@ class ExecutionEngine:
         results = self.execute_tasks(tasks)
 
         # 更新计划统计
-        plan.metadata['execution_results'] = len(results)
-        plan.metadata['execution_time'] = sum(r.execution_time for r in results)
-        plan.metadata['success_rate'] = len([r for r in results if r.success]) / len(results) if results else 0
+        plan.metadata["execution_results"] = len(results)
+        plan.metadata["execution_time"] = sum(r.execution_time for r in results)
+        plan.metadata["success_rate"] = (
+            len([r for r in results if r.success]) / len(results) if results else 0
+        )
 
         return results
 
@@ -429,7 +445,7 @@ class ExecutionEngine:
                     status=TaskStatus.CANCELLED,
                     success=False,
                     error="Task cancelled by user",
-                    error_type="CancelledError"
+                    error_type="CancelledError",
                 )
                 self._record_result(result)
 
@@ -467,27 +483,39 @@ class ExecutionEngine:
             统计信息字典
         """
         # 更新统计信息
-        self.stats['total_tasks'] = len(self.completed_tasks)
-        self.stats['completed_tasks'] = len([r for r in self.completed_tasks.values() if r.success])
-        self.stats['failed_tasks'] = len([r for r in self.completed_tasks.values() if not r.success])
-        self.stats['total_execution_time'] = sum(r.execution_time for r in self.completed_tasks.values())
+        self.stats["total_tasks"] = len(self.completed_tasks)
+        self.stats["completed_tasks"] = len(
+            [r for r in self.completed_tasks.values() if r.success]
+        )
+        self.stats["failed_tasks"] = len(
+            [r for r in self.completed_tasks.values() if not r.success]
+        )
+        self.stats["total_execution_time"] = sum(
+            r.execution_time for r in self.completed_tasks.values()
+        )
 
         # 工具统计
         tool_stats = {}
         for name, tool in self.tools.items():
             tool_stats[name] = {
-                'usage_count': tool.usage_count,
-                'error_count': tool.error_count,
-                'success_rate': (tool.usage_count - tool.error_count) / tool.usage_count if tool.usage_count > 0 else 0,
-                'last_used': tool.last_used,
-                'status': tool.status.value
+                "usage_count": tool.usage_count,
+                "error_count": tool.error_count,
+                "success_rate": (
+                    (tool.usage_count - tool.error_count) / tool.usage_count
+                    if tool.usage_count > 0
+                    else 0
+                ),
+                "last_used": tool.last_used,
+                "status": tool.status.value,
             }
 
         return {
-            'engine_stats': self.stats.copy(),
-            'tool_stats': tool_stats,
-            'running_tasks': len(self.running_tasks),
-            'available_tools': len([t for t in self.tools.values() if t.status == ToolStatus.AVAILABLE])
+            "engine_stats": self.stats.copy(),
+            "tool_stats": tool_stats,
+            "running_tasks": len(self.running_tasks),
+            "available_tools": len(
+                [t for t in self.tools.values() if t.status == ToolStatus.AVAILABLE]
+            ),
         }
 
     def _record_result(self, result: ExecutionResult):

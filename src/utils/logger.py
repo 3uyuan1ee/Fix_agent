@@ -7,8 +7,10 @@
 import os
 import sys
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
+
 from loguru import logger as loguru_logger
+
 from .config import get_config_manager
 
 
@@ -27,8 +29,13 @@ class WorkflowLogger:
         self.base_logger = base_logger or get_logger()
         self.workflow_logs = []
 
-    def log_workflow_transition(self, from_node: str, to_node: str,
-                               reason: str = "", metadata: Dict[str, Any] = None):
+    def log_workflow_transition(
+        self,
+        from_node: str,
+        to_node: str,
+        reason: str = "",
+        metadata: Dict[str, Any] = None,
+    ):
         """
         记录工作流状态转换
 
@@ -45,14 +52,15 @@ class WorkflowLogger:
             "to_node": to_node,
             "reason": reason,
             "metadata": metadata or {},
-            "timestamp": loguru_logger._core.now
+            "timestamp": loguru_logger._core.now,
         }
 
         self.workflow_logs.append(log_data)
         self.base_logger.info(f"工作流转换: {from_node} → {to_node} - {reason}")
 
-    def log_user_decision(self, node: str, decision_type: str,
-                         decision_id: str, details: Dict[str, Any]):
+    def log_user_decision(
+        self, node: str, decision_type: str, decision_id: str, details: Dict[str, Any]
+    ):
         """
         记录用户决策
 
@@ -69,15 +77,19 @@ class WorkflowLogger:
             "decision_type": decision_type,
             "decision_id": decision_id,
             "details": details,
-            "timestamp": loguru_logger._core.now
+            "timestamp": loguru_logger._core.now,
         }
 
         self.workflow_logs.append(log_data)
         self.base_logger.info(f"用户决策 [{node}]: {decision_type} - {decision_id}")
 
-    def log_ai_interaction(self, interaction_type: str, node: str,
-                          request_data: Dict[str, Any],
-                          response_data: Dict[str, Any] = None):
+    def log_ai_interaction(
+        self,
+        interaction_type: str,
+        node: str,
+        request_data: Dict[str, Any],
+        response_data: Dict[str, Any] = None,
+    ):
         """
         记录AI交互
 
@@ -94,15 +106,20 @@ class WorkflowLogger:
             "node": node,
             "request_data": request_data,
             "response_data": response_data,
-            "timestamp": loguru_logger._core.now
+            "timestamp": loguru_logger._core.now,
         }
 
         self.workflow_logs.append(log_data)
         self.base_logger.info(f"AI交互 [{node}]: {interaction_type}")
 
-    def log_fix_execution(self, operation_id: str, file_path: str,
-                          operation_type: str, success: bool,
-                          details: Dict[str, Any] = None):
+    def log_fix_execution(
+        self,
+        operation_id: str,
+        file_path: str,
+        operation_type: str,
+        success: bool,
+        details: Dict[str, Any] = None,
+    ):
         """
         记录修复执行
 
@@ -121,15 +138,20 @@ class WorkflowLogger:
             "operation_type": operation_type,
             "success": success,
             "details": details or {},
-            "timestamp": loguru_logger._core.now
+            "timestamp": loguru_logger._core.now,
         }
 
         self.workflow_logs.append(log_data)
         status = "成功" if success else "失败"
         self.base_logger.info(f"修复执行 [{operation_id}]: {operation_type} - {status}")
 
-    def log_error(self, error_type: str, node: str, error_message: str,
-                   details: Dict[str, Any] = None):
+    def log_error(
+        self,
+        error_type: str,
+        node: str,
+        error_message: str,
+        details: Dict[str, Any] = None,
+    ):
         """
         记录工作流错误
 
@@ -146,7 +168,7 @@ class WorkflowLogger:
             "node": node,
             "error_message": error_message,
             "details": details or {},
-            "timestamp": loguru_logger._core.now
+            "timestamp": loguru_logger._core.now,
         }
 
         self.workflow_logs.append(log_data)
@@ -168,7 +190,8 @@ class WorkflowLogger:
         """
         try:
             import json
-            with open(file_path, 'w', encoding='utf-8') as f:
+
+            with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(self.workflow_logs, f, ensure_ascii=False, indent=2)
             self.base_logger.info(f"工作流日志已导出到: {file_path}")
             return True
@@ -194,26 +217,27 @@ class Logger:
     def _setup_logger(self):
         """设置日志系统"""
         # 获取日志配置
-        log_config = self.config_manager.get_section('logging')
+        log_config = self.config_manager.get_section("logging")
 
         # 移除默认的处理器
         loguru_logger.remove()
 
         # 设置日志级别
-        level = log_config.get('level', 'INFO')
+        level = log_config.get("level", "INFO")
 
         # 设置日志格式
-        format_str = log_config.get('format',
-            "{time:YYYY-MM-DD HH:mm:ss} | {level} | {module} | {message}")
+        format_str = log_config.get(
+            "format", "{time:YYYY-MM-DD HH:mm:ss} | {level} | {module} | {message}"
+        )
 
         # 确保日志目录存在
-        log_file = log_config.get('file_path', 'logs/app.log')
+        log_file = log_config.get("file_path", "logs/app.log")
         log_dir = Path(log_file).parent
         log_dir.mkdir(parents=True, exist_ok=True)
 
         # 添加文件处理器
-        rotation = log_config.get('max_size', '10 MB')
-        retention = log_config.get('backup_count', 5)
+        rotation = log_config.get("max_size", "10 MB")
+        retention = log_config.get("backup_count", 5)
 
         # 添加文件处理器
         loguru_logger.add(
@@ -223,17 +247,14 @@ class Logger:
             rotation=rotation,
             retention=retention,
             compression="zip",
-            encoding="utf-8"
+            encoding="utf-8",
         )
 
         # 添加控制台处理器（如果启用）
-        if log_config.get('enable_console', True):
-            console_format = log_config.get('console_format', format_str)
+        if log_config.get("enable_console", True):
+            console_format = log_config.get("console_format", format_str)
             loguru_logger.add(
-                sys.stdout,
-                level=level,
-                format=console_format,
-                colorize=True
+                sys.stdout, level=level, format=console_format, colorize=True
             )
 
         self._logger = loguru_logger
@@ -262,8 +283,9 @@ class Logger:
         """记录异常信息"""
         self._logger.exception(message, **kwargs)
 
-    def log_api_request(self, api_type: str, endpoint: str, status: str,
-                       response_time: float, **kwargs):
+    def log_api_request(
+        self, api_type: str, endpoint: str, status: str, response_time: float, **kwargs
+    ):
         """
         记录API请求日志
 
@@ -279,11 +301,10 @@ class Logger:
             endpoint=endpoint,
             status=status,
             response_time=response_time,
-            **kwargs
+            **kwargs,
         )
 
-    def log_file_operation(self, operation: str, file_path: str,
-                          result: str, **kwargs):
+    def log_file_operation(self, operation: str, file_path: str, result: str, **kwargs):
         """
         记录文件操作日志
 
@@ -297,11 +318,17 @@ class Logger:
             operation=operation,
             file_path=file_path,
             result=result,
-            **kwargs
+            **kwargs,
         )
 
-    def log_analysis_result(self, analysis_type: str, file_count: int,
-                           issue_count: int, duration: float, **kwargs):
+    def log_analysis_result(
+        self,
+        analysis_type: str,
+        file_count: int,
+        issue_count: int,
+        duration: float,
+        **kwargs,
+    ):
         """
         记录分析结果日志
 
@@ -318,11 +345,10 @@ class Logger:
             file_count=file_count,
             issue_count=issue_count,
             duration=duration,
-            **kwargs
+            **kwargs,
         )
 
-    def log_user_action(self, action: str, user_input: str,
-                       result: str, **kwargs):
+    def log_user_action(self, action: str, user_input: str, result: str, **kwargs):
         """
         记录用户操作日志
 
@@ -336,7 +362,7 @@ class Logger:
             action=action,
             user_input=user_input,
             result=result,
-            **kwargs
+            **kwargs,
         )
 
     def get_logger(self):
@@ -354,14 +380,15 @@ class Logger:
         loguru_logger.remove()
 
         # 更新配置
-        log_config = self.config_manager.get_section('logging')
-        log_config['level'] = level
+        log_config = self.config_manager.get_section("logging")
+        log_config["level"] = level
 
         # 重新设置
         self._setup_logger()
 
-    def add_file_handler(self, file_path: str, level: str = None,
-                        format_str: str = None):
+    def add_file_handler(
+        self, file_path: str, level: str = None, format_str: str = None
+    ):
         """
         添加额外的文件处理器
 
@@ -370,20 +397,24 @@ class Logger:
             level: 日志级别
             format_str: 日志格式
         """
-        log_config = self.config_manager.get_section('logging')
+        log_config = self.config_manager.get_section("logging")
 
         loguru_logger.add(
             file_path,
-            level=level or log_config.get('level', 'INFO'),
-            format=format_str or log_config.get('format',
-                "{time:YYYY-MM-DD HH:mm:ss} | {level} | {module} | {message}"),
-            rotation=log_config.get('max_size', '10 MB'),
-            retention=log_config.get('backup_count', 5),
-            encoding="utf-8"
+            level=level or log_config.get("level", "INFO"),
+            format=format_str
+            or log_config.get(
+                "format", "{time:YYYY-MM-DD HH:mm:ss} | {level} | {module} | {message}"
+            ),
+            rotation=log_config.get("max_size", "10 MB"),
+            retention=log_config.get("backup_count", 5),
+            encoding="utf-8",
         )
 
     # 项目分析工作流专门的日志方法
-    def log_project_analysis_start(self, project_path: str, analysis_mode: str, **kwargs):
+    def log_project_analysis_start(
+        self, project_path: str, analysis_mode: str, **kwargs
+    ):
         """
         记录项目分析开始
 
@@ -397,12 +428,18 @@ class Logger:
             event_type="analysis_start",
             project_path=project_path,
             analysis_mode=analysis_mode,
-            **kwargs
+            **kwargs,
         )
 
-    def log_project_analysis_complete(self, project_path: str, analysis_id: str,
-                                    duration: float, files_analyzed: int,
-                                    issues_found: int, **kwargs):
+    def log_project_analysis_complete(
+        self,
+        project_path: str,
+        analysis_id: str,
+        duration: float,
+        files_analyzed: int,
+        issues_found: int,
+        **kwargs,
+    ):
         """
         记录项目分析完成
 
@@ -423,7 +460,7 @@ class Logger:
             duration=duration,
             files_analyzed=files_analyzed,
             issues_found=issues_found,
-            **kwargs
+            **kwargs,
         )
 
     def log_analysis_phase_start(self, phase: str, analysis_id: str, **kwargs):
@@ -440,11 +477,17 @@ class Logger:
             event_type="phase_start",
             phase=phase,
             analysis_id=analysis_id,
-            **kwargs
+            **kwargs,
         )
 
-    def log_analysis_phase_complete(self, phase: str, analysis_id: str,
-                                  duration: float, result_summary: str = "", **kwargs):
+    def log_analysis_phase_complete(
+        self,
+        phase: str,
+        analysis_id: str,
+        duration: float,
+        result_summary: str = "",
+        **kwargs,
+    ):
         """
         记录分析阶段完成
 
@@ -463,11 +506,12 @@ class Logger:
             analysis_id=analysis_id,
             duration=duration,
             result_summary=result_summary,
-            **kwargs
+            **kwargs,
         )
 
-    def log_file_selection(self, total_files: int, selected_files: int,
-                          selection_strategy: str, **kwargs):
+    def log_file_selection(
+        self, total_files: int, selected_files: int, selection_strategy: str, **kwargs
+    ):
         """
         记录文件选择过程
 
@@ -484,11 +528,18 @@ class Logger:
             total_files=total_files,
             selected_files=selected_files,
             selection_strategy=selection_strategy,
-            **kwargs
+            **kwargs,
         )
 
-    def log_token_usage(self, analysis_id: str, phase: str, tokens_used: int,
-                       model: str, cost_estimate: float = 0.0, **kwargs):
+    def log_token_usage(
+        self,
+        analysis_id: str,
+        phase: str,
+        tokens_used: int,
+        model: str,
+        cost_estimate: float = 0.0,
+        **kwargs,
+    ):
         """
         记录Token使用情况
 
@@ -509,12 +560,18 @@ class Logger:
             tokens_used=tokens_used,
             model=model,
             cost_estimate=cost_estimate,
-            **kwargs
+            **kwargs,
         )
 
-    def log_progress_update(self, analysis_id: str, current_step: int,
-                          total_steps: int, step_description: str,
-                          progress_percent: float, **kwargs):
+    def log_progress_update(
+        self,
+        analysis_id: str,
+        current_step: int,
+        total_steps: int,
+        step_description: str,
+        progress_percent: float,
+        **kwargs,
+    ):
         """
         记录进度更新
 
@@ -535,11 +592,12 @@ class Logger:
             total_steps=total_steps,
             step_description=step_description,
             progress_percent=progress_percent,
-            **kwargs
+            **kwargs,
         )
 
-    def log_fix_generation(self, file_path: str, issues_count: int,
-                          fixes_generated: int, **kwargs):
+    def log_fix_generation(
+        self, file_path: str, issues_count: int, fixes_generated: int, **kwargs
+    ):
         """
         记录修复建议生成
 
@@ -555,11 +613,17 @@ class Logger:
             file_path=file_path,
             issues_count=issues_count,
             fixes_generated=fixes_generated,
-            **kwargs
+            **kwargs,
         )
 
-    def log_fix_application(self, file_path: str, fix_id: str,
-                           success: bool, error_message: str = "", **kwargs):
+    def log_fix_application(
+        self,
+        file_path: str,
+        fix_id: str,
+        success: bool,
+        error_message: str = "",
+        **kwargs,
+    ):
         """
         记录修复应用
 
@@ -583,12 +647,18 @@ class Logger:
             fix_id=fix_id,
             success=success,
             error_message=error_message,
-            **kwargs
+            **kwargs,
         )
 
-    def log_performance_metrics(self, analysis_id: str, phase: str,
-                              metric_name: str, metric_value: float,
-                              unit: str = "", **kwargs):
+    def log_performance_metrics(
+        self,
+        analysis_id: str,
+        phase: str,
+        metric_name: str,
+        metric_value: float,
+        unit: str = "",
+        **kwargs,
+    ):
         """
         记录性能指标
 
@@ -610,12 +680,18 @@ class Logger:
             metric_name=metric_name,
             metric_value=metric_value,
             unit=unit,
-            **kwargs
+            **kwargs,
         )
 
-    def log_error_with_context(self, analysis_id: str, phase: str,
-                              error_type: str, error_message: str,
-                              context: Dict[str, Any] = None, **kwargs):
+    def log_error_with_context(
+        self,
+        analysis_id: str,
+        phase: str,
+        error_type: str,
+        error_message: str,
+        context: Dict[str, Any] = None,
+        **kwargs,
+    ):
         """
         记录带上下文的错误信息
 
@@ -637,11 +713,17 @@ class Logger:
             error_type=error_type,
             error_message=error_message,
             context=context or {},
-            **kwargs
+            **kwargs,
         )
 
-    def log_cost_summary(self, analysis_id: str, total_tokens: int,
-                        total_cost: float, token_breakdown: Dict[str, int] = None, **kwargs):
+    def log_cost_summary(
+        self,
+        analysis_id: str,
+        total_tokens: int,
+        total_cost: float,
+        token_breakdown: Dict[str, int] = None,
+        **kwargs,
+    ):
         """
         记录成本汇总
 
@@ -653,7 +735,9 @@ class Logger:
         """
         breakdown_str = ""
         if token_breakdown:
-            breakdown_parts = [f"{model}: {tokens}" for model, tokens in token_breakdown.items()]
+            breakdown_parts = [
+                f"{model}: {tokens}" for model, tokens in token_breakdown.items()
+            ]
             breakdown_str = f" | Breakdown: {', '.join(breakdown_parts)}"
 
         self.info(
@@ -665,7 +749,7 @@ class Logger:
             total_tokens=total_tokens,
             total_cost=total_cost,
             token_breakdown=token_breakdown or {},
-            **kwargs
+            **kwargs,
         )
 
 

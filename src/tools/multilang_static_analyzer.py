@@ -3,18 +3,19 @@
 执行多语言静态分析，发现代码质量问题
 """
 
+import json
 import os
 import subprocess
-import json
+import threading
 import time
-from typing import Dict, List, Any, Optional, Set, Union
-from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from datetime import datetime
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import threading
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Set, Union
 
 from ..utils.logger import get_logger
+
 try:
     from .project_analysis_types import ProgrammingLanguage, SeverityLevel
 except ImportError:
@@ -57,6 +58,7 @@ except ImportError:
 @dataclass
 class StaticAnalysisIssue:
     """静态分析问题"""
+
     tool_name: str
     file_path: str
     line_number: int
@@ -82,13 +84,14 @@ class StaticAnalysisIssue:
             "category": self.category,
             "source_code": self.source_code,
             "end_line_number": self.end_line_number,
-            "confidence": self.confidence
+            "confidence": self.confidence,
         }
 
 
 @dataclass
 class StaticAnalysisResult:
     """静态分析结果"""
+
     language: ProgrammingLanguage
     tool_name: str
     issues: List[StaticAnalysisIssue] = field(default_factory=list)
@@ -108,7 +111,7 @@ class StaticAnalysisResult:
             "error_message": self.error_message,
             "execution_timestamp": self.execution_timestamp,
             "issue_count": len(self.issues),
-            "severity_counts": self._get_severity_counts()
+            "severity_counts": self._get_severity_counts(),
         }
 
     def _get_severity_counts(self) -> Dict[str, int]:
@@ -157,7 +160,7 @@ class BaseStaticAnalyzer:
                 capture_output=True,
                 text=True,
                 timeout=timeout,
-                cwd=os.path.dirname(cmd[0]) if os.path.isfile(cmd[0]) else os.getcwd()
+                cwd=os.path.dirname(cmd[0]) if os.path.isfile(cmd[0]) else os.getcwd(),
             )
             return True, result.stdout, result.stderr
         except subprocess.TimeoutExpired:
@@ -179,31 +182,28 @@ class BaseStaticAnalyzer:
         """
         severity_mapping = {
             # 通用映射
-            'error': SeverityLevel.HIGH,
-            'warning': SeverityLevel.MEDIUM,
-            'info': SeverityLevel.LOW,
-            'note': SeverityLevel.LOW,
-            'fatal': SeverityLevel.CRITICAL,
-            'critical': SeverityLevel.CRITICAL,
-            'major': SeverityLevel.HIGH,
-            'minor': SeverityLevel.LOW,
-
+            "error": SeverityLevel.HIGH,
+            "warning": SeverityLevel.MEDIUM,
+            "info": SeverityLevel.LOW,
+            "note": SeverityLevel.LOW,
+            "fatal": SeverityLevel.CRITICAL,
+            "critical": SeverityLevel.CRITICAL,
+            "major": SeverityLevel.HIGH,
+            "minor": SeverityLevel.LOW,
             # Pylint特定映射
-            'F': SeverityLevel.CRITICAL,  # Fatal
-            'E': SeverityLevel.HIGH,     # Error
-            'W': SeverityLevel.MEDIUM,   # Warning
-            'R': SeverityLevel.LOW,      # Refactor
-            'C': SeverityLevel.LOW,      # Convention
-
+            "F": SeverityLevel.CRITICAL,  # Fatal
+            "E": SeverityLevel.HIGH,  # Error
+            "W": SeverityLevel.MEDIUM,  # Warning
+            "R": SeverityLevel.LOW,  # Refactor
+            "C": SeverityLevel.LOW,  # Convention
             # Flake8特定映射
-            'E': SeverityLevel.HIGH,     # Error
-            'W': SeverityLevel.MEDIUM,   # Warning
-            'F': SeverityLevel.CRITICAL, # Flake8 specific
-
+            "E": SeverityLevel.HIGH,  # Error
+            "W": SeverityLevel.MEDIUM,  # Warning
+            "F": SeverityLevel.CRITICAL,  # Flake8 specific
             # Bandit特定映射
-            'LOW': SeverityLevel.LOW,
-            'MEDIUM': SeverityLevel.MEDIUM,
-            'HIGH': SeverityLevel.HIGH,
+            "LOW": SeverityLevel.LOW,
+            "MEDIUM": SeverityLevel.MEDIUM,
+            "HIGH": SeverityLevel.HIGH,
         }
 
         return severity_mapping.get(tool_severity.upper(), SeverityLevel.LOW)
@@ -215,7 +215,9 @@ class PythonStaticAnalyzer(BaseStaticAnalyzer):
     def __init__(self):
         super().__init__("python_analyzer", ProgrammingLanguage.PYTHON)
 
-    def analyze(self, file_path: str, tools: List[str] = None, **kwargs) -> StaticAnalysisResult:
+    def analyze(
+        self, file_path: str, tools: List[str] = None, **kwargs
+    ) -> StaticAnalysisResult:
         """
         执行Python静态分析
 
@@ -231,11 +233,11 @@ class PythonStaticAnalyzer(BaseStaticAnalyzer):
         result = StaticAnalysisResult(
             language=self.language,
             tool_name="python_analyzer",
-            execution_timestamp=datetime.now().isoformat()
+            execution_timestamp=datetime.now().isoformat(),
         )
 
         if tools is None:
-            tools = ['pylint', 'flake8', 'bandit']
+            tools = ["pylint", "flake8", "bandit"]
 
         try:
             # 检查文件是否存在
@@ -248,19 +250,27 @@ class PythonStaticAnalyzer(BaseStaticAnalyzer):
             with ThreadPoolExecutor(max_workers=3) as executor:
                 future_to_tool = {}
 
-                if 'pylint' in tools:
-                    future_to_tool[executor.submit(self._run_pylint, file_path)] = 'pylint'
-                if 'flake8' in tools:
-                    future_to_tool[executor.submit(self._run_flake8, file_path)] = 'flake8'
-                if 'bandit' in tools:
-                    future_to_tool[executor.submit(self._run_bandit, file_path)] = 'bandit'
+                if "pylint" in tools:
+                    future_to_tool[executor.submit(self._run_pylint, file_path)] = (
+                        "pylint"
+                    )
+                if "flake8" in tools:
+                    future_to_tool[executor.submit(self._run_flake8, file_path)] = (
+                        "flake8"
+                    )
+                if "bandit" in tools:
+                    future_to_tool[executor.submit(self._run_bandit, file_path)] = (
+                        "bandit"
+                    )
 
                 for future in as_completed(future_to_tool):
                     tool_name = future_to_tool[future]
                     try:
                         tool_result = future.result(timeout=60)
                         result.issues.extend(tool_result.issues)
-                        self.logger.info(f"{tool_name} 分析完成，发现 {len(tool_result.issues)} 个问题")
+                        self.logger.info(
+                            f"{tool_name} 分析完成，发现 {len(tool_result.issues)} 个问题"
+                        )
                     except Exception as e:
                         self.logger.error(f"{tool_name} 分析失败: {e}")
 
@@ -276,12 +286,9 @@ class PythonStaticAnalyzer(BaseStaticAnalyzer):
 
     def _run_pylint(self, file_path: str) -> StaticAnalysisResult:
         """运行Pylint分析"""
-        result = StaticAnalysisResult(
-            language=self.language,
-            tool_name="pylint"
-        )
+        result = StaticAnalysisResult(language=self.language, tool_name="pylint")
 
-        cmd = ['pylint', '--output-format=json', file_path]
+        cmd = ["pylint", "--output-format=json", file_path]
         success, stdout, stderr = self._run_command(cmd, timeout=60)
 
         if not success:
@@ -294,14 +301,14 @@ class PythonStaticAnalyzer(BaseStaticAnalyzer):
             for issue in pylint_issues:
                 static_issue = StaticAnalysisIssue(
                     tool_name="pylint",
-                    file_path=issue.get('path', file_path),
-                    line_number=issue.get('line', 0),
-                    column_number=issue.get('column'),
-                    severity=self._normalize_severity(issue.get('type', '')),
-                    message=issue.get('message', ''),
-                    rule_id=issue.get('message-id', ''),
-                    category=issue.get('type', ''),
-                    source_code=issue.get('symbol', '')
+                    file_path=issue.get("path", file_path),
+                    line_number=issue.get("line", 0),
+                    column_number=issue.get("column"),
+                    severity=self._normalize_severity(issue.get("type", "")),
+                    message=issue.get("message", ""),
+                    rule_id=issue.get("message-id", ""),
+                    category=issue.get("type", ""),
+                    source_code=issue.get("symbol", ""),
                 )
                 result.issues.append(static_issue)
 
@@ -313,12 +320,9 @@ class PythonStaticAnalyzer(BaseStaticAnalyzer):
 
     def _run_flake8(self, file_path: str) -> StaticAnalysisResult:
         """运行Flake8分析"""
-        result = StaticAnalysisResult(
-            language=self.language,
-            tool_name="flake8"
-        )
+        result = StaticAnalysisResult(language=self.language, tool_name="flake8")
 
-        cmd = ['flake8', '--format=json', file_path]
+        cmd = ["flake8", "--format=json", file_path]
         success, stdout, stderr = self._run_command(cmd, timeout=30)
 
         if not success:
@@ -331,13 +335,13 @@ class PythonStaticAnalyzer(BaseStaticAnalyzer):
             for issue in flake8_issues:
                 static_issue = StaticAnalysisIssue(
                     tool_name="flake8",
-                    file_path=issue.get('filename', file_path),
-                    line_number=issue.get('line_number', 0),
-                    column_number=issue.get('column_number'),
-                    severity=self._normalize_severity(issue.get('code', '')[0]),
-                    message=issue.get('text', ''),
-                    rule_id=issue.get('code', ''),
-                    category="style"
+                    file_path=issue.get("filename", file_path),
+                    line_number=issue.get("line_number", 0),
+                    column_number=issue.get("column_number"),
+                    severity=self._normalize_severity(issue.get("code", "")[0]),
+                    message=issue.get("text", ""),
+                    rule_id=issue.get("code", ""),
+                    category="style",
                 )
                 result.issues.append(static_issue)
 
@@ -347,28 +351,29 @@ class PythonStaticAnalyzer(BaseStaticAnalyzer):
 
         return result
 
-    def _parse_flake8_text_output(self, output: str, file_path: str) -> StaticAnalysisResult:
+    def _parse_flake8_text_output(
+        self, output: str, file_path: str
+    ) -> StaticAnalysisResult:
         """解析Flake8文本输出"""
-        result = StaticAnalysisResult(
-            language=self.language,
-            tool_name="flake8"
-        )
+        result = StaticAnalysisResult(language=self.language, tool_name="flake8")
 
-        for line in output.strip().split('\n'):
+        for line in output.strip().split("\n"):
             if line.strip():
                 try:
                     # Flake8格式: filename:line:column: code message
-                    parts = line.split(':', 3)
+                    parts = line.split(":", 3)
                     if len(parts) >= 4:
                         static_issue = StaticAnalysisIssue(
                             tool_name="flake8",
                             file_path=parts[0].strip(),
                             line_number=int(parts[1].strip()),
                             column_number=int(parts[2].strip()),
-                            severity=self._normalize_severity(parts[3].strip().split()[0][0]),
-                            message=' '.join(parts[3].strip().split()[1:]),
+                            severity=self._normalize_severity(
+                                parts[3].strip().split()[0][0]
+                            ),
+                            message=" ".join(parts[3].strip().split()[1:]),
                             rule_id=parts[3].strip().split()[0],
-                            category="style"
+                            category="style",
                         )
                         result.issues.append(static_issue)
                 except (ValueError, IndexError):
@@ -378,12 +383,9 @@ class PythonStaticAnalyzer(BaseStaticAnalyzer):
 
     def _run_bandit(self, file_path: str) -> StaticAnalysisResult:
         """运行Bandit安全分析"""
-        result = StaticAnalysisResult(
-            language=self.language,
-            tool_name="bandit"
-        )
+        result = StaticAnalysisResult(language=self.language, tool_name="bandit")
 
-        cmd = ['bandit', '-f', 'json', file_path]
+        cmd = ["bandit", "-f", "json", file_path]
         success, stdout, stderr = self._run_command(cmd, timeout=60)
 
         if not success:
@@ -393,19 +395,19 @@ class PythonStaticAnalyzer(BaseStaticAnalyzer):
 
         try:
             bandit_output = json.loads(stdout)
-            results = bandit_output.get('results', [])
+            results = bandit_output.get("results", [])
 
             for issue in results:
                 static_issue = StaticAnalysisIssue(
                     tool_name="bandit",
-                    file_path=issue.get('filename', file_path),
-                    line_number=issue.get('line_number', 0),
+                    file_path=issue.get("filename", file_path),
+                    line_number=issue.get("line_number", 0),
                     column_number=None,
-                    severity=self._normalize_severity(issue.get('issue_severity', '')),
-                    message=issue.get('issue_text', ''),
-                    rule_id=issue.get('test_id', ''),
-                    category=issue.get('issue_cwe', {}).get('id', 'security'),
-                    confidence=issue.get('issue_confidence', '')
+                    severity=self._normalize_severity(issue.get("issue_severity", "")),
+                    message=issue.get("issue_text", ""),
+                    rule_id=issue.get("test_id", ""),
+                    category=issue.get("issue_cwe", {}).get("id", "security"),
+                    confidence=issue.get("issue_confidence", ""),
                 )
                 result.issues.append(static_issue)
 
@@ -422,7 +424,9 @@ class JavaScriptStaticAnalyzer(BaseStaticAnalyzer):
     def __init__(self):
         super().__init__("javascript_analyzer", ProgrammingLanguage.JAVASCRIPT)
 
-    def analyze(self, file_path: str, tools: List[str] = None, **kwargs) -> StaticAnalysisResult:
+    def analyze(
+        self, file_path: str, tools: List[str] = None, **kwargs
+    ) -> StaticAnalysisResult:
         """
         执行JavaScript/TypeScript静态分析
 
@@ -438,11 +442,11 @@ class JavaScriptStaticAnalyzer(BaseStaticAnalyzer):
         result = StaticAnalysisResult(
             language=self.language,
             tool_name="javascript_analyzer",
-            execution_timestamp=datetime.now().isoformat()
+            execution_timestamp=datetime.now().isoformat(),
         )
 
         if tools is None:
-            tools = ['eslint']
+            tools = ["eslint"]
 
         try:
             if not os.path.exists(file_path):
@@ -451,14 +455,18 @@ class JavaScriptStaticAnalyzer(BaseStaticAnalyzer):
                 return result
 
             # 运行ESLint分析
-            if 'eslint' in tools:
+            if "eslint" in tools:
                 eslint_result = self._run_eslint(file_path)
                 result.issues.extend(eslint_result.issues)
                 if not eslint_result.success:
-                    self.logger.warning(f"ESLint分析失败: {eslint_result.error_message}")
+                    self.logger.warning(
+                        f"ESLint分析失败: {eslint_result.error_message}"
+                    )
 
             result.execution_time = time.time() - start_time
-            self.logger.info(f"JavaScript静态分析完成，发现 {len(result.issues)} 个问题")
+            self.logger.info(
+                f"JavaScript静态分析完成，发现 {len(result.issues)} 个问题"
+            )
 
         except Exception as e:
             result.success = False
@@ -469,17 +477,14 @@ class JavaScriptStaticAnalyzer(BaseStaticAnalyzer):
 
     def _run_eslint(self, file_path: str) -> StaticAnalysisResult:
         """运行ESLint分析"""
-        result = StaticAnalysisResult(
-            language=self.language,
-            tool_name="eslint"
-        )
+        result = StaticAnalysisResult(language=self.language, tool_name="eslint")
 
         # 尝试查找配置文件
         config_file = self._find_eslint_config(file_path)
-        cmd = ['npx', 'eslint', '--format', 'json']
+        cmd = ["npx", "eslint", "--format", "json"]
 
         if config_file:
-            cmd.extend(['--config', config_file])
+            cmd.extend(["--config", config_file])
 
         cmd.append(file_path)
 
@@ -493,16 +498,20 @@ class JavaScriptStaticAnalyzer(BaseStaticAnalyzer):
         try:
             eslint_output = json.loads(stdout)
             for file_result in eslint_output:
-                for message in file_result.get('messages', []):
+                for message in file_result.get("messages", []):
                     static_issue = StaticAnalysisIssue(
                         tool_name="eslint",
-                        file_path=file_result.get('filePath', file_path),
-                        line_number=message.get('line', 0),
-                        column_number=message.get('column'),
-                        severity=self._normalize_severity(message.get('severity', 1)),
-                        message=message.get('message', ''),
-                        rule_id=message.get('ruleId', ''),
-                        category=message.get('ruleId', '').split('/')[0] if message.get('ruleId') else 'general'
+                        file_path=file_result.get("filePath", file_path),
+                        line_number=message.get("line", 0),
+                        column_number=message.get("column"),
+                        severity=self._normalize_severity(message.get("severity", 1)),
+                        message=message.get("message", ""),
+                        rule_id=message.get("ruleId", ""),
+                        category=(
+                            message.get("ruleId", "").split("/")[0]
+                            if message.get("ruleId")
+                            else "general"
+                        ),
                     )
                     result.issues.append(static_issue)
 
@@ -515,9 +524,14 @@ class JavaScriptStaticAnalyzer(BaseStaticAnalyzer):
     def _find_eslint_config(self, file_path: str) -> Optional[str]:
         """查找ESLint配置文件"""
         directory = os.path.dirname(file_path)
-        config_files = ['.eslintrc.js', '.eslintrc.json', '.eslintrc.yml', '.eslintrc.yaml']
+        config_files = [
+            ".eslintrc.js",
+            ".eslintrc.json",
+            ".eslintrc.yml",
+            ".eslintrc.yaml",
+        ]
 
-        while directory and directory != '/':
+        while directory and directory != "/":
             for config_file in config_files:
                 config_path = os.path.join(directory, config_file)
                 if os.path.exists(config_path):
@@ -553,19 +567,29 @@ class MultilangStaticAnalyzer:
 
         # 语言文件扩展名映射
         self.language_extensions = {
-            ProgrammingLanguage.PYTHON: {'.py', '.pyw', '.pyi'},
-            ProgrammingLanguage.JAVASCRIPT: {'.js', '.jsx', '.mjs', '.cjs'},
-            ProgrammingLanguage.TYPESCRIPT: {'.ts', '.tsx'},
-            ProgrammingLanguage.JAVA: {'.java'},
-            ProgrammingLanguage.GO: {'.go'},
-            ProgrammingLanguage.CPP: {'.cpp', '.cxx', '.cc', '.c', '.h', '.hpp', '.hxx'},
-            ProgrammingLanguage.CSHARP: {'.cs'},
-            ProgrammingLanguage.RUST: {'.rs'},
-            ProgrammingLanguage.PHP: {'.php', '.phtml'},
-            ProgrammingLanguage.RUBY: {'.rb', '.rbw'},
+            ProgrammingLanguage.PYTHON: {".py", ".pyw", ".pyi"},
+            ProgrammingLanguage.JAVASCRIPT: {".js", ".jsx", ".mjs", ".cjs"},
+            ProgrammingLanguage.TYPESCRIPT: {".ts", ".tsx"},
+            ProgrammingLanguage.JAVA: {".java"},
+            ProgrammingLanguage.GO: {".go"},
+            ProgrammingLanguage.CPP: {
+                ".cpp",
+                ".cxx",
+                ".cc",
+                ".c",
+                ".h",
+                ".hpp",
+                ".hxx",
+            },
+            ProgrammingLanguage.CSHARP: {".cs"},
+            ProgrammingLanguage.RUST: {".rs"},
+            ProgrammingLanguage.PHP: {".php", ".phtml"},
+            ProgrammingLanguage.RUBY: {".rb", ".rbw"},
         }
 
-    def analyze_project(self, project_path: str, **kwargs) -> List[StaticAnalysisResult]:
+    def analyze_project(
+        self, project_path: str, **kwargs
+    ) -> List[StaticAnalysisResult]:
         """
         分析整个项目
 
@@ -578,6 +602,7 @@ class MultilangStaticAnalyzer:
         """
         # 使用PathResolver解析项目路径
         from ..utils.path_resolver import get_path_resolver
+
         path_resolver = get_path_resolver()
 
         resolved_project_path = path_resolver.resolve_path(project_path)
@@ -602,7 +627,9 @@ class MultilangStaticAnalyzer:
 
         return self.analyze_files(file_paths, **kwargs)
 
-    def analyze_files(self, file_paths: List[str], **kwargs) -> Dict[str, StaticAnalysisResult]:
+    def analyze_files(
+        self, file_paths: List[str], **kwargs
+    ) -> Dict[str, StaticAnalysisResult]:
         """
         批量分析文件
 
@@ -630,7 +657,7 @@ class MultilangStaticAnalyzer:
                             analyzer.analyze,
                             file_path,
                             timeout=self.timeout_per_file,
-                            **kwargs
+                            **kwargs,
                         )
                         future_to_file[future] = file_path
                 else:
@@ -640,7 +667,7 @@ class MultilangStaticAnalyzer:
                             language=language,
                             tool_name="unsupported",
                             success=False,
-                            error_message=f"暂不支持 {language.value} 语言的分析"
+                            error_message=f"暂不支持 {language.value} 语言的分析",
                         )
 
             # 收集结果
@@ -649,19 +676,24 @@ class MultilangStaticAnalyzer:
                 try:
                     result = future.result(timeout=self.timeout_per_file + 10)
                     results[file_path] = result
-                    self.logger.info(f"文件 {file_path} 分析完成，发现 {len(result.issues)} 个问题")
+                    self.logger.info(
+                        f"文件 {file_path} 分析完成，发现 {len(result.issues)} 个问题"
+                    )
                 except Exception as e:
                     self.logger.error(f"文件 {file_path} 分析失败: {e}")
                     results[file_path] = StaticAnalysisResult(
-                        language=self._detect_language(file_path) or ProgrammingLanguage.OTHER,
+                        language=self._detect_language(file_path)
+                        or ProgrammingLanguage.OTHER,
                         tool_name="analyzer_error",
                         success=False,
-                        error_message=str(e)
+                        error_message=str(e),
                     )
 
         return results
 
-    def _group_files_by_language(self, file_paths: List[str]) -> Dict[ProgrammingLanguage, List[str]]:
+    def _group_files_by_language(
+        self, file_paths: List[str]
+    ) -> Dict[ProgrammingLanguage, List[str]]:
         """按语言分组文件"""
         grouped = {}
 
@@ -685,7 +717,9 @@ class MultilangStaticAnalyzer:
 
         return None
 
-    def get_analysis_summary(self, results: Dict[str, StaticAnalysisResult]) -> Dict[str, Any]:
+    def get_analysis_summary(
+        self, results: Dict[str, StaticAnalysisResult]
+    ) -> Dict[str, Any]:
         """
         获取分析结果摘要
 
@@ -728,19 +762,27 @@ class MultilangStaticAnalyzer:
                 "successful_analyses": successful_analyses,
                 "failed_analyses": failed_analyses,
                 "total_issues": total_issues,
-                "success_rate": round(successful_analyses / total_files * 100, 2) if total_files > 0 else 0
+                "success_rate": (
+                    round(successful_analyses / total_files * 100, 2)
+                    if total_files > 0
+                    else 0
+                ),
             },
             "language_distribution": language_counts,
             "severity_distribution": severity_counts,
             "tool_usage": tool_usage,
-            "issue_density": round(total_issues / successful_analyses, 2) if successful_analyses > 0 else 0
+            "issue_density": (
+                round(total_issues / successful_analyses, 2)
+                if successful_analyses > 0
+                else 0
+            ),
         }
 
 
 # 便捷函数
-def analyze_multiple_files(file_paths: List[str],
-                          max_workers: int = 4,
-                          timeout_per_file: int = 120) -> Dict[str, Any]:
+def analyze_multiple_files(
+    file_paths: List[str], max_workers: int = 4, timeout_per_file: int = 120
+) -> Dict[str, Any]:
     """
     便捷的多文件静态分析函数
 
@@ -758,5 +800,5 @@ def analyze_multiple_files(file_paths: List[str],
 
     return {
         "results": {path: result.to_dict() for path, result in results.items()},
-        "summary": summary
+        "summary": summary,
     }

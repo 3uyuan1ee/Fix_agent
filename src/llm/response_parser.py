@@ -5,15 +5,16 @@ LLM API响应解析器
 
 import json
 import re
-from typing import Dict, List, Any, Optional, Union
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Dict, List, Optional, Union
 
 from ..utils.logger import get_logger
 
 
 class ParseResult(Enum):
     """解析结果状态"""
+
     SUCCESS = "success"
     PARTIAL = "partial"
     FAILED = "failed"
@@ -22,6 +23,7 @@ class ParseResult(Enum):
 @dataclass
 class ParsedAnalysis:
     """解析后的分析结果"""
+
     status: ParseResult
     defects: List[Dict[str, Any]]
     summary: Dict[str, Any]
@@ -56,7 +58,7 @@ class LLMResponseParser:
             summary={},
             raw_response=response,
             parse_errors=[],
-            metadata={}
+            metadata={},
         )
 
         try:
@@ -69,18 +71,26 @@ class LLMResponseParser:
             parsed_data = self._try_multiple_parse_strategies(cleaned_response)
 
             if parsed_data:
-                result.defects, result.summary = self._extract_defects_and_summary(parsed_data)
+                result.defects, result.summary = self._extract_defects_and_summary(
+                    parsed_data
+                )
                 result.status = ParseResult.SUCCESS
                 self.logger.info(f"成功解析LLM响应，发现{len(result.defects)}个缺陷")
 
             else:
                 # 尝试从文本中提取信息
-                result.defects, result.summary = self._extract_from_text(cleaned_response)
+                result.defects, result.summary = self._extract_from_text(
+                    cleaned_response
+                )
                 if result.defects:
                     result.status = ParseResult.PARTIAL
-                    self.logger.warning(f"部分解析成功，从文本中提取到{len(result.defects)}个缺陷")
+                    self.logger.warning(
+                        f"部分解析成功，从文本中提取到{len(result.defects)}个缺陷"
+                    )
                 else:
-                    result.parse_errors.append("无法解析JSON格式，也未找到文本格式的缺陷信息")
+                    result.parse_errors.append(
+                        "无法解析JSON格式，也未找到文本格式的缺陷信息"
+                    )
 
         except Exception as e:
             error_msg = f"解析过程中发生错误: {str(e)}"
@@ -117,16 +127,16 @@ class LLMResponseParser:
             "```json",
             "```",
             '"',
-            "'"
+            "'",
         ]
 
         for prefix in prefixes_to_remove:
             if cleaned.startswith(prefix):
-                cleaned = cleaned[len(prefix):].strip()
+                cleaned = cleaned[len(prefix) :].strip()
 
         for suffix in prefixes_to_remove:
             if cleaned.endswith(suffix):
-                cleaned = cleaned[:-len(suffix)].strip()
+                cleaned = cleaned[: -len(suffix)].strip()
 
         return cleaned
 
@@ -145,7 +155,7 @@ class LLMResponseParser:
             self._parse_nested_json,
             self._parse_partial_json,
             self._parse_markdown_json,
-            self._parse_structured_text
+            self._parse_structured_text,
         ]
 
         for i, strategy in enumerate(strategies):
@@ -171,7 +181,7 @@ class LLMResponseParser:
     def _parse_nested_json(self, response: str) -> Optional[Dict[str, Any]]:
         """解析嵌套JSON"""
         # 尝试找到JSON对象
-        json_pattern = r'\{[\s\S]*\}'
+        json_pattern = r"\{[\s\S]*\}"
         matches = re.findall(json_pattern, response)
 
         for match in matches:
@@ -181,7 +191,7 @@ class LLMResponseParser:
                 continue
 
         # 尝试找到JSON数组
-        array_pattern = r'\[[\s\S]*\]'
+        array_pattern = r"\[[\s\S]*\]"
         matches = re.findall(array_pattern, response)
 
         for match in matches:
@@ -198,15 +208,15 @@ class LLMResponseParser:
         fixed_response = response
 
         # 修复缺少的逗号
-        fixed_response = re.sub(r'}\s*{\s*', '}, {', fixed_response)
-        fixed_response = re.sub(r']\s*\[\s*', '], [', fixed_response)
+        fixed_response = re.sub(r"}\s*{\s*", "}, {", fixed_response)
+        fixed_response = re.sub(r"]\s*\[\s*", "], [", fixed_response)
 
         # 修复缺少的引号
-        fixed_response = re.sub(r'(\w+):', r'"\1":', fixed_response)
+        fixed_response = re.sub(r"(\w+):", r'"\1":', fixed_response)
 
         # 移除注释（如果存在）
-        fixed_response = re.sub(r'//.*?\n', '', fixed_response)
-        fixed_response = re.sub(r'/\*.*?\*/', '', fixed_response, flags=re.DOTALL)
+        fixed_response = re.sub(r"//.*?\n", "", fixed_response)
+        fixed_response = re.sub(r"/\*.*?\*/", "", fixed_response, flags=re.DOTALL)
 
         try:
             return json.loads(fixed_response)
@@ -216,7 +226,7 @@ class LLMResponseParser:
     def _parse_markdown_json(self, response: str) -> Optional[Dict[str, Any]]:
         """解析Markdown代码块中的JSON"""
         # 查找 ```json 和 ``` 之间的内容
-        pattern = r'```(?:json)?\s*\n?([\s\S]*?)\n?```'
+        pattern = r"```(?:json)?\s*\n?([\s\S]*?)\n?```"
         matches = re.findall(pattern, response, re.IGNORECASE)
 
         for match in matches:
@@ -233,7 +243,9 @@ class LLMResponseParser:
         # 目前返回None，表示不支持
         return None
 
-    def _extract_defects_and_summary(self, data: Dict[str, Any]) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    def _extract_defects_and_summary(
+        self, data: Dict[str, Any]
+    ) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
         """
         从解析的数据中提取缺陷和摘要
 
@@ -268,7 +280,9 @@ class LLMResponseParser:
 
         return defects, summary
 
-    def _normalize_defects(self, raw_defects: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _normalize_defects(
+        self, raw_defects: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """
         标准化缺陷格式
 
@@ -288,15 +302,21 @@ class LLMResponseParser:
                 "id": defect.get("id", ""),
                 "type": defect.get("type", defect.get("category", "unknown")),
                 "severity": self._normalize_severity(defect.get("severity", "medium")),
-                "title": defect.get("title", defect.get("name", defect.get("message", ""))),
+                "title": defect.get(
+                    "title", defect.get("name", defect.get("message", ""))
+                ),
                 "description": defect.get("description", defect.get("details", "")),
-                "location": self._normalize_location(defect.get("location", defect.get("position", {}))),
-                "fix_suggestion": defect.get("fix_suggestion", defect.get("suggestion", defect.get("fix", ""))),
+                "location": self._normalize_location(
+                    defect.get("location", defect.get("position", {}))
+                ),
+                "fix_suggestion": defect.get(
+                    "fix_suggestion", defect.get("suggestion", defect.get("fix", ""))
+                ),
                 "code_snippet": defect.get("code_snippet", defect.get("code", "")),
                 "confidence": defect.get("confidence", "medium"),
                 "cwe_id": defect.get("cwe_id", defect.get("cwe", "")),
                 "cvss_score": defect.get("cvss_score", defect.get("cvss", None)),
-                "metadata": {}
+                "metadata": {},
             }
 
             # 保留额外的字段作为元数据
@@ -322,7 +342,7 @@ class LLMResponseParser:
             "danger": "critical",
             "安全": "high",
             "警告": "medium",
-            "提示": "info"
+            "提示": "info",
         }
 
         return severity_mapping.get(severity.lower(), "medium")
@@ -335,33 +355,41 @@ class LLMResponseParser:
                 "line": location.get("line", location.get("line_number", 0)),
                 "column": location.get("column", location.get("col", 0)),
                 "function": location.get("function", location.get("method", "")),
-                "class": location.get("class", "")
+                "class": location.get("class", ""),
             }
         elif isinstance(location, str):
             # 尝试从字符串中解析位置信息
             # 格式可能为: "filename.py:line:column" 或 "filename.py:line"
-            match = re.match(r'^([^:]+):(\d+)(?::(\d+))?$', location)
+            match = re.match(r"^([^:]+):(\d+)(?::(\d+))?$", location)
             if match:
                 return {
                     "file": match.group(1),
                     "line": int(match.group(2)),
                     "column": int(match.group(3) or 0),
                     "function": "",
-                    "class": ""
+                    "class": "",
                 }
 
         return {"file": "", "line": 0, "column": 0, "function": "", "class": ""}
 
-    def _generate_summary(self, defects: List[Dict[str, Any]], data: Dict[str, Any]) -> Dict[str, Any]:
+    def _generate_summary(
+        self, defects: List[Dict[str, Any]], data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """生成摘要信息"""
         summary = {
             "total_defects": len(defects),
-            "severity_distribution": {"critical": 0, "high": 0, "medium": 0, "low": 0, "info": 0},
+            "severity_distribution": {
+                "critical": 0,
+                "high": 0,
+                "medium": 0,
+                "low": 0,
+                "info": 0,
+            },
             "type_distribution": {},
             "files_affected": set(),
             "analysis_time": data.get("timestamp", ""),
             "analyzer": data.get("analyzer", "LLM"),
-            "recommendations": []
+            "recommendations": [],
         }
 
         for defect in defects:
@@ -372,7 +400,9 @@ class LLMResponseParser:
 
             # 统计类型分布
             defect_type = defect.get("type", "unknown")
-            summary["type_distribution"][defect_type] = summary["type_distribution"].get(defect_type, 0) + 1
+            summary["type_distribution"][defect_type] = (
+                summary["type_distribution"].get(defect_type, 0) + 1
+            )
 
             # 统计影响的文件
             location = defect.get("location", {})
@@ -391,7 +421,9 @@ class LLMResponseParser:
 
         return summary
 
-    def _extract_from_text(self, response: str) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    def _extract_from_text(
+        self, response: str
+    ) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
         """
         从文本中提取缺陷信息
 
@@ -405,7 +437,7 @@ class LLMResponseParser:
 
         # 尝试匹配文本中的缺陷描述
         # 这里可以实现更复杂的文本模式匹配
-        lines = response.split('\n')
+        lines = response.split("\n")
 
         current_defect = {}
         for line in lines:
@@ -414,7 +446,16 @@ class LLMResponseParser:
                 continue
 
             # 检查是否包含缺陷关键词
-            defect_keywords = ["缺陷", "问题", "错误", "漏洞", "vulnerability", "bug", "issue", "error"]
+            defect_keywords = [
+                "缺陷",
+                "问题",
+                "错误",
+                "漏洞",
+                "vulnerability",
+                "bug",
+                "issue",
+                "error",
+            ]
             if any(keyword in line.lower() for keyword in defect_keywords):
                 if current_defect:
                     defects.append(current_defect)
@@ -422,7 +463,7 @@ class LLMResponseParser:
                     "title": line,
                     "description": "",
                     "type": "text_extracted",
-                    "severity": "medium"
+                    "severity": "medium",
                 }
             elif current_defect:
                 current_defect["description"] += line + " "
@@ -441,8 +482,10 @@ class LLMResponseParser:
             "defects_count": len(result.defects),
             "parse_errors_count": len(result.parse_errors),
             "response_length": len(result.raw_response),
-            "has_critical_issues": any(d.get("severity") == "critical" for d in result.defects),
-            "has_high_issues": any(d.get("severity") == "high" for d in result.defects)
+            "has_critical_issues": any(
+                d.get("severity") == "critical" for d in result.defects
+            ),
+            "has_high_issues": any(d.get("severity") == "high" for d in result.defects),
         }
 
         result.metadata["statistics"] = stats
@@ -457,11 +500,7 @@ class LLMResponseParser:
         Returns:
             验证报告
         """
-        validation = {
-            "is_valid": True,
-            "warnings": [],
-            "errors": []
-        }
+        validation = {"is_valid": True, "warnings": [], "errors": []}
 
         # 检查是否有缺陷
         if not result.defects and result.status != ParseResult.SUCCESS:

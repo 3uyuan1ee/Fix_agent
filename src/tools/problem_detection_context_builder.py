@@ -3,18 +3,24 @@
 为AI问题检测构建上下文
 """
 
-import os
 import json
-from typing import Dict, List, Any, Optional, Tuple
+import os
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
-from collections import defaultdict
+from typing import Any, Dict, List, Optional, Tuple
 
 from ..utils.logger import get_logger
+
 try:
-    from .workflow_data_types import AIDetectedProblem, ProblemType, SeverityLevel, CodeContext
     from .multilang_static_analyzer import StaticAnalysisResult
     from .project_structure_scanner import ProjectStructure
+    from .workflow_data_types import (
+        AIDetectedProblem,
+        CodeContext,
+        ProblemType,
+        SeverityLevel,
+    )
 except ImportError:
     # 如果相关模块不可用，定义基本类型
     from enum import Enum
@@ -74,6 +80,7 @@ except ImportError:
 @dataclass
 class ProblemDetectionContext:
     """问题检测上下文"""
+
     context_id: str
     project_info: Dict[str, Any]
     selected_files: List[Dict[str, Any]]
@@ -96,7 +103,7 @@ class ProblemDetectionContext:
                 path: {
                     "language": result.language,
                     "tool_name": result.tool_name,
-                    "issues": result.issues
+                    "issues": result.issues,
                 }
                 for path, result in self.static_analysis_results.items()
             },
@@ -109,7 +116,7 @@ class ProblemDetectionContext:
             "detection_focus": self.detection_focus,
             "context_statistics": self.context_statistics,
             "build_timestamp": self.build_timestamp,
-            "token_estimate": self.token_estimate
+            "token_estimate": self.token_estimate,
         }
 
 
@@ -130,7 +137,7 @@ class ProblemDetectionContextBuilder:
             ProblemType.MAINTAINABILITY: 1.0,
             ProblemType.STYLE: 0.8,
             ProblemType.COMPATIBILITY: 1.1,
-            ProblemType.DOCUMENTATION: 0.6
+            ProblemType.DOCUMENTATION: 0.6,
         }
 
         # 严重程度权重配置
@@ -138,14 +145,16 @@ class ProblemDetectionContextBuilder:
             SeverityLevel.CRITICAL: 1.5,
             SeverityLevel.HIGH: 1.3,
             SeverityLevel.MEDIUM: 1.0,
-            SeverityLevel.LOW: 0.7
+            SeverityLevel.LOW: 0.7,
         }
 
-    def build_context(self,
-                     selected_files: List[Dict[str, Any]],
-                     static_analysis_results: Dict[str, StaticAnalysisResult],
-                     project_structure: Optional[ProjectStructure] = None,
-                     user_preferences: Optional[Dict[str, Any]] = None) -> ProblemDetectionContext:
+    def build_context(
+        self,
+        selected_files: List[Dict[str, Any]],
+        static_analysis_results: Dict[str, StaticAnalysisResult],
+        project_structure: Optional[ProjectStructure] = None,
+        user_preferences: Optional[Dict[str, Any]] = None,
+    ) -> ProblemDetectionContext:
         """
         构建问题检测上下文
 
@@ -165,7 +174,7 @@ class ProblemDetectionContextBuilder:
             project_info={},  # 初始化为空，后面会填充
             selected_files=[],  # 初始化为空，后面会填充
             static_analysis_results=static_analysis_results or {},
-            build_timestamp=datetime.now().isoformat()
+            build_timestamp=datetime.now().isoformat(),
         )
 
         try:
@@ -182,14 +191,18 @@ class ProblemDetectionContextBuilder:
             context.file_contents = self._read_file_contents(selected_files)
 
             # 构建代码上下文
-            context.code_contexts = self._build_code_contexts(selected_files, context.file_contents)
+            context.code_contexts = self._build_code_contexts(
+                selected_files, context.file_contents
+            )
 
             # 处理用户偏好
             context.user_preferences = user_preferences or {}
 
             # 确定检测重点
             context.detection_focus = self._determine_detection_focus(
-                context.selected_files, context.static_analysis_results, context.user_preferences
+                context.selected_files,
+                context.static_analysis_results,
+                context.user_preferences,
             )
 
             # 生成上下文统计
@@ -198,7 +211,9 @@ class ProblemDetectionContextBuilder:
             # 估算token使用量
             context.token_estimate = self._estimate_token_usage(context)
 
-            self.logger.info(f"问题检测上下文构建完成，预估token数: {context.token_estimate}")
+            self.logger.info(
+                f"问题检测上下文构建完成，预估token数: {context.token_estimate}"
+            )
 
         except Exception as e:
             self.logger.error(f"构建问题检测上下文失败: {e}")
@@ -206,7 +221,9 @@ class ProblemDetectionContextBuilder:
 
         return context
 
-    def _build_project_info(self, project_structure: Optional[ProjectStructure]) -> Dict[str, Any]:
+    def _build_project_info(
+        self, project_structure: Optional[ProjectStructure]
+    ) -> Dict[str, Any]:
         """构建项目信息"""
         if not project_structure:
             return {}
@@ -216,7 +233,7 @@ class ProblemDetectionContextBuilder:
             "total_files": project_structure.total_files,
             "language_distribution": project_structure.language_distribution,
             "project_type": self._detect_project_type(project_structure),
-            "complexity_level": self._assess_project_complexity(project_structure)
+            "complexity_level": self._assess_project_complexity(project_structure),
         }
 
     def _detect_project_type(self, project_structure: ProjectStructure) -> str:
@@ -231,7 +248,10 @@ class ProblemDetectionContextBuilder:
             else:
                 return "Python通用项目"
         elif languages.get("javascript", 0) > 0 or languages.get("typescript", 0) > 0:
-            if "react" in str(languages.keys()).lower() or "vue" in str(languages.keys()).lower():
+            if (
+                "react" in str(languages.keys()).lower()
+                or "vue" in str(languages.keys()).lower()
+            ):
                 return "前端Web项目"
             else:
                 return "JavaScript/TypeScript项目"
@@ -254,7 +274,9 @@ class ProblemDetectionContextBuilder:
         else:
             return "低"
 
-    def _process_selected_files(self, selected_files: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _process_selected_files(
+        self, selected_files: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """处理选择的文件"""
         processed_files = []
 
@@ -269,11 +291,13 @@ class ProblemDetectionContextBuilder:
                 "estimated_complexity": file_data.get("estimated_complexity", "中"),
                 "expected_fixes": file_data.get("expected_fixes", 0),
                 "ai_selection_reason": file_data.get("ai_selection_reason", ""),
-                "file_metadata": file_data.get("file_metadata", {})
+                "file_metadata": file_data.get("file_metadata", {}),
             }
 
             # 添加文件重要性评分
-            processed_file["importance_score"] = self._calculate_file_importance(processed_file)
+            processed_file["importance_score"] = self._calculate_file_importance(
+                processed_file
+            )
 
             processed_files.append(processed_file)
 
@@ -311,13 +335,16 @@ class ProblemDetectionContextBuilder:
 
         return round(score, 2)
 
-    def _read_file_contents(self, selected_files: List[Dict[str, Any]]) -> Dict[str, str]:
+    def _read_file_contents(
+        self, selected_files: List[Dict[str, Any]]
+    ) -> Dict[str, str]:
         """读取文件内容"""
         file_contents = {}
 
         # 导入PathResolver以获得更好的路径解析
         try:
             from ..utils.path_resolver import get_path_resolver
+
             path_resolver = get_path_resolver()
         except ImportError:
             path_resolver = None
@@ -361,24 +388,28 @@ class ProblemDetectionContextBuilder:
 
             # 检查文件是否存在
             if not os.path.exists(abs_file_path):
-                self.logger.warning(f"文件不存在: {abs_file_path} (原始路径: {file_path})")
+                self.logger.warning(
+                    f"文件不存在: {abs_file_path} (原始路径: {file_path})"
+                )
                 continue
 
             try:
-                with open(abs_file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                with open(abs_file_path, "r", encoding="utf-8", errors="ignore") as f:
                     lines = f.readlines()
 
                 # 限制读取的行数
                 if len(lines) > self.max_content_lines:
-                    content_lines = lines[:self.max_content_lines]
-                    content = ''.join(content_lines)
+                    content_lines = lines[: self.max_content_lines]
+                    content = "".join(content_lines)
                     content += f"\n... (文件截断，共 {len(lines)} 行)"
                 else:
-                    content = ''.join(lines)
+                    content = "".join(lines)
 
                 # 使用原始路径作为键，以保持一致性
                 file_contents[file_path] = content
-                self.logger.debug(f"成功读取文件内容: {file_path} ({len(content)} 字符)")
+                self.logger.debug(
+                    f"成功读取文件内容: {file_path} ({len(content)} 字符)"
+                )
 
             except Exception as e:
                 self.logger.warning(f"读取文件内容失败 {abs_file_path}: {e}")
@@ -386,9 +417,9 @@ class ProblemDetectionContextBuilder:
 
         return file_contents
 
-    def _build_code_contexts(self,
-                           selected_files: List[Dict[str, Any]],
-                           file_contents: Dict[str, str]) -> Dict[str, List[CodeContext]]:
+    def _build_code_contexts(
+        self, selected_files: List[Dict[str, Any]], file_contents: Dict[str, str]
+    ) -> Dict[str, List[CodeContext]]:
         """构建代码上下文"""
         code_contexts = {}
 
@@ -410,7 +441,7 @@ class ProblemDetectionContextBuilder:
     def _extract_code_contexts(self, file_path: str, content: str) -> List[CodeContext]:
         """提取代码上下文"""
         contexts = []
-        lines = content.split('\n')
+        lines = content.split("\n")
         language = self._detect_file_language(file_path)
 
         # 提取函数定义上下文
@@ -449,12 +480,14 @@ class ProblemDetectionContextBuilder:
             ".cs": "csharp",
             ".rs": "rust",
             ".php": "php",
-            ".rb": "ruby"
+            ".rb": "ruby",
         }
 
         return language_map.get(ext, "unknown")
 
-    def _extract_function_contexts(self, file_path: str, lines: List[str], language: str) -> List[CodeContext]:
+    def _extract_function_contexts(
+        self, file_path: str, lines: List[str], language: str
+    ) -> List[CodeContext]:
         """提取函数定义上下文"""
         contexts = []
 
@@ -465,7 +498,9 @@ class ProblemDetectionContextBuilder:
 
         return contexts
 
-    def _extract_python_functions(self, file_path: str, lines: List[str]) -> List[CodeContext]:
+    def _extract_python_functions(
+        self, file_path: str, lines: List[str]
+    ) -> List[CodeContext]:
         """提取Python函数上下文"""
         contexts = []
         imports = []
@@ -474,12 +509,12 @@ class ProblemDetectionContextBuilder:
             line = line.strip()
 
             # 收集导入语句
-            if line.startswith(('import ', 'from ')):
+            if line.startswith(("import ", "from ")):
                 imports.append(line)
 
             # 查找函数定义
-            if line.startswith('def ') and '(' in line:
-                function_name = line.split('(')[0].replace('def ', '').strip()
+            if line.startswith("def ") and "(" in line:
+                function_name = line.split("(")[0].replace("def ", "").strip()
 
                 # 获取函数上下文（前后几行）
                 start_line = max(0, i - 3)
@@ -491,13 +526,15 @@ class ProblemDetectionContextBuilder:
                     line_number=i + 1,
                     function_name=function_name,
                     surrounding_lines=surrounding_lines,
-                    imports=imports.copy()
+                    imports=imports.copy(),
                 )
                 contexts.append(context)
 
         return contexts
 
-    def _extract_js_functions(self, file_path: str, lines: List[str]) -> List[CodeContext]:
+    def _extract_js_functions(
+        self, file_path: str, lines: List[str]
+    ) -> List[CodeContext]:
         """提取JavaScript/TypeScript函数上下文"""
         contexts = []
 
@@ -505,13 +542,13 @@ class ProblemDetectionContextBuilder:
             line = line.strip()
 
             # 查找函数定义
-            if ('function ' in line and '(' in line) or ('=>' in line and '(' in line):
+            if ("function " in line and "(" in line) or ("=>" in line and "(" in line):
                 # 提取函数名
-                if 'function ' in line:
-                    function_name = line.split('function ')[1].split('(')[0].strip()
+                if "function " in line:
+                    function_name = line.split("function ")[1].split("(")[0].strip()
                 else:
                     # 箭头函数，尝试从变量名推断
-                    parts = line.split('=')[0].strip().split()
+                    parts = line.split("=")[0].strip().split()
                     function_name = parts[-1] if parts else "anonymous"
 
                 # 获取函数上下文
@@ -523,13 +560,15 @@ class ProblemDetectionContextBuilder:
                     file_path=file_path,
                     line_number=i + 1,
                     function_name=function_name,
-                    surrounding_lines=surrounding_lines
+                    surrounding_lines=surrounding_lines,
                 )
                 contexts.append(context)
 
         return contexts
 
-    def _extract_class_contexts(self, file_path: str, lines: List[str], language: str) -> List[CodeContext]:
+    def _extract_class_contexts(
+        self, file_path: str, lines: List[str], language: str
+    ) -> List[CodeContext]:
         """提取类定义上下文"""
         contexts = []
 
@@ -537,8 +576,8 @@ class ProblemDetectionContextBuilder:
             line = line.strip()
 
             # 查找类定义
-            if language == "python" and line.startswith('class '):
-                class_name = line.split('(')[0].replace('class ', '').strip()
+            if language == "python" and line.startswith("class "):
+                class_name = line.split("(")[0].replace("class ", "").strip()
 
                 start_line = max(0, i - 2)
                 end_line = min(len(lines), i + 15)
@@ -548,13 +587,15 @@ class ProblemDetectionContextBuilder:
                     file_path=file_path,
                     line_number=i + 1,
                     class_name=class_name,
-                    surrounding_lines=surrounding_lines
+                    surrounding_lines=surrounding_lines,
                 )
                 contexts.append(context)
 
         return contexts
 
-    def _create_generic_contexts(self, file_path: str, lines: List[str]) -> List[CodeContext]:
+    def _create_generic_contexts(
+        self, file_path: str, lines: List[str]
+    ) -> List[CodeContext]:
         """创建通用上下文"""
         contexts = []
 
@@ -567,16 +608,18 @@ class ProblemDetectionContextBuilder:
             context = CodeContext(
                 file_path=file_path,
                 line_number=start_line + 1,
-                surrounding_lines=surrounding_lines
+                surrounding_lines=surrounding_lines,
             )
             contexts.append(context)
 
         return contexts
 
-    def _determine_detection_focus(self,
-                                 selected_files: List[Dict[str, Any]],
-                                 static_analysis_results: Dict[str, StaticAnalysisResult],
-                                 user_preferences: Dict[str, Any]) -> List[str]:
+    def _determine_detection_focus(
+        self,
+        selected_files: List[Dict[str, Any]],
+        static_analysis_results: Dict[str, StaticAnalysisResult],
+        user_preferences: Dict[str, Any],
+    ) -> List[str]:
         """确定检测重点"""
         focus_areas = []
 
@@ -606,7 +649,9 @@ class ProblemDetectionContextBuilder:
         # 去重并返回
         return list(set(focus_areas))
 
-    def _generate_context_statistics(self, context: ProblemDetectionContext) -> Dict[str, Any]:
+    def _generate_context_statistics(
+        self, context: ProblemDetectionContext
+    ) -> Dict[str, Any]:
         """生成上下文统计"""
         stats = {
             "total_files": len(context.selected_files),
@@ -614,14 +659,16 @@ class ProblemDetectionContextBuilder:
             "language_distribution": {},
             "priority_distribution": {"high": 0, "medium": 0, "low": 0},
             "complexity_distribution": {"低": 0, "中": 0, "高": 0},
-            "estimated_analysis_time": 0.0
+            "estimated_analysis_time": 0.0,
         }
 
         # 统计文件信息
         for file_data in context.selected_files:
             # 语言分布
             lang = file_data.get("language", "unknown")
-            stats["language_distribution"][lang] = stats["language_distribution"].get(lang, 0) + 1
+            stats["language_distribution"][lang] = (
+                stats["language_distribution"].get(lang, 0) + 1
+            )
 
             # 优先级分布
             priority = file_data.get("priority", "medium")
@@ -654,7 +701,9 @@ class ProblemDetectionContextBuilder:
         total_chars += min(content_chars, 100000)  # 限制内容字符数
 
         # 静态分析结果
-        analysis_chars = len(json.dumps(context.static_analysis_results, ensure_ascii=False))
+        analysis_chars = len(
+            json.dumps(context.static_analysis_results, ensure_ascii=False)
+        )
         total_chars += min(analysis_chars, 50000)  # 限制分析结果字符数
 
         # 其他数据
@@ -672,11 +721,12 @@ class ProblemDetectionContextBuilder:
     def _generate_context_id(self) -> str:
         """生成上下文ID"""
         import uuid
+
         return f"context_{uuid.uuid4().hex[:12]}_{int(datetime.now().timestamp())}"
 
-    def optimize_context_for_tokens(self,
-                                  context: ProblemDetectionContext,
-                                  target_tokens: int) -> ProblemDetectionContext:
+    def optimize_context_for_tokens(
+        self, context: ProblemDetectionContext, target_tokens: int
+    ) -> ProblemDetectionContext:
         """
         优化上下文以控制token数量
 
@@ -690,7 +740,9 @@ class ProblemDetectionContextBuilder:
         if context.token_estimate <= target_tokens:
             return context
 
-        self.logger.info(f"优化上下文，当前token数: {context.token_estimate}, 目标: {target_tokens}")
+        self.logger.info(
+            f"优化上下文，当前token数: {context.token_estimate}, 目标: {target_tokens}"
+        )
 
         # 创建优化的上下文副本
         optimized_context = ProblemDetectionContext(
@@ -700,7 +752,7 @@ class ProblemDetectionContextBuilder:
             static_analysis_results=context.static_analysis_results,
             user_preferences=context.user_preferences,
             detection_focus=context.detection_focus,
-            build_timestamp=context.build_timestamp
+            build_timestamp=context.build_timestamp,
         )
 
         # 优化文件内容
@@ -727,17 +779,21 @@ class ProblemDetectionContextBuilder:
         # 重新估算token数量
         optimized_context.token_estimate = self._estimate_token_usage(optimized_context)
 
-        self.logger.info(f"上下文优化完成，新token数: {optimized_context.token_estimate}")
+        self.logger.info(
+            f"上下文优化完成，新token数: {optimized_context.token_estimate}"
+        )
 
         return optimized_context
 
 
 # 便捷函数
-def build_problem_detection_context(selected_files: List[Dict[str, Any]],
-                                   static_analysis_results: Dict[str, Any],
-                                   project_structure: Optional[Any] = None,
-                                   user_preferences: Optional[Dict[str, Any]] = None,
-                                   max_tokens: int = 8000) -> Dict[str, Any]:
+def build_problem_detection_context(
+    selected_files: List[Dict[str, Any]],
+    static_analysis_results: Dict[str, Any],
+    project_structure: Optional[Any] = None,
+    user_preferences: Optional[Dict[str, Any]] = None,
+    max_tokens: int = 8000,
+) -> Dict[str, Any]:
     """
     便捷的问题检测上下文构建函数
 
@@ -756,7 +812,7 @@ def build_problem_detection_context(selected_files: List[Dict[str, Any]],
         selected_files=selected_files,
         static_analysis_results=static_analysis_results,
         project_structure=project_structure,
-        user_preferences=user_preferences
+        user_preferences=user_preferences,
     )
 
     # 如果token过多，进行优化

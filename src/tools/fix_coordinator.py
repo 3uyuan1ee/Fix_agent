@@ -3,26 +3,32 @@
 协调整个分析修复执行流程
 """
 
+import asyncio
 import time
 import uuid
-import asyncio
-from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
-from ..utils.logger import get_logger
-from ..utils.config import get_config_manager
 from ..llm.client import LLMClient
-from .fix_generator import FixGenerator, FixRequest, FixResult
+from ..utils.config import get_config_manager
+from ..utils.logger import get_logger
 from .backup_manager import BackupManager, BackupResult
-from .diff_viewer import DiffViewer, DiffResult
-from .fix_confirmation import FixConfirmationManager, ConfirmationRequest, ConfirmationResponse, ConfirmationSession
-from .fix_executor import FixExecutor, ExecutionResult, BatchExecutionResult
+from .diff_viewer import DiffResult, DiffViewer
+from .fix_confirmation import (
+    ConfirmationRequest,
+    ConfirmationResponse,
+    ConfirmationSession,
+    FixConfirmationManager,
+)
+from .fix_executor import BatchExecutionResult, ExecutionResult, FixExecutor
+from .fix_generator import FixGenerator, FixRequest, FixResult
 
 
 @dataclass
 class FixAnalysisRequest:
     """修复分析请求"""
+
     file_path: str
     issues: List[Dict[str, Any]]
     analysis_type: str = "security"
@@ -36,6 +42,7 @@ class FixAnalysisRequest:
 @dataclass
 class FixProcessResult:
     """修复流程结果"""
+
     process_id: str
     file_path: str
     success: bool
@@ -63,13 +70,14 @@ class FixProcessResult:
             "has_backup": self.backup_result is not None,
             "has_diff": self.diff_result is not None,
             "has_confirmation": self.confirmation_response is not None,
-            "has_execution": self.execution_result is not None
+            "has_execution": self.execution_result is not None,
         }
 
 
 @dataclass
 class BatchFixProcessResult:
     """批量修复流程结果"""
+
     batch_id: str
     total_files: int
     successful_files: int
@@ -99,14 +107,16 @@ class FixCoordinator:
 
         # 获取配置
         try:
-            self.config = self.config_manager.get_section('fix_coordinator')
+            self.config = self.config_manager.get_section("fix_coordinator")
         except:
             self.config = {}
 
-        self.parallel_processing = self.config.get('parallel_processing', False)
-        self.max_parallel_files = self.config.get('max_parallel_files', 3)
-        self.generate_reports = self.config.get('generate_reports', True)
-        self.report_output_dir = Path(self.config.get('report_output_dir', './fix_reports'))
+        self.parallel_processing = self.config.get("parallel_processing", False)
+        self.max_parallel_files = self.config.get("max_parallel_files", 3)
+        self.generate_reports = self.config.get("generate_reports", True)
+        self.report_output_dir = Path(
+            self.config.get("report_output_dir", "./fix_reports")
+        )
 
         # 初始化组件
         self.fix_generator = FixGenerator(config_manager, llm_client)
@@ -120,7 +130,9 @@ class FixCoordinator:
 
         self.logger.info("FixCoordinator initialized")
 
-    async def process_fix_request(self, request: FixAnalysisRequest) -> FixProcessResult:
+    async def process_fix_request(
+        self, request: FixAnalysisRequest
+    ) -> FixProcessResult:
         """
         处理单个文件修复请求
 
@@ -131,15 +143,14 @@ class FixCoordinator:
             修复流程结果
         """
         import uuid
+
         process_id = str(uuid.uuid4())
         start_time = time.time()
 
         self.logger.info(f"Starting fix process {process_id} for {request.file_path}")
 
         result = FixProcessResult(
-            process_id=process_id,
-            file_path=request.file_path,
-            success=False
+            process_id=process_id, file_path=request.file_path, success=False
         )
 
         try:
@@ -158,15 +169,15 @@ class FixCoordinator:
             if request.backup_enabled:
                 self.logger.info(f"Stage 2: Creating backup for {request.file_path}")
                 backup_result = self.backup_manager.create_backup(
-                    request.file_path,
-                    reason="pre_fix",
-                    fix_request_id=process_id
+                    request.file_path, reason="pre_fix", fix_request_id=process_id
                 )
                 result.backup_result = backup_result
                 result.stages_completed.append("backup_creation")
 
                 if not backup_result.success:
-                    self.logger.warning(f"Backup creation failed: {backup_result.error}")
+                    self.logger.warning(
+                        f"Backup creation failed: {backup_result.error}"
+                    )
                     # 继续处理，但记录警告
 
             # 阶段3: 生成代码差异
@@ -174,35 +185,40 @@ class FixCoordinator:
             diff_result = self.diff_viewer.generate_diff(
                 request.file_path,
                 fix_request.original_content,
-                fix_result.complete_fixed_content
+                fix_result.complete_fixed_content,
             )
             result.diff_result = diff_result
             result.stages_completed.append("diff_generation")
 
             # 阶段4: 用户确认
             if request.confirmation_required and not request.auto_fix:
-                self.logger.info(f"Stage 4: Requesting confirmation for {request.file_path}")
+                self.logger.info(
+                    f"Stage 4: Requesting confirmation for {request.file_path}"
+                )
                 confirmation_response = self.confirmation_manager.request_confirmation(
                     process_id,
                     request.file_path,
                     fix_result,
                     diff_result,
-                    result.backup_result.backup_id if result.backup_result else ""
+                    result.backup_result.backup_id if result.backup_result else "",
                 )
                 result.confirmation_response = confirmation_response
                 result.stages_completed.append("user_confirmation")
 
                 # 检查确认结果
-                if confirmation_response.status.value in ['rejected', 'cancelled']:
-                    result.error_message = f"Fix rejected by user: {confirmation_response.user_message}"
+                if confirmation_response.status.value in ["rejected", "cancelled"]:
+                    result.error_message = (
+                        f"Fix rejected by user: {confirmation_response.user_message}"
+                    )
                     return result
             else:
                 # 自动确认
                 from .fix_confirmation import ConfirmationStatus
+
                 confirmation_response = ConfirmationResponse(
                     fix_id=process_id,
                     status=ConfirmationStatus.APPROVED,
-                    user_message="Auto-approved"
+                    user_message="Auto-approved",
                 )
                 result.confirmation_response = confirmation_response
                 result.stages_completed.append("auto_confirmation")
@@ -214,7 +230,7 @@ class FixCoordinator:
                 request.file_path,
                 fix_result,
                 confirmation_response,
-                result.backup_result.backup_id if result.backup_result else None
+                result.backup_result.backup_id if result.backup_result else None,
             )
             result.execution_result = execution_result
             result.stages_completed.append("fix_execution")
@@ -224,8 +240,12 @@ class FixCoordinator:
                 result.summary = f"Fix completed successfully for {request.file_path}"
                 self.logger.info(f"Fix process {process_id} completed successfully")
             else:
-                result.error_message = f"Fix execution failed: {execution_result.error_message}"
-                self.logger.error(f"Fix process {process_id} failed: {execution_result.error_message}")
+                result.error_message = (
+                    f"Fix execution failed: {execution_result.error_message}"
+                )
+                self.logger.error(
+                    f"Fix process {process_id} failed: {execution_result.error_message}"
+                )
 
         except Exception as e:
             result.error_message = f"Fix process error: {e}"
@@ -239,7 +259,9 @@ class FixCoordinator:
 
         return result
 
-    def process_batch_fix_requests(self, requests: List[FixAnalysisRequest]) -> BatchFixProcessResult:
+    def process_batch_fix_requests(
+        self, requests: List[FixAnalysisRequest]
+    ) -> BatchFixProcessResult:
         """
         处理批量修复请求
 
@@ -250,15 +272,18 @@ class FixCoordinator:
             批量修复流程结果
         """
         import uuid
+
         batch_id = str(uuid.uuid4())
         start_time = time.time()
 
-        self.logger.info(f"Starting batch fix process {batch_id} for {len(requests)} files")
+        self.logger.info(
+            f"Starting batch fix process {batch_id} for {len(requests)} files"
+        )
 
         batch_result = BatchFixProcessResult(
             batch_id=batch_id,
             total_files=len(requests),
-            start_time=time.strftime("%Y-%m-%d %H:%M:%S")
+            start_time=time.strftime("%Y-%m-%d %H:%M:%S"),
         )
 
         try:
@@ -275,15 +300,26 @@ class FixCoordinator:
                     batch_result.process_results.append(result)
 
                     # 如果某个文件处理失败严重，询问是否继续
-                    if not result.success and result.execution_result and \
-                       result.execution_result.status.value not in ['rolled_back']:
-                        if not self._ask_continue_on_batch_failure(request.file_path, result.error_message):
-                            self.logger.info(f"Batch process cancelled due to failure in {request.file_path}")
+                    if (
+                        not result.success
+                        and result.execution_result
+                        and result.execution_result.status.value not in ["rolled_back"]
+                    ):
+                        if not self._ask_continue_on_batch_failure(
+                            request.file_path, result.error_message
+                        ):
+                            self.logger.info(
+                                f"Batch process cancelled due to failure in {request.file_path}"
+                            )
                             break
 
             # 统计结果
-            batch_result.successful_files = len([r for r in batch_result.process_results if r.success])
-            batch_result.failed_files = batch_result.total_files - batch_result.successful_files
+            batch_result.successful_files = len(
+                [r for r in batch_result.process_results if r.success]
+            )
+            batch_result.failed_files = (
+                batch_result.total_files - batch_result.successful_files
+            )
 
             # 生成批量报告
             if self.generate_reports:
@@ -296,14 +332,16 @@ class FixCoordinator:
         batch_result.end_time = time.strftime("%Y-%m-%d %H:%M:%S")
         batch_result.summary = self._generate_batch_summary(batch_result)
 
-        self.logger.info(f"Batch fix process {batch_id} completed: {batch_result.summary}")
+        self.logger.info(
+            f"Batch fix process {batch_id} completed: {batch_result.summary}"
+        )
 
         return batch_result
 
     async def _create_fix_request(self, request: FixAnalysisRequest) -> FixRequest:
         """创建修复请求"""
         file_path = Path(request.file_path)
-        original_content = file_path.read_text(encoding='utf-8')
+        original_content = file_path.read_text(encoding="utf-8")
 
         return FixRequest(
             file_path=request.file_path,
@@ -311,18 +349,22 @@ class FixCoordinator:
             original_content=original_content,
             analysis_type=request.analysis_type,
             user_instructions=request.user_instructions,
-            context=request.context
+            context=request.context,
         )
 
-    async def _process_requests_parallel(self, requests: List[FixAnalysisRequest]) -> List[FixProcessResult]:
+    async def _process_requests_parallel(
+        self, requests: List[FixAnalysisRequest]
+    ) -> List[FixProcessResult]:
         """并行处理请求"""
         # 分批处理
         batch_size = self.max_parallel_files
         all_results = []
 
         for i in range(0, len(requests), batch_size):
-            batch = requests[i:i + batch_size]
-            self.logger.info(f"Processing batch {i//batch_size + 1}: {len(batch)} files")
+            batch = requests[i : i + batch_size]
+            self.logger.info(
+                f"Processing batch {i//batch_size + 1}: {len(batch)} files"
+            )
 
             # 并发执行
             tasks = [self.process_fix_request(request) for request in batch]
@@ -337,7 +379,7 @@ class FixCoordinator:
                         file_path=batch[j].file_path,
                         success=False,
                         error_message=str(result),
-                        stages_completed=[]
+                        stages_completed=[],
                     )
                     all_results.append(error_result)
                 else:
@@ -355,55 +397,62 @@ class FixCoordinator:
                 f"处理时间: {result.total_time:.2f}秒",
                 f"成功状态: {'成功' if result.success else '失败'}",
                 f"完成的阶段: {', '.join(result.stages_completed)}",
-                ""
+                "",
             ]
 
             if result.error_message:
-                report_lines.extend([
-                    f"错误信息: {result.error_message}",
-                    ""
-                ])
+                report_lines.extend([f"错误信息: {result.error_message}", ""])
 
             if result.fix_result:
-                report_lines.extend([
-                    f"修复建议数: {len(result.fix_result.suggestions)}",
-                    f"使用模型: {result.fix_result.model_used}",
-                    f"Token使用: {result.fix_result.token_usage.get('total_tokens', 0)}",
-                    ""
-                ])
+                report_lines.extend(
+                    [
+                        f"修复建议数: {len(result.fix_result.suggestions)}",
+                        f"使用模型: {result.fix_result.model_used}",
+                        f"Token使用: {result.fix_result.token_usage.get('total_tokens', 0)}",
+                        "",
+                    ]
+                )
 
             if result.backup_result:
-                report_lines.extend([
-                    f"备份ID: {result.backup_result.backup_id}",
-                    f"备份文件: {result.backup_result.backup_path}",
-                    ""
-                ])
+                report_lines.extend(
+                    [
+                        f"备份ID: {result.backup_result.backup_id}",
+                        f"备份文件: {result.backup_result.backup_path}",
+                        "",
+                    ]
+                )
 
             if result.diff_result:
-                report_lines.extend([
-                    f"差异摘要: {result.diff_result.summary}",
-                    f"变更统计: {result.diff_result.stats}",
-                    ""
-                ])
+                report_lines.extend(
+                    [
+                        f"差异摘要: {result.diff_result.summary}",
+                        f"变更统计: {result.diff_result.stats}",
+                        "",
+                    ]
+                )
 
             if result.confirmation_response:
-                report_lines.extend([
-                    f"确认状态: {result.confirmation_response.status.value}",
-                    f"用户消息: {result.confirmation_response.user_message}",
-                    ""
-                ])
+                report_lines.extend(
+                    [
+                        f"确认状态: {result.confirmation_response.status.value}",
+                        f"用户消息: {result.confirmation_response.user_message}",
+                        "",
+                    ]
+                )
 
             if result.execution_result:
-                report_lines.extend([
-                    f"执行状态: {result.execution_result.status.value}",
-                    f"应用的修复数: {len(result.execution_result.applied_suggestions)}",
-                    ""
-                ])
+                report_lines.extend(
+                    [
+                        f"执行状态: {result.execution_result.status.value}",
+                        f"应用的修复数: {len(result.execution_result.applied_suggestions)}",
+                        "",
+                    ]
+                )
 
             # 写入报告文件
             report_file = self.report_output_dir / f"fix_report_{result.process_id}.txt"
-            with open(report_file, 'w', encoding='utf-8') as f:
-                f.write('\n'.join(report_lines))
+            with open(report_file, "w", encoding="utf-8") as f:
+                f.write("\n".join(report_lines))
 
             self.logger.info(f"Process report generated: {report_file}")
 
@@ -424,7 +473,7 @@ class FixCoordinator:
                 f"成功文件数: {batch_result.successful_files}",
                 f"失败文件数: {batch_result.failed_files}",
                 f"成功率: {batch_result.successful_files/batch_result.total_files:.1%}",
-                ""
+                "",
             ]
 
             # 详细结果
@@ -435,41 +484,53 @@ class FixCoordinator:
                 status_icon = "✅" if result.success else "❌"
                 report_lines.append(f"{i}. {status_icon} {result.file_path}")
                 report_lines.append(f"   处理时间: {result.total_time:.2f}秒")
-                report_lines.append(f"   完成阶段: {', '.join(result.stages_completed)}")
+                report_lines.append(
+                    f"   完成阶段: {', '.join(result.stages_completed)}"
+                )
                 if result.error_message:
                     report_lines.append(f"   错误: {result.error_message}")
                 report_lines.append("")
 
             # 统计信息
             if batch_result.process_results:
-                successful_results = [r for r in batch_result.process_results if r.success]
+                successful_results = [
+                    r for r in batch_result.process_results if r.success
+                ]
                 if successful_results:
-                    avg_time = sum(r.total_time for r in successful_results) / len(successful_results)
-                    report_lines.extend([
-                        "统计信息:",
-                        f"  平均处理时间: {avg_time:.2f}秒",
-                        f"  总修复建议数: {sum(len(r.fix_result.suggestions) for r in successful_results if r.fix_result)}",
-                        f"  总备份数: {sum(1 for r in successful_results if r.backup_result and r.backup_result.success)}",
-                        ""
-                    ])
+                    avg_time = sum(r.total_time for r in successful_results) / len(
+                        successful_results
+                    )
+                    report_lines.extend(
+                        [
+                            "统计信息:",
+                            f"  平均处理时间: {avg_time:.2f}秒",
+                            f"  总修复建议数: {sum(len(r.fix_result.suggestions) for r in successful_results if r.fix_result)}",
+                            f"  总备份数: {sum(1 for r in successful_results if r.backup_result and r.backup_result.success)}",
+                            "",
+                        ]
+                    )
 
             # 写入报告文件
-            report_file = self.report_output_dir / f"batch_fix_report_{batch_result.batch_id}.txt"
-            with open(report_file, 'w', encoding='utf-8') as f:
-                f.write('\n'.join(report_lines))
+            report_file = (
+                self.report_output_dir / f"batch_fix_report_{batch_result.batch_id}.txt"
+            )
+            with open(report_file, "w", encoding="utf-8") as f:
+                f.write("\n".join(report_lines))
 
             self.logger.info(f"Batch report generated: {report_file}")
 
         except Exception as e:
             self.logger.error(f"Failed to generate batch report: {e}")
 
-    def _ask_continue_on_batch_failure(self, file_path: str, error_message: str) -> bool:
+    def _ask_continue_on_batch_failure(
+        self, file_path: str, error_message: str
+    ) -> bool:
         """询问是否在批量处理失败时继续"""
         try:
             print(f"\n批量处理失败: {file_path}")
             print(f"错误信息: {error_message}")
             choice = input("是否继续处理其他文件? (y/n): ").strip().lower()
-            return choice in ['y', 'yes']
+            return choice in ["y", "yes"]
         except (KeyboardInterrupt, EOFError):
             return False
 
@@ -482,7 +543,9 @@ class FixCoordinator:
         else:
             return f"所有文件修复失败 (耗时: {batch_result.total_time:.2f}秒)"
 
-    def get_process_statistics(self, process_results: List[FixProcessResult]) -> Dict[str, Any]:
+    def get_process_statistics(
+        self, process_results: List[FixProcessResult]
+    ) -> Dict[str, Any]:
         """获取处理统计信息"""
         try:
             total_files = len(process_results)
@@ -502,18 +565,20 @@ class FixCoordinator:
             error_stats = {}
             for result in process_results:
                 if result.error_message:
-                    error_type = result.error_message.split(':')[0]
+                    error_type = result.error_message.split(":")[0]
                     error_stats[error_type] = error_stats.get(error_type, 0) + 1
 
             return {
                 "total_files": total_files,
                 "successful_files": successful_files,
                 "failed_files": failed_files,
-                "success_rate": successful_files / total_files if total_files > 0 else 0,
+                "success_rate": (
+                    successful_files / total_files if total_files > 0 else 0
+                ),
                 "total_time": total_time,
                 "average_time": avg_time,
                 "stage_completion_stats": stage_stats,
-                "error_distribution": error_stats
+                "error_distribution": error_stats,
             }
 
         except Exception as e:

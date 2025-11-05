@@ -3,10 +3,10 @@
 解决相对路径和绝对路径在整个工作流中的解析问题
 """
 
+import logging
 import os
 from pathlib import Path
-from typing import Union, List, Optional
-import logging
+from typing import List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -44,9 +44,9 @@ class PathResolver:
         if isinstance(project_root, str):
             project_root = project_root.strip()
             # 处理常见的相对路径前缀
-            if project_root.startswith('./'):
+            if project_root.startswith("./"):
                 project_path = Path(project_root[2:])
-            elif project_root.startswith('.\\'):
+            elif project_root.startswith(".\\"):
                 project_path = Path(project_root[3:])
 
         # 如果是相对路径，基于当前工作目录解析
@@ -75,7 +75,9 @@ class PathResolver:
         self.project_root = resolved_path
         self._saved_project_root = resolved_path
         logger.info(f"项目根目录已设置并保存: {self.project_root}")
-        logger.info(f"路径类型: {'绝对路径' if resolved_path.is_absolute() else '相对路径'}")
+        logger.info(
+            f"路径类型: {'绝对路径' if resolved_path.is_absolute() else '相对路径'}"
+        )
 
     def get_saved_project_root(self) -> Path:
         """
@@ -100,8 +102,9 @@ class PathResolver:
                 self.set_project_root(Path.cwd())
             logger.info(f"项目根目录已确保设置: {self._saved_project_root}")
 
-    def resolve_path(self, file_path: Union[str, Path],
-                    search_dirs: Optional[List[str]] = None) -> Optional[Path]:
+    def resolve_path(
+        self, file_path: Union[str, Path], search_dirs: Optional[List[str]] = None
+    ) -> Optional[Path]:
         """
         解析文件路径，支持相对路径和绝对路径
         支持各种常见的路径格式：./file.py、../src/file.py、file.py等
@@ -118,11 +121,11 @@ class PathResolver:
             file_path_str = file_path.strip()
 
             # 处理常见的相对路径前缀
-            if file_path_str.startswith('./'):
+            if file_path_str.startswith("./"):
                 file_path = Path(file_path_str[2:])
-            elif file_path_str.startswith('.\\'):
+            elif file_path_str.startswith(".\\"):
                 file_path = Path(file_path_str[3:])
-            elif file_path_str.startswith('../') or file_path_str.startswith('..\\'):
+            elif file_path_str.startswith("../") or file_path_str.startswith("..\\"):
                 # 保留上级目录引用，让Path.resolve()处理
                 file_path = Path(file_path_str)
             else:
@@ -190,13 +193,20 @@ class PathResolver:
             # 检查文件是否存在
             if candidate.exists():
                 resolved_path = candidate.resolve()
-                logger.debug(f"搜索目录查找成功: {file_path} -> {resolved_path} (在 {search_dir} 中)")
+                logger.debug(
+                    f"搜索目录查找成功: {file_path} -> {resolved_path} (在 {search_dir} 中)"
+                )
                 return resolved_path
 
         # 尝试使用glob模式匹配（处理通配符）
         try:
             import glob
-            pattern = str(self.project_root / "**" / file_path.name if file_path.name else file_path)
+
+            pattern = str(
+                self.project_root / "**" / file_path.name
+                if file_path.name
+                else file_path
+            )
             matches = glob.glob(pattern, recursive=True)
             if matches:
                 # 返回第一个匹配项
@@ -216,7 +226,9 @@ class PathResolver:
         except Exception as e:
             logger.debug(f"当前工作目录查找失败: {e}")
 
-        logger.warning(f"无法找到文件: {file_path} (已尝试项目根目录、搜索目录和当前工作目录)")
+        logger.warning(
+            f"无法找到文件: {file_path} (已尝试项目根目录、搜索目录和当前工作目录)"
+        )
         return None
 
     def normalize_path(self, file_path: Union[str, Path]) -> Path:
@@ -244,8 +256,9 @@ class PathResolver:
 
         return path
 
-    def get_relative_path(self, file_path: Union[str, Path],
-                         base: Optional[Union[str, Path]] = None) -> Path:
+    def get_relative_path(
+        self, file_path: Union[str, Path], base: Optional[Union[str, Path]] = None
+    ) -> Path:
         """
         获取相对路径
 
@@ -268,8 +281,11 @@ class PathResolver:
             logger.debug(f"无法获取相对路径: {file_path} 相对于 {base_path}")
             return file_path
 
-    def batch_resolve_paths(self, file_paths: List[Union[str, Path]],
-                           search_dirs: Optional[List[str]] = None) -> List[Path]:
+    def batch_resolve_paths(
+        self,
+        file_paths: List[Union[str, Path]],
+        search_dirs: Optional[List[str]] = None,
+    ) -> List[Path]:
         """
         批量解析路径
 
@@ -310,7 +326,7 @@ class PathResolver:
             "is_directory": target_path.is_dir() if target_path.exists() else False,
             "subdirectories": [],
             "files": [],
-            "errors": []
+            "errors": [],
         }
 
         if not target_path.exists():
@@ -357,8 +373,9 @@ def get_path_resolver(project_root: Optional[Union[str, Path]] = None) -> PathRe
     return _global_resolver
 
 
-def resolve_file_path(file_path: Union[str, Path],
-                     search_dirs: Optional[List[str]] = None) -> Optional[Path]:
+def resolve_file_path(
+    file_path: Union[str, Path], search_dirs: Optional[List[str]] = None
+) -> Optional[Path]:
     """
     便捷函数：解析单个文件路径
 
@@ -373,8 +390,9 @@ def resolve_file_path(file_path: Union[str, Path],
     return resolver.resolve_path(file_path, search_dirs)
 
 
-def batch_resolve_file_paths(file_paths: List[Union[str, Path]],
-                           search_dirs: Optional[List[str]] = None) -> List[Path]:
+def batch_resolve_file_paths(
+    file_paths: List[Union[str, Path]], search_dirs: Optional[List[str]] = None
+) -> List[Path]:
     """
     便捷函数：批量解析文件路径
 

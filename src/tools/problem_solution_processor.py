@@ -6,18 +6,21 @@
 
 import json
 import uuid
+from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import Dict, List, Any, Optional
-from pathlib import Path
-from dataclasses import dataclass, asdict
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from ..utils.logger import get_logger
 from ..utils.config import get_config_manager
-from .workflow_flow_state_manager import WorkflowSession
+from ..utils.logger import get_logger
 from .workflow_data_types import AIDetectedProblem, AIFixSuggestion
+from .workflow_flow_state_manager import (
+    WorkflowFlowStateManager,
+    WorkflowNode,
+    WorkflowSession,
+)
 from .workflow_user_interaction_types import UserDecision
-from .workflow_flow_state_manager import WorkflowNode, WorkflowFlowStateManager
 
 logger = get_logger()
 
@@ -25,6 +28,7 @@ logger = get_logger()
 @dataclass
 class ProblemSolution:
     """问题解决方案"""
+
     solution_id: str
     session_id: str
     issue_id: str
@@ -56,13 +60,14 @@ class ProblemSolution:
             "solution_timestamp": self.solution_timestamp.isoformat(),
             "verification_status": self.verification_status,
             "quality_score": self.quality_score,
-            "user_satisfaction": self.user_satisfaction
+            "user_satisfaction": self.user_satisfaction,
         }
 
 
 @dataclass
 class SolutionStatistics:
     """解决方案统计"""
+
     total_solved: int
     solved_by_type: Dict[str, int]
     solved_by_severity: Dict[str, int]
@@ -76,7 +81,7 @@ class SolutionStatistics:
             "solved_by_type": self.solved_by_type,
             "solved_by_severity": self.solved_by_severity,
             "average_quality_score": self.average_quality_score,
-            "solution_time_stats": self.solution_time_stats
+            "solution_time_stats": self.solution_time_stats,
         }
 
 
@@ -98,7 +103,9 @@ class ProblemSolutionProcessor:
         self.config = self.config_manager.get("project_analysis", {})
 
         # 解决方案存储目录
-        self.solutions_dir = Path(self.config.get("solutions_dir", ".fix_backups/solutions"))
+        self.solutions_dir = Path(
+            self.config.get("solutions_dir", ".fix_backups/solutions")
+        )
         self.solutions_dir.mkdir(parents=True, exist_ok=True)
 
     def process_problem_solution(
@@ -107,7 +114,7 @@ class ProblemSolutionProcessor:
         issue_id: str,
         suggestion_id: str,
         verification_report_id: Optional[str] = None,
-        user_satisfaction: Optional[str] = None
+        user_satisfaction: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         处理问题解决方案
@@ -146,7 +153,7 @@ class ProblemSolutionProcessor:
                 problem=problem,
                 fix_suggestion=fix_suggestion,
                 verification_report_id=verification_report_id,
-                user_satisfaction=user_satisfaction
+                user_satisfaction=user_satisfaction,
             )
 
             # 保存解决方案
@@ -160,9 +167,7 @@ class ProblemSolutionProcessor:
 
             # 转换到节点L（检查剩余问题）
             self.state_manager.transition_to(
-                session_id,
-                WorkflowNode.CHECK_REMAINING,
-                f"问题已解决: {issue_id}"
+                session_id, WorkflowNode.CHECK_REMAINING, f"问题已解决: {issue_id}"
             )
 
             # 生成处理结果
@@ -173,7 +178,7 @@ class ProblemSolutionProcessor:
                 "suggestion_id": suggestion_id,
                 "next_node": "CHECK_REMAINING",
                 "solution_report": solution_report,
-                "message": f"问题 {issue_id} 已成功解决"
+                "message": f"问题 {issue_id} 已成功解决",
             }
 
             self.logger.info(f"问题解决处理完成: {result}")
@@ -184,17 +189,21 @@ class ProblemSolutionProcessor:
             return {
                 "success": False,
                 "error": str(e),
-                "message": "处理问题解决方案失败"
+                "message": "处理问题解决方案失败",
             }
 
-    def _get_problem_by_id(self, session: WorkflowSession, issue_id: str) -> Optional[AIDetectedProblem]:
+    def _get_problem_by_id(
+        self, session: WorkflowSession, issue_id: str
+    ) -> Optional[AIDetectedProblem]:
         """根据ID获取问题信息"""
         for problem in session.detected_problems:
             if problem.issue_id == issue_id:
                 return problem
         return None
 
-    def _get_fix_suggestion_by_id(self, session: WorkflowSession, suggestion_id: str) -> Optional[AIFixSuggestion]:
+    def _get_fix_suggestion_by_id(
+        self, session: WorkflowSession, suggestion_id: str
+    ) -> Optional[AIFixSuggestion]:
         """根据ID获取修复建议信息"""
         for suggestion in session.fix_suggestions:
             if suggestion.suggestion_id == suggestion_id:
@@ -207,7 +216,7 @@ class ProblemSolutionProcessor:
         problem: AIDetectedProblem,
         fix_suggestion: AIFixSuggestion,
         verification_report_id: Optional[str],
-        user_satisfaction: Optional[str]
+        user_satisfaction: Optional[str],
     ) -> ProblemSolution:
         """创建解决方案记录"""
         # 计算质量分数（可以从验证报告获取，这里使用默认值）
@@ -227,15 +236,18 @@ class ProblemSolutionProcessor:
             solution_timestamp=datetime.now(),
             verification_status="verified_success",
             quality_score=quality_score,
-            user_satisfaction=user_satisfaction
+            user_satisfaction=user_satisfaction,
         )
 
     def _save_solution(self, solution: ProblemSolution) -> None:
         """保存解决方案记录"""
         try:
-            solution_file = self.solutions_dir / f"solution_{solution.session_id}_{solution.issue_id}.json"
+            solution_file = (
+                self.solutions_dir
+                / f"solution_{solution.session_id}_{solution.issue_id}.json"
+            )
 
-            with open(solution_file, 'w', encoding='utf-8') as f:
+            with open(solution_file, "w", encoding="utf-8") as f:
                 json.dump(solution.to_dict(), f, indent=2, ensure_ascii=False)
 
             self.logger.info(f"解决方案已保存: {solution.solution_id}")
@@ -244,14 +256,16 @@ class ProblemSolutionProcessor:
             self.logger.error(f"保存解决方案失败: {e}")
             raise
 
-    def _update_session_for_solution(self, session: WorkflowSession, solution: ProblemSolution) -> None:
+    def _update_session_for_solution(
+        self, session: WorkflowSession, solution: ProblemSolution
+    ) -> None:
         """更新会话状态以反映问题解决"""
         # 从待处理问题列表中移除
         if solution.issue_id in session.pending_problems:
             session.pending_problems.remove(solution.issue_id)
 
         # 添加到已解决问题列表
-        if not hasattr(session, 'solved_problems'):
+        if not hasattr(session, "solved_problems"):
             session.solved_problems = []
         session.solved_problems.append(solution.solution_id)
 
@@ -272,30 +286,28 @@ class ProblemSolutionProcessor:
                 "file_path": solution.file_path,
                 "line_number": solution.line_number,
                 "problem_type": solution.problem_type,
-                "severity": solution.severity
+                "severity": solution.severity,
             },
             "solution_details": {
                 "suggestion_id": solution.suggestion_id,
                 "fix_code": solution.fix_code,
                 "fix_description": solution.fix_description,
-                "quality_score": solution.quality_score
+                "quality_score": solution.quality_score,
             },
             "solution_metadata": {
                 "solution_timestamp": solution.solution_timestamp.isoformat(),
                 "verification_status": solution.verification_status,
-                "user_satisfaction": solution.user_satisfaction
+                "user_satisfaction": solution.user_satisfaction,
             },
             "impact_assessment": {
                 "problem_resolved": True,
                 "code_improved": True,
-                "risk_mitigated": solution.severity in ["error", "warning"]
-            }
+                "risk_mitigated": solution.severity in ["error", "warning"],
+            },
         }
 
     def batch_process_solutions(
-        self,
-        session_id: str,
-        solution_tasks: List[Dict[str, Any]]
+        self, session_id: str, solution_tasks: List[Dict[str, Any]]
     ) -> Dict[str, Any]:
         """
         批量处理解决方案
@@ -308,24 +320,30 @@ class ProblemSolutionProcessor:
             Dict[str, Any]: 批量处理结果
         """
         try:
-            self.logger.info(f"开始批量处理解决方案: 会话={session_id}, 任务数={len(solution_tasks)}")
+            self.logger.info(
+                f"开始批量处理解决方案: 会话={session_id}, 任务数={len(solution_tasks)}"
+            )
 
             results = {
                 "success_count": 0,
                 "failed_count": 0,
                 "results": [],
-                "total_tasks": len(solution_tasks)
+                "total_tasks": len(solution_tasks),
             }
 
             for task in solution_tasks:
                 try:
-                    result = self.process_problem_solution(session_id=session_id, **task)
+                    result = self.process_problem_solution(
+                        session_id=session_id, **task
+                    )
 
-                    results["results"].append({
-                        "issue_id": task.get("issue_id"),
-                        "success": result.get("success", False),
-                        "message": result.get("message", "")
-                    })
+                    results["results"].append(
+                        {
+                            "issue_id": task.get("issue_id"),
+                            "success": result.get("success", False),
+                            "message": result.get("message", ""),
+                        }
+                    )
 
                     if result.get("success"):
                         results["success_count"] += 1
@@ -334,14 +352,18 @@ class ProblemSolutionProcessor:
 
                 except Exception as e:
                     self.logger.error(f"批量处理单个解决方案失败: {e}")
-                    results["results"].append({
-                        "issue_id": task.get("issue_id"),
-                        "success": False,
-                        "message": str(e)
-                    })
+                    results["results"].append(
+                        {
+                            "issue_id": task.get("issue_id"),
+                            "success": False,
+                            "message": str(e),
+                        }
+                    )
                     results["failed_count"] += 1
 
-            self.logger.info(f"批量解决方案处理完成: 成功={results['success_count']}, 失败={results['failed_count']}")
+            self.logger.info(
+                f"批量解决方案处理完成: 成功={results['success_count']}, 失败={results['failed_count']}"
+            )
             return results
 
         except Exception as e:
@@ -351,7 +373,7 @@ class ProblemSolutionProcessor:
                 "failed_count": len(solution_tasks),
                 "results": [],
                 "total_tasks": len(solution_tasks),
-                "error": str(e)
+                "error": str(e),
             }
 
     def get_solution_statistics(self, session_id: str) -> SolutionStatistics:
@@ -378,7 +400,7 @@ class ProblemSolutionProcessor:
                     solved_by_type={},
                     solved_by_severity={},
                     average_quality_score=0.0,
-                    solution_time_stats={}
+                    solution_time_stats={},
                 )
 
             # 统计解决问题数量
@@ -397,7 +419,9 @@ class ProblemSolutionProcessor:
                 solved_by_severity[severity] = solved_by_severity.get(severity, 0) + 1
 
             # 计算平均质量分数
-            average_quality_score = sum(s.quality_score for s in solutions) / len(solutions)
+            average_quality_score = sum(s.quality_score for s in solutions) / len(
+                solutions
+            )
 
             # 解决时间统计
             solution_times = [s.solution_timestamp for s in solutions]
@@ -406,7 +430,9 @@ class ProblemSolutionProcessor:
                 solution_time_stats = {
                     "total_time_seconds": time_span,
                     "average_time_per_solution": time_span / len(solutions),
-                    "solutions_per_hour": len(solutions) / (time_span / 3600) if time_span > 0 else 0
+                    "solutions_per_hour": (
+                        len(solutions) / (time_span / 3600) if time_span > 0 else 0
+                    ),
                 }
             else:
                 solution_time_stats = {}
@@ -416,7 +442,7 @@ class ProblemSolutionProcessor:
                 solved_by_type=solved_by_type,
                 solved_by_severity=solved_by_severity,
                 average_quality_score=average_quality_score,
-                solution_time_stats=solution_time_stats
+                solution_time_stats=solution_time_stats,
             )
 
         except Exception as e:
@@ -426,7 +452,7 @@ class ProblemSolutionProcessor:
                 solved_by_type={},
                 solved_by_severity={},
                 average_quality_score=0.0,
-                solution_time_stats={}
+                solution_time_stats={},
             )
 
     def _get_session_solutions(self, session_id: str) -> List[ProblemSolution]:
@@ -437,7 +463,7 @@ class ProblemSolutionProcessor:
             # 扫描解决方案文件
             pattern = f"solution_{session_id}_*.json"
             for solution_file in self.solutions_dir.glob(pattern):
-                with open(solution_file, 'r', encoding='utf-8') as f:
+                with open(solution_file, "r", encoding="utf-8") as f:
                     solution_data = json.load(f)
                     solution = self._reconstruct_solution(solution_data)
                     if solution:
@@ -449,7 +475,9 @@ class ProblemSolutionProcessor:
             self.logger.error(f"获取会话解决方案失败: {e}")
             return []
 
-    def _reconstruct_solution(self, solution_data: Dict[str, Any]) -> Optional[ProblemSolution]:
+    def _reconstruct_solution(
+        self, solution_data: Dict[str, Any]
+    ) -> Optional[ProblemSolution]:
         """从字典数据重构解决方案"""
         try:
             return ProblemSolution(
@@ -463,16 +491,20 @@ class ProblemSolutionProcessor:
                 suggestion_id=solution_data["suggestion_id"],
                 fix_code=solution_data["fix_code"],
                 fix_description=solution_data["fix_description"],
-                solution_timestamp=datetime.fromisoformat(solution_data["solution_timestamp"]),
+                solution_timestamp=datetime.fromisoformat(
+                    solution_data["solution_timestamp"]
+                ),
                 verification_status=solution_data["verification_status"],
                 quality_score=solution_data["quality_score"],
-                user_satisfaction=solution_data.get("user_satisfaction")
+                user_satisfaction=solution_data.get("user_satisfaction"),
             )
         except Exception as e:
             self.logger.error(f"重构解决方案失败: {e}")
             return None
 
-    def get_solution_details(self, session_id: str, issue_id: str) -> Optional[ProblemSolution]:
+    def get_solution_details(
+        self, session_id: str, issue_id: str
+    ) -> Optional[ProblemSolution]:
         """
         获取特定问题的解决方案详情
 
@@ -484,12 +516,14 @@ class ProblemSolutionProcessor:
             Optional[ProblemSolution]: 解决方案详情
         """
         try:
-            solution_file = self.solutions_dir / f"solution_{session_id}_{issue_id}.json"
+            solution_file = (
+                self.solutions_dir / f"solution_{session_id}_{issue_id}.json"
+            )
 
             if not solution_file.exists():
                 return None
 
-            with open(solution_file, 'r', encoding='utf-8') as f:
+            with open(solution_file, "r", encoding="utf-8") as f:
                 solution_data = json.load(f)
 
             return self._reconstruct_solution(solution_data)
@@ -519,7 +553,7 @@ class ProblemSolutionProcessor:
                 "executive_summary": {
                     "total_problems_solved": statistics.total_solved,
                     "success_rate": 1.0 if statistics.total_solved > 0 else 0.0,
-                    "average_quality_score": statistics.average_quality_score
+                    "average_quality_score": statistics.average_quality_score,
                 },
                 "problem_type_breakdown": statistics.solved_by_type,
                 "severity_breakdown": statistics.solved_by_severity,
@@ -530,12 +564,12 @@ class ProblemSolutionProcessor:
                         "issue_id": s.issue_id,
                         "file_path": s.file_path,
                         "problem_type": s.problem_type,
-                        "solution_timestamp": s.solution_timestamp.isoformat()
+                        "solution_timestamp": s.solution_timestamp.isoformat(),
                     }
                     for s in solutions[-5:]  # 最近5个解决方案
                 ],
                 "quality_distribution": self._analyze_quality_distribution(solutions),
-                "recommendations": self._generate_solution_recommendations(statistics)
+                "recommendations": self._generate_solution_recommendations(statistics),
             }
 
             return report
@@ -544,7 +578,9 @@ class ProblemSolutionProcessor:
             self.logger.error(f"生成解决方案摘要报告失败: {e}")
             return {"error": str(e)}
 
-    def _analyze_quality_distribution(self, solutions: List[ProblemSolution]) -> Dict[str, Any]:
+    def _analyze_quality_distribution(
+        self, solutions: List[ProblemSolution]
+    ) -> Dict[str, Any]:
         """分析质量分布"""
         if not solutions:
             return {}
@@ -557,11 +593,15 @@ class ProblemSolutionProcessor:
             "average_score": sum(quality_scores) / len(quality_scores),
             "median_score": sorted(quality_scores)[len(quality_scores) // 2],
             "high_quality_count": len([s for s in solutions if s.quality_score >= 0.8]),
-            "medium_quality_count": len([s for s in solutions if 0.6 <= s.quality_score < 0.8]),
-            "low_quality_count": len([s for s in solutions if s.quality_score < 0.6])
+            "medium_quality_count": len(
+                [s for s in solutions if 0.6 <= s.quality_score < 0.8]
+            ),
+            "low_quality_count": len([s for s in solutions if s.quality_score < 0.6]),
         }
 
-    def _generate_solution_recommendations(self, statistics: SolutionStatistics) -> List[str]:
+    def _generate_solution_recommendations(
+        self, statistics: SolutionStatistics
+    ) -> List[str]:
         """生成解决方案建议"""
         recommendations = []
 

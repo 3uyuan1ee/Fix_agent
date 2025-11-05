@@ -3,22 +3,28 @@ HTTP客户端模块，提供请求处理、重试和异常管理
 """
 
 import asyncio
-import time
 import json
-from typing import Dict, Any, Optional, Callable, AsyncGenerator, Union
+import time
 from dataclasses import dataclass
+from typing import Any, AsyncGenerator, Callable, Dict, Optional, Union
 
 import aiohttp
-from .exceptions import (
-    LLMError, LLMTimeoutError, LLMRateLimitError,
-    LLMNetworkError, LLMAuthenticationError, LLMQuotaExceededError
-)
+
 from ..utils.logger import get_logger
+from .exceptions import (
+    LLMAuthenticationError,
+    LLMError,
+    LLMNetworkError,
+    LLMQuotaExceededError,
+    LLMRateLimitError,
+    LLMTimeoutError,
+)
 
 
 @dataclass
 class RetryConfig:
     """重试配置"""
+
     max_retries: int = 3
     base_delay: float = 1.0
     max_delay: float = 60.0
@@ -68,7 +74,7 @@ class HTTPClient:
         data: Optional[Union[str, Dict[str, Any]]] = None,
         params: Optional[Dict[str, Any]] = None,
         timeout: Optional[int] = None,
-        **kwargs
+        **kwargs,
     ) -> Dict[str, Any]:
         """
         发送HTTP请求
@@ -106,7 +112,7 @@ class HTTPClient:
                     data=data,
                     params=params,
                     timeout=request_timeout,
-                    **kwargs
+                    **kwargs,
                 ) as response:
                     # 检查响应状态
                     await self._check_response_status(response)
@@ -115,15 +121,26 @@ class HTTPClient:
                     response_data = await self._parse_response(response)
                     return response_data
 
-            except (LLMError, LLMAuthenticationError, LLMRateLimitError, LLMQuotaExceededError) as e:
+            except (
+                LLMError,
+                LLMAuthenticationError,
+                LLMRateLimitError,
+                LLMQuotaExceededError,
+            ) as e:
                 # LLM相关异常不需要重试，直接抛出
-                self.logger.warning(f"LLM error (attempt {attempt + 1}/{self.retry_config.max_retries + 1}): {e}")
+                self.logger.warning(
+                    f"LLM error (attempt {attempt + 1}/{self.retry_config.max_retries + 1}): {e}"
+                )
                 raise e
 
             except asyncio.TimeoutError as e:
-                self.logger.warning(f"Request timeout (attempt {attempt + 1}/{self.retry_config.max_retries + 1}): {e}")
+                self.logger.warning(
+                    f"Request timeout (attempt {attempt + 1}/{self.retry_config.max_retries + 1}): {e}"
+                )
                 if attempt == self.retry_config.max_retries:
-                    raise LLMTimeoutError(f"Request timeout after {self.retry_config.max_retries} retries")
+                    raise LLMTimeoutError(
+                        f"Request timeout after {self.retry_config.max_retries} retries"
+                    )
 
             except aiohttp.ClientError as e:
                 error_msg = f"Request failed (attempt {attempt + 1}/{self.retry_config.max_retries + 1}): {e}"
@@ -134,12 +151,18 @@ class HTTPClient:
                     await self._handle_client_response_error(e)
 
                 if attempt == self.retry_config.max_retries:
-                    raise LLMNetworkError(f"Request failed after {self.retry_config.max_retries} retries: {e}")
+                    raise LLMNetworkError(
+                        f"Request failed after {self.retry_config.max_retries} retries: {e}"
+                    )
 
             except Exception as e:
-                self.logger.warning(f"Unexpected error (attempt {attempt + 1}/{self.retry_config.max_retries + 1}): {e}")
+                self.logger.warning(
+                    f"Unexpected error (attempt {attempt + 1}/{self.retry_config.max_retries + 1}): {e}"
+                )
                 if attempt == self.retry_config.max_retries:
-                    raise LLMError(f"Unexpected error after {self.retry_config.max_retries} retries: {e}")
+                    raise LLMError(
+                        f"Unexpected error after {self.retry_config.max_retries} retries: {e}"
+                    )
 
             # 等待重试
             if attempt < self.retry_config.max_retries:
@@ -157,7 +180,7 @@ class HTTPClient:
         data: Optional[Union[str, Dict[str, Any]]] = None,
         params: Optional[Dict[str, Any]] = None,
         timeout: Optional[int] = None,
-        **kwargs
+        **kwargs,
     ) -> AsyncGenerator[Dict[str, Any], None]:
         """
         发送流式HTTP请求
@@ -195,7 +218,7 @@ class HTTPClient:
                     data=data,
                     params=params,
                     timeout=request_timeout,
-                    **kwargs
+                    **kwargs,
                 ) as response:
                     # 检查响应状态
                     await self._check_response_status(response)
@@ -206,15 +229,26 @@ class HTTPClient:
 
                     return  # 成功完成，退出重试循环
 
-            except (LLMError, LLMAuthenticationError, LLMRateLimitError, LLMQuotaExceededError) as e:
+            except (
+                LLMError,
+                LLMAuthenticationError,
+                LLMRateLimitError,
+                LLMQuotaExceededError,
+            ) as e:
                 # LLM相关异常不需要重试，直接抛出
-                self.logger.warning(f"LLM stream error (attempt {attempt + 1}/{self.retry_config.max_retries + 1}): {e}")
+                self.logger.warning(
+                    f"LLM stream error (attempt {attempt + 1}/{self.retry_config.max_retries + 1}): {e}"
+                )
                 raise e
 
             except asyncio.TimeoutError as e:
-                self.logger.warning(f"Stream request timeout (attempt {attempt + 1}/{self.retry_config.max_retries + 1}): {e}")
+                self.logger.warning(
+                    f"Stream request timeout (attempt {attempt + 1}/{self.retry_config.max_retries + 1}): {e}"
+                )
                 if attempt == self.retry_config.max_retries:
-                    raise LLMTimeoutError(f"Stream request timeout after {self.retry_config.max_retries} retries")
+                    raise LLMTimeoutError(
+                        f"Stream request timeout after {self.retry_config.max_retries} retries"
+                    )
 
             except aiohttp.ClientError as e:
                 error_msg = f"Stream request failed (attempt {attempt + 1}/{self.retry_config.max_retries + 1}): {e}"
@@ -224,12 +258,18 @@ class HTTPClient:
                     await self._handle_client_response_error(e)
 
                 if attempt == self.retry_config.max_retries:
-                    raise LLMNetworkError(f"Stream request failed after {self.retry_config.max_retries} retries: {e}")
+                    raise LLMNetworkError(
+                        f"Stream request failed after {self.retry_config.max_retries} retries: {e}"
+                    )
 
             except Exception as e:
-                self.logger.warning(f"Unexpected stream error (attempt {attempt + 1}/{self.retry_config.max_retries + 1}): {e}")
+                self.logger.warning(
+                    f"Unexpected stream error (attempt {attempt + 1}/{self.retry_config.max_retries + 1}): {e}"
+                )
                 if attempt == self.retry_config.max_retries:
-                    raise LLMError(f"Unexpected stream error after {self.retry_config.max_retries} retries: {e}")
+                    raise LLMError(
+                        f"Unexpected stream error after {self.retry_config.max_retries} retries: {e}"
+                    )
 
             # 等待重试
             if attempt < self.retry_config.max_retries:
@@ -252,7 +292,9 @@ class HTTPClient:
                     error_data = response.reason
 
             if response.status == 401:
-                raise LLMAuthenticationError("Authentication failed", error_code=str(response.status))
+                raise LLMAuthenticationError(
+                    "Authentication failed", error_code=str(response.status)
+                )
             elif response.status == 429:
                 retry_after = None
                 if "Retry-After" in response.headers:
@@ -260,22 +302,33 @@ class HTTPClient:
                         retry_after = int(response.headers["Retry-After"])
                     except ValueError:
                         pass
-                raise LLMRateLimitError("Rate limit exceeded", error_code=str(response.status), retry_after=retry_after)
+                raise LLMRateLimitError(
+                    "Rate limit exceeded",
+                    error_code=str(response.status),
+                    retry_after=retry_after,
+                )
             elif response.status == 402:
-                raise LLMQuotaExceededError("Quota exceeded", error_code=str(response.status))
+                raise LLMQuotaExceededError(
+                    "Quota exceeded", error_code=str(response.status)
+                )
             else:
-                raise LLMNetworkError(f"HTTP {response.status}: {response.reason}", error_code=str(response.status))
+                raise LLMNetworkError(
+                    f"HTTP {response.status}: {response.reason}",
+                    error_code=str(response.status),
+                )
 
-    async def _handle_client_response_error(self, error: aiohttp.ClientResponseError) -> None:
+    async def _handle_client_response_error(
+        self, error: aiohttp.ClientResponseError
+    ) -> None:
         """处理客户端响应错误"""
         # 可以根据需要实现特定的错误处理逻辑
         pass
 
     async def _parse_response(self, response: aiohttp.ClientResponse) -> Dict[str, Any]:
         """解析响应数据"""
-        content_type = response.headers.get('Content-Type', '').lower()
+        content_type = response.headers.get("Content-Type", "").lower()
 
-        if 'application/json' in content_type:
+        if "application/json" in content_type:
             try:
                 return await response.json()
             except json.JSONDecodeError as e:
@@ -284,18 +337,20 @@ class HTTPClient:
         else:
             return {"raw_text": await response.text()}
 
-    async def _read_stream_response(self, response: aiohttp.ClientResponse) -> AsyncGenerator[Dict[str, Any], None]:
+    async def _read_stream_response(
+        self, response: aiohttp.ClientResponse
+    ) -> AsyncGenerator[Dict[str, Any], None]:
         """读取流式响应"""
-        content_type = response.headers.get('Content-Type', '').lower()
+        content_type = response.headers.get("Content-Type", "").lower()
 
-        if 'text/event-stream' in content_type:
+        if "text/event-stream" in content_type:
             # Server-Sent Events格式
             async for line in response.content:
                 if line:
-                    line_str = line.decode('utf-8').strip()
-                    if line_str.startswith('data: '):
+                    line_str = line.decode("utf-8").strip()
+                    if line_str.startswith("data: "):
                         data_str = line_str[6:]  # 移除 "data: " 前缀
-                        if data_str == '[DONE]':
+                        if data_str == "[DONE]":
                             break
                         try:
                             data = json.loads(data_str)
@@ -308,7 +363,7 @@ class HTTPClient:
             # 其他流式格式
             async for chunk in response.content:
                 if chunk:
-                    chunk_str = chunk.decode('utf-8')
+                    chunk_str = chunk.decode("utf-8")
                     try:
                         data = json.loads(chunk_str)
                         yield data
@@ -318,13 +373,16 @@ class HTTPClient:
 
     def _calculate_retry_delay(self, attempt: int) -> float:
         """计算重试延迟"""
-        delay = self.retry_config.base_delay * (self.retry_config.exponential_base ** attempt)
+        delay = self.retry_config.base_delay * (
+            self.retry_config.exponential_base**attempt
+        )
         delay = min(delay, self.retry_config.max_delay)
 
         if self.retry_config.jitter:
             # 添加随机抖动，避免雷群效应
             import random
-            delay *= (0.5 + random.random() * 0.5)
+
+            delay *= 0.5 + random.random() * 0.5
 
         return delay
 
@@ -339,7 +397,7 @@ class RetryableMixin:
         max_delay: float = 60.0,
         exponential_base: float = 2.0,
         jitter: bool = True,
-        exceptions: tuple = (Exception,)
+        exceptions: tuple = (Exception,),
     ):
         """
         重试装饰器
@@ -352,6 +410,7 @@ class RetryableMixin:
             jitter: 是否添加随机抖动
             exceptions: 需要重试的异常类型
         """
+
         def decorator(func):
             async def wrapper(*args, **kwargs):
                 for attempt in range(max_retries + 1):
@@ -361,12 +420,13 @@ class RetryableMixin:
                         if attempt == max_retries:
                             raise
 
-                        delay = base_delay * (exponential_base ** attempt)
+                        delay = base_delay * (exponential_base**attempt)
                         delay = min(delay, max_delay)
 
                         if jitter:
                             import random
-                            delay *= (0.5 + random.random() * 0.5)
+
+                            delay *= 0.5 + random.random() * 0.5
 
                         await asyncio.sleep(delay)
 
@@ -374,4 +434,5 @@ class RetryableMixin:
                 raise
 
             return wrapper
+
         return decorator

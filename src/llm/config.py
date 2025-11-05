@@ -2,15 +2,16 @@
 LLM配置管理模块
 """
 
-import os
 import json
-import yaml
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Union
+import os
 from dataclasses import asdict, dataclass
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
-from ..utils.logger import get_logger
+import yaml
+
 from ..utils.config import get_config_manager
+from ..utils.logger import get_logger
 from .base import LLMConfig
 from .exceptions import LLMConfigError
 
@@ -42,14 +43,16 @@ class LLMConfigManager:
             ("配置文件", self._load_from_config_file),
             ("环境变量", self._load_from_environment),
             ("全局配置", self._load_from_global_config),
-            ("默认配置", self._create_default_configs)
+            ("默认配置", self._create_default_configs),
         ]
 
         for method_name, load_method in load_methods:
             try:
                 load_method()
                 if self.configs:
-                    self.logger.info(f"Successfully loaded LLM configs from {method_name}")
+                    self.logger.info(
+                        f"Successfully loaded LLM configs from {method_name}"
+                    )
                     return  # 成功加载后立即停止
             except Exception as e:
                 self.logger.warning(f"Failed to load from {method_name}: {e}")
@@ -64,7 +67,7 @@ class LLMConfigManager:
         if not config_path.exists():
             raise FileNotFoundError(f"Config file not found: {config_path}")
 
-        with open(config_path, 'r', encoding='utf-8') as f:
+        with open(config_path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
             self._parse_config_file_data(data)
 
@@ -99,7 +102,9 @@ class LLMConfigManager:
             return {k: self._substitute_env_vars(v) for k, v in config.items()}
         elif isinstance(config, list):
             return [self._substitute_env_vars(item) for item in config]
-        elif isinstance(config, str) and config.startswith("${") and config.endswith("}"):
+        elif (
+            isinstance(config, str) and config.startswith("${") and config.endswith("}")
+        ):
             # 提取环境变量名
             env_var = config[2:-1]
             # 支持默认值，格式: ${VAR_NAME:default_value}
@@ -122,7 +127,7 @@ class LLMConfigManager:
                 api_base=os.environ.get("OPENAI_API_BASE"),
                 organization=os.environ.get("OPENAI_ORGANIZATION"),
                 max_tokens=int(os.environ.get("OPENAI_MAX_TOKENS", "1000")),
-                temperature=float(os.environ.get("OPENAI_TEMPERATURE", "0.7"))
+                temperature=float(os.environ.get("OPENAI_TEMPERATURE", "0.7")),
             )
             try:
                 openai_config.validate()
@@ -139,14 +144,16 @@ class LLMConfigManager:
                 api_key=os.environ["ANTHROPIC_API_KEY"],
                 api_base=os.environ.get("ANTHROPIC_API_BASE"),
                 max_tokens=int(os.environ.get("ANTHROPIC_MAX_TOKENS", "1000")),
-                temperature=float(os.environ.get("ANTHROPIC_TEMPERATURE", "0.7"))
+                temperature=float(os.environ.get("ANTHROPIC_TEMPERATURE", "0.7")),
             )
             try:
                 anthropic_config.validate()
                 self.configs["anthropic"] = anthropic_config
                 self.logger.info("Loaded Anthropic config from environment")
             except Exception as e:
-                self.logger.error(f"Failed to load Anthropic config from environment: {e}")
+                self.logger.error(
+                    f"Failed to load Anthropic config from environment: {e}"
+                )
 
         # ZhipuAI配置
         if "ZHIPU_API_KEY" in os.environ:
@@ -154,16 +161,20 @@ class LLMConfigManager:
                 provider="zhipu",
                 model=os.environ.get("ZHIPU_MODEL", "glm-4.5-air"),
                 api_key=os.environ["ZHIPU_API_KEY"],
-                api_base=os.environ.get("ZHIPU_API_BASE", "https://open.bigmodel.cn/api/paas/v4/"),
+                api_base=os.environ.get(
+                    "ZHIPU_API_BASE", "https://open.bigmodel.cn/api/paas/v4/"
+                ),
                 max_tokens=int(os.environ.get("ZHIPU_MAX_TOKENS", "4000")),
-                temperature=float(os.environ.get("ZHIPU_TEMPERATURE", "0.7"))
+                temperature=float(os.environ.get("ZHIPU_TEMPERATURE", "0.7")),
             )
             try:
                 zhipu_config.validate()
                 self.configs["zhipu"] = zhipu_config
                 self.logger.info("Loaded ZhipuAI config from environment")
             except Exception as e:
-                self.logger.error(f"Failed to load ZhipuAI config from environment: {e}")
+                self.logger.error(
+                    f"Failed to load ZhipuAI config from environment: {e}"
+                )
 
         # 自定义提供者配置
         custom_providers = os.environ.get("LLM_PROVIDERS", "").split(",")
@@ -183,19 +194,23 @@ class LLMConfigManager:
                     api_key=os.environ[api_key_env],
                     api_base=os.environ.get(f"{key_prefix}API_BASE"),
                     max_tokens=int(os.environ.get(f"{key_prefix}MAX_TOKENS", "1000")),
-                    temperature=float(os.environ.get(f"{key_prefix}TEMPERATURE", "0.7"))
+                    temperature=float(
+                        os.environ.get(f"{key_prefix}TEMPERATURE", "0.7")
+                    ),
                 )
                 try:
                     config.validate()
                     self.configs[provider.lower()] = config
                     self.logger.info(f"Loaded {provider} config from environment")
                 except Exception as e:
-                    self.logger.error(f"Failed to load {provider} config from environment: {e}")
+                    self.logger.error(
+                        f"Failed to load {provider} config from environment: {e}"
+                    )
 
     def _load_from_global_config(self) -> None:
         """从全局配置加载"""
         try:
-            llm_config = self.config_manager.get_section('llm')
+            llm_config = self.config_manager.get_section("llm")
             if not llm_config:
                 llm_config = {}
             if "providers" in llm_config:
@@ -211,7 +226,7 @@ class LLMConfigManager:
             openai_config = LLMConfig(
                 provider="openai",
                 model="gpt-3.5-turbo",
-                api_key=os.environ["OPENAI_API_KEY"]
+                api_key=os.environ["OPENAI_API_KEY"],
             )
             try:
                 openai_config.validate()
@@ -224,7 +239,7 @@ class LLMConfigManager:
             anthropic_config = LLMConfig(
                 provider="anthropic",
                 model="claude-3-sonnet-20240229",
-                api_key=os.environ["ANTHROPIC_API_KEY"]
+                api_key=os.environ["ANTHROPIC_API_KEY"],
             )
             try:
                 anthropic_config.validate()
@@ -238,7 +253,7 @@ class LLMConfigManager:
                 provider="zhipu",
                 model="glm-4.5-air",
                 api_key=os.environ["ZHIPU_API_KEY"],
-                api_base="https://open.bigmodel.cn/api/paas/v4/"
+                api_base="https://open.bigmodel.cn/api/paas/v4/",
             )
             try:
                 zhipu_config.validate()
@@ -344,13 +359,12 @@ class LLMConfigManager:
             # 准备配置数据
             data = {
                 "providers": {
-                    name: config.to_dict()
-                    for name, config in self.configs.items()
+                    name: config.to_dict() for name, config in self.configs.items()
                 }
             }
 
             # 保存到文件
-            with open(config_path, 'w', encoding='utf-8') as f:
+            with open(config_path, "w", encoding="utf-8") as f:
                 yaml.dump(data, f, default_flow_style=False, allow_unicode=True)
 
             self.logger.info(f"Saved LLM config to {config_path}")
@@ -379,7 +393,7 @@ class LLMConfigManager:
                 "gpt-3.5-turbo-16k",
                 "gpt-4-32k",
                 "text-davinci-003",
-                "text-curie-001"
+                "text-curie-001",
             ],
             "anthropic": [
                 "claude-3-opus-20240229",
@@ -387,7 +401,7 @@ class LLMConfigManager:
                 "claude-3-haiku-20240307",
                 "claude-2.1",
                 "claude-2.0",
-                "claude-instant-1.2"
+                "claude-instant-1.2",
             ],
             "zhipu": [
                 "glm-4.5",
@@ -399,8 +413,8 @@ class LLMConfigManager:
                 "glm-4v",
                 "glm-3-turbo",
                 "embedding-2",
-                "embedding-3"
-            ]
+                "embedding-3",
+            ],
         }
         return models.get(provider.lower(), [])
 
@@ -451,8 +465,7 @@ class LLMConfigManager:
         """
         data = {
             "providers": {
-                name: config.to_dict()
-                for name, config in self.configs.items()
+                name: config.to_dict() for name, config in self.configs.items()
             }
         }
 
@@ -495,24 +508,33 @@ class LLMConfigManager:
         # 先尝试从LLM配置文件中读取
         try:
             config_data = self._load_config_file_data()
-            if config_data and 'concurrency' in config_data:
-                concurrency_data = config_data['concurrency']
+            if config_data and "concurrency" in config_data:
+                concurrency_data = config_data["concurrency"]
                 return ConcurrencyConfig(**concurrency_data)
         except Exception as e:
             self.logger.debug(f"Failed to load concurrency config from file: {e}")
 
         # 然后尝试从环境变量读取
         try:
-            if 'LLM_MAX_CONCURRENT_REQUESTS' in os.environ:
+            if "LLM_MAX_CONCURRENT_REQUESTS" in os.environ:
                 return ConcurrencyConfig(
-                    max_concurrent_requests=int(os.environ['LLM_MAX_CONCURRENT_REQUESTS']),
-                    request_timeout=int(os.environ.get('LLM_REQUEST_TIMEOUT', '300')),
-                    session_timeout=int(os.environ.get('LLM_SESSION_TIMEOUT', '600')),
-                    enable_session_pooling=os.environ.get('LLM_ENABLE_SESSION_POOLING', 'true').lower() == 'true',
-                    max_sessions_per_provider=int(os.environ.get('LLM_MAX_SESSIONS_PER_PROVIDER', '3'))
+                    max_concurrent_requests=int(
+                        os.environ["LLM_MAX_CONCURRENT_REQUESTS"]
+                    ),
+                    request_timeout=int(os.environ.get("LLM_REQUEST_TIMEOUT", "300")),
+                    session_timeout=int(os.environ.get("LLM_SESSION_TIMEOUT", "600")),
+                    enable_session_pooling=os.environ.get(
+                        "LLM_ENABLE_SESSION_POOLING", "true"
+                    ).lower()
+                    == "true",
+                    max_sessions_per_provider=int(
+                        os.environ.get("LLM_MAX_SESSIONS_PER_PROVIDER", "3")
+                    ),
                 )
         except Exception as e:
-            self.logger.debug(f"Failed to load concurrency config from environment: {e}")
+            self.logger.debug(
+                f"Failed to load concurrency config from environment: {e}"
+            )
 
         # 最后返回默认配置
         return ConcurrencyConfig()
@@ -521,8 +543,8 @@ class LLMConfigManager:
         """加载配置文件数据"""
         if self.config_file and os.path.exists(self.config_file):
             try:
-                with open(self.config_file, 'r', encoding='utf-8') as f:
-                    if self.config_file.endswith('.json'):
+                with open(self.config_file, "r", encoding="utf-8") as f:
+                    if self.config_file.endswith(".json"):
                         return json.load(f)
                     else:
                         return yaml.safe_load(f)
@@ -534,6 +556,7 @@ class LLMConfigManager:
 @dataclass
 class ConcurrencyConfig:
     """并发控制配置"""
+
     max_concurrent_requests: int = 5
     request_timeout: int = 300
     session_timeout: int = 600

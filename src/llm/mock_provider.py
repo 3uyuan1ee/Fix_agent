@@ -2,12 +2,12 @@
 Mock LLM提供者，用于测试和演示
 """
 
+import asyncio
 import json
 import time
-import asyncio
-from typing import Dict, Any, AsyncGenerator
+from typing import Any, AsyncGenerator, Dict
 
-from .base import LLMProvider, LLMRequest, LLMResponse, LLMConfig
+from .base import LLMConfig, LLMProvider, LLMRequest, LLMResponse
 
 
 class MockLLMProvider(LLMProvider):
@@ -121,13 +121,18 @@ class MockLLMProvider(LLMProvider):
             usage={
                 "prompt_tokens": sum(len(msg.content) for msg in request.messages) // 4,
                 "completion_tokens": len(content) // 4,
-                "total_tokens": (sum(len(msg.content) for msg in request.messages) + len(content)) // 4
+                "total_tokens": (
+                    sum(len(msg.content) for msg in request.messages) + len(content)
+                )
+                // 4,
             },
             created_at=time.time(),
-            response_time=0.5 + len(request.messages) * 0.1
+            response_time=0.5 + len(request.messages) * 0.1,
         )
 
-    async def stream_complete(self, request: LLMRequest) -> AsyncGenerator[LLMResponse, None]:
+    async def stream_complete(
+        self, request: LLMRequest
+    ) -> AsyncGenerator[LLMResponse, None]:
         """流式完成文本生成请求"""
         # 模拟流式响应
         full_response = await self.complete(request)
@@ -145,7 +150,7 @@ class MockLLMProvider(LLMProvider):
                 content=chunk_content.strip(),
                 delta=word + " ",
                 is_stream=True,
-                is_complete=False
+                is_complete=False,
             )
             await asyncio.sleep(0.05)
 
@@ -158,7 +163,7 @@ class MockLLMProvider(LLMProvider):
             finish_reason="stop",
             is_stream=False,
             is_complete=True,
-            usage=full_response.usage
+            usage=full_response.usage,
         )
 
     def validate_request(self, request: LLMRequest) -> None:

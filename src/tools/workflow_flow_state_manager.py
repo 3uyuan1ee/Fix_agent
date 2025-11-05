@@ -3,21 +3,22 @@
 严格按照工作流图实现状态转换管理: B→C→D→E→F/G→H→I→J/K→L→B/M
 """
 
-import uuid
-import time
-from typing import Dict, List, Any, Optional, Set
-from dataclasses import dataclass, field
-from enum import Enum
-from datetime import datetime
 import json
+import time
+import uuid
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Set
 
-from ..utils.logger import get_logger
 from ..utils.config import get_config_manager
+from ..utils.logger import get_logger
 
 
 class WorkflowNode(Enum):
     """工作流节点枚举 - 严格按照工作流图"""
+
     PHASE_A_COMPLETE = "phase_a_complete"  # Phase 1-4完成
     PROBLEM_DETECTION = "problem_detection"  # 节点B: AI问题检测
     FIX_SUGGESTION = "fix_suggestion"  # 节点C: AI修复建议生成
@@ -35,12 +36,14 @@ class WorkflowNode(Enum):
 
 class WorkflowTransitionError(Exception):
     """工作流转换异常"""
+
     pass
 
 
 @dataclass
 class WorkflowStateTransition:
     """工作流状态转换记录"""
+
     transition_id: str
     from_node: WorkflowNode
     to_node: WorkflowNode
@@ -56,13 +59,14 @@ class WorkflowStateTransition:
             "to_node": self.to_node.value,
             "timestamp": self.timestamp.isoformat(),
             "reason": self.reason,
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }
 
 
 @dataclass
 class WorkflowSession:
     """工作流会话数据"""
+
     session_id: str
     project_path: str
     selected_files: List[str]
@@ -83,7 +87,7 @@ class WorkflowSession:
     solved_problems: List[str] = field(default_factory=list)
     skip_history: List[str] = field(default_factory=list)
     problem_processing_status: Dict[str, str] = field(default_factory=dict)
-    detected_problems: List['AIDetectedProblem'] = field(default_factory=list)
+    detected_problems: List["AIDetectedProblem"] = field(default_factory=list)
     verification_decisions: List[Dict[str, Any]] = field(default_factory=list)
 
     # 元数据
@@ -93,8 +97,13 @@ class WorkflowSession:
         """更新时间戳"""
         self.updated_at = datetime.now()
 
-    def add_transition(self, from_node: WorkflowNode, to_node: WorkflowNode,
-                      reason: str = "", metadata: Dict[str, Any] = None) -> WorkflowStateTransition:
+    def add_transition(
+        self,
+        from_node: WorkflowNode,
+        to_node: WorkflowNode,
+        reason: str = "",
+        metadata: Dict[str, Any] = None,
+    ) -> WorkflowStateTransition:
         """添加状态转换记录"""
         transition = WorkflowStateTransition(
             transition_id=f"trans_{uuid.uuid4().hex[:8]}",
@@ -102,7 +111,7 @@ class WorkflowSession:
             to_node=to_node,
             timestamp=datetime.now(),
             reason=reason,
-            metadata=metadata or {}
+            metadata=metadata or {},
         )
         self.workflow_history.append(transition)
         self.current_node = to_node
@@ -113,7 +122,10 @@ class WorkflowSession:
         """获取下一个待处理问题"""
         if self.current_problem_index < len(self.problems_detected):
             problem = self.problems_detected[self.current_problem_index]
-            if problem.get("problem_id") not in self.skipped_problems + self.solved_problems:
+            if (
+                problem.get("problem_id")
+                not in self.skipped_problems + self.solved_problems
+            ):
                 return problem
         return None
 
@@ -124,8 +136,11 @@ class WorkflowSession:
 
     def has_remaining_problems(self) -> bool:
         """检查是否还有待处理问题"""
-        for problem in self.problems_detected[self.current_problem_index:]:
-            if problem.get("problem_id") not in self.skipped_problems + self.solved_problems:
+        for problem in self.problems_detected[self.current_problem_index :]:
+            if (
+                problem.get("problem_id")
+                not in self.skipped_problems + self.solved_problems
+            ):
                 return True
         return False
 
@@ -155,27 +170,29 @@ class WorkflowFlowStateManager:
             WorkflowNode.FIX_SUGGESTION: [WorkflowNode.USER_REVIEW],
             WorkflowNode.USER_REVIEW: [WorkflowNode.USER_DECISION],
             WorkflowNode.USER_DECISION: [
-                WorkflowNode.AUTO_FIX,      # 批准修复
-                WorkflowNode.FIX_SUGGESTION, # 修改建议
-                WorkflowNode.SKIP_PROBLEM   # 拒绝建议
+                WorkflowNode.AUTO_FIX,  # 批准修复
+                WorkflowNode.FIX_SUGGESTION,  # 修改建议
+                WorkflowNode.SKIP_PROBLEM,  # 拒绝建议
             ],
             WorkflowNode.AUTO_FIX: [WorkflowNode.FIX_VERIFICATION],
             WorkflowNode.SKIP_PROBLEM: [WorkflowNode.CHECK_REMAINING],
             WorkflowNode.FIX_VERIFICATION: [WorkflowNode.VERIFICATION_DECISION],
             WorkflowNode.VERIFICATION_DECISION: [
                 WorkflowNode.PROBLEM_SOLVED,  # 验证成功
-                WorkflowNode.REANALYSIS       # 验证失败
+                WorkflowNode.REANALYSIS,  # 验证失败
             ],
             WorkflowNode.PROBLEM_SOLVED: [WorkflowNode.CHECK_REMAINING],
             WorkflowNode.REANALYSIS: [WorkflowNode.PROBLEM_DETECTION],
             WorkflowNode.CHECK_REMAINING: [
                 WorkflowNode.PROBLEM_DETECTION,  # 还有问题
-                WorkflowNode.WORKFLOW_COMPLETE   # 没有问题
+                WorkflowNode.WORKFLOW_COMPLETE,  # 没有问题
             ],
-            WorkflowNode.WORKFLOW_COMPLETE: []  # 终点状态
+            WorkflowNode.WORKFLOW_COMPLETE: [],  # 终点状态
         }
 
-    def create_session(self, project_path: str, selected_files: List[str]) -> WorkflowSession:
+    def create_session(
+        self, project_path: str, selected_files: List[str]
+    ) -> WorkflowSession:
         """
         创建新的工作流会话
 
@@ -190,7 +207,7 @@ class WorkflowFlowStateManager:
         session = WorkflowSession(
             session_id=session_id,
             project_path=str(project_path),
-            selected_files=selected_files
+            selected_files=selected_files,
         )
 
         self.active_sessions[session_id] = session
@@ -198,8 +215,13 @@ class WorkflowFlowStateManager:
 
         return session
 
-    def transition_to(self, session_id: str, target_node: WorkflowNode,
-                     reason: str = "", metadata: Dict[str, Any] = None) -> bool:
+    def transition_to(
+        self,
+        session_id: str,
+        target_node: WorkflowNode,
+        reason: str = "",
+        metadata: Dict[str, Any] = None,
+    ) -> bool:
         """
         状态转换 - 严格按照工作流图逻辑
 
@@ -229,21 +251,29 @@ class WorkflowFlowStateManager:
             )
 
         # 特殊逻辑处理
-        if not self._handle_special_transitions(session, current_node, target_node, metadata):
+        if not self._handle_special_transitions(
+            session, current_node, target_node, metadata
+        ):
             return False
 
         # 执行转换
         transition = session.add_transition(current_node, target_node, reason, metadata)
-        self.logger.info(f"状态转换: {current_node.value} → {target_node.value}, 会话: {session_id}")
+        self.logger.info(
+            f"状态转换: {current_node.value} → {target_node.value}, 会话: {session_id}"
+        )
 
         # 保存会话状态
         self._save_session(session)
 
         return True
 
-    def _handle_special_transitions(self, session: WorkflowSession,
-                                  from_node: WorkflowNode, to_node: WorkflowNode,
-                                  metadata: Dict[str, Any] = None) -> bool:
+    def _handle_special_transitions(
+        self,
+        session: WorkflowSession,
+        from_node: WorkflowNode,
+        to_node: WorkflowNode,
+        metadata: Dict[str, Any] = None,
+    ) -> bool:
         """
         处理特殊转换逻辑
 
@@ -256,23 +286,34 @@ class WorkflowFlowStateManager:
         Returns:
             bool: 处理是否成功
         """
-        if from_node == WorkflowNode.CHECK_REMAINING and to_node == WorkflowNode.PROBLEM_DETECTION:
+        if (
+            from_node == WorkflowNode.CHECK_REMAINING
+            and to_node == WorkflowNode.PROBLEM_DETECTION
+        ):
             # 检查是否还有问题，如果没有则转换到WORKFLOW_COMPLETE
             if not session.has_remaining_problems():
-                session.add_transition(WorkflowNode.CHECK_REMAINING,
-                                    WorkflowNode.WORKFLOW_COMPLETE,
-                                    "没有剩余问题，工作流完成")
+                session.add_transition(
+                    WorkflowNode.CHECK_REMAINING,
+                    WorkflowNode.WORKFLOW_COMPLETE,
+                    "没有剩余问题，工作流完成",
+                )
                 return False
             else:
                 # 重置到下一个问题
                 session.advance_to_next_problem()
 
-        elif from_node == WorkflowNode.USER_DECISION and to_node == WorkflowNode.SKIP_PROBLEM:
+        elif (
+            from_node == WorkflowNode.USER_DECISION
+            and to_node == WorkflowNode.SKIP_PROBLEM
+        ):
             # 记录跳过的问题
             if metadata and "problem_id" in metadata:
                 session.skipped_problems.append(metadata["problem_id"])
 
-        elif from_node == WorkflowNode.VERIFICATION_DECISION and to_node == WorkflowNode.PROBLEM_SOLVED:
+        elif (
+            from_node == WorkflowNode.VERIFICATION_DECISION
+            and to_node == WorkflowNode.PROBLEM_SOLVED
+        ):
             # 记录解决的问题
             if metadata and "problem_id" in metadata:
                 session.solved_problems.append(metadata["problem_id"])
@@ -333,7 +374,7 @@ class WorkflowFlowStateManager:
             if not session_file.exists():
                 return None
 
-            with open(session_file, 'r', encoding='utf-8') as f:
+            with open(session_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
             # 重建会话对象
@@ -350,7 +391,7 @@ class WorkflowFlowStateManager:
                 applied_fixes=data["applied_fixes"],
                 skipped_problems=data["skipped_problems"],
                 solved_problems=data["solved_problems"],
-                metadata=data.get("metadata", {})
+                metadata=data.get("metadata", {}),
             )
 
             # 重建转换历史
@@ -361,7 +402,7 @@ class WorkflowFlowStateManager:
                     to_node=WorkflowNode(trans_data["to_node"]),
                     timestamp=datetime.fromisoformat(trans_data["timestamp"]),
                     reason=trans_data.get("reason", ""),
-                    metadata=trans_data.get("metadata", {})
+                    metadata=trans_data.get("metadata", {}),
                 )
                 session.workflow_history.append(transition)
 
@@ -387,7 +428,7 @@ class WorkflowFlowStateManager:
             # 处理detected_problems序列化
             detected_problems_serializable = []
             for problem in session.detected_problems:
-                if hasattr(problem, 'to_dict'):
+                if hasattr(problem, "to_dict"):
                     detected_problems_serializable.append(problem.to_dict())
                 else:
                     detected_problems_serializable.append(problem)
@@ -399,7 +440,9 @@ class WorkflowFlowStateManager:
                 "created_at": session.created_at.isoformat(),
                 "updated_at": session.updated_at.isoformat(),
                 "current_node": session.current_node.value,
-                "workflow_history": [trans.to_dict() for trans in session.workflow_history],
+                "workflow_history": [
+                    trans.to_dict() for trans in session.workflow_history
+                ],
                 "problems_detected": session.problems_detected,
                 "current_problem_index": session.current_problem_index,
                 "pending_problems": session.pending_problems,
@@ -410,10 +453,10 @@ class WorkflowFlowStateManager:
                 "skip_history": session.skip_history,
                 "problem_processing_status": session.problem_processing_status,
                 "detected_problems": detected_problems_serializable,
-                "metadata": session.metadata
+                "metadata": session.metadata,
             }
 
-            with open(session_file, 'w', encoding='utf-8') as f:
+            with open(session_file, "w", encoding="utf-8") as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
 
         except Exception as e:
@@ -492,10 +535,14 @@ class WorkflowFlowStateManager:
             "solved_problems": solved_count,
             "skipped_problems": skipped_count,
             "pending_problems": total_problems - solved_count - skipped_count,
-            "progress_percentage": (solved_count / total_problems * 100) if total_problems > 0 else 0,
+            "progress_percentage": (
+                (solved_count / total_problems * 100) if total_problems > 0 else 0
+            ),
             "created_at": session.created_at.isoformat(),
             "updated_at": session.updated_at.isoformat(),
-            "next_possible_nodes": [node.value for node in self.get_next_possible_nodes(session_id)]
+            "next_possible_nodes": [
+                node.value for node in self.get_next_possible_nodes(session_id)
+            ],
         }
 
     def cleanup_old_sessions(self, days: int = 7) -> int:
