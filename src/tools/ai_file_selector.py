@@ -9,6 +9,7 @@ from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime
 import threading
+import itertools
 from pathlib import Path
 
 from ..utils.logger import get_logger
@@ -90,7 +91,7 @@ class AIFileSelectionPromptBuilder:
         if analysis_results:
             user_prompt_parts.extend([
                 "## 静态分析结果",
-                f"发现严重问题，需要重点关注："
+                f"发现问题，需要重点关注："
             ])
 
             problem_files = {}
@@ -138,7 +139,7 @@ class AIFileSelectionPromptBuilder:
         else:
             user_prompt_parts.extend([
                 "## 静态分析结果",
-                "⚠️ 未收到静态分析结果，请基于项目结构进行文件选择",
+                "⚠️ 未收到静态分析结果，请基于项目结构和用户需求进行文件选择",
                 ""
             ])
 
@@ -248,6 +249,52 @@ class SelectionStatistics:
     reason_categories: Dict[str, int] = field(default_factory=dict)
 
 
+class ProgressAnimator:
+    """进度动画显示器"""
+
+    def __init__(self, message: str = "AI正在处理"):
+        self.message = message
+        self.stop_event = threading.Event()
+        self.animation_thread = None
+
+        # 动画字符序列
+        self.spinner_chars = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+
+    def start(self):
+        """启动动画"""
+        if self.animation_thread and self.animation_thread.is_alive():
+            return  # 已在运行
+
+        self.stop_event.clear()
+        self.animation_thread = threading.Thread(target=self._animate, daemon=True)
+        self.animation_thread.start()
+
+    def stop(self):
+        """停止动画"""
+        self.stop_event.set()
+        if self.animation_thread and self.animation_thread.is_alive():
+            self.animation_thread.join(timeout=1.0)
+        # 清除当前行并显示完成消息
+        print(f"\r✅ {self.message}完成")
+
+    def _animate(self):
+        """动画循环"""
+        char_index = 0
+
+        while not self.stop_event.is_set():
+            # 组合动画字符
+            spinner = self.spinner_chars[char_index % len(self.spinner_chars)]
+
+            # 在同一行显示进度消息（使用\r回到行首）
+            print(f"\r{spinner} {self.message}...", end='', flush=True)
+
+            # 更新索引
+            char_index += 1
+
+            # 等待一段时间
+            self.stop_event.wait(0.2)
+
+
 class AIFileSelector:
     """AI文件选择执行器"""
 
@@ -269,6 +316,9 @@ class AIFileSelector:
             "medium": 2.0,
             "low": 1.0
         }
+
+        # 动画显示控制
+        self._animation_stop_event = threading.Event()
 
     def select_files(self,
                     project_path: str,
@@ -408,15 +458,26 @@ class AIFileSelector:
                     # 注意：response_format暂不支持，在系统提示词中指定JSON格式
                 }
 
-                # 调用AI
-                response = self.llm_client.chat_completion(**call_params)
+                # 启动进度动画
+                animator = ProgressAnimator("AI正在进行文件选择分析")
+                animator.start()
 
-                if response.get("success", False):
-                    self.logger.info("AI调用成功")
-                    return response
-                else:
-                    last_error = response.get("error_message", "未知错误")
-                    self.logger.warning(f"AI调用失败: {last_error}")
+                try:
+                    # 调用AI
+                    response = self.llm_client.chat_completion(**call_params)
+
+                    if response.get("success", False):
+                        animator.stop()
+                        self.logger.info("AI调用成功")
+                        return response
+                    else:
+                        animator.stop()
+                        last_error = response.get("error_message", "未知错误")
+                        self.logger.warning(f"AI调用失败: {last_error}")
+
+                finally:
+                    # 确保动画停止
+                    animator.stop()
 
             except Exception as e:
                 last_error = str(e)
@@ -424,6 +485,7 @@ class AIFileSelector:
 
             # 如果不是最后一次尝试，等待重试
             if attempt < self.max_retries - 1:
+                self.logger.info(f"等待 {self.retry_delay * (2 ** attempt):.1f} 秒后重试...")
                 time.sleep(self.retry_delay * (2 ** attempt))  # 指数退避
 
         self.logger.error(f"AI调用最终失败: {last_error}")
@@ -808,7 +870,8 @@ class AIFileSelector:
                 return clean_path
             else:
                 self.logger.warning(f"绝对路径文件不存在: {clean_path}")
-                return None
+                # 如果绝对路径不存在，继续尝试相对路径
+                pass
 
         # 使用保存的项目根目录作为基准
         if hasattr(self, 'current_project_root') and self.current_project_root:
@@ -830,7 +893,7 @@ class AIFileSelector:
         ]
 
         # 动态添加一些常见的子目录尝试
-        for subdir in ["src", "lib", "app", "code"]:
+        for subdir in ["src", "lib", "app", "code", "example"]:
             possible_paths.append(project_root / subdir / clean_path)
 
         for path in possible_paths:
