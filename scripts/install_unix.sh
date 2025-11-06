@@ -295,13 +295,13 @@ create_global_symlinks() {
     fi
 
     # 创建 aidefect 链接
-    if [ -f "$VENV_BIN/python" ] && [ -f "scripts/aidefect" ]; then
+    if [ -f "$VENV_BIN/python" ] ; then
         # 创建wrapper脚本
         cat > "$LOCAL_BIN/aidefect" << EOF
 #!/bin/bash
 # AIDefectDetector wrapper script
 source "$VENV_DIR/bin/activate"
-cd "$(dirname "$(readlink -f "\$0")")/../../../AIDefectDetector"
+cd "$PROJECT_DIR"
 exec python main.py "\$@"
 EOF
         chmod +x "$LOCAL_BIN/aidefect"
@@ -313,7 +313,7 @@ EOF
 #!/bin/bash
 # AIDefectDetector Web wrapper script
 source "$VENV_DIR/bin/activate"
-cd "$(dirname "$(readlink -f "\$0")")/../../../AIDefectDetector"
+cd "$PROJECT_DIR"
 exec python main.py web "\$@"
 EOF
     chmod +x "$LOCAL_BIN/aidefect-web"
@@ -492,7 +492,9 @@ main() {
     # 进入项目根目录（scripts目录的上一级）
     cd "$(dirname "$(dirname "${BASH_SOURCE[0]}")")"
 
-    print_info "项目目录: $(pwd)"
+    # 设置项目目录变量供后续使用
+    PROJECT_DIR="$(pwd)"
+    print_info "项目目录: $PROJECT_DIR"
 
     # 执行安装步骤
     detect_os
