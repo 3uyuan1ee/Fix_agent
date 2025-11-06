@@ -44,7 +44,9 @@ call :print_header "🚀 AIDefectDetector Windows 安装脚本"
 
 :: 切换到项目根目录
 cd /d "%~dp0\.."
-call :print_info "项目目录: %CD%"
+:: 设置项目目录变量供后续使用
+set "PROJECT_DIR=%CD%"
+call :print_info "项目目录: %PROJECT_DIR%"
 
 :: 检查管理员权限
 :check_admin
@@ -255,7 +257,7 @@ set "AIDEFECT_SCRIPT=%SCRIPT_DIR%\aidefect.bat"
 echo @echo off
 echo :: AIDefectDetector wrapper script
 echo call "%VENV_DIR%\Scripts\activate.bat"
-echo cd /d "%CD%"
+echo cd /d "%PROJECT_DIR%"
 echo python main.py %%*
 ) > "%AIDEFECT_SCRIPT%"
 
@@ -271,7 +273,7 @@ set "AIDEFECT_WEB_SCRIPT=%SCRIPT_DIR%\aidefect-web.bat"
 echo @echo off
 echo :: AIDefectDetector Web wrapper script
 echo call "%VENV_DIR%\Scripts\activate.bat"
-echo cd /d "%CD%"
+echo cd /d "%PROJECT_DIR%"
 echo python main.py web %%*
 ) > "%AIDEFECT_WEB_SCRIPT%"
 
