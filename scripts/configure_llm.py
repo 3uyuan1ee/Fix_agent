@@ -46,7 +46,8 @@ class LLMConfigurator:
                 display_name='智谱AI',
                 env_key='ZHIPU_API_KEY',
                 description='国内推荐，访问稳定',
-                setup_url='https://open.bigmodel.cn/'
+                setup_url='https://open.bigmodel.cn/',
+                base_url_default='https://open.bigmodel.cn/api/paas/v4/'
             ),
             'openai': LLMProvider(
                 name='openai',
@@ -326,8 +327,11 @@ class LLMConfigurator:
             user_url = input("> ").strip()
             base_url = user_url if user_url else default_url
 
+        # 获取模型参数配置
+        model_config = self._get_model_config(provider)
+
         # 保存配置
-        return self._save_provider_config(provider, api_key, base_url)
+        return self._save_provider_config(provider, api_key, base_url, model_config)
 
     def _configure_mock(self) -> bool:
         """配置Mock模式"""
@@ -361,7 +365,7 @@ class LLMConfigurator:
             self._print_error(f"保存Mock配置失败: {e}")
             return False
 
-    def _save_provider_config(self, provider: LLMProvider, api_key: str, base_url: str = "") -> bool:
+    def _save_provider_config(self, provider: LLMProvider, api_key: str, base_url: str = "", model_config: dict = None) -> bool:
         """保存提供商配置"""
         try:
             # 保存到.env文件
@@ -416,9 +420,15 @@ class LLMConfigurator:
                 config_choice = input("请选择 (1-3): ").strip()
 
                 if config_choice in ['1', '3']:
-                    self._update_user_config_default(provider.name, base_url)
+                    # 询问API密钥存储方式
+                    print("选择API密钥存储方式:")
+                    print("1) 直接写入配置文件 (简单)")
+                    print("2) 使用环境变量引用 (更安全)")
+
+                    storage_choice = input("请选择 (1-2): ").strip()
+                    self._update_user_config_default(provider.name, base_url, api_key, storage_choice == '1', model_config)
                 if config_choice in ['2', '3']:
-                    self._update_llm_config(provider, api_key, base_url)
+                    self._update_llm_config(provider, api_key, base_url, model_config)
 
             self._print_success(f"{provider.display_name}配置完成")
             return True
@@ -427,7 +437,7 @@ class LLMConfigurator:
             self._print_error(f"保存配置失败: {e}")
             return False
 
-    def _update_user_config_default(self, provider_name: str, base_url: str = ""):
+    def _update_user_config_default(self, provider_name: str, base_url: str = "", api_key: str = "", direct_write: bool = False, model_config: dict = None):
         """更新用户配置文件的默认提供商"""
         try:
             config = {}
@@ -444,13 +454,40 @@ class LLMConfigurator:
             # 确保提供商配置存在
             if provider_name not in config['llm']:
                 provider = self.providers[provider_name]
-                config['llm'][provider_name] = {
-                    'provider': provider_name,
-                    'model': self._get_default_model(provider_name),
-                    'api_base': base_url if base_url else provider.base_url_default,
-                    'max_tokens': 4000,
-                    'temperature': 0.1
-                }
+                # 使用自定义模型配置或默认值
+                if model_config:
+                    config['llm'][provider_name] = {
+                        'provider': provider_name,
+                        'model': model_config['model'],
+                        'api_key': api_key if direct_write else f"${{{provider.env_key}}}",  # 根据选择决定存储方式
+                        'api_base': base_url if base_url else provider.base_url_default,
+                        'max_tokens': model_config['max_tokens'],
+                        'temperature': model_config['temperature'],
+                        'timeout': model_config.get('timeout', 60 if provider_name == 'zhipu' else 30),
+                        'max_retries': model_config.get('max_retries', 3)
+                    }
+                else:
+                    config['llm'][provider_name] = {
+                        'provider': provider_name,
+                        'model': self._get_default_model(provider_name),
+                        'api_key': api_key if direct_write else f"${{{provider.env_key}}}",  # 根据选择决定存储方式
+                        'api_base': base_url if base_url else provider.base_url_default,
+                        'max_tokens': 4000,
+                        'temperature': 0.1
+                    }
+            else:
+                # 如果提供商已存在，更新配置
+                provider_obj = self.providers[provider_name]
+                config['llm'][provider_name]['api_key'] = api_key if direct_write else f"${{{provider_obj.env_key}}}"
+                # 确保api_base字段存在
+                if 'api_base' not in config['llm'][provider_name]:
+                    config['llm'][provider_name]['api_base'] = base_url if base_url else provider_obj.base_url_default
+                if model_config:
+                    config['llm'][provider_name]['model'] = model_config['model']
+                    config['llm'][provider_name]['max_tokens'] = model_config['max_tokens']
+                    config['llm'][provider_name]['temperature'] = model_config['temperature']
+                    config['llm'][provider_name]['timeout'] = model_config.get('timeout', 120 if provider_name == 'zhipu' else 90)
+                    config['llm'][provider_name]['max_retries'] = model_config.get('max_retries', 3)
 
             with open(self.user_config_file, 'w', encoding='utf-8') as f:
                 yaml.dump(config, f, default_flow_style=False, allow_unicode=True)
@@ -460,30 +497,51 @@ class LLMConfigurator:
         except Exception as e:
             self._print_warning(f"更新配置文件失败: {e}")
 
-    def _update_llm_config(self, provider: LLMProvider, api_key: str, base_url: str = ""):
+    def _update_llm_config(self, provider: LLMProvider, api_key: str, base_url: str = "", model_config: dict = None):
         """更新LLM配置文件"""
         try:
             # 读取现有LLM配置
-            llm_config = {}
+            original_content = ""
             if self.llm_config_file.exists():
                 with open(self.llm_config_file, 'r', encoding='utf-8') as f:
-                    llm_config = yaml.safe_load(f) or {}
+                    original_content = f.read()
+
+            # 解析配置
+            llm_config = {}
+            if original_content:
+                try:
+                    llm_config = yaml.safe_load(original_content) or {}
+                except yaml.YAMLError as e:
+                    self._print_warning(f"YAML解析失败: {e}，将重新创建配置文件")
+                    llm_config = {}
 
             # 确保providers配置存在
             if 'providers' not in llm_config:
                 llm_config['providers'] = {}
 
             # 更新或添加提供商配置
-            provider_config = {
-                'provider': provider.name,
-                'model': self._get_default_model(provider.name),
-                'api_key': f"${{{provider.env_key}}}",  # 使用环境变量
-                'api_base': base_url if base_url else provider.base_url_default,
-                'max_tokens': 4000,
-                'temperature': 0.3,
-                'timeout': 60 if provider.name == 'zhipu' else 30,
-                'max_retries': 3
-            }
+            if model_config:
+                provider_config = {
+                    'provider': provider.name,
+                    'model': model_config['model'],
+                    'api_key': f"${{{provider.env_key}}}",  # 使用环境变量
+                    'api_base': base_url if base_url else provider.base_url_default,
+                    'max_tokens': model_config['max_tokens'],
+                    'temperature': model_config['temperature'],
+                    'timeout': model_config.get('timeout', 60 if provider.name == 'zhipu' else 30),
+                    'max_retries': model_config.get('max_retries', 3)
+                }
+            else:
+                provider_config = {
+                    'provider': provider.name,
+                    'model': self._get_default_model(provider.name),
+                    'api_key': f"${{{provider.env_key}}}",  # 使用环境变量
+                    'api_base': base_url if base_url else provider.base_url_default,
+                    'max_tokens': 4000,
+                    'temperature': 0.3,
+                    'timeout': 60 if provider.name == 'zhipu' else 30,
+                    'max_retries': 3
+                }
 
             llm_config['providers'][provider.name] = provider_config
 
@@ -494,14 +552,225 @@ class LLMConfigurator:
                 shutil.copy2(self.llm_config_file, backup_file)
                 self._print_info(f"已备份LLM配置文件: {backup_file}")
 
-            # 写入新配置
-            with open(self.llm_config_file, 'w', encoding='utf-8') as f:
-                yaml.dump(llm_config, f, default_flow_style=False, allow_unicode=True)
+            # 写入新配置 - 保留原有格式
+            self._write_yaml_with_format(llm_config, provider.name, provider_config)
 
             self._print_success(f"已更新LLM配置文件: {self.llm_config_file}")
 
         except Exception as e:
             self._print_error(f"更新LLM配置文件失败: {e}")
+
+    def _write_yaml_with_format(self, llm_config: dict, provider_name: str, provider_config: dict):
+        """写入YAML配置，尽量保留原有格式"""
+        try:
+            # 如果文件不存在，创建一个新的格式良好的文件
+            if not self.llm_config_file.exists():
+                with open(self.llm_config_file, 'w', encoding='utf-8') as f:
+                    f.write("providers:\n")
+                    # 写入所有提供商配置
+                    for name, config in llm_config['providers'].items():
+                        f.write(f"  # {name.title()} Provider\n")
+                        f.write(f"  {name}:\n")
+                        for key, value in config.items():
+                            if isinstance(value, str):
+                                f.write(f'    {key}: "{value}"\n')
+                            else:
+                                f.write(f"    {key}: {value}\n")
+                        f.write("\n")
+                return
+
+            # 如果文件存在，尝试更新特定提供商的配置
+            with open(self.llm_config_file, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+
+            # 查找目标提供商的起始和结束位置
+            provider_start = -1
+            provider_end = -1
+            indent_level = 0
+
+            for i, line in enumerate(lines):
+                stripped = line.strip()
+                if stripped.startswith(f"{provider_name}:"):
+                    provider_start = i
+                    indent_level = len(line) - len(line.lstrip())
+                elif provider_start >= 0 and stripped and not line.startswith(' ' * (indent_level + 2)):
+                    # 遇到同级或上级元素，结束当前提供商配置
+                    if not stripped.startswith('#') and not line.isspace():
+                        provider_end = i
+                        break
+
+            if provider_end == -1:
+                provider_end = len(lines)
+
+            # 准备新的提供商配置内容
+            new_provider_lines = [
+                f"  # {provider_name.title()} Provider - 更新配置\n",
+                f"  {provider_name}:\n"
+            ]
+
+            # 按顺序添加配置项
+            config_keys = ['provider', 'model', 'api_key', 'api_base', 'max_tokens', 'temperature', 'timeout', 'max_retries']
+            for key in config_keys:
+                if key in provider_config:
+                    value = provider_config[key]
+                    if isinstance(value, str):
+                        new_provider_lines.append(f'    {key}: "{value}"\n')
+                    else:
+                        new_provider_lines.append(f"    {key}: {value}\n")
+            new_provider_lines.append("\n")
+
+            # 更新文件内容
+            if provider_start >= 0:
+                # 替换现有配置
+                lines[provider_start:provider_end] = new_provider_lines
+            else:
+                # 在文件末尾添加新配置
+                if lines and not lines[-1].endswith('\n'):
+                    lines.append('\n')
+                lines.extend(new_provider_lines)
+
+            # 写回文件
+            with open(self.llm_config_file, 'w', encoding='utf-8') as f:
+                f.writelines(lines)
+
+        except Exception as e:
+            # 如果更新失败，回退到标准YAML dump
+            self._print_warning(f"格式化更新失败，使用标准格式: {e}")
+            with open(self.llm_config_file, 'w', encoding='utf-8') as f:
+                yaml.dump(llm_config, f, default_flow_style=False, allow_unicode=True)
+
+    def _get_model_config(self, provider: LLMProvider) -> dict:
+        """获取用户自定义的模型参数配置"""
+        self._print_header("配置模型参数")
+
+        # 获取默认配置
+        default_model = self._get_default_model(provider.name)
+        default_max_tokens = 4000
+        default_temperature = 0.3
+        default_timeout = 60 if provider.name == 'zhipu' else 30
+        default_retries = 3
+
+        # 显示推荐模型选项
+        print(f"\n📋 可用模型选项 ({provider.display_name}):")
+        if provider.name == 'zhipu':
+            print("1) glm-4.5-air (最新，推荐)")
+            print("2) glm-4-air (稳定)")
+            print("3) glm-4 (通用)")
+            print("4) glm-3-turbo (快速)")
+            print("5) 自定义模型")
+        elif provider.name == 'openai':
+            print("1) gpt-4 (最新，推荐)")
+            print("2) gpt-4-turbo (平衡)")
+            print("3) gpt-3.5-turbo (经济)")
+            print("4) 自定义模型")
+        elif provider.name == 'anthropic':
+            print("1) claude-3-5-sonnet-20241022 (最新，推荐)")
+            print("2) claude-3-sonnet-20240229 (平衡)")
+            print("3) claude-3-haiku-20240307 (快速)")
+            print("4) 自定义模型")
+        else:
+            print(f"1) {default_model} (默认)")
+            print("2) 自定义模型")
+
+        # 选择模型
+        model_choice = input(f"\n请选择模型 (1-{'5' if provider.name == 'zhipu' else '4'}, 默认: {default_model}): ").strip()
+
+        model = default_model
+        if model_choice:
+            if provider.name == 'zhipu':
+                model_map = {
+                    '1': 'glm-4.5-air',
+                    '2': 'glm-4-air',
+                    '3': 'glm-4',
+                    '4': 'glm-3-turbo',
+                    '5': None  # 自定义
+                }
+            elif provider.name == 'openai':
+                model_map = {
+                    '1': 'gpt-4',
+                    '2': 'gpt-4-turbo',
+                    '3': 'gpt-3.5-turbo',
+                    '4': None  # 自定义
+                }
+            elif provider.name == 'anthropic':
+                model_map = {
+                    '1': 'claude-3-5-sonnet-20241022',
+                    '2': 'claude-3-sonnet-20240229',
+                    '3': 'claude-3-haiku-20240307',
+                    '4': None  # 自定义
+                }
+            else:
+                model_map = {'1': default_model, '2': None}
+
+            if model_choice in model_map and model_map[model_choice]:
+                model = model_map[model_choice]
+            elif model_choice == str(len(model_map)):  # 自定义选项
+                custom_model = input("请输入自定义模型名称: ").strip()
+                if custom_model:
+                    model = custom_model
+
+        # 配置其他参数
+        print(f"\n⚙️  配置其他参数 (按回车使用默认值):")
+
+        # Max tokens
+        max_tokens_input = input(f"Max tokens (默认: {default_max_tokens}): ").strip()
+        try:
+            max_tokens = int(max_tokens_input) if max_tokens_input else default_max_tokens
+            max_tokens = max(100, min(32768, max_tokens))  # 限制范围
+        except ValueError:
+            max_tokens = default_max_tokens
+            print(f"⚠️  无效输入，使用默认值: {default_max_tokens}")
+
+        # Temperature
+        temperature_input = input(f"Temperature (0.0-1.0, 默认: {default_temperature}): ").strip()
+        try:
+            temperature = float(temperature_input) if temperature_input else default_temperature
+            temperature = max(0.0, min(2.0, temperature))  # 限制范围
+        except ValueError:
+            temperature = default_temperature
+            print(f"⚠️  无效输入，使用默认值: {default_temperature}")
+
+        # Timeout (秒)
+        timeout_input = input(f"Timeout (秒, 默认: {default_timeout}): ").strip()
+        try:
+            timeout = int(timeout_input) if timeout_input else default_timeout
+            timeout = max(10, min(300, timeout))  # 限制范围
+        except ValueError:
+            timeout = default_timeout
+            print(f"⚠️  无效输入，使用默认值: {default_timeout}")
+
+        # Max retries
+        retries_input = input(f"Max retries (默认: {default_retries}): ").strip()
+        try:
+            max_retries = int(retries_input) if retries_input else default_retries
+            max_retries = max(0, min(10, max_retries))  # 限制范围
+        except ValueError:
+            max_retries = default_retries
+            print(f"⚠️  无效输入，使用默认值: {default_retries}")
+
+        # 构建配置
+        config = {
+            'model': model,
+            'max_tokens': max_tokens,
+            'temperature': temperature,
+            'timeout': timeout,
+            'max_retries': max_retries
+        }
+
+        # 显示配置摘要
+        print(f"\n📊 配置摘要:")
+        print(f"   模型: {model}")
+        print(f"   Max tokens: {max_tokens}")
+        print(f"   Temperature: {temperature}")
+        print(f"   Timeout: {timeout}秒")
+        print(f"   Max retries: {max_retries}")
+
+        confirm = input("\n确认配置? (Y/n): ").strip().lower()
+        if confirm and confirm not in ['y', 'yes', '是', '']:
+            # 重新配置
+            return self._get_model_config(provider)
+
+        return config
 
     def _get_default_model(self, provider_name: str) -> str:
         """获取提供商的默认模型"""
@@ -744,8 +1013,9 @@ class LLMConfigurator:
             print("5) 🧪 配置Mock模式 (无需API)")
             print("6) 🧪 测试API连接")
             print("7) 🔍 运行配置诊断")
-            print("8) 📝 编辑配置文件")
-            print("9) 📖 显示使用指南")
+            print("8) ⚙️  修改模型配置")
+            print("9) 📝 编辑配置文件")
+            print("10) 📖 显示使用指南")
             print("0) 🚪 退出")
             print()
 
@@ -802,10 +1072,39 @@ class LLMConfigurator:
                 input("\n按回车键继续...")
 
             elif choice == '8':
-                self._edit_config_file()
+                # 修改模型配置
+                print("\n选择要修改配置的提供商:")
+                available_providers = [(k, v) for k, v in self.providers.items()
+                                            if k != 'mock' and status.get(k, False)]
+
+                if not available_providers:
+                    print("❌ 没有已配置的LLM提供商")
+                    input("\n按回车键继续...")
+                    continue
+
+                for i, (key, provider) in enumerate(available_providers, 1):
+                    current_config = self._get_current_provider_config(key)
+                    model_info = f" ({current_config.get('model', 'N/A')})" if current_config else ""
+                    print(f"{i}) {provider.display_name}{model_info}")
+
+                modify_choice = input(f"请选择 (1-{len(available_providers)}): ").strip()
+                try:
+                    modify_index = int(modify_choice) - 1
+                    if 0 <= modify_index < len(available_providers):
+                        provider_key = available_providers[modify_index][0]
+                        self.modify_existing_provider_config(provider_key)
+                    else:
+                        print("❌ 无效选择")
+                except ValueError:
+                    print("❌ 无效选择")
+
                 input("\n按回车键继续...")
 
             elif choice == '9':
+                self._edit_config_file()
+                input("\n按回车键继续...")
+
+            elif choice == '10':
                 self._show_usage_guide()
                 input("\n按回车键继续...")
 
@@ -839,6 +1138,118 @@ class LLMConfigurator:
         except Exception as e:
             self._print_error(f"无法打开配置文件: {e}")
             self._print_info(f"请手动编辑: {self.user_config_file}")
+
+    def modify_existing_provider_config(self, provider_name: str) -> bool:
+        """修改已存在的提供商配置"""
+        if provider_name not in self.providers:
+            self._print_error(f"不支持的提供商: {provider_name}")
+            return False
+
+        provider = self.providers[provider_name]
+        self._print_header(f"修改{provider.display_name}配置")
+
+        # 检查当前配置
+        config = self.load_existing_config()
+        current_key = config.get(provider.env_key, '')
+
+        if not current_key or len(current_key) < 10 or current_key.startswith('your-'):
+            self._print_warning(f"{provider.display_name}尚未配置或API密钥无效")
+            self._print_info("请先使用选项2-4配置该提供商")
+            return False
+
+        print(f"当前API密钥: {current_key[:10]}...")
+
+        # 读取当前模型配置
+        current_config = self._get_current_provider_config(provider_name)
+        if not current_config:
+            self._print_warning(f"未找到{provider.display_name}的现有配置")
+            current_config = {
+                'model': self._get_default_model(provider_name),
+                'max_tokens': 4000,
+                'temperature': 0.3,
+                'timeout': 60 if provider_name == 'zhipu' else 30,
+                'max_retries': 3
+            }
+
+        # 显示当前配置
+        print(f"\n📊 当前{provider.display_name}配置:")
+        print(f"   模型: {current_config.get('model', 'N/A')}")
+        print(f"   Max tokens: {current_config.get('max_tokens', 'N/A')}")
+        print(f"   Temperature: {current_config.get('temperature', 'N/A')}")
+        print(f"   Timeout: {current_config.get('timeout', 'N/A')}秒")
+        print(f"   Max retries: {current_config.get('max_retries', 'N/A')}")
+
+        # 询问是否继续修改
+        proceed = input("\n是否要修改配置? (y/N): ").strip().lower()
+        if proceed not in ['y', 'yes', '是']:
+            self._print_info("保持现有配置")
+            return True
+
+        # 获取新的模型配置
+        new_model_config = self._get_model_config(provider)
+
+        # 询问是否更新配置文件
+        update_config = input("是否更新配置文件? (y/N): ").strip().lower()
+        if update_config in ['y', 'yes', '是']:
+            # 询问更新哪种配置文件
+            print("选择要更新的配置文件:")
+            print("1) 用户配置文件 (~/.aidefect/config.yaml)")
+            print("2) LLM配置文件 (config/llm_config.yaml)")
+            print("3) 两者都更新")
+
+            config_choice = input("请选择 (1-3): ").strip()
+
+            if config_choice in ['1', '3']:
+                self._update_user_config_default(provider.name, "", current_key, False, new_model_config)
+            if config_choice in ['2', '3']:
+                self._update_llm_config(provider, current_key, "", new_model_config)
+
+        self._print_success(f"{provider.display_name}配置修改完成")
+        return True
+
+    def _get_current_provider_config(self, provider_name: str) -> dict:
+        """获取提供商的当前配置"""
+        # 尝试从用户配置文件读取
+        try:
+            if self.user_config_file.exists():
+                with open(self.user_config_file, 'r', encoding='utf-8') as f:
+                    config = yaml.safe_load(f) or {}
+                    if 'llm' in config and provider_name in config['llm']:
+                        provider_config = config['llm'][provider_name]
+                        return {
+                            'model': provider_config.get('model', 'N/A'),
+                            'max_tokens': provider_config.get('max_tokens', 'N/A'),
+                            'temperature': provider_config.get('temperature', 'N/A'),
+                            'timeout': provider_config.get('timeout', 'N/A'),
+                            'max_retries': provider_config.get('max_retries', 'N/A')
+                        }
+        except Exception:
+            pass
+
+        # 尝试从LLM配置文件读取
+        try:
+            if self.llm_config_file.exists():
+                with open(self.llm_config_file, 'r', encoding='utf-8') as f:
+                    llm_config = yaml.safe_load(f) or {}
+                    if 'providers' in llm_config and provider_name in llm_config['providers']:
+                        provider_config = llm_config['providers'][provider_name]
+                        return {
+                            'model': provider_config.get('model', 'N/A'),
+                            'max_tokens': provider_config.get('max_tokens', 'N/A'),
+                            'temperature': provider_config.get('temperature', 'N/A'),
+                            'timeout': provider_config.get('timeout', 'N/A'),
+                            'max_retries': provider_config.get('max_retries', 'N/A')
+                        }
+        except Exception as e:
+            print(f"  ⚠️  获取提供商配置时出错: {e}")
+
+        return {
+            'model': 'N/A',
+            'max_tokens': 'N/A',
+            'temperature': 'N/A',
+            'timeout': 'N/A',
+            'max_retries': 'N/A'
+        }
 
     def _show_usage_guide(self):
         """显示使用指南"""

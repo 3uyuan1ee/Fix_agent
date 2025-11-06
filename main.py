@@ -8,6 +8,19 @@ import sys
 import os
 from pathlib import Path
 
+# 尝试加载dotenv以自动加载环境变量
+try:
+    from dotenv import load_dotenv
+    # 尝试加载用户目录下的.env文件
+    user_env_path = Path.home() / ".aidefect" / ".env"
+    if user_env_path.exists():
+        load_dotenv(user_env_path)
+        print(f"✅ 已加载环境变量: {user_env_path}")
+except ImportError:
+    print("⚠️  python-dotenv未安装，跳过环境变量加载")
+except Exception as e:
+    print(f"⚠️  环境变量加载失败: {e}")
+
 # 添加src目录到Python路径
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
