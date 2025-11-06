@@ -408,7 +408,7 @@ verify_installation() {
     print_info "验证安装..."
 
     # 检查Python模块导入
-    if python -c "import sys; sys.path.insert(0, 'src'); from interfaces.cli import cli_main; print('✅ 模块导入成功')" 2>/dev/null; then
+    if python -c "import sys; sys.path.insert(0, 'src'); from interfaces.cli import main; print('✅ 模块导入成功')" 2>/dev/null; then
         print_success "Python模块导入测试通过"
     else
         print_warning "Python模块导入测试失败"
@@ -426,10 +426,34 @@ verify_installation() {
         print_success "主程序文件存在"
 
         # 测试帮助命令
-        if timeout 10 python main.py --help &>/dev/null; then
-            print_success "主程序帮助命令测试通过"
+        if command -v timeout &>/dev/null; then
+            # Linux系统使用timeout命令
+            if timeout 10 python main.py --help &>/dev/null; then
+                print_success "主程序帮助命令测试通过"
+            else
+                print_warning "主程序帮助命令测试失败"
+            fi
         else
-            print_warning "主程序帮助命令测试失败"
+            # macOS系统使用后台进程和kill
+            python main.py --help &>/dev/null &
+            local pid=$!
+            local count=0
+            while kill -0 $pid 2>/dev/null && [ $count -lt 100 ]; do
+                sleep 0.1
+                count=$((count + 1))
+            done
+            if kill -0 $pid 2>/dev/null; then
+                kill $pid 2>/dev/null
+                wait $pid 2>/dev/null
+                print_warning "主程序帮助命令超时"
+            else
+                wait $pid 2>/dev/null
+                if [ $? -eq 0 ]; then
+                    print_success "主程序帮助命令测试通过"
+                else
+                    print_warning "主程序帮助命令测试失败"
+                fi
+            fi
         fi
     else
         print_error "主程序文件不存在"
