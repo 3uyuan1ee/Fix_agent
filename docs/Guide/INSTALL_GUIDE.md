@@ -42,8 +42,8 @@ aidefect-web
 
 ```bash
 # 1. 克隆项目
-git clone <repository-url>
-cd AIDefectDetector
+git clone https://github.com/3uyuan1ee/Fix_agent
+cd Fix_agent
 
 # 2. 运行安装脚本
 bash scripts/install_unix.sh
@@ -53,8 +53,8 @@ bash scripts/install_unix.sh
 
 ```batch
 :: 1. 克隆项目
-git clone <repository-url>
-cd AIDefectDetector
+git clone https://github.com/3uyuan1ee/Fix_agent
+cd Fix_agent
 
 :: 2. 运行安装脚本
 scripts\install_windows.bat
@@ -72,8 +72,8 @@ scripts\install_windows.bat
 
 ```bash
 # 1. 克隆项目
-git clone <repository-url>
-cd AIDefectDetector
+git clone https://github.com/3uyuan1ee/Fix_agent
+cd Fix_agent
 
 # 2. 创建虚拟环境（推荐）
 python3 -m venv aidefect_venv
@@ -121,7 +121,7 @@ aidefect_venv\Scripts\activate
 pip install --upgrade pip
 
 # 安装基础依赖
-pip install pyyaml loguru requests asyncio aiofiles
+pip install pyyaml loguru requests aiofiles
 
 # 安装静态分析工具
 pip install pylint flake8 bandit mccabe
@@ -146,7 +146,7 @@ pip install pytest pytest-asyncio pytest-cov black isort mypy
 python3 -c "
 import sys
 sys.path.insert(0, 'src')
-from interfaces.cli import main
+from interfaces.cli import main as cli_main
 print('✅ 导入成功！')
 "
 
@@ -178,8 +178,8 @@ sudo yum install -y git curl wget python3 python3-pip                # CentOS/RH
 
 ```bash
 # 克隆仓库
-git clone <repository-url>
-cd AIDefectDetector
+git clone https://github.com/3uyuan1ee/Fix_agent
+cd Fix_agent
 
 # 检查项目结构
 ls -la
@@ -228,8 +228,8 @@ git --version
 
 ```batch
 :: 克隆仓库
-git clone <repository-url>
-cd AIDefectDetector
+git clone https://github.com/3uyuan1ee/Fix_agent
+cd Fix_agent
 
 :: 检查项目结构
 dir
@@ -519,7 +519,7 @@ sudo rm -f ~/.local/bin/aidefect*
 
 # 4. 删除项目目录
 cd ..
-rm -rf AIDefectDetector
+rm -rf Fix_agent
 ```
 
 ### 保留配置的卸载
