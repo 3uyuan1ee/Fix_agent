@@ -600,31 +600,44 @@ class MultilangStaticAnalyzer:
         Returns:
             List[StaticAnalysisResult]: 分析结果列表
         """
-        # 使用PathResolver解析项目路径
+        # 使用PathResolver解析项目路径，但严格限制在目标目录内
         from ..utils.path_resolver import get_path_resolver
 
         path_resolver = get_path_resolver()
 
-        resolved_project_path = path_resolver.resolve_path(project_path)
-        if not resolved_project_path:
-            raise FileNotFoundError(f"无法解析项目路径: {project_path}")
-
-        project_path = resolved_project_path
-        if not project_path.exists():
+        # 直接解析路径，不使用广泛的搜索目录
+        resolved_project_path = Path(project_path).resolve()
+        if not resolved_project_path.exists():
             raise FileNotFoundError(f"项目路径不存在: {project_path}")
 
-        # 查找项目中的所有代码文件
+        if not resolved_project_path.is_dir():
+            raise NotADirectoryError(f"路径不是目录: {project_path}")
+
+        self.logger.info(f"分析项目目录: {resolved_project_path}")
+
+        # 查找项目中的所有代码文件，严格限制在目标目录内
         code_files = []
         for ext_set in self.language_extensions.values():
             for ext in ext_set:
-                code_files.extend(project_path.rglob(f"*{ext}"))
+                # 使用rglob但严格检查文件是否在项目边界内
+                for file_path in resolved_project_path.rglob(f"*{ext}"):
+                    if file_path.is_file():
+                        # 确保文件在项目边界内
+                        try:
+                            file_path.relative_to(resolved_project_path)
+                            code_files.append(file_path)
+                        except ValueError:
+                            # 文件不在项目边界内，跳过
+                            self.logger.debug(f"跳过项目边界外的文件: {file_path}")
+                            continue
 
-        file_paths = [str(f) for f in code_files if f.is_file()]
+        file_paths = [str(f) for f in code_files]
 
         if not file_paths:
-            self.logger.warning(f"项目中未找到支持的代码文件: {project_path}")
+            self.logger.warning(f"项目中未找到支持的代码文件: {resolved_project_path}")
             return []
 
+        self.logger.info(f"找到 {len(file_paths)} 个代码文件进行分析")
         return self.analyze_files(file_paths, **kwargs)
 
     def analyze_files(

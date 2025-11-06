@@ -68,12 +68,8 @@ class FileOperations:
         Raises:
             FileOperationError: 目录不存在或访问失败
         """
-        # 使用PathResolver解析目录路径
-        resolved_directory = self.path_resolver.resolve_path(directory)
-        if not resolved_directory:
-            raise FileOperationError(f"Cannot resolve directory path: {directory}")
-
-        directory = resolved_directory
+        # 直接解析路径为绝对路径，不使用PathResolver的广泛搜索
+        directory = Path(directory).resolve()
 
         # 检查目录是否存在
         if not directory.exists():
@@ -95,6 +91,13 @@ class FileOperations:
 
             for file_path in file_paths:
                 if not file_path.is_file():
+                    continue
+
+                # 确保文件在目标目录边界内（针对符号链接等情况）
+                try:
+                    file_path.relative_to(directory)
+                except ValueError:
+                    self.logger.debug(f"跳过目录边界外的文件: {file_path}")
                     continue
 
                 # 检查扩展名过滤

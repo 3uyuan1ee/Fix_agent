@@ -1112,7 +1112,7 @@ class AIFileSelector:
         return validation
 
     def _validate_and_fix_file_path(self, file_path: str) -> Optional[str]:
-        """验证和修正文件路径（使用PathResolver）
+        """验证和修正文件路径（严格限制在项目目录内）
 
         Args:
             file_path: AI返回的文件路径
@@ -1124,18 +1124,45 @@ class AIFileSelector:
             return None
 
         # 确保项目根目录已设置
-        if hasattr(self, "current_project_root") and self.current_project_root:
-            self.path_resolver.set_project_root(self.current_project_root)
+        if not hasattr(self, "current_project_root") or not self.current_project_root:
+            self.logger.warning("项目根目录未设置，无法验证文件路径")
+            return None
 
-        # 使用PathResolver解析路径
-        resolved_path = self.path_resolver.resolve_path(file_path)
+        project_root = self.current_project_root
 
-        if resolved_path:
-            # 返回相对于项目根目录的路径
-            relative_path = self.path_resolver.get_relative_path(resolved_path)
-            return str(relative_path)
-        else:
-            self.logger.warning(f"无法找到有效文件路径: {file_path}")
+        try:
+            # 首先判断是否为绝对路径
+            if Path(file_path).is_absolute():
+                candidate_path = Path(file_path)
+            else:
+                # 相对路径：基于项目根目录解析
+                candidate_path = project_root / file_path
+
+            # 解析为绝对路径（处理..和.）
+            resolved_path = candidate_path.resolve()
+
+            # 严格检查文件是否在项目边界内
+            try:
+                relative_path = resolved_path.relative_to(project_root)
+            except ValueError:
+                self.logger.debug(f"文件超出项目边界，跳过: {resolved_path} (项目边界: {project_root})")
+                return None
+
+            # 检查文件是否存在
+            if not resolved_path.exists():
+                self.logger.debug(f"文件不存在，跳过: {resolved_path}")
+                return None
+
+            # 检查是否为文件
+            if not resolved_path.is_file():
+                self.logger.debug(f"路径不是文件，跳过: {resolved_path}")
+                return None
+
+            # 返回相对于项目根目录的路径（使用POSIX风格）
+            return str(relative_path.as_posix())
+
+        except Exception as e:
+            self.logger.debug(f"路径验证失败: {file_path}, 错误: {e}")
             return None
 
     def _fallback_file_selection(
