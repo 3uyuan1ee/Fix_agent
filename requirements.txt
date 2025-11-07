@@ -1,0 +1,25 @@
+# Core dependencies
+aiohttp>=3.8.0
+asyncio>=3.4.3
+click>=8.0.0
+colorama>=0.4.4
+langchain>=0.0.200
+openai>=1.0.0
+pydantic>=2.0.0
+python-dotenv>=1.0.0
+pyyaml>=6.0
+rich>=13.0.0
+watchdog>=2.1.0
+zai>=0.0.4
+
+# Additional dependencies for code analysis
+ast-tools>=0.1.1
+bandit>=1.7.0
+flake8>=5.0.0
+pylint>=2.15.0
+black>=22.0.0
+isort>=5.10.0
+
+# JSON and configuration utilities
+jsonschema>=4.0.0
+toml>=0.10.0
