@@ -1145,7 +1145,9 @@ class AIFileSelector:
             try:
                 relative_path = resolved_path.relative_to(project_root)
             except ValueError:
-                self.logger.debug(f"文件超出项目边界，跳过: {resolved_path} (项目边界: {project_root})")
+                self.logger.debug(
+                    f"文件超出项目边界，跳过: {resolved_path} (项目边界: {project_root})"
+                )
                 return None
 
             # 检查文件是否存在

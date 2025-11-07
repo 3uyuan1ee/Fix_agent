@@ -204,13 +204,15 @@ class FixSuggestionContextBuilder:
                 f"开始构建修复建议上下文，问题数量: {len(detected_problems)}"
             )
             # 先创建validation_result，然后创建上下文
-            validation_result = self._create_validation_result_from_problems(detected_problems)
+            validation_result = self._create_validation_result_from_problems(
+                detected_problems
+            )
 
             # 使用detected_problems创建上下文
             context = FixSuggestionContext(
                 context_id=context_id,
                 validation_result=validation_result,
-                build_timestamp=datetime.now().isoformat()
+                build_timestamp=datetime.now().isoformat(),
             )
             # 设置detected_problems
             context.detected_problems = detected_problems
@@ -777,7 +779,7 @@ class FixSuggestionContextBuilder:
                 context_id="auto_generated",
                 detected_problems=detected_problems,
                 execution_success=True,
-                execution_time=0.0
+                execution_time=0.0,
             )
 
             # 创建ProblemValidationResult

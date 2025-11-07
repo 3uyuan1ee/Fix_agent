@@ -700,7 +700,9 @@ class AIProblemDetector:
         result = type_mapping.get(problem_type_lower)
 
         if result is None:
-            self.logger.warning(f"无法解析的问题类型: '{problem_type_str}' (处理后: '{problem_type_lower}')")
+            self.logger.warning(
+                f"无法解析的问题类型: '{problem_type_str}' (处理后: '{problem_type_lower}')"
+            )
             self.logger.debug(f"支持的问题类型: {list(type_mapping.keys())}")
 
         return result

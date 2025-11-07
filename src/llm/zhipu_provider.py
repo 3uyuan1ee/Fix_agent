@@ -171,7 +171,6 @@ class ZhipuProvider(LLMProvider):
 
             logger.info(f"  Message {i+1}: {msg['role']} - {content_preview}")
 
-        
         # 重试机制
         max_retries = 3
         base_delay = 1.0  # 基础延迟1秒
