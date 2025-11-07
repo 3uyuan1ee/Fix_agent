@@ -203,15 +203,17 @@ class FixSuggestionContextBuilder:
             self.logger.info(
                 f"开始构建修复建议上下文，问题数量: {len(detected_problems)}"
             )
+            # 先创建validation_result，然后创建上下文
+            validation_result = self._create_validation_result_from_problems(detected_problems)
+
             # 使用detected_problems创建上下文
             context = FixSuggestionContext(
-                context_id=context_id, build_timestamp=datetime.now().isoformat()
+                context_id=context_id,
+                validation_result=validation_result,
+                build_timestamp=datetime.now().isoformat()
             )
-            # 设置detected_problems并创建内部的validation_result
+            # 设置detected_problems
             context.detected_problems = detected_problems
-            context.validation_result = self._create_validation_result_from_problems(
-                detected_problems
-            )
         elif validation_result:
             context_id = self._generate_context_id()
             self.logger.info(
@@ -767,10 +769,22 @@ class FixSuggestionContextBuilder:
                 )
                 validated_problems.append(validated_problem)
 
+            # 创建模拟的ProblemDetectionResult
+            from ..tools.ai_problem_detector import ProblemDetectionResult
+
+            mock_detection_result = ProblemDetectionResult(
+                detection_id=f"detection_{int(datetime.now().timestamp())}",
+                context_id="auto_generated",
+                detected_problems=detected_problems,
+                execution_success=True,
+                execution_time=0.0
+            )
+
             # 创建ProblemValidationResult
             problem_validation_result = ProblemValidationResult(
                 validation_id=f"validation_{int(datetime.now().timestamp())}",
-                original_problems=detected_problems,
+                original_detection_result=mock_detection_result,
+                validated_problems=validated_problems,
                 filtered_problems=validated_problems,
                 validation_summary={
                     "total_problems": len(detected_problems),
