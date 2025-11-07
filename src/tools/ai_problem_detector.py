@@ -186,18 +186,58 @@ class AIProblemDetector:
 - 提供问题产生的原因分析
 
 输出格式：
-严格按照JSON格式输出，包含detected_problems数组，每个问题包含：
-- problem_id: 问题唯一标识
-- file_path: 文件路径
-- line_number: 行号
-- problem_type: 问题类型
-- severity: 严重程度 (low/medium/high/critical)
-- description: 问题描述
-- code_snippet: 问题代码片段
-- confidence: 置信度 (0.0-1.0)
-- reasoning: 推理过程
-- suggested_fix_type: 建议修复类型
-- estimated_fix_time: 预估修复时间（分钟）
+严格按照JSON格式输出，包含detected_problems数组，每个问题必须包含以下字段：
+
+**问题类型 (problem_type) 必须使用以下值之一：**
+- "security" (安全问题)
+- "performance" (性能问题)
+- "logic" (逻辑问题)
+- "style" (代码风格问题)
+- "maintainability" (可维护性问题)
+- "reliability" (可靠性问题)
+- "compatibility" (兼容性问题)
+- "documentation" (文档问题)
+
+**严重程度 (severity) 必须使用以下值之一：**
+- "low" (低)
+- "medium" (中)
+- "high" (高)
+- "critical" (严重)
+
+**修复类型 (suggested_fix_type) 必须使用以下值之一：**
+- "code_replacement" (代码替换)
+- "code_insertion" (代码插入)
+- "code_deletion" (代码删除)
+- "refactoring" (重构)
+- "configuration" (配置)
+- "dependency_update" (依赖更新)
+
+**完整JSON格式示例：**
+```json
+{
+  "detected_problems": [
+    {
+      "problem_id": "SEC_001",
+      "file_path": "文件路径",
+      "line_number": 行号,
+      "problem_type": "security",
+      "severity": "high",
+      "description": "详细的问题描述",
+      "code_snippet": "相关的代码片段",
+      "confidence": 0.9,
+      "reasoning": "详细的推理过程",
+      "suggested_fix_type": "code_replacement",
+      "estimated_fix_time": 30,
+      "tags": ["安全", "输入验证"]
+    }
+  ]
+}
+```
+
+重要提醒：
+- problem_type, severity, suggested_fix_type 字段必须严格按照上述英文值填写
+- 不要使用中文或其他格式的问题类型表达
+- 确保所有必需字段都存在且格式正确
 """
 
     def detect_problems(
@@ -625,8 +665,9 @@ class AIProblemDetector:
         return problems
 
     def _parse_problem_type(self, problem_type_str: str) -> Optional[ProblemType]:
-        """解析问题类型"""
+        """解析问题类型（支持中英文）"""
         type_mapping = {
+            # 英文映射
             "security": ProblemType.SECURITY,
             "performance": ProblemType.PERFORMANCE,
             "logic": ProblemType.LOGIC,
@@ -635,10 +676,34 @@ class AIProblemDetector:
             "reliability": ProblemType.RELIABILITY,
             "compatibility": ProblemType.COMPATIBILITY,
             "documentation": ProblemType.DOCUMENTATION,
+            # 中文映射
+            "安全问题": ProblemType.SECURITY,
+            "性能问题": ProblemType.PERFORMANCE,
+            "逻辑问题": ProblemType.LOGIC,
+            "代码风格": ProblemType.STYLE,
+            "风格问题": ProblemType.STYLE,
+            "可维护性": ProblemType.MAINTAINABILITY,
+            "维护性问题": ProblemType.MAINTAINABILITY,
+            "可靠性": ProblemType.RELIABILITY,
+            "兼容性": ProblemType.COMPATIBILITY,
+            "文档问题": ProblemType.DOCUMENTATION,
+            # 其他可能的中文表达
+            "安全漏洞": ProblemType.SECURITY,
+            "性能瓶颈": ProblemType.PERFORMANCE,
+            "性能优化": ProblemType.PERFORMANCE,
+            "业务逻辑": ProblemType.LOGIC,
+            "代码质量": ProblemType.STYLE,
+            "代码规范": ProblemType.STYLE,
         }
 
-        problem_type_lower = problem_type_str.lower()
-        return type_mapping.get(problem_type_lower)
+        problem_type_lower = problem_type_str.lower().strip()
+        result = type_mapping.get(problem_type_lower)
+
+        if result is None:
+            self.logger.warning(f"无法解析的问题类型: '{problem_type_str}' (处理后: '{problem_type_lower}')")
+            self.logger.debug(f"支持的问题类型: {list(type_mapping.keys())}")
+
+        return result
 
     def _parse_severity_level(self, severity_str: str) -> Optional[SeverityLevel]:
         """解析严重程度"""
