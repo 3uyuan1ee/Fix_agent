@@ -3,12 +3,13 @@ Web搜索工具完整实现
 包含数据模型、抽象基类、Tavily提供者、工厂类和主服务类
 """
 
+import logging
 import os
 import time
-import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Type, Union
+
 from dotenv import load_dotenv
 from tavily import TavilyClient
 
@@ -20,9 +21,11 @@ load_dotenv()
 # 数据模型
 # ================================
 
+
 @dataclass
 class SearchResult:
     """标准化搜索结果项"""
+
     title: str
     url: str
     content: str
@@ -51,7 +54,7 @@ class SearchResult:
             "score": self.score,
             "source": self.source,
             "published_date": self.published_date,
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }
 
     @classmethod
@@ -63,6 +66,7 @@ class SearchResult:
 @dataclass
 class SearchResponse:
     """搜索响应"""
+
     success: bool
     results: List[SearchResult]
     query: str
@@ -97,7 +101,7 @@ class SearchResponse:
             "results_count": len(self.results),
             "execution_time": self.execution_time,
             "error": self.error,
-            "has_results": len(self.results) > 0
+            "has_results": len(self.results) > 0,
         }
 
     def to_dict(self) -> Dict[str, Any]:
@@ -110,7 +114,7 @@ class SearchResponse:
             "provider": self.provider,
             "error": self.error,
             "execution_time": self.execution_time,
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }
 
     @classmethod
@@ -130,6 +134,7 @@ class SearchResponse:
 @dataclass
 class SearchConfig:
     """搜索配置"""
+
     default_provider: str = "tavily"
     max_results: int = 5
     timeout: int = 30
@@ -156,7 +161,7 @@ class SearchConfig:
             "timeout": self.timeout,
             "include_raw_content": self.include_raw_content,
             "retry_attempts": self.retry_attempts,
-            "retry_delay": self.retry_delay
+            "retry_delay": self.retry_delay,
         }
 
     @classmethod
@@ -169,24 +174,34 @@ class SearchConfig:
 # 异常类定义
 # ================================
 
+
 class SearchException(Exception):
     """搜索基础异常类"""
+
     pass
 
 
 class ProviderNotFoundException(SearchException):
     """提供者未找到异常"""
+
     pass
 
 
 class ConfigurationException(SearchException):
     """配置异常"""
+
     pass
 
 
 class APIException(SearchException):
     """API调用异常"""
-    def __init__(self, message: str, status_code: Optional[int] = None, response_data: Optional[Dict] = None):
+
+    def __init__(
+        self,
+        message: str,
+        status_code: Optional[int] = None,
+        response_data: Optional[Dict] = None,
+    ):
         super().__init__(message)
         self.status_code = status_code
         self.response_data = response_data or {}
@@ -194,11 +209,13 @@ class APIException(SearchException):
 
 class TimeoutException(SearchException):
     """超时异常"""
+
     pass
 
 
 class RateLimitException(SearchException):
     """频率限制异常"""
+
     def __init__(self, message: str, retry_after: Optional[int] = None):
         super().__init__(message)
         self.retry_after = retry_after
@@ -207,6 +224,7 @@ class RateLimitException(SearchException):
 # ================================
 # 抽象基类
 # ================================
+
 
 class BaseSearchProvider(ABC):
     """搜索提供者抽象基类"""
@@ -251,7 +269,9 @@ class BaseSearchProvider(ABC):
         pass
 
     @abstractmethod
-    def _parse_response(self, response: Any, query: str, execution_time: float) -> SearchResponse:
+    def _parse_response(
+        self, response: Any, query: str, execution_time: float
+    ) -> SearchResponse:
         """解析搜索响应"""
         pass
 
@@ -295,9 +315,11 @@ class BaseSearchProvider(ABC):
                     delay = e.retry_after
                 else:
                     # 指数退避
-                    delay = self.config.retry_delay * (2 ** attempt)
+                    delay = self.config.retry_delay * (2**attempt)
 
-                self.logger.warning(f"搜索失败，{delay}秒后重试 (尝试 {attempt + 1}/{self.config.retry_attempts + 1}): {e}")
+                self.logger.warning(
+                    f"搜索失败，{delay}秒后重试 (尝试 {attempt + 1}/{self.config.retry_attempts + 1}): {e}"
+                )
                 time.sleep(delay)
 
         raise last_exception
@@ -321,7 +343,9 @@ class BaseSearchProvider(ABC):
 
             # 检查可用性
             if not self._check_availability():
-                raise ConfigurationException(f"搜索提供者 '{self.get_provider_name()}' 不可用")
+                raise ConfigurationException(
+                    f"搜索提供者 '{self.get_provider_name()}' 不可用"
+                )
 
             # 准备参数
             search_kwargs = self._prepare_search_kwargs(**kwargs)
@@ -341,7 +365,9 @@ class BaseSearchProvider(ABC):
             # 解析响应
             response = self._parse_response(raw_response, query, execution_time)
 
-            self.logger.info(f"搜索完成，返回 {len(response.results)} 个结果，耗时 {execution_time:.2f}秒")
+            self.logger.info(
+                f"搜索完成，返回 {len(response.results)} 个结果，耗时 {execution_time:.2f}秒"
+            )
             return response
 
         except Exception as e:
@@ -357,7 +383,7 @@ class BaseSearchProvider(ABC):
                 total=0,
                 provider=self.get_provider_name(),
                 error=error_msg,
-                execution_time=execution_time
+                execution_time=execution_time,
             )
 
     def __str__(self) -> str:
@@ -379,8 +405,8 @@ class TavilyProvider(BaseSearchProvider):
             api_key: Tavily API密钥
             base_url: 自定义API端点
         """
-        self.api_key = kwargs.get('api_key') or os.environ.get("TAVILY_API_KEY")
-        self.base_url = kwargs.get('base_url') or os.environ.get("TAVILY_BASE_URL")
+        self.api_key = kwargs.get("api_key") or os.environ.get("TAVILY_API_KEY")
+        self.base_url = kwargs.get("base_url") or os.environ.get("TAVILY_BASE_URL")
 
         if not self.api_key:
             raise ConfigurationException("TAVILY_API_KEY 环境变量未设置")
@@ -415,7 +441,9 @@ class TavilyProvider(BaseSearchProvider):
         params = {
             "query": query,
             "max_results": kwargs.get("max_results", self.config.max_results),
-            "include_raw_content": kwargs.get("include_raw_content", self.config.include_raw_content),
+            "include_raw_content": kwargs.get(
+                "include_raw_content", self.config.include_raw_content
+            ),
         }
 
         # 可选参数
@@ -445,7 +473,8 @@ class TavilyProvider(BaseSearchProvider):
                 retry_after = None
                 if "retry after" in error_msg:
                     import re
-                    match = re.search(r'retry after (\d+)', error_msg)
+
+                    match = re.search(r"retry after (\d+)", error_msg)
                     if match:
                         retry_after = int(match.group(1))
                 raise RateLimitException(f"Tavily API频率限制: {e}", retry_after)
@@ -456,7 +485,9 @@ class TavilyProvider(BaseSearchProvider):
             else:
                 raise APIException(f"Tavily API调用失败: {e}")
 
-    def _parse_response(self, response: Any, query: str, execution_time: float) -> SearchResponse:
+    def _parse_response(
+        self, response: Any, query: str, execution_time: float
+    ) -> SearchResponse:
         """解析Tavily响应"""
         try:
             results = []
@@ -471,7 +502,7 @@ class TavilyProvider(BaseSearchProvider):
                     metadata={
                         "raw_content": item.get("raw_content"),
                         "score": item.get("score"),
-                    }
+                    },
                 )
                 results.append(search_result)
 
@@ -485,7 +516,7 @@ class TavilyProvider(BaseSearchProvider):
                 metadata={
                     "answer": response.get("answer"),
                     "follow_up_questions": response.get("follow_up_questions", []),
-                }
+                },
             )
 
         except Exception as e:
@@ -508,7 +539,9 @@ class GoogleProvider(BaseSearchProvider):
     def _execute_search(self, params: Dict[str, Any]) -> Any:
         raise NotImplementedError("Google提供者尚未实现")
 
-    def _parse_response(self, response: Any, query: str, execution_time: float) -> SearchResponse:
+    def _parse_response(
+        self, response: Any, query: str, execution_time: float
+    ) -> SearchResponse:
         raise NotImplementedError("Google提供者尚未实现")
 
 
@@ -526,7 +559,9 @@ class SearchProviderFactory:
         cls._providers[name.lower()] = provider_class
 
     @classmethod
-    def create(cls, provider: str, config: Optional[SearchConfig] = None, **kwargs) -> BaseSearchProvider:
+    def create(
+        cls, provider: str, config: Optional[SearchConfig] = None, **kwargs
+    ) -> BaseSearchProvider:
         """
         创建搜索提供者实例
 
@@ -561,7 +596,9 @@ class SearchProviderFactory:
 class WebSearchService:
     """Web搜索服务主类"""
 
-    def __init__(self, provider: str = "tavily", config: Optional[SearchConfig] = None, **kwargs):
+    def __init__(
+        self, provider: str = "tavily", config: Optional[SearchConfig] = None, **kwargs
+    ):
         """
         初始化Web搜索服务
 
@@ -599,10 +636,11 @@ class WebSearch:
 
     def __init__(self):
         import warnings
+
         warnings.warn(
             "WebSearch类已废弃，请使用WebSearchService类",
             DeprecationWarning,
-            stacklevel=2
+            stacklevel=2,
         )
 
         # 创建默认的Tavily服务
@@ -614,7 +652,7 @@ class WebSearch:
         max_results: int = 5,
         topic: str = "general",
         include_raw_content: bool = False,
-        **kwargs
+        **kwargs,
     ):
         """
         兼容原始接口的搜索方法
@@ -635,7 +673,7 @@ class WebSearch:
             max_results=max_results,
             topic=topic,
             include_raw_content=include_raw_content,
-            **kwargs
+            **kwargs,
         )
 
         # 转换为类似原始格式的响应

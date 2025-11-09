@@ -10,12 +10,13 @@ import subprocess
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union, Type
+from typing import Any, Dict, List, Optional, Type, Union
 
 
 @dataclass
 class AnalysisIssue:
     """代码分析问题"""
+
     tool_name: str
     issue_type: str  # error, warning, info, convention
     severity: str  # high, medium, low
@@ -30,6 +31,7 @@ class AnalysisIssue:
 @dataclass
 class AnalysisResult:
     """代码分析结果"""
+
     file_path: str
     language: str
     tool_name: str
@@ -107,21 +109,24 @@ class BaseCodeAnalyzer(ABC):
         pass
 
     @abstractmethod
-    def _parse_output(self, stdout: str, stderr: str, returncode: int, file_path: Path) -> List[AnalysisIssue]:
+    def _parse_output(
+        self, stdout: str, stderr: str, returncode: int, file_path: Path
+    ) -> List[AnalysisIssue]:
         """解析工具输出"""
         pass
 
     def can_analyze(self, file_path: Path) -> bool:
         """检查是否可以分析指定文件"""
         return (
-            file_path.exists() and
-            file_path.suffix in self.get_supported_extensions() and
-            self._check_tool_availability()
+            file_path.exists()
+            and file_path.suffix in self.get_supported_extensions()
+            and self._check_tool_availability()
         )
 
     def analyze(self, file_path: Union[str, Path]) -> AnalysisResult:
         """分析文件"""
         import time
+
         start_time = time.time()
 
         file_path = Path(file_path)
@@ -133,7 +138,7 @@ class BaseCodeAnalyzer(ABC):
                 tool_name=self.get_tool_name(),
                 success=False,
                 issues=[],
-                error=f"Cannot analyze file: {file_path}"
+                error=f"Cannot analyze file: {file_path}",
             )
 
         try:
@@ -144,11 +149,13 @@ class BaseCodeAnalyzer(ABC):
                 capture_output=True,
                 text=True,
                 timeout=self.timeout,
-                cwd=file_path.parent
+                cwd=file_path.parent,
             )
 
             # 解析输出
-            issues = self._parse_output(result.stdout, result.stderr, result.returncode, file_path)
+            issues = self._parse_output(
+                result.stdout, result.stderr, result.returncode, file_path
+            )
 
             # 计算质量评分
             score = self._calculate_score(issues)
@@ -163,7 +170,7 @@ class BaseCodeAnalyzer(ABC):
                 issues=issues,
                 score=score,
                 execution_time=execution_time,
-                metadata={"returncode": result.returncode}
+                metadata={"returncode": result.returncode},
             )
 
         except subprocess.TimeoutExpired:
@@ -173,7 +180,7 @@ class BaseCodeAnalyzer(ABC):
                 tool_name=self.get_tool_name(),
                 success=False,
                 issues=[],
-                error="Analysis timeout"
+                error="Analysis timeout",
             )
         except FileNotFoundError:
             return AnalysisResult(
@@ -182,7 +189,7 @@ class BaseCodeAnalyzer(ABC):
                 tool_name=self.get_tool_name(),
                 success=False,
                 issues=[],
-                error=f"Tool '{self.get_tool_name()}' is not installed"
+                error=f"Tool '{self.get_tool_name()}' is not installed",
             )
         except Exception as e:
             return AnalysisResult(
@@ -191,7 +198,7 @@ class BaseCodeAnalyzer(ABC):
                 tool_name=self.get_tool_name(),
                 success=False,
                 issues=[],
-                error=f"Analysis failed: {e}"
+                error=f"Analysis failed: {e}",
             )
 
     def _calculate_score(self, issues: List[AnalysisIssue]) -> float:
@@ -234,15 +241,20 @@ class JavaScriptTypeScriptAnalyzer(BaseCodeAnalyzer):
     def _build_command(self, file_path: Path) -> List[str]:
         cmd = [
             "eslint",
-            "--format", "json",
+            "--format",
+            "json",
             "--no-eslintrc",  # 不使用项目配置
-            "--env", "browser,es2021,node",
-            "--parser-options", '{"ecmaVersion": "latest", "sourceType": "module"}',
-            str(file_path)
+            "--env",
+            "browser,es2021,node",
+            "--parser-options",
+            '{"ecmaVersion": "latest", "sourceType": "module"}',
+            str(file_path),
         ]
         return cmd
 
-    def _parse_output(self, stdout: str, stderr: str, returncode: int, file_path: Path) -> List[AnalysisIssue]:
+    def _parse_output(
+        self, stdout: str, stderr: str, returncode: int, file_path: Path
+    ) -> List[AnalysisIssue]:
         issues = []
 
         try:
@@ -254,13 +266,17 @@ class JavaScriptTypeScriptAnalyzer(BaseCodeAnalyzer):
                         for message in result.get("messages", []):
                             issue = AnalysisIssue(
                                 tool_name="eslint",
-                                issue_type=message.get("severity", 1),  # 1=error, 2=warning
-                                severity="high" if message.get("severity") == 1 else "medium",
+                                issue_type=message.get(
+                                    "severity", 1
+                                ),  # 1=error, 2=warning
+                                severity=(
+                                    "high" if message.get("severity") == 1 else "medium"
+                                ),
                                 message=message.get("message", ""),
                                 line=message.get("line"),
                                 column=message.get("column"),
                                 rule_id=message.get("ruleId"),
-                                category="code_style"
+                                category="code_style",
                             )
                             issues.append(issue)
         except json.JSONDecodeError:
@@ -279,7 +295,7 @@ class JavaScriptTypeScriptAnalyzer(BaseCodeAnalyzer):
                                     severity="medium",
                                     message=":".join(parts[2:]).strip(),
                                     line=line_num,
-                                    category="syntax_error"
+                                    category="syntax_error",
                                 )
                                 issues.append(issue)
                             except ValueError:
@@ -308,7 +324,7 @@ class JavaAnalyzer(BaseCodeAnalyzer):
         tools = {
             "spotbugs": ["spotbugs", "-textui", "-version"],
             "pmd": ["pmd", "--version"],
-            "checkstyle": ["checkstyle", "-version"]
+            "checkstyle": ["checkstyle", "-version"],
         }
 
         cmd = tools.get(self.tool)
@@ -323,30 +339,32 @@ class JavaAnalyzer(BaseCodeAnalyzer):
 
     def _build_command(self, file_path: Path) -> List[str]:
         if self.tool == "spotbugs":
-            return [
-                "spotbugs",
-                "-textui",
-                "-xml:withMessages",
-                str(file_path)
-            ]
+            return ["spotbugs", "-textui", "-xml:withMessages", str(file_path)]
         elif self.tool == "pmd":
             return [
                 "pmd",
-                "-d", str(file_path),
-                "-f", "json",
-                "-r", "rulesets/java/quickstart.xml"
+                "-d",
+                str(file_path),
+                "-f",
+                "json",
+                "-r",
+                "rulesets/java/quickstart.xml",
             ]
         elif self.tool == "checkstyle":
             return [
                 "checkstyle",
-                "-f", "json",
-                "-c", "/google_checks.xml",  # 使用Google风格指南
-                str(file_path)
+                "-f",
+                "json",
+                "-c",
+                "/google_checks.xml",  # 使用Google风格指南
+                str(file_path),
             ]
         else:
             raise ValueError(f"Unsupported tool: {self.tool}")
 
-    def _parse_output(self, stdout: str, stderr: str, returncode: int, file_path: Path) -> List[AnalysisIssue]:
+    def _parse_output(
+        self, stdout: str, stderr: str, returncode: int, file_path: Path
+    ) -> List[AnalysisIssue]:
         issues = []
 
         if self.tool == "pmd" and stdout:
@@ -363,7 +381,7 @@ class JavaAnalyzer(BaseCodeAnalyzer):
                                 line=v.get("beginline"),
                                 column=v.get("begincolumn"),
                                 rule_id=v.get("rule"),
-                                category=v.get("ruleset", "")
+                                category=v.get("ruleset", ""),
                             )
                             issues.append(issue)
             except json.JSONDecodeError:
@@ -383,7 +401,7 @@ class JavaAnalyzer(BaseCodeAnalyzer):
                                 line=error.get("line"),
                                 column=error.get("column"),
                                 rule_id=error.get("source"),
-                                category="style"
+                                category="style",
                             )
                             issues.append(issue)
             except json.JSONDecodeError:
@@ -398,7 +416,7 @@ class JavaAnalyzer(BaseCodeAnalyzer):
                         issue_type="warning",
                         severity="medium",
                         message=line.strip(),
-                        category="general"
+                        category="general",
                     )
                     issues.append(issue)
 
@@ -422,10 +440,7 @@ class CCppAnalyzer(BaseCodeAnalyzer):
         return self.tool
 
     def _check_tool_availability(self) -> bool:
-        tools = {
-            "clang": ["clang", "--version"],
-            "cppcheck": ["cppcheck", "--version"]
-        }
+        tools = {"clang": ["clang", "--version"], "cppcheck": ["cppcheck", "--version"]}
 
         cmd = tools.get(self.tool)
         if not cmd:
@@ -442,20 +457,18 @@ class CCppAnalyzer(BaseCodeAnalyzer):
             return [
                 "clang",
                 "--analyze",
-                "-Xanalyzer", "-analyzer-output=text",
-                str(file_path)
+                "-Xanalyzer",
+                "-analyzer-output=text",
+                str(file_path),
             ]
         elif self.tool == "cppcheck":
-            return [
-                "cppcheck",
-                "--enable=all",
-                "--xml",
-                str(file_path)
-            ]
+            return ["cppcheck", "--enable=all", "--xml", str(file_path)]
         else:
             raise ValueError(f"Unsupported tool: {self.tool}")
 
-    def _parse_output(self, stdout: str, stderr: str, returncode: int, file_path: Path) -> List[AnalysisIssue]:
+    def _parse_output(
+        self, stdout: str, stderr: str, returncode: int, file_path: Path
+    ) -> List[AnalysisIssue]:
         issues = []
 
         if self.tool == "clang" and stderr:
@@ -464,7 +477,10 @@ class CCppAnalyzer(BaseCodeAnalyzer):
                 if file_path.name in line and ("warning" in line or "error" in line):
                     # 解析clang输出格式
                     # 示例: main.c:10:5: warning: ...
-                    match = re.search(rf"{re.escape(file_path.name)}:(\d+):(\d+):\s*(\w+):\s*(.+)", line)
+                    match = re.search(
+                        rf"{re.escape(file_path.name)}:(\d+):(\d+):\s*(\w+):\s*(.+)",
+                        line,
+                    )
                     if match:
                         line_num, col_num, severity, message = match.groups()
                         issue = AnalysisIssue(
@@ -474,13 +490,14 @@ class CCppAnalyzer(BaseCodeAnalyzer):
                             message=message.strip(),
                             line=int(line_num),
                             column=int(col_num),
-                            category="static_analysis"
+                            category="static_analysis",
                         )
                         issues.append(issue)
 
         elif self.tool == "cppcheck" and stdout:
             # 简单的XML解析cppcheck输出
             import xml.etree.ElementTree as ET
+
             try:
                 root = ET.fromstring(stdout)
                 for error in root.findall(".//error"):
@@ -491,21 +508,25 @@ class CCppAnalyzer(BaseCodeAnalyzer):
                             issue_type="warning",
                             severity=attrs.get("severity", "medium"),
                             message=attrs.get("msg", ""),
-                            line=int(attrs.get("line", 0)) if attrs.get("line") else None,
+                            line=(
+                                int(attrs.get("line", 0)) if attrs.get("line") else None
+                            ),
                             rule_id=attrs.get("id"),
-                            category=attrs.get("category", "")
+                            category=attrs.get("category", ""),
                         )
                         issues.append(issue)
             except ET.ParseError:
                 # 如果XML解析失败，尝试文本解析
                 for line in stdout.split("\n"):
-                    if file_path.name in line and ("error" in line or "warning" in line):
+                    if file_path.name in line and (
+                        "error" in line or "warning" in line
+                    ):
                         issue = AnalysisIssue(
                             tool_name="cppcheck",
                             issue_type="warning",
                             severity="medium",
                             message=line.strip(),
-                            category="general"
+                            category="general",
                         )
                         issues.append(issue)
 
@@ -545,7 +566,9 @@ class GoAnalyzer(BaseCodeAnalyzer):
         else:
             raise ValueError(f"Unsupported tool: {self.tool}")
 
-    def _parse_output(self, stdout: str, stderr: str, returncode: int, file_path: Path) -> List[AnalysisIssue]:
+    def _parse_output(
+        self, stdout: str, stderr: str, returncode: int, file_path: Path
+    ) -> List[AnalysisIssue]:
         issues = []
 
         # Go工具通常在stderr输出错误信息
@@ -555,7 +578,9 @@ class GoAnalyzer(BaseCodeAnalyzer):
             if line.strip() and file_path.name in line:
                 # 解析Go输出格式
                 # 示例: main.go:10:2: missing argument for conversion to int
-                match = re.search(rf"{re.escape(file_path.name)}:(\d+):(\d+):\s*(.+)", line)
+                match = re.search(
+                    rf"{re.escape(file_path.name)}:(\d+):(\d+):\s*(.+)", line
+                )
                 if match:
                     line_num, col_num, message = match.groups()
                     issue = AnalysisIssue(
@@ -565,7 +590,7 @@ class GoAnalyzer(BaseCodeAnalyzer):
                         message=message.strip(),
                         line=int(line_num),
                         column=int(col_num),
-                        category="go_analysis"
+                        category="go_analysis",
                     )
                     issues.append(issue)
                 else:
@@ -575,7 +600,7 @@ class GoAnalyzer(BaseCodeAnalyzer):
                         issue_type="warning",
                         severity="medium",
                         message=line.strip(),
-                        category="go_analysis"
+                        category="go_analysis",
                     )
                     issues.append(issue)
 
@@ -596,20 +621,20 @@ class RustAnalyzer(BaseCodeAnalyzer):
 
     def _check_tool_availability(self) -> bool:
         try:
-            subprocess.run(["cargo", "clippy", "--version"], capture_output=True, timeout=5)
+            subprocess.run(
+                ["cargo", "clippy", "--version"], capture_output=True, timeout=5
+            )
             return True
         except (FileNotFoundError, subprocess.TimeoutExpired):
             return False
 
     def _build_command(self, file_path: Path) -> List[str]:
         # Rust分析通常在项目根目录运行
-        return [
-            "cargo", "clippy",
-            "--message-format=json",
-            "--", str(file_path)
-        ]
+        return ["cargo", "clippy", "--message-format=json", "--", str(file_path)]
 
-    def _parse_output(self, stdout: str, stderr: str, returncode: int, file_path: Path) -> List[AnalysisIssue]:
+    def _parse_output(
+        self, stdout: str, stderr: str, returncode: int, file_path: Path
+    ) -> List[AnalysisIssue]:
         issues = []
 
         # Clippy输出JSON格式的诊断信息
@@ -625,11 +650,13 @@ class RustAnalyzer(BaseCodeAnalyzer):
                             issue = AnalysisIssue(
                                 tool_name="clippy",
                                 issue_type=msg.get("level", "warning"),
-                                severity="high" if msg.get("level") == "error" else "medium",
+                                severity=(
+                                    "high" if msg.get("level") == "error" else "medium"
+                                ),
                                 message=msg.get("message", ""),
                                 line=span.get("line_start"),
                                 column=span.get("column_start"),
-                                category="rust_analysis"
+                                category="rust_analysis",
                             )
                             issues.append(issue)
                 except json.JSONDecodeError:
@@ -645,7 +672,7 @@ class RustAnalyzer(BaseCodeAnalyzer):
                         issue_type="warning",
                         severity="medium",
                         message=line.strip(),
-                        category="rust_analysis"
+                        category="rust_analysis",
                     )
                     issues.append(issue)
 
@@ -691,29 +718,17 @@ class PythonAnalyzer(BaseCodeAnalyzer):
 
     def _build_command(self, file_path: Path) -> List[str]:
         if self.tool == "pylint":
-            return [
-                "pylint",
-                "--output-format=json",
-                "--reports=no",
-                str(file_path)
-            ]
+            return ["pylint", "--output-format=json", "--reports=no", str(file_path)]
         elif self.tool == "flake8":
-            return [
-                "flake8",
-                "--format=json",
-                str(file_path)
-            ]
+            return ["flake8", "--format=json", str(file_path)]
         elif self.tool == "mypy":
-            return [
-                "mypy",
-                "--show-error-codes",
-                "--no-error-summary",
-                str(file_path)
-            ]
+            return ["mypy", "--show-error-codes", "--no-error-summary", str(file_path)]
         else:
             raise ValueError(f"Unsupported tool: {self.tool}")
 
-    def _parse_output(self, stdout: str, stderr: str, returncode: int, file_path: Path) -> List[AnalysisIssue]:
+    def _parse_output(
+        self, stdout: str, stderr: str, returncode: int, file_path: Path
+    ) -> List[AnalysisIssue]:
         issues = []
 
         if self.tool == "pylint" and stdout:
@@ -724,12 +739,14 @@ class PythonAnalyzer(BaseCodeAnalyzer):
                         analysis_issue = AnalysisIssue(
                             tool_name="pylint",
                             issue_type=issue.get("type", "warning"),
-                            severity="high" if issue.get("type") == "error" else "medium",
+                            severity=(
+                                "high" if issue.get("type") == "error" else "medium"
+                            ),
                             message=issue.get("message", ""),
                             line=issue.get("line"),
                             column=issue.get("column"),
                             rule_id=issue.get("message-id"),
-                            category="python_quality"
+                            category="python_quality",
                         )
                         issues.append(analysis_issue)
             except json.JSONDecodeError:
@@ -750,7 +767,7 @@ class PythonAnalyzer(BaseCodeAnalyzer):
                                 line=issue.get("line"),
                                 column=issue.get("column"),
                                 rule_id=issue.get("code"),
-                                category="python_style"
+                                category="python_style",
                             )
                             issues.append(analysis_issue)
             except json.JSONDecodeError:
@@ -758,7 +775,10 @@ class PythonAnalyzer(BaseCodeAnalyzer):
                 for line in stdout.split("\n"):
                     if line.strip() and file_path.name in line:
                         # 示例: test.py:1:1: E001 error message
-                        match = re.search(rf"{re.escape(file_path.name)}:(\d+):(\d+):\s*(\w+)\s+(.+)", line)
+                        match = re.search(
+                            rf"{re.escape(file_path.name)}:(\d+):(\d+):\s*(\w+)\s+(.+)",
+                            line,
+                        )
                         if match:
                             line_num, col_num, code, message = match.groups()
                             analysis_issue = AnalysisIssue(
@@ -769,7 +789,7 @@ class PythonAnalyzer(BaseCodeAnalyzer):
                                 line=int(line_num),
                                 column=int(col_num),
                                 rule_id=code,
-                                category="python_style"
+                                category="python_style",
                             )
                             issues.append(analysis_issue)
 
@@ -778,7 +798,9 @@ class PythonAnalyzer(BaseCodeAnalyzer):
             for line in stderr.split("\n"):
                 if line.strip() and file_path.name in line:
                     # 示例: test.py:1: error: Name 'x' is not defined
-                    match = re.search(rf"{re.escape(file_path.name)}:(\d+):\s*(\w+):\s*(.+)", line)
+                    match = re.search(
+                        rf"{re.escape(file_path.name)}:(\d+):\s*(\w+):\s*(.+)", line
+                    )
                     if match:
                         line_num, severity, message = match.groups()
                         analysis_issue = AnalysisIssue(
@@ -787,7 +809,7 @@ class PythonAnalyzer(BaseCodeAnalyzer):
                             severity="high" if severity == "error" else "medium",
                             message=message.strip(),
                             line=int(line_num),
-                            category="python_typing"
+                            category="python_typing",
                         )
                         issues.append(analysis_issue)
 
@@ -804,29 +826,24 @@ class MultiLanguageAnalyzerFactory:
         "pylint": lambda **kwargs: PythonAnalyzer(tool="pylint", **kwargs),
         "flake8": lambda **kwargs: PythonAnalyzer(tool="flake8", **kwargs),
         "mypy": lambda **kwargs: PythonAnalyzer(tool="mypy", **kwargs),
-
         # JavaScript/TypeScript
         "javascript": JavaScriptTypeScriptAnalyzer,
         "typescript": JavaScriptTypeScriptAnalyzer,
         "js": JavaScriptTypeScriptAnalyzer,
         "ts": JavaScriptTypeScriptAnalyzer,
-
         # Java
         "java": lambda **kwargs: JavaAnalyzer(**kwargs),
-
         # C/C++
         "c": lambda **kwargs: CCppAnalyzer(tool="clang", **kwargs),
         "cpp": lambda **kwargs: CCppAnalyzer(tool="clang", **kwargs),
         "c++": lambda **kwargs: CCppAnalyzer(tool="clang", **kwargs),
         "clang": lambda **kwargs: CCppAnalyzer(tool="clang", **kwargs),
         "cppcheck": lambda **kwargs: CCppAnalyzer(tool="cppcheck", **kwargs),
-
         # Go
         "go": lambda **kwargs: GoAnalyzer(tool="vet", **kwargs),
         "golint": lambda **kwargs: GoAnalyzer(tool="vet", **kwargs),
         "govet": lambda **kwargs: GoAnalyzer(tool="vet", **kwargs),
         "staticcheck": lambda **kwargs: GoAnalyzer(tool="staticcheck", **kwargs),
-
         # Rust
         "rust": RustAnalyzer,
         "clippy": RustAnalyzer,
@@ -852,7 +869,6 @@ class MultiLanguageAnalyzerFactory:
         extension_map = {
             # Python
             ".py": "python",
-
             # JavaScript/TypeScript
             ".js": "javascript",
             ".jsx": "javascript",
@@ -860,10 +876,8 @@ class MultiLanguageAnalyzerFactory:
             ".tsx": "typescript",
             ".mjs": "javascript",
             ".cjs": "javascript",
-
             # Java
             ".java": "java",
-
             # C/C++
             ".c": "c",
             ".cpp": "cpp",
@@ -873,10 +887,8 @@ class MultiLanguageAnalyzerFactory:
             ".h": "c",
             ".hpp": "cpp",
             ".hxx": "cpp",
-
             # Go
             ".go": "go",
-
             # Rust
             ".rs": "rust",
         }
@@ -884,7 +896,9 @@ class MultiLanguageAnalyzerFactory:
         return extension_map.get(file_path.suffix.lower())
 
     @classmethod
-    def analyze_file(cls, file_path: Union[str, Path], language: Optional[str] = None, **kwargs) -> Optional[AnalysisResult]:
+    def analyze_file(
+        cls, file_path: Union[str, Path], language: Optional[str] = None, **kwargs
+    ) -> Optional[AnalysisResult]:
         """分析文件，自动检测语言或使用指定语言"""
         file_path = Path(file_path)
 
@@ -912,7 +926,9 @@ class MultiLanguageAnalyzerFactory:
 
 
 # 便捷函数，供deepagents调用
-def analyze_code_file(file_path: Union[str, Path], language: Optional[str] = None) -> Dict[str, Any]:
+def analyze_code_file(
+    file_path: Union[str, Path], language: Optional[str] = None
+) -> Dict[str, Any]:
     """
     代码分析主函数，供deepagents调用
 
@@ -943,20 +959,20 @@ def analyze_code_file(file_path: Union[str, Path], language: Optional[str] = Non
                         "column": issue.column,
                         "rule_id": issue.rule_id,
                         "category": issue.category,
-                        "suggestion": issue.suggestion
+                        "suggestion": issue.suggestion,
                     }
                     for issue in result.issues
                 ],
                 "score": result.score,
                 "execution_time": result.execution_time,
-                "metadata": result.metadata
-            }
+                "metadata": result.metadata,
+            },
         }
     else:
         return {
             "success": False,
             "error": f"Cannot analyze file: {file_path}",
-            "supported_languages": MultiLanguageAnalyzerFactory.get_supported_languages()
+            "supported_languages": MultiLanguageAnalyzerFactory.get_supported_languages(),
         }
 
 
@@ -972,4 +988,6 @@ if __name__ == "__main__":
         print(json.dumps(result, indent=2, ensure_ascii=False))
     else:
         print("Usage: python multilang_code_analyzers.py <file_path> [language]")
-        print(f"Supported languages: {MultiLanguageAnalyzerFactory.get_supported_languages()}")
+        print(
+            f"Supported languages: {MultiLanguageAnalyzerFactory.get_supported_languages()}"
+        )

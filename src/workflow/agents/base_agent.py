@@ -8,26 +8,26 @@ DeepAgents Base Agent Framework
 - 统一的创建和管理接口
 """
 
+import logging
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Sequence, Union, Callable
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum
-import logging
-from contextlib import contextmanager
+from typing import Any, Callable, Dict, List, Optional, Sequence, Union
 
+from deepagents import CompiledSubAgent, SubAgent, create_deep_agent
+from deepagents.backends.protocol import BackendFactory, BackendProtocol
 from langchain_core.language_models import BaseChatModel
 from langchain_core.tools import BaseTool
+from langgraph.cache.base import BaseCache
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.store.base import BaseStore
 from langgraph.types import Checkpointer
-from langgraph.cache.base import BaseCache
-
-from deepagents import create_deep_agent, SubAgent, CompiledSubAgent
-from deepagents.backends.protocol import BackendProtocol, BackendFactory
 
 
 class AgentType(Enum):
     """代理类型枚举"""
+
     RESEARCHER = "researcher"
     DEVELOPER = "developer"
     ANALYST = "analyst"
@@ -39,6 +39,7 @@ class AgentType(Enum):
 @dataclass
 class AgentConfig:
     """代理配置数据类"""
+
     name: str
     agent_type: AgentType
     description: str
@@ -50,7 +51,9 @@ class AgentConfig:
     max_tokens: int = 20000
 
     # 工具和中间件
-    tools: Sequence[Union[BaseTool, Callable, dict[str, Any]]] = field(default_factory=list)
+    tools: Sequence[Union[BaseTool, Callable, dict[str, Any]]] = field(
+        default_factory=list
+    )
     middleware: List[Any] = field(default_factory=list)
     subagents: List[Union[SubAgent, CompiledSubAgent]] = field(default_factory=list)
 
@@ -96,7 +99,7 @@ class BaseAgent(ABC):
         if not logger.handlers:
             handler = logging.StreamHandler()
             formatter = logging.Formatter(
-                '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
             )
             handler.setFormatter(formatter)
             logger.addHandler(handler)
@@ -110,7 +113,7 @@ class BaseAgent(ABC):
             raise RuntimeError("代理未初始化，请先调用build()方法")
         return self._agent
 
-    def build(self) -> 'BaseAgent':
+    def build(self) -> "BaseAgent":
         """
         构建代理
 
@@ -189,7 +192,7 @@ class BaseAgent(ABC):
             "name": self.config.name,
             "type": self.config.agent_type.value,
             "description": self.config.description,
-            "model": getattr(self.config.model, 'model_name', str(self.config.model)),
+            "model": getattr(self.config.model, "model_name", str(self.config.model)),
             "tools_count": len(self.config.tools),
             "subagents_count": len(self.config.subagents),
             "middleware_count": len(self.config.middleware),
@@ -214,7 +217,9 @@ class ResearchAgent(BaseAgent):
 
             def internet_search(query: str, max_results: int = 5):
                 """网络搜索工具"""
-                return search_web(query=query, max_results=max_results, provider="tavily")
+                return search_web(
+                    query=query, max_results=max_results, provider="tavily"
+                )
 
             self.config.tools = list(self.config.tools) + [internet_search]
             self._logger.info("已添加网络搜索工具")
@@ -222,14 +227,16 @@ class ResearchAgent(BaseAgent):
             self._logger.warning("无法导入web_search工具")
 
     @classmethod
-    def create(cls, name: str, description: str, **kwargs) -> 'ResearchAgent':
+    def create(cls, name: str, description: str, **kwargs) -> "ResearchAgent":
         """快速创建研究代理"""
         config = AgentConfig(
             name=name,
             agent_type=AgentType.RESEARCHER,
             description=description,
-            system_prompt=kwargs.pop('system_prompt', "你是专业的研究员，负责信息收集和分析"),
-            **kwargs
+            system_prompt=kwargs.pop(
+                "system_prompt", "你是专业的研究员，负责信息收集和分析"
+            ),
+            **kwargs,
         )
         return cls(config)
 
@@ -241,26 +248,29 @@ class DeveloperAgent(BaseAgent):
         """开发代理的定制化构建"""
         # 添加代码分析工具
         try:
-            from src.workflow.tools.multilang_code_analyzer import MultiLanguageCodeAnalyzer
+            from src.workflow.tools.multilang_code_analyzer import (
+                MultiLanguageCodeAnalyzer,
+            )
+
             analyzer = MultiLanguageCodeAnalyzer()
             self.config.tools = list(self.config.tools) + [
                 analyzer.analyze_code,
                 analyzer.detect_issues,
-                analyzer.get_suggestions
+                analyzer.get_suggestions,
             ]
             self._logger.info("已添加代码分析工具")
         except ImportError:
             self._logger.warning("无法导入代码分析工具")
 
     @classmethod
-    def create(cls, name: str, description: str, **kwargs) -> 'DeveloperAgent':
+    def create(cls, name: str, description: str, **kwargs) -> "DeveloperAgent":
         """快速创建开发代理"""
         config = AgentConfig(
             name=name,
             agent_type=AgentType.DEVELOPER,
             description=description,
-            system_prompt=kwargs.pop('system_prompt', "你是专业的软件开发工程师"),
-            **kwargs
+            system_prompt=kwargs.pop("system_prompt", "你是专业的软件开发工程师"),
+            **kwargs,
         )
         return cls(config)
 
@@ -274,14 +284,16 @@ class CoordinatorAgent(BaseAgent):
             self._logger.warning("协调代理没有配置子代理")
 
     @classmethod
-    def create(cls, name: str, description: str, **kwargs) -> 'CoordinatorAgent':
+    def create(cls, name: str, description: str, **kwargs) -> "CoordinatorAgent":
         """快速创建协调代理"""
         config = AgentConfig(
             name=name,
             agent_type=AgentType.COORDINATOR,
             description=description,
-            system_prompt=kwargs.pop('system_prompt', "你是项目协调员，负责任务分解和协调"),
-            **kwargs
+            system_prompt=kwargs.pop(
+                "system_prompt", "你是项目协调员，负责任务分解和协调"
+            ),
+            **kwargs,
         )
         return cls(config)
 

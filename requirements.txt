@@ -1,3 +1,6 @@
+langchain-anthropic
+deepagents
+deepagents
 # AIDefectDetector - AI驱动的智能代码缺陷检测与修复系统
 
 

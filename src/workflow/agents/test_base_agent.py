@@ -4,18 +4,24 @@ DeepAgents Base Agent 测试用例
 测试基类框架的核心功能和各种代理类型
 """
 
-import unittest
-from unittest.mock import Mock, patch
 import os
 import sys
+import unittest
+from unittest.mock import Mock, patch
 
 # 添加项目路径到sys.path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from base_agent import (
-    AgentConfig, AgentType,
-    BaseAgent, ResearchAgent, DeveloperAgent, CoordinatorAgent,
-    create_research_agent, create_developer_agent, create_coordinator_agent
+    AgentConfig,
+    AgentType,
+    BaseAgent,
+    CoordinatorAgent,
+    DeveloperAgent,
+    ResearchAgent,
+    create_coordinator_agent,
+    create_developer_agent,
+    create_research_agent,
 )
 
 
@@ -28,7 +34,7 @@ class TestAgentConfig(unittest.TestCase):
             name="test-agent",
             agent_type=AgentType.RESEARCHER,
             description="测试代理",
-            system_prompt="测试提示"
+            system_prompt="测试提示",
         )
 
         self.assertEqual(config.name, "test-agent")
@@ -47,7 +53,7 @@ class TestAgentConfig(unittest.TestCase):
             system_prompt="自定义提示",
             temperature=0.5,
             max_tokens=1000,
-            debug=True
+            debug=True,
         )
 
         self.assertEqual(config.temperature, 0.5)
@@ -64,7 +70,7 @@ class TestBaseAgent(unittest.TestCase):
             name="test-base-agent",
             agent_type=AgentType.CUSTOM,
             description="测试基类代理",
-            system_prompt="测试基类提示"
+            system_prompt="测试基类提示",
         )
 
     def test_base_agent_initialization(self):
@@ -89,7 +95,7 @@ class TestBaseAgent(unittest.TestCase):
         with self.assertRaises(TypeError):
             agent = IncompleteAgent(self.config)
 
-    @patch('base_agent.create_deep_agent')
+    @patch("base_agent.create_deep_agent")
     def test_base_agent_build_success(self, mock_create_deep_agent):
         """测试代理构建成功"""
 
@@ -99,7 +105,7 @@ class TestBaseAgent(unittest.TestCase):
 
         # 创建mock对象链 - create_deep_agent返回的对象需要支持with_config方法
         mock_intermediate_agent = Mock()  # create_deep_agent返回的对象
-        mock_final_agent = Mock()      # with_config返回的最终对象
+        mock_final_agent = Mock()  # with_config返回的最终对象
         mock_intermediate_agent.with_config.return_value = mock_final_agent
         mock_create_deep_agent.return_value = mock_intermediate_agent
 
@@ -109,7 +115,9 @@ class TestBaseAgent(unittest.TestCase):
         self.assertEqual(result, agent)
         self.assertEqual(agent._agent, mock_final_agent)
         mock_create_deep_agent.assert_called_once()
-        mock_intermediate_agent.with_config.assert_called_once_with({"recursion_limit": 1000})
+        mock_intermediate_agent.with_config.assert_called_once_with(
+            {"recursion_limit": 1000}
+        )
 
     def test_base_agent_not_built_error(self):
         """测试未构建代理的错误"""
@@ -124,7 +132,7 @@ class TestBaseAgent(unittest.TestCase):
 
         self.assertIn("代理未初始化", str(context.exception))
 
-    @patch('base_agent.create_deep_agent')
+    @patch("base_agent.create_deep_agent")
     def test_base_agent_invoke_success(self, mock_create_deep_agent):
         """测试代理执行成功"""
 
@@ -182,18 +190,17 @@ class TestBaseAgent(unittest.TestCase):
 class TestResearchAgent(unittest.TestCase):
     """测试ResearchAgent研究代理"""
 
-    @patch('base_agent.create_deep_agent')
-    @patch('base_agent.ResearchAgent._build_custom')
-    def test_research_agent_custom_build(self, mock_build_custom, mock_create_deep_agent):
+    @patch("base_agent.create_deep_agent")
+    @patch("base_agent.ResearchAgent._build_custom")
+    def test_research_agent_custom_build(
+        self, mock_build_custom, mock_create_deep_agent
+    ):
         """测试研究代理的定制构建"""
         mock_final_agent = Mock()
         mock_with_config = Mock(return_value=mock_final_agent)
         mock_create_deep_agent.return_value = mock_with_config
 
-        agent = ResearchAgent.create(
-            name="test-researcher",
-            description="测试研究代理"
-        )
+        agent = ResearchAgent.create(name="test-researcher", description="测试研究代理")
 
         agent.build()
         self.assertEqual(agent._agent, mock_final_agent)
@@ -204,7 +211,7 @@ class TestResearchAgent(unittest.TestCase):
         agent = ResearchAgent.create(
             name="test-researcher",
             description="测试研究代理",
-            system_prompt="自定义研究提示"
+            system_prompt="自定义研究提示",
         )
 
         self.assertEqual(agent.config.name, "test-researcher")
@@ -215,18 +222,17 @@ class TestResearchAgent(unittest.TestCase):
 class TestDeveloperAgent(unittest.TestCase):
     """测试DeveloperAgent开发代理"""
 
-    @patch('base_agent.create_deep_agent')
-    @patch('base_agent.DeveloperAgent._build_custom')
-    def test_developer_agent_custom_build(self, mock_build_custom, mock_create_deep_agent):
+    @patch("base_agent.create_deep_agent")
+    @patch("base_agent.DeveloperAgent._build_custom")
+    def test_developer_agent_custom_build(
+        self, mock_build_custom, mock_create_deep_agent
+    ):
         """测试开发代理的定制构建"""
         mock_final_agent = Mock()
         mock_with_config = Mock(return_value=mock_final_agent)
         mock_create_deep_agent.return_value = mock_with_config
 
-        agent = DeveloperAgent.create(
-            name="test-developer",
-            description="测试开发代理"
-        )
+        agent = DeveloperAgent.create(name="test-developer", description="测试开发代理")
 
         agent.build()
         self.assertEqual(agent._agent, mock_final_agent)
@@ -241,13 +247,11 @@ class TestCoordinatorAgent(unittest.TestCase):
         subagent = {
             "name": "test-subagent",
             "description": "测试子代理",
-            "system_prompt": "测试子代理提示"
+            "system_prompt": "测试子代理提示",
         }
 
         agent = CoordinatorAgent.create(
-            name="test-coordinator",
-            description="测试协调代理",
-            subagents=[subagent]
+            name="test-coordinator", description="测试协调代理", subagents=[subagent]
         )
 
         self.assertEqual(len(agent.config.subagents), 1)
@@ -257,13 +261,12 @@ class TestCoordinatorAgent(unittest.TestCase):
         """测试没有子代理的协调代理警告"""
         import logging
 
-        with patch('logging.getLogger') as mock_logger:
+        with patch("logging.getLogger") as mock_logger:
             mock_logger_instance = Mock()
             mock_logger.return_value = mock_logger_instance
 
             agent = CoordinatorAgent.create(
-                name="test-coordinator",
-                description="测试协调代理"
+                name="test-coordinator", description="测试协调代理"
             )
 
             agent._build_custom()
@@ -276,8 +279,7 @@ class TestConvenienceFunctions(unittest.TestCase):
     def test_create_research_agent_function(self):
         """测试创建研究代理便利函数"""
         agent = create_research_agent(
-            name="func-researcher",
-            description="函数创建的研究代理"
+            name="func-researcher", description="函数创建的研究代理"
         )
 
         self.assertIsInstance(agent, ResearchAgent)
@@ -287,8 +289,7 @@ class TestConvenienceFunctions(unittest.TestCase):
     def test_create_developer_agent_function(self):
         """测试创建开发代理便利函数"""
         agent = create_developer_agent(
-            name="func-developer",
-            description="函数创建的开发代理"
+            name="func-developer", description="函数创建的开发代理"
         )
 
         self.assertIsInstance(agent, DeveloperAgent)
@@ -298,8 +299,7 @@ class TestConvenienceFunctions(unittest.TestCase):
     def test_create_coordinator_agent_function(self):
         """测试创建协调代理便利函数"""
         agent = create_coordinator_agent(
-            name="func-coordinator",
-            description="函数创建的协调代理"
+            name="func-coordinator", description="函数创建的协调代理"
         )
 
         self.assertIsInstance(agent, CoordinatorAgent)
@@ -325,9 +325,10 @@ class TestAgentType(unittest.TestCase):
         self.assertEqual(len(values), len(set(values)))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # 配置日志以避免测试输出中的日志信息
     import logging
+
     logging.getLogger().setLevel(logging.CRITICAL)
 
     # 运行测试
