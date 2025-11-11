@@ -19,6 +19,9 @@ COLORS = {
     "agent": "#0d9488",
     "thinking": "#0891b2",
     "tool": "#d97706",
+    "warning": "#eab308",  # 黄色用于警告
+    "success": "#22c55e",  # 绿色用于成功
+    "info": "#3b82f6",  # 蓝色用于信息
 }
 
 # ASCII art banner - Defect FUcKeR in deep green and blue style

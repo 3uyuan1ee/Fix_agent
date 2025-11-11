@@ -203,8 +203,8 @@ async def main(assistant_id: str, session_state):
 
 
 def cli_main():
-    """Entry point for console script."""
-    # Check dependencies first
+    """控制台脚本的入口点"""
+    # 先检查依赖
     check_cli_dependencies()
 
     try:
@@ -217,13 +217,13 @@ def cli_main():
         elif args.command == "reset":
             reset_agent(args.agent, args.source_agent)
         else:
-            # Create session state from args
+            # 根据args创建会话
             session_state = SessionState(auto_approve=args.auto_approve)
 
-            # API key validation happens in create_model()
+            # API key验证在create_model()中进行
             asyncio.run(main(args.agent, session_state))
     except KeyboardInterrupt:
-        # Clean exit on Ctrl+C - suppress ugly traceback
+        # Ctrl+C 安全退出 - suppress ugly traceback
         console.print("\n\n[yellow]Interrupted[/yellow]")
         sys.exit(0)
     except Exception as e:

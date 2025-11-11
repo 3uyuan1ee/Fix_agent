@@ -7,6 +7,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 
 from ..config.config import COLORS, DEEP_AGENTS_ASCII, console
 from ..ui.ui import TokenTracker, show_interactive_help
+from ..ui.dynamicCli import typewriter
 
 
 def handle_command(command: str, agent, token_tracker: TokenTracker) -> str | bool:
@@ -27,10 +28,8 @@ def handle_command(command: str, agent, token_tracker: TokenTracker) -> str | bo
         console.clear()
         console.print(DEEP_AGENTS_ASCII, style=f"bold {COLORS['primary']}")
         console.print()
-        console.print(
-            "... Fresh start! Screen cleared and conversation reset.",
-            style=COLORS["agent"],
-        )
+        # 使用滑入动画显示重置消息
+        typewriter.slide_in_text("Fresh start! Screen cleared and conversation reset.", style="agent")
         console.print()
         return True
 
@@ -42,8 +41,8 @@ def handle_command(command: str, agent, token_tracker: TokenTracker) -> str | bo
         token_tracker.display_session()
         return True
 
-    console.print()
-    console.print(f"[yellow]Unknown command: /{cmd}[/yellow]")
+    # 使用震动效果显示未知命令错误
+    typewriter.error_shake(f"Unknown command: /{cmd}")
     console.print("[dim]Type /help for available commands.[/dim]")
     console.print()
     return True
