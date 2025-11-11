@@ -3,6 +3,7 @@ Web搜索工具完整实现
 包含数据模型、抽象基类、Tavily提供者、工厂类和主服务类
 """
 
+import json
 import logging
 import os
 import time
@@ -11,6 +12,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Type, Union
 
 from dotenv import load_dotenv
+from langchain_core.tools import tool
 from tavily import TavilyClient
 
 # 加载环境变量
@@ -705,7 +707,8 @@ class WebSearch:
 
 
 # 便捷函数，供agents调用
-def search_web(query: str, provider: str = "tavily", **kwargs) -> Dict[str, Any]:
+@tool(description="Web搜索工具，支持多种搜索引擎（默认使用Tavily）进行网络信息检索")
+def search_web(query: str, provider: str = "tavily", **kwargs) -> str:
     """
     Web搜索主函数，供agents调用
 
@@ -715,14 +718,14 @@ def search_web(query: str, provider: str = "tavily", **kwargs) -> Dict[str, Any]
         **kwargs: 搜索参数
 
     Returns:
-        搜索结果字典
+        搜索结果的JSON字符串
     """
     try:
         service = WebSearchService(provider=provider)
         response = service.search(query, **kwargs)
-        return response.to_dict()
+        return json.dumps(response.to_dict(), indent=2, ensure_ascii=False)
     except Exception as e:
-        return {
+        error_result = {
             "success": False,
             "error": str(e),
             "query": query,
@@ -730,3 +733,4 @@ def search_web(query: str, provider: str = "tavily", **kwargs) -> Dict[str, Any]
             "total": 0,
             "provider": provider,
         }
+        return json.dumps(error_result, indent=2, ensure_ascii=False)

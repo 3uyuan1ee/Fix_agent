@@ -97,7 +97,9 @@ class FileOperationRecord:
     read_output: str | None = None
 
 
-def resolve_physical_path(path_str: str | None, assistant_id: str | None) -> Path | None:
+def resolve_physical_path(
+    path_str: str | None, assistant_id: str | None
+) -> Path | None:
     """Convert a virtual/relative path to a physical filesystem path."""
     if not path_str:
         return None
@@ -142,7 +144,11 @@ def build_approval_preview(
 
     if tool_name == "write_file":
         content = str(args.get("content", ""))
-        before = _safe_read(physical_path) if physical_path and physical_path.exists() else ""
+        before = (
+            _safe_read(physical_path)
+            if physical_path and physical_path.exists()
+            else ""
+        )
         after = content
         diff = compute_unified_diff(before or "", after, display_path, max_lines=None)
         additions = 0
@@ -155,7 +161,8 @@ def build_approval_preview(
         total_lines = _count_lines(after)
         details = [
             f"File: {path_str}",
-            "Action: Create new file" + (" (overwrites existing content)" if before else ""),
+            "Action: Create new file"
+            + (" (overwrites existing content)" if before else ""),
             f"Lines to write: {additions or total_lines}",
             f"Bytes to write: {len(after.encode('utf-8'))}",
         ]
@@ -183,7 +190,9 @@ def build_approval_preview(
         old_string = str(args.get("old_string", ""))
         new_string = str(args.get("new_string", ""))
         replace_all = bool(args.get("replace_all", False))
-        replacement = perform_string_replacement(before, old_string, new_string, replace_all)
+        replacement = perform_string_replacement(
+            before, old_string, new_string, replace_all
+        )
         if isinstance(replacement, str):
             return ApprovalPreview(
                 title=f"Update {display_path}",
@@ -320,10 +329,15 @@ class FileOpTracker:
                 )
                 record.metrics.lines_added = additions
                 record.metrics.lines_removed = deletions
-            elif record.tool_name == "write_file" and (record.before_content or "") == "":
+            elif (
+                record.tool_name == "write_file" and (record.before_content or "") == ""
+            ):
                 record.metrics.lines_added = record.metrics.lines_written
             record.metrics.bytes_written = len(record.after_content.encode("utf-8"))
-            if record.diff is None and (record.before_content or "") != record.after_content:
+            if (
+                record.diff is None
+                and (record.before_content or "") != record.after_content
+            ):
                 record.diff = compute_unified_diff(
                     record.before_content or "",
                     record.after_content,
@@ -331,7 +345,9 @@ class FileOpTracker:
                     max_lines=None,
                 )
             if record.diff is None and before_lines != record.metrics.lines_written:
-                record.metrics.lines_added = max(record.metrics.lines_written - before_lines, 0)
+                record.metrics.lines_added = max(
+                    record.metrics.lines_written - before_lines, 0
+                )
 
         self._finalize(record)
         return record

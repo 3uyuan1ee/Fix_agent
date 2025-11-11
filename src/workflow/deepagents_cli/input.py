@@ -89,10 +89,13 @@ class CommandCompleter(Completer):
             # Remove / for word completion
             cmd_text = text[1:]
             adjusted_doc = Document(
-                cmd_text, document.cursor_position - 1 if document.cursor_position > 0 else 0
+                cmd_text,
+                document.cursor_position - 1 if document.cursor_position > 0 else 0,
             )
 
-            for completion in self.word_completer.get_completions(adjusted_doc, complete_event):
+            for completion in self.word_completer.get_completions(
+                adjusted_doc, complete_event
+            ):
                 yield completion
 
 
@@ -116,10 +119,13 @@ class BashCompleter(Completer):
             # Remove ! for word completion
             cmd_text = text[1:]
             adjusted_doc = Document(
-                cmd_text, document.cursor_position - 1 if document.cursor_position > 0 else 0
+                cmd_text,
+                document.cursor_position - 1 if document.cursor_position > 0 else 0,
             )
 
-            for completion in self.word_completer.get_completions(adjusted_doc, complete_event):
+            for completion in self.word_completer.get_completions(
+                adjusted_doc, complete_event
+            ):
                 yield completion
 
 
@@ -163,7 +169,9 @@ def get_bottom_toolbar(session_state: SessionState):
     return toolbar
 
 
-def create_prompt_session(assistant_id: str, session_state: SessionState) -> PromptSession:
+def create_prompt_session(
+    assistant_id: str, session_state: SessionState
+) -> PromptSession:
     """Create a configured PromptSession with all features."""
     # Set default editor if not already set
     if "EDITOR" not in os.environ:
@@ -237,12 +245,16 @@ def create_prompt_session(assistant_id: str, session_state: SessionState) -> Pro
         message=HTML(f'<style fg="{COLORS["user"]}">></style> '),
         multiline=True,  # Keep multiline support but Enter submits
         key_bindings=kb,
-        completer=merge_completers([CommandCompleter(), BashCompleter(), FilePathCompleter()]),
+        completer=merge_completers(
+            [CommandCompleter(), BashCompleter(), FilePathCompleter()]
+        ),
         editing_mode=EditingMode.EMACS,
         complete_while_typing=True,  # Show completions as you type
         mouse_support=False,
         enable_open_in_editor=True,  # Allow Ctrl+X Ctrl+E to open external editor
-        bottom_toolbar=get_bottom_toolbar(session_state),  # Persistent status bar at bottom
+        bottom_toolbar=get_bottom_toolbar(
+            session_state
+        ),  # Persistent status bar at bottom
         style=toolbar_style,  # Apply toolbar styling
     )
 

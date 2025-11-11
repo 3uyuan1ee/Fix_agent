@@ -12,6 +12,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Type, Union
 
+from langchain_core.tools import tool
+
 
 @dataclass
 class AnalysisIssue:
@@ -926,9 +928,10 @@ class MultiLanguageAnalyzerFactory:
 
 
 # 便捷函数，供deepagents调用
-def analyze_code_file(
-    file_path: Union[str, Path], language: Optional[str] = None
-) -> Dict[str, Any]:
+@tool(
+    description="多语言代码分析工具，支持Python、JavaScript、Java、C/C++、Go、Rust等语言的静态代码分析"
+)
+def analyze_code_file(file_path: str, language: Optional[str] = None) -> str:
     """
     代码分析主函数，供deepagents调用
 
@@ -937,12 +940,12 @@ def analyze_code_file(
         language: 可选的语言标识符
 
     Returns:
-        分析结果字典
+        分析结果的JSON字符串
     """
     result = MultiLanguageAnalyzerFactory.analyze_file(file_path, language)
 
     if result:
-        return {
+        analysis_result = {
             "success": True,
             "result": result.get_summary(),
             "detailed_result": {
@@ -968,12 +971,14 @@ def analyze_code_file(
                 "metadata": result.metadata,
             },
         }
+        return json.dumps(analysis_result, indent=2, ensure_ascii=False)
     else:
-        return {
+        error_result = {
             "success": False,
             "error": f"Cannot analyze file: {file_path}",
             "supported_languages": MultiLanguageAnalyzerFactory.get_supported_languages(),
         }
+        return json.dumps(error_result, indent=2, ensure_ascii=False)
 
 
 if __name__ == "__main__":

@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from langgraph.runtime import Runtime
 
+from deepagents.backends.protocol import BackendProtocol
 from langchain.agents.middleware.types import (
     AgentMiddleware,
     AgentState,
@@ -13,8 +14,6 @@ from langchain.agents.middleware.types import (
     ModelResponse,
 )
 from typing_extensions import NotRequired, TypedDict
-
-from deepagents.backends.protocol import BackendProtocol
 
 
 class AgentMemoryState(AgentState):
@@ -83,6 +82,7 @@ DEFAULT_MEMORY_SNIPPET = """<agent_memory>
 </agent_memory>
 """
 
+
 class AgentMemoryMiddleware(AgentMiddleware):
     """Middleware for loading agent-specific long-term memory.
 
@@ -105,7 +105,7 @@ class AgentMemoryMiddleware(AgentMiddleware):
         # Set up backend pointing to agent's directory
         agent_dir = Path.home() / ".deepagents" / "my-agent"
         backend = FilesystemBackend(root_dir=agent_dir)
-        
+
         # Create middleware
         middleware = AgentMemoryMiddleware(backend=backend)
         ```
@@ -185,13 +185,17 @@ class AgentMemoryMiddleware(AgentMiddleware):
         """
         # Get agent memory from state
         agent_memory = request.state.get("agent_memory", "")
-        
+
         memory_section = self.system_prompt_template.format(agent_memory=agent_memory)
         if request.system_prompt:
             request.system_prompt = memory_section + "\n\n" + request.system_prompt
         else:
             request.system_prompt = memory_section
-        request.system_prompt = request.system_prompt + "\n\n" + LONGTERM_MEMORY_SYSTEM_PROMPT.format(memory_path=self.memory_path)
+        request.system_prompt = (
+            request.system_prompt
+            + "\n\n"
+            + LONGTERM_MEMORY_SYSTEM_PROMPT.format(memory_path=self.memory_path)
+        )
 
         return handler(request)
 
@@ -211,12 +215,16 @@ class AgentMemoryMiddleware(AgentMiddleware):
         """
         # Get agent memory from state
         agent_memory = request.state.get("agent_memory", "")
-        
+
         memory_section = self.system_prompt_template.format(agent_memory=agent_memory)
         if request.system_prompt:
             request.system_prompt = memory_section + "\n\n" + request.system_prompt
         else:
             request.system_prompt = memory_section
-        request.system_prompt = request.system_prompt + "\n\n" + LONGTERM_MEMORY_SYSTEM_PROMPT.format(memory_path=self.memory_path)
+        request.system_prompt = (
+            request.system_prompt
+            + "\n\n"
+            + LONGTERM_MEMORY_SYSTEM_PROMPT.format(memory_path=self.memory_path)
+        )
 
         return await handler(request)

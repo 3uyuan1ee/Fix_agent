@@ -58,7 +58,11 @@ def prompt_for_tool_approval(action_request: dict, assistant_id: str | None) -> 
     description = action_request.get("description", "No description available")
     tool_name = action_request.get("name") or action_request.get("tool")
     tool_args = _extract_tool_args(action_request)
-    preview = build_approval_preview(tool_name, tool_args, assistant_id) if tool_name else None
+    preview = (
+        build_approval_preview(tool_name, tool_args, assistant_id)
+        if tool_name
+        else None
+    )
 
     body_lines = []
     if preview:
@@ -200,7 +204,9 @@ def execute_task(
                     f"\n### {file_path.name}\nPath: `{file_path}`\n```\n{content}\n```"
                 )
             except Exception as e:
-                context_parts.append(f"\n### {file_path.name}\n[Error reading file: {e}]")
+                context_parts.append(
+                    f"\n### {file_path.name}\n[Error reading file: {e}]"
+                )
 
         final_input = "\n".join(context_parts)
     else:
@@ -216,7 +222,9 @@ def execute_task(
     captured_output_tokens = 0
     current_todos = None  # Track current todo list state
 
-    status = console.status(f"[bold {COLORS['thinking']}]Agent is thinking...", spinner="dots")
+    status = console.status(
+        f"[bold {COLORS['thinking']}]Agent is thinking...", spinner="dots"
+    )
     status.start()
     spinner_active = True
 
@@ -326,13 +334,17 @@ def execute_task(
                             if session_state.auto_approve:
                                 # Auto-approve all commands without prompting
                                 decisions = []
-                                for action_request in hitl_request.get("action_requests", []):
+                                for action_request in hitl_request.get(
+                                    "action_requests", []
+                                ):
                                     # Show what's being auto-approved (brief, dim message)
                                     if spinner_active:
                                         status.stop()
                                         spinner_active = False
 
-                                    description = action_request.get("description", "tool action")
+                                    description = action_request.get(
+                                        "description", "tool action"
+                                    )
                                     console.print()
                                     console.print(f"  [dim]⚡ {description}[/dim]")
 
@@ -354,12 +366,17 @@ def execute_task(
 
                             # Handle human-in-the-loop approval
                             decisions = []
-                            for action_request in hitl_request.get("action_requests", []):
-                                decision = prompt_for_tool_approval(action_request, assistant_id)
+                            for action_request in hitl_request.get(
+                                "action_requests", []
+                            ):
+                                decision = prompt_for_tool_approval(
+                                    action_request, assistant_id
+                                )
                                 decisions.append(decision)
 
                             suppress_resumed_output = any(
-                                decision.get("type") == "reject" for decision in decisions
+                                decision.get("type") == "reject"
+                                for decision in decisions
                             )
                             hitl_response = {"decisions": decisions}
                             interrupt_occurred = True
@@ -448,8 +465,12 @@ def execute_task(
                             input_toks = usage.get("input_tokens", 0)
                             output_toks = usage.get("output_tokens", 0)
                             if input_toks or output_toks:
-                                captured_input_tokens = max(captured_input_tokens, input_toks)
-                                captured_output_tokens = max(captured_output_tokens, output_toks)
+                                captured_input_tokens = max(
+                                    captured_input_tokens, input_toks
+                                )
+                                captured_output_tokens = max(
+                                    captured_output_tokens, output_toks
+                                )
 
                     # Process content blocks (this is the key fix!)
                     for block in message.content_blocks:
@@ -505,7 +526,12 @@ def execute_task(
 
                             buffer = tool_call_buffers.setdefault(
                                 buffer_key,
-                                {"name": None, "id": None, "args": None, "args_parts": []},
+                                {
+                                    "name": None,
+                                    "id": None,
+                                    "args": None,
+                                    "args_parts": [],
+                                },
                             )
 
                             if chunk_name:
@@ -518,7 +544,9 @@ def execute_task(
                                 buffer["args_parts"] = []
                             elif isinstance(chunk_args, str):
                                 if chunk_args:
-                                    parts: list[str] = buffer.setdefault("args_parts", [])
+                                    parts: list[str] = buffer.setdefault(
+                                        "args_parts", []
+                                    )
                                     if not parts or chunk_args != parts[-1]:
                                         parts.append(chunk_args)
                                     buffer["args"] = "".join(parts)
@@ -529,7 +557,10 @@ def execute_task(
                             buffer_id = buffer.get("id")
                             if buffer_name is None:
                                 continue
-                            if buffer_id is not None and buffer_id in displayed_tool_ids:
+                            if (
+                                buffer_id is not None
+                                and buffer_id in displayed_tool_ids
+                            ):
                                 continue
 
                             parsed_args = buffer.get("args")
@@ -552,7 +583,9 @@ def execute_task(
                             flush_text_buffer(final=True)
                             if buffer_id is not None:
                                 displayed_tool_ids.add(buffer_id)
-                                file_op_tracker.start_operation(buffer_name, parsed_args, buffer_id)
+                                file_op_tracker.start_operation(
+                                    buffer_name, parsed_args, buffer_id
+                                )
                             tool_call_buffers.pop(buffer_key, None)
                             icon = tool_icons.get(buffer_name, "🔧")
 
@@ -586,7 +619,10 @@ def execute_task(
                         status.stop()
                         spinner_active = False
 
-                    console.print("\nCommand rejected. Returning to prompt.\n", style=COLORS["dim"])
+                    console.print(
+                        "\nCommand rejected. Returning to prompt.\n",
+                        style=COLORS["dim"],
+                    )
 
                     # Resume agent in background thread to properly update graph state
                     # without blocking the user

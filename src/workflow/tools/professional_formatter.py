@@ -19,10 +19,11 @@ from langchain_core.tools import tool
 
 class FormatOperation(Enum):
     """格式化操作类型"""
-    AUTO_FIX = "auto_fix"          # 自动格式化
-    PREVIEW = "preview"            # 预览变更
-    CHECK = "check"                # 检查是否需要格式化
-    DIFF = "diff"                  # 显示差异
+
+    AUTO_FIX = "auto_fix"  # 自动格式化
+    PREVIEW = "preview"  # 预览变更
+    CHECK = "check"  # 检查是否需要格式化
+    DIFF = "diff"  # 显示差异
 
 
 class FormatResult:
@@ -40,7 +41,7 @@ class FormatResult:
         diff_output: str = "",
         execution_time: float = 0.0,
         error: Optional[str] = None,
-        stats: Optional[Dict[str, Any]] = None
+        stats: Optional[Dict[str, Any]] = None,
     ):
         self.success = success
         self.file_path = file_path
@@ -66,7 +67,7 @@ class FormatResult:
             "execution_time": self.execution_time,
             "error": self.error,
             "stats": self.stats,
-            "has_diff": bool(self.diff_output)
+            "has_diff": bool(self.diff_output),
         }
 
 
@@ -77,6 +78,7 @@ class PythonFormatter:
         try:
             import black
             import isort
+
             self.black_available = True
             self.isort_available = True
             self.black = black
@@ -86,7 +88,9 @@ class PythonFormatter:
             self.isort_available = False
             print(f"Python格式化工具不可用: {e}")
 
-    def format_file(self, file_path: str, operation: FormatOperation = FormatOperation.AUTO_FIX) -> FormatResult:
+    def format_file(
+        self, file_path: str, operation: FormatOperation = FormatOperation.AUTO_FIX
+    ) -> FormatResult:
         """格式化Python文件"""
         if not self.black_available:
             return FormatResult(
@@ -94,12 +98,12 @@ class PythonFormatter:
                 file_path=file_path,
                 tool_name="python",
                 operation=operation,
-                error="black和isort包未安装"
+                error="black和isort包未安装",
             )
 
         try:
             # 读取文件内容
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 original_code = f.read()
 
             start_time = datetime.now()
@@ -126,7 +130,7 @@ class PythonFormatter:
                 file_path=file_path,
                 tool_name="python",
                 operation=operation,
-                error=f"格式化失败: {str(e)}"
+                error=f"格式化失败: {str(e)}",
             )
 
     def _auto_format_python(self, code: str, file_path: str) -> FormatResult:
@@ -141,7 +145,7 @@ class PythonFormatter:
 
             # 如果格式化后有变化，写回文件
             if formatted_code != code:
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.write(formatted_code)
 
             return FormatResult(
@@ -150,7 +154,7 @@ class PythonFormatter:
                 tool_name="python",
                 operation=FormatOperation.AUTO_FIX,
                 original_code=code,
-                formatted_code=formatted_code
+                formatted_code=formatted_code,
             )
 
         except Exception as e:
@@ -159,7 +163,7 @@ class PythonFormatter:
                 file_path=file_path,
                 tool_name="python",
                 operation=FormatOperation.AUTO_FIX,
-                error=f"格式化失败: {str(e)}"
+                error=f"格式化失败: {str(e)}",
             )
 
     def _check_with_black(self, code: str) -> FormatResult:
@@ -167,13 +171,22 @@ class PythonFormatter:
         try:
             # 使用black的check模式
             import io
-            from black import format_str, Mode
+
+            from black import Mode, format_str
 
             formatted_code = format_str(code, mode=Mode())
             needs_formatting = formatted_code != code
 
             stats = {
-                "lines_changed": len([i for i, (a, b) in enumerate(zip(code.splitlines(), formatted_code.splitlines())) if a != b])
+                "lines_changed": len(
+                    [
+                        i
+                        for i, (a, b) in enumerate(
+                            zip(code.splitlines(), formatted_code.splitlines())
+                        )
+                        if a != b
+                    ]
+                )
             }
 
             return FormatResult(
@@ -184,7 +197,7 @@ class PythonFormatter:
                 original_code=code,
                 formatted_code=formatted_code,
                 needs_formatting=needs_formatting,
-                stats=stats
+                stats=stats,
             )
 
         except Exception as e:
@@ -193,16 +206,21 @@ class PythonFormatter:
                 file_path="string",
                 tool_name="python",
                 operation=FormatOperation.CHECK,
-                error=f"检查失败: {str(e)}"
+                error=f"检查失败: {str(e)}",
             )
 
-    def _diff_with_black(self, code: str, file_path: str, detailed: bool = False) -> FormatResult:
+    def _diff_with_black(
+        self, code: str, file_path: str, detailed: bool = False
+    ) -> FormatResult:
         """使用black生成diff"""
         try:
             # 使用diff模式
-            result = subprocess.run([
-                'black', '--diff', '--color=never', file_path
-            ], capture_output=True, text=True, timeout=30)
+            result = subprocess.run(
+                ["black", "--diff", "--color=never", file_path],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
 
             if result.returncode == 0:
                 diff_output = ""
@@ -219,7 +237,7 @@ class PythonFormatter:
                 operation=FormatOperation.PREVIEW,
                 original_code=code,
                 formatted_code=formatted_code,
-                diff_output=diff_output
+                diff_output=diff_output,
             )
 
         except Exception as e:
@@ -228,7 +246,7 @@ class PythonFormatter:
                 file_path=file_path,
                 tool_name="python",
                 operation=FormatOperation.PREVIEW,
-                error=f"diff生成失败: {str(e)}"
+                error=f"diff生成失败: {str(e)}",
             )
 
 
@@ -241,12 +259,16 @@ class JavaScriptFormatter:
     def _check_prettier(self) -> bool:
         """检查prettier是否可用"""
         try:
-            result = subprocess.run(['npx', '--version'], capture_output=True, text=True, timeout=10)
+            result = subprocess.run(
+                ["npx", "--version"], capture_output=True, text=True, timeout=10
+            )
             return result.returncode == 0
         except:
             return False
 
-    def format_file(self, file_path: str, operation: FormatOperation = FormatOperation.AUTO_FIX) -> FormatResult:
+    def format_file(
+        self, file_path: str, operation: FormatOperation = FormatOperation.AUTO_FIX
+    ) -> FormatResult:
         """格式化JavaScript/TypeScript文件"""
         if not self.prettier_available:
             return FormatResult(
@@ -254,7 +276,7 @@ class JavaScriptFormatter:
                 file_path=file_path,
                 tool_name="javascript",
                 operation=operation,
-                error="prettier不可用，请确保npx和prettier已安装"
+                error="prettier不可用，请确保npx和prettier已安装",
             )
 
         try:
@@ -276,23 +298,26 @@ class JavaScriptFormatter:
                 file_path=file_path,
                 tool_name="javascript",
                 operation=operation,
-                error=f"格式化失败: {str(e)}"
+                error=f"格式化失败: {str(e)}",
             )
 
     def _auto_format_js(self, file_path: str) -> FormatResult:
         """使用prettier自动格式化"""
         try:
             # 读取原始代码
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 original_code = f.read()
 
             # 使用prettier格式化
-            result = subprocess.run([
-                'npx', 'prettier', '--write', file_path
-            ], capture_output=True, text=True, timeout=30)
+            result = subprocess.run(
+                ["npx", "prettier", "--write", file_path],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
 
             # 读取格式化后的代码
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 formatted_code = f.read()
 
             return FormatResult(
@@ -302,7 +327,7 @@ class JavaScriptFormatter:
                 operation=FormatOperation.AUTO_FIX,
                 original_code=original_code,
                 formatted_code=formatted_code,
-                error=result.stderr if result.returncode != 0 else None
+                error=result.stderr if result.returncode != 0 else None,
             )
 
         except Exception as e:
@@ -311,18 +336,21 @@ class JavaScriptFormatter:
                 file_path=file_path,
                 tool_name="javascript",
                 operation=FormatOperation.AUTO_FIX,
-                error=f"格式化失败: {str(e)}"
+                error=f"格式化失败: {str(e)}",
             )
 
     def _check_with_prettier(self, file_path: str) -> FormatResult:
         """使用prettier检查格式"""
         try:
-            result = subprocess.run([
-                'npx', 'prettier', '--check', file_path
-            ], capture_output=True, text=True, timeout=30)
+            result = subprocess.run(
+                ["npx", "prettier", "--check", file_path],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
 
             # 读取代码
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 original_code = f.read()
 
             return FormatResult(
@@ -332,7 +360,7 @@ class JavaScriptFormatter:
                 operation=FormatOperation.CHECK,
                 original_code=original_code,
                 needs_formatting=result.returncode != 0,
-                error=result.stderr if result.returncode != 0 else None
+                error=result.stderr if result.returncode != 0 else None,
             )
 
         except Exception as e:
@@ -341,24 +369,30 @@ class JavaScriptFormatter:
                 file_path=file_path,
                 tool_name="javascript",
                 operation=FormatOperation.CHECK,
-                error=f"检查失败: {str(e)}"
+                error=f"检查失败: {str(e)}",
             )
 
     def _diff_with_prettier(self, file_path: str) -> FormatResult:
         """使用prettier生成diff"""
         try:
             # 读取原始代码
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 original_code = f.read()
 
-            result = subprocess.run([
-                'npx', 'prettier', '--check', '--diff', file_path
-            ], capture_output=True, text=True, timeout=30)
+            result = subprocess.run(
+                ["npx", "prettier", "--check", "--diff", file_path],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
 
             # 获取格式化后的代码
-            format_result = subprocess.run([
-                'npx', 'prettier', file_path
-            ], capture_output=True, text=True, timeout=30)
+            format_result = subprocess.run(
+                ["npx", "prettier", file_path],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
             formatted_code = format_result.stdout
 
             return FormatResult(
@@ -369,7 +403,7 @@ class JavaScriptFormatter:
                 original_code=original_code,
                 formatted_code=formatted_code,
                 diff_output=result.stdout if result.returncode != 0 else "",
-                needs_formatting=result.returncode != 0
+                needs_formatting=result.returncode != 0,
             )
 
         except Exception as e:
@@ -378,7 +412,7 @@ class JavaScriptFormatter:
                 file_path=file_path,
                 tool_name="javascript",
                 operation=FormatOperation.PREVIEW,
-                error=f"diff生成失败: {str(e)}"
+                error=f"diff生成失败: {str(e)}",
             )
 
 
@@ -391,12 +425,19 @@ class CppFormatter:
     def _check_clang_format(self) -> bool:
         """检查clang-format是否可用"""
         try:
-            result = subprocess.run(['clang-format', '--version'], capture_output=True, text=True, timeout=10)
+            result = subprocess.run(
+                ["clang-format", "--version"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
             return result.returncode == 0
         except:
             return False
 
-    def format_file(self, file_path: str, operation: FormatOperation = FormatOperation.AUTO_FIX) -> FormatResult:
+    def format_file(
+        self, file_path: str, operation: FormatOperation = FormatOperation.AUTO_FIX
+    ) -> FormatResult:
         """格式化C/C++文件"""
         if not self.clang_format_available:
             return FormatResult(
@@ -404,7 +445,7 @@ class CppFormatter:
                 file_path=file_path,
                 tool_name="cpp",
                 operation=operation,
-                error="clang-format不可用"
+                error="clang-format不可用",
             )
 
         try:
@@ -426,23 +467,26 @@ class CppFormatter:
                 file_path=file_path,
                 tool_name="cpp",
                 operation=operation,
-                error=f"格式化失败: {str(e)}"
+                error=f"格式化失败: {str(e)}",
             )
 
     def _auto_format_cpp(self, file_path: str) -> FormatResult:
         """使用clang-format自动格式化"""
         try:
             # 读取原始代码
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 original_code = f.read()
 
             # 使用clang-format格式化
-            result = subprocess.run([
-                'clang-format', '-i', file_path
-            ], capture_output=True, text=True, timeout=30)
+            result = subprocess.run(
+                ["clang-format", "-i", file_path],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
 
             # 读取格式化后的代码
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 formatted_code = f.read()
 
             return FormatResult(
@@ -452,7 +496,7 @@ class CppFormatter:
                 operation=FormatOperation.AUTO_FIX,
                 original_code=original_code,
                 formatted_code=formatted_code,
-                error=result.stderr if result.returncode != 0 else None
+                error=result.stderr if result.returncode != 0 else None,
             )
 
         except Exception as e:
@@ -461,20 +505,20 @@ class CppFormatter:
                 file_path=file_path,
                 tool_name="cpp",
                 operation=FormatOperation.AUTO_FIX,
-                error=f"格式化失败: {str(e)}"
+                error=f"格式化失败: {str(e)}",
             )
 
     def _check_with_clang_format(self, file_path: str) -> FormatResult:
         """使用clang-format检查格式"""
         try:
             # 读取原始代码
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 original_code = f.read()
 
             # clang-format没有直接的check命令，通过比较来判断
-            format_result = subprocess.run([
-                'clang-format', file_path
-            ], capture_output=True, text=True, timeout=30)
+            format_result = subprocess.run(
+                ["clang-format", file_path], capture_output=True, text=True, timeout=30
+            )
 
             if format_result.returncode == 0:
                 formatted_code = format_result.stdout
@@ -489,7 +533,7 @@ class CppFormatter:
                 operation=FormatOperation.CHECK,
                 original_code=original_code,
                 formatted_code=formatted_code if format_result.returncode == 0 else "",
-                needs_formatting=needs_formatting
+                needs_formatting=needs_formatting,
             )
 
         except Exception as e:
@@ -498,27 +542,32 @@ class CppFormatter:
                 file_path=file_path,
                 tool_name="cpp",
                 operation=FormatOperation.CHECK,
-                error=f"检查失败: {str(e)}"
+                error=f"检查失败: {str(e)}",
             )
 
     def _diff_with_clang_format(self, file_path: str) -> FormatResult:
         """使用clang-format生成diff"""
         try:
             # 读取原始代码
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 original_code = f.read()
 
             # 生成diff
-            result = subprocess.run([
-                'clang-format', '--dry-run', '--Werror', file_path
-            ], capture_output=True, text=True, timeout=30)
+            result = subprocess.run(
+                ["clang-format", "--dry-run", "--Werror", file_path],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
 
             # 获取格式化后的代码
-            format_result = subprocess.run([
-                'clang-format', file_path
-            ], capture_output=True, text=True, timeout=30)
+            format_result = subprocess.run(
+                ["clang-format", file_path], capture_output=True, text=True, timeout=30
+            )
 
-            formatted_code = format_result.stdout if format_result.returncode == 0 else ""
+            formatted_code = (
+                format_result.stdout if format_result.returncode == 0 else ""
+            )
 
             return FormatResult(
                 success=True,
@@ -528,7 +577,7 @@ class CppFormatter:
                 original_code=original_code,
                 formatted_code=formatted_code,
                 diff_output=result.stderr if result.returncode != 0 else "",
-                needs_formatting=result.returncode != 0
+                needs_formatting=result.returncode != 0,
             )
 
         except Exception as e:
@@ -537,7 +586,7 @@ class CppFormatter:
                 file_path=file_path,
                 tool_name="cpp",
                 operation=FormatOperation.PREVIEW,
-                error=f"diff生成失败: {str(e)}"
+                error=f"diff生成失败: {str(e)}",
             )
 
 
@@ -553,33 +602,33 @@ class ProfessionalCodeFormatter:
         """检测文件语言"""
         ext = Path(file_path).suffix.lower()
         language_map = {
-            '.py': 'python',
-            '.js': 'javascript',
-            '.jsx': 'javascript',
-            '.ts': 'javascript',
-            '.tsx': 'javascript',
-            '.mjs': 'javascript',
-            '.c': 'cpp',
-            '.cpp': 'cpp',
-            '.cc': 'cpp',
-            '.cxx': 'cpp',
-            '.h': 'cpp',
-            '.hpp': 'cpp',
-            '.hxx': 'cpp'
+            ".py": "python",
+            ".js": "javascript",
+            ".jsx": "javascript",
+            ".ts": "javascript",
+            ".tsx": "javascript",
+            ".mjs": "javascript",
+            ".c": "cpp",
+            ".cpp": "cpp",
+            ".cc": "cpp",
+            ".cxx": "cpp",
+            ".h": "cpp",
+            ".hpp": "cpp",
+            ".hxx": "cpp",
         }
-        return language_map.get(ext, 'unknown')
+        return language_map.get(ext, "unknown")
 
     def format_file(self, file_path: str, operation: str = "auto_fix") -> FormatResult:
         """格式化文件"""
         language = self.detect_language(file_path)
 
-        if language == 'python':
+        if language == "python":
             operation_enum = FormatOperation(operation)
             return self.python_formatter.format_file(file_path, operation_enum)
-        elif language == 'javascript':
+        elif language == "javascript":
             operation_enum = FormatOperation(operation)
             return self.js_formatter.format_file(file_path, operation_enum)
-        elif language == 'cpp':
+        elif language == "cpp":
             operation_enum = FormatOperation(operation)
             return self.cpp_formatter.format_file(file_path, operation_enum)
         else:
@@ -588,16 +637,16 @@ class ProfessionalCodeFormatter:
                 file_path=file_path,
                 tool_name="unknown",
                 operation=FormatOperation.AUTO_FIX,
-                error=f"不支持的语言: {language}"
+                error=f"不支持的语言: {language}",
             )
 
 
 # 创建工具函数
-@tool(name="format_code_professional", description="专业代码格式化工具，基于black/isort(Python)、prettier(JS/TS)、clang-format(C/C++)等原生包")
-def format_code_professional(
-    file_path: str,
-    operation: str = "auto_fix"
-) -> str:
+@tool(
+    "format_code_professional",
+    description="专业代码格式化工具，基于black/isort(Python)、prettier(JS/TS)、clang-format(C/C++)等原生包",
+)
+def format_code_professional(file_path: str, operation: str = "auto_fix") -> str:
     """
     使用专业工具格式化代码文件
 
@@ -614,16 +663,15 @@ def format_code_professional(
 
         # 添加统计信息
         stats = result.stats.copy()
-        stats.update({
-            "file_extension": Path(file_path).suffix,
-            "detected_language": formatter.detect_language(file_path),
-            "timestamp": datetime.now().isoformat()
-        })
+        stats.update(
+            {
+                "file_extension": Path(file_path).suffix,
+                "detected_language": formatter.detect_language(file_path),
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
 
-        result_data = {
-            **result.to_dict(),
-            "stats": stats
-        }
+        result_data = {**result.to_dict(), "stats": stats}
 
         if result.diff_output:
             result_data["diff_lines"] = len(result.diff_output.splitlines())
@@ -631,19 +679,23 @@ def format_code_professional(
         return json.dumps(result_data, indent=2, ensure_ascii=False)
 
     except Exception as e:
-        return json.dumps({
-            "success": False,
-            "error": f"格式化操作失败: {str(e)}",
-            "file_path": file_path,
-            "operation": operation
-        }, indent=2, ensure_ascii=False)
+        return json.dumps(
+            {
+                "success": False,
+                "error": f"格式化操作失败: {str(e)}",
+                "file_path": file_path,
+                "operation": operation,
+            },
+            indent=2,
+            ensure_ascii=False,
+        )
 
 
-@tool(name="batch_format_professional", description="批量使用专业工具格式化项目代码")
+@tool("batch_format_professional", description="批量使用专业工具格式化项目代码")
 def batch_format_professional(
     project_path: str,
     operation: str = "check",
-    file_pattern: str = "**/*.{py,js,ts,cpp,c,cc,cxx,h,hpp}"
+    file_pattern: str = "**/*.{py,js,ts,cpp,c,cc,cxx,h,hpp}",
 ) -> str:
     """
     批量格式化项目代码
@@ -657,26 +709,31 @@ def batch_format_professional(
         批量格式化结果的JSON字符串
     """
     try:
-        from pathlib import Path
         import glob
+        from pathlib import Path
 
         project_dir = Path(project_path)
         if not project_dir.exists():
-            return json.dumps({
-                "success": False,
-                "error": f"项目路径不存在: {project_path}"
-            }, indent=2, ensure_ascii=False)
+            return json.dumps(
+                {"success": False, "error": f"项目路径不存在: {project_path}"},
+                indent=2,
+                ensure_ascii=False,
+            )
 
         # 查找文件
         search_pattern = str(project_dir / file_pattern)
         files = glob.glob(search_pattern, recursive=True)
 
         if not files:
-            return json.dumps({
-                "success": True,
-                "message": "未找到匹配的文件",
-                "pattern": search_pattern
-            }, indent=2, ensure_ascii=False)
+            return json.dumps(
+                {
+                    "success": True,
+                    "message": "未找到匹配的文件",
+                    "pattern": search_pattern,
+                },
+                indent=2,
+                ensure_ascii=False,
+            )
 
         formatter = ProfessionalCodeFormatter()
         results = []
@@ -687,7 +744,7 @@ def batch_format_professional(
             "failed_files": 0,
             "by_language": {},
             "operation": operation,
-            "project_path": project_path
+            "project_path": project_path,
         }
 
         for file_path in files:
@@ -705,7 +762,7 @@ def batch_format_professional(
                     if language not in summary["by_language"]:
                         summary["by_language"][language] = {
                             "count": 0,
-                            "needs_formatting": 0
+                            "needs_formatting": 0,
                         }
                     summary["by_language"][language]["count"] += 1
                     if result.needs_formatting:
@@ -714,37 +771,40 @@ def batch_format_professional(
                     summary["failed_files"] += 1
 
             except Exception as e:
-                results.append({
-                    "success": False,
-                    "file_path": file_path,
-                    "error": str(e),
-                    "tool_name": "unknown"
-                })
+                results.append(
+                    {
+                        "success": False,
+                        "file_path": file_path,
+                        "error": str(e),
+                        "tool_name": "unknown",
+                    }
+                )
                 summary["failed_files"] += 1
 
-        return json.dumps({
-            "success": True,
-            "summary": summary,
-            "results": results
-        }, indent=2, ensure_ascii=False)
+        return json.dumps(
+            {"success": True, "summary": summary, "results": results},
+            indent=2,
+            ensure_ascii=False,
+        )
 
     except Exception as e:
-        return json.dumps({
-            "success": False,
-            "error": f"批量格式化失败: {str(e)}"
-        }, indent=2, ensure_ascii=False)
+        return json.dumps(
+            {"success": False, "error": f"批量格式化失败: {str(e)}"},
+            indent=2,
+            ensure_ascii=False,
+        )
 
 
 if __name__ == "__main__":
     # 测试用例
-    test_python_code = '''
+    test_python_code = """
 import os,sys
 def test():
     return 1+2
-'''
+"""
 
     print("测试Python格式化:")
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
         f.write(test_python_code)
         temp_path = f.name
 

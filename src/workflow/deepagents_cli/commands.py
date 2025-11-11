@@ -28,7 +28,8 @@ def handle_command(command: str, agent, token_tracker: TokenTracker) -> str | bo
         console.print(DEEP_AGENTS_ASCII, style=f"bold {COLORS['primary']}")
         console.print()
         console.print(
-            "... Fresh start! Screen cleared and conversation reset.", style=COLORS["agent"]
+            "... Fresh start! Screen cleared and conversation reset.",
+            style=COLORS["agent"],
         )
         console.print()
         return True
@@ -63,7 +64,13 @@ def execute_bash_command(command: str) -> bool:
 
         # Execute the command
         result = subprocess.run(
-            cmd, check=False, shell=True, capture_output=True, text=True, timeout=30, cwd=Path.cwd()
+            cmd,
+            check=False,
+            shell=True,
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=Path.cwd(),
         )
 
         # Display output

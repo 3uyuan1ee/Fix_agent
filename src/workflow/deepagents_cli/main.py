@@ -93,7 +93,9 @@ def parse_args():
     return parser.parse_args()
 
 
-async def simple_cli(agent, assistant_id: str | None, session_state, baseline_tokens: int = 0):
+async def simple_cli(
+    agent, assistant_id: str | None, session_state, baseline_tokens: int = 0
+):
     """Main CLI loop."""
     console.clear()
     console.print(DEEP_AGENTS_ASCII, style=f"bold {COLORS['primary']}")
@@ -104,15 +106,21 @@ async def simple_cli(agent, assistant_id: str | None, session_state, baseline_to
             "[yellow]⚠ Web search disabled:[/yellow] TAVILY_API_KEY not found.",
             style=COLORS["dim"],
         )
-        console.print("  To enable web search, set your Tavily API key:", style=COLORS["dim"])
-        console.print("    export TAVILY_API_KEY=your_api_key_here", style=COLORS["dim"])
+        console.print(
+            "  To enable web search, set your Tavily API key:", style=COLORS["dim"]
+        )
+        console.print(
+            "    export TAVILY_API_KEY=your_api_key_here", style=COLORS["dim"]
+        )
         console.print(
             "  Or add it to your .env file. Get your key at: https://tavily.com",
             style=COLORS["dim"],
         )
         console.print()
 
-    console.print("... Ready to code! What would you like to build?", style=COLORS["agent"])
+    console.print(
+        "... Ready to code! What would you like to build?", style=COLORS["agent"]
+    )
     console.print(f"  [dim]Working directory: {Path.cwd()}[/dim]")
     console.print()
 
@@ -220,6 +228,12 @@ def cli_main():
         # Clean exit on Ctrl+C - suppress ugly traceback
         console.print("\n\n[yellow]Interrupted[/yellow]")
         sys.exit(0)
+    except Exception as e:
+        console.print(f"\n[bold red]❌ Fatal Error:[/bold red] {e}")
+        console.print("[dim]Detailed error information:[/dim]")
+        import traceback
+        console.print(traceback.format_exc())
+        sys.exit(1)
 
 
 if __name__ == "__main__":
