@@ -1,22 +1,22 @@
-"""Main entry point and CLI loop for deepagents."""
+"""DeepAgents的主入口点和CLI循环。"""
 
 import argparse
 import asyncio
 import sys
 from pathlib import Path
 
-from .agent import create_agent_with_config, list_agents, reset_agent
-from .commands import execute_bash_command, handle_command
-from .config import (COLORS, DEEP_AGENTS_ASCII, SessionState, console,
-                     create_model)
-from .execution import execute_task
-from .input import create_prompt_session
-from .tools import http_request, tavily_client, web_search
-from .ui import TokenTracker, show_help
+from .agents.agent import create_agent_with_config, list_agents, reset_agent
+from .config.config import COLORS, SessionState, console, create_model
+from .interface.commands import execute_bash_command, handle_command
+from .interface.execution import execute_task
+from .interface.input import create_prompt_session
+from .tools.tools import http_request, tavily_client, web_search
+from .ui.dynamicCli import typewriter
+from .ui.ui import TokenTracker, show_help
 
 
 def check_cli_dependencies():
-    """Check if CLI optional dependencies are installed."""
+    """检查CLI的可选依赖是否安装"""
     missing = []
 
     try:
@@ -45,7 +45,7 @@ def check_cli_dependencies():
         missing.append("prompt-toolkit")
 
     if missing:
-        print("\n❌ Missing required CLI dependencies!")
+        print("\n❌ 缺少所需要的CLI依赖")
         print("\nThe following packages are required to use the deepagents CLI:")
         for pkg in missing:
             print(f"  - {pkg}")
@@ -57,7 +57,7 @@ def check_cli_dependencies():
 
 
 def parse_args():
-    """Parse command line arguments."""
+    """解析命令行参数"""
     parser = argparse.ArgumentParser(
         description="DeepAgents - AI Coding Assistant",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -97,10 +97,8 @@ def parse_args():
 async def simple_cli(
     agent, assistant_id: str | None, session_state, baseline_tokens: int = 0
 ):
-    """Main CLI loop."""
+    """Main CLI循环"""
     console.clear()
-    console.print(DEEP_AGENTS_ASCII, style=f"bold {COLORS['primary']}")
-    console.print()
 
     if tavily_client is None:
         console.print(
@@ -119,9 +117,8 @@ async def simple_cli(
         )
         console.print()
 
-    console.print(
-        "... Ready to code! What would you like to build?", style=COLORS["agent"]
-    )
+    typewriter.welcome()
+
     console.print(f"  [dim]Working directory: {Path.cwd()}[/dim]")
     console.print()
 
@@ -137,7 +134,7 @@ async def simple_cli(
     )
     console.print()
 
-    # Create prompt session and token tracker
+    # 创建提示词会话和token跟踪器
     session = create_prompt_session(assistant_id, session_state)
     token_tracker = TokenTracker()
     token_tracker.set_baseline(baseline_tokens)
@@ -149,31 +146,31 @@ async def simple_cli(
         except EOFError:
             break
         except KeyboardInterrupt:
-            # Ctrl+C at prompt - exit the program
+            # Ctrl+C 提示符 - 推出程序
             console.print("\n\nGoodbye!", style=COLORS["primary"])
             break
 
         if not user_input:
             continue
 
-        # Check for slash commands first
+        # 首先检查'/'命令
         if user_input.startswith("/"):
             result = handle_command(user_input, agent, token_tracker)
             if result == "exit":
-                console.print("\nGoodbye!", style=COLORS["primary"])
+                typewriter.goodbye()
                 break
             if result:
-                # Command was handled, continue to next input
+                # 处理完指令，继续处理下一条
                 continue
 
-        # Check for bash commands (!)
+        # 检查bash命令 (!)
         if user_input.startswith("!"):
             execute_bash_command(user_input)
             continue
 
-        # Handle regular quit keywords
+        # 处理常见的推出关键词
         if user_input.lower() in ["quit", "exit", "q"]:
-            console.print("\nGoodbye!", style=COLORS["primary"])
+            typewriter.goodbye()
             break
 
         execute_task(user_input, agent, assistant_id, session_state, token_tracker)
@@ -192,8 +189,8 @@ async def main(assistant_id: str, session_state):
     agent = create_agent_with_config(model, assistant_id, tools)
 
     # Calculate baseline token count for accurate token tracking
-    from .agent import get_system_prompt
-    from .token_utils import calculate_baseline_tokens
+    from .agents.agent import get_system_prompt
+    from .utils.token_utils import calculate_baseline_tokens
 
     agent_dir = Path.home() / ".deepagents" / assistant_id
     system_prompt = get_system_prompt()

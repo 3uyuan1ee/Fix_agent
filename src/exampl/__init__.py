@@ -19,8 +19,13 @@ from .agent_factory import AgentFactory, MainAgentFactory, SubAgentFactory
 from .app import AppFactory, DeepAgentsApp
 from .cli import CLIManager, InteractiveCLI
 from .config import AgentConfig, ConfigManager, LLMConfig, WorkspaceConfig
-from .glm import (GLMAgentApp, create_interactive_agent, interactive_cli, main,
-                  quick_start)
+from .glm import (
+    GLMAgentApp,
+    create_interactive_agent,
+    interactive_cli,
+    main,
+    quick_start,
+)
 
 __version__ = "1.0.0"
 __author__ = "DeepAgents Team"

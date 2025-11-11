@@ -1,4 +1,4 @@
-"""Custom tools for the CLI agent."""
+"""CLI agent的自定义工具。"""
 
 import os
 from typing import Any, Literal
@@ -22,18 +22,18 @@ def http_request(
     params: dict[str, str] = None,
     timeout: int = 30,
 ) -> dict[str, Any]:
-    """Make HTTP requests to APIs and web services.
+    """向API和Web服务发起HTTP请求。
 
     Args:
-        url: Target URL
-        method: HTTP method (GET, POST, PUT, DELETE, etc.)
-        headers: HTTP headers to include
-        data: Request body data (string or dict)
-        params: URL query parameters
-        timeout: Request timeout in seconds
+        url: 目标URL
+        method: HTTP方法 (GET, POST, PUT, DELETE等)
+        headers: 要包含的HTTP头
+        data: 请求体数据 (字符串或字典)
+        params: URL查询参数
+        timeout: 请求超时时间（秒）
 
     Returns:
-        Dictionary with response data including status, headers, and content
+        包含响应数据的字典，包括状态、头和内容
     """
     try:
         kwargs = {"url": url, "method": method.upper(), "timeout": timeout}

@@ -1,4 +1,4 @@
-"""Main CLI entrypoint for deepagents."""
+"""主命令行入口"""
 
 
 def cli_main() -> None:

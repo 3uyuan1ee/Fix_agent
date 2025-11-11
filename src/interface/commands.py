@@ -1,12 +1,12 @@
-"""Command handlers for slash commands and bash execution."""
+"""/command和bash执行的命令处理器。"""
 
 import subprocess
 from pathlib import Path
 
 from langgraph.checkpoint.memory import InMemorySaver
 
-from .config import COLORS, DEEP_AGENTS_ASCII, console
-from .ui import TokenTracker, show_interactive_help
+from ..config.config import COLORS, DEEP_AGENTS_ASCII, console
+from ..ui.ui import TokenTracker, show_interactive_help
 
 
 def handle_command(command: str, agent, token_tracker: TokenTracker) -> str | bool:

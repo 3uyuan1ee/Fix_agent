@@ -1,29 +1,27 @@
-"""Utilities for accurate token counting using LangChain models."""
+"""使用LangChain model进行精确token计数的实用工具。"""
 
 from pathlib import Path
 
 from langchain_core.messages import SystemMessage
 
-from .config import console
+from ..config.config import console
 
 
 def calculate_baseline_tokens(model, agent_dir: Path, system_prompt: str) -> int:
-    """Calculate baseline context tokens using the model's official tokenizer.
+    """使用模型的官方分词器计算基线上下文token数。
 
-    This uses the model's get_num_tokens_from_messages() method to get
-    accurate token counts for the initial context (system prompt + agent.md).
+    这使用模型的get_num_tokens_from_messages()方法来获取初始上下文（系统提示+agent.md）的精确token计数。
 
-    Note: Tool definitions cannot be accurately counted before the first API call
-    due to LangChain limitations. They will be included in the total after the
-    first message is sent (~5,000 tokens).
+    注意：由于LangChain限制，工具定义无法在第一次API调用之前准确计数。
+    它们将在第一条消息发送后包含在总数中（约5000个token）。
 
     Args:
-        model: LangChain model instance (ChatAnthropic or ChatOpenAI)
-        agent_dir: Path to agent directory containing agent.md
-        system_prompt: The base system prompt string
+        model: LangChain模型实例 (ChatAnthropic或ChatOpenAI)
+        agent_dir: 包含agent.md的代理目录路径
+        system_prompt: 基础系统提示字符串
 
     Returns:
-        Token count for system prompt + agent.md (tools not included)
+        系统提示+agent.md的token计数（不包括工具）
     """
     # Load agent.md content
     agent_md_path = agent_dir / "agent.md"
@@ -60,8 +58,8 @@ def calculate_baseline_tokens(model, agent_dir: Path, system_prompt: str) -> int
 
 
 def get_memory_system_prompt() -> str:
-    """Get the long-term memory system prompt text."""
+    """获取长期记忆系统提示文本"""
     # Import from agent_memory middleware
-    from .agent_memory import LONGTERM_MEMORY_SYSTEM_PROMPT
+    from ..midware.agent_memory import LONGTERM_MEMORY_SYSTEM_PROMPT
 
     return LONGTERM_MEMORY_SYSTEM_PROMPT.format(memory_path="/memories/")

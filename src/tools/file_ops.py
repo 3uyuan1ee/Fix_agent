@@ -1,4 +1,4 @@
-"""Helpers for tracking file operations and computing diffs for CLI display."""
+"""用于跟踪文件操作和计算CLI显示差异的辅助工具。"""
 
 from __future__ import annotations
 

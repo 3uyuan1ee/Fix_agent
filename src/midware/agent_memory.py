@@ -1,4 +1,4 @@
-"""Middleware for loading agent-specific long-term memory into the system prompt."""
+"""将代理特定的长期记忆加载到系统提示中的中间件。"""
 
 from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING, Any
@@ -7,8 +7,12 @@ if TYPE_CHECKING:
     from langgraph.runtime import Runtime
 
 from deepagents.backends.protocol import BackendProtocol
-from langchain.agents.middleware.types import (AgentMiddleware, AgentState,
-                                               ModelRequest, ModelResponse)
+from langchain.agents.middleware.types import (
+    AgentMiddleware,
+    AgentState,
+    ModelRequest,
+    ModelResponse,
+)
 from typing_extensions import NotRequired, TypedDict
 
 

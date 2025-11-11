@@ -1,4 +1,4 @@
-"""Task execution and streaming logic for the CLI."""
+"""CLI的任务执行和流式处理逻辑。"""
 
 import json
 import sys
@@ -12,12 +12,18 @@ from rich import box
 from rich.markdown import Markdown
 from rich.panel import Panel
 
-from .config import COLORS, console
-from .file_ops import FileOpTracker, build_approval_preview
+from ..config.config import COLORS, console
+from ..tools.file_ops import FileOpTracker, build_approval_preview
+from ..ui.ui import (
+    TokenTracker,
+    format_tool_display,
+    format_tool_message_content,
+    render_diff_block,
+    render_file_operation,
+    render_summary_panel,
+    render_todo_list,
+)
 from .input import parse_file_mentions
-from .ui import (TokenTracker, format_tool_display,
-                 format_tool_message_content, render_diff_block,
-                 render_file_operation, render_summary_panel, render_todo_list)
 
 
 def is_summary_message(content: str) -> bool:

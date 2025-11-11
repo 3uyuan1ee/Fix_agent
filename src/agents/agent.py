@@ -1,4 +1,4 @@
-"""Agent management and creation for the CLI."""
+"""CLI的agent管理和创建。"""
 
 import os
 import shutil
@@ -11,9 +11,14 @@ from deepagents.middleware.resumable_shell import ResumableShellToolMiddleware
 from langchain.agents.middleware import HostExecutionPolicy
 from langgraph.checkpoint.memory import InMemorySaver
 
-from .agent_memory import AgentMemoryMiddleware
-from .config import (COLORS, config, console, get_default_coding_instructions,
-                     get_system_prompt)
+from ..config.config import (
+    COLORS,
+    config,
+    console,
+    get_default_coding_instructions,
+    get_system_prompt,
+)
+from ..midware.agent_memory import AgentMemoryMiddleware
 
 
 def list_agents():

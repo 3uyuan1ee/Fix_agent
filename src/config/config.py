@@ -1,4 +1,4 @@
-"""Configuration, constants, and model creation for the CLI."""
+"""CLI的配置、常量和模型创建。"""
 
 import os
 import sys

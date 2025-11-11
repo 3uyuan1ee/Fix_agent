@@ -9,29 +9,28 @@ from rich.panel import Panel
 from rich.syntax import Syntax
 from rich.text import Text
 
-from .config import (COLORS, COMMANDS, DEEP_AGENTS_ASCII, MAX_ARG_LENGTH,
-                     console)
-from .file_ops import FileOperationRecord
+from ..config.config import COLORS, COMMANDS, DEEP_AGENTS_ASCII, MAX_ARG_LENGTH, console
+from ..tools.file_ops import FileOperationRecord
 
 
 def truncate_value(value: str, max_length: int = MAX_ARG_LENGTH) -> str:
-    """Truncate a string value if it exceeds max_length."""
+    """如果字符串长度超过max_length则截断。"""
     if len(value) > max_length:
         return value[:max_length] + "..."
     return value
 
 
 def format_tool_display(tool_name: str, tool_args: dict) -> str:
-    """Format tool calls for display with tool-specific smart formatting.
+    """为显示格式化工具调用，具有工具特定的智能格式化。
 
-    Shows the most relevant information for each tool type rather than all arguments.
+    显示每种工具类型最相关的信息，而不是所有参数。
 
     Args:
-        tool_name: Name of the tool being called
-        tool_args: Dictionary of tool arguments
+        tool_name: 被调用工具的名称
+        tool_args: 工具参数字典
 
     Returns:
-        Formatted string for display (e.g., "read_file(config.py)")
+        用于显示的格式化字符串 (例如 "read_file(config.py)")
 
     Examples:
         read_file(path="/long/path/file.py") → "read_file(file.py)"
