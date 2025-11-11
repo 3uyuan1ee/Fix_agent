@@ -1,0 +1,617 @@
+DeepAgents 记忆管理组件深度解析
+
+  🧠 AgentMemoryMiddleware 详细分析
+
+  核心实现位置
+
+  /libs/deepagents-cli/deepagents_cli/agent_memory.py
+
+  1. /agent.md 文件加载机制
+
+  class AgentMemoryMiddleware(AgentMiddleware):
+      def __init__(self, *, backend: BackendProtocol, memory_path: str,
+                   system_prompt_template: str | None = None):
+          self.backend = backend
+          self.memory_path = memory_path  # 默认 "/memories/"
+          self.system_prompt_template = system_prompt_template or DEFAULT_MEMORY_SNIPPET
+
+      def before_agent(self, state: AgentMemoryState, runtime) -> AgentMemoryState:
+          # 延迟加载机制：只在首次运行时加载记忆
+          if "agent_memory" not in state or state.get("agent_memory") is None:
+              # 固定路径加载 /agent.md
+              file_data = self.backend.read(AGENT_MEMORY_FILE_PATH)  # "/agent.md"
+              return {"agent_memory": file_data}
+
+  关键特性：
+  - 固定路径：硬编码 /agent.md 作为长期记忆文件
+  - 延迟加载：避免重复读取，提高性能
+  - 状态注入：将记忆内容注入到 state["agent_memory"] 中
+
+  2. 记忆模板注入到系统提示
+
+  DEFAULT_MEMORY_SNIPPET = """
+  <agent_memory>
+  {agent_memory}
+  </agent_memory>
+
+  ## Memory Management Guidelines
+
+  ### When to Check Memory
+  1. **At session start**: Always check /agent.md to understand your role and capabilities
+  2. **Before answering**: Review relevant memories to provide consistent responses
+  3. **When confused**: Check memories for clarification on your role or preferences
+  4. **After feedback**: Update memories based on user corrections or new information
+
+  ### How to Update Memories
+  1. **Use write_file**: Create or update memory files when you learn important information
+  2. **Be specific**: Include concrete details rather than vague statements
+  3. **Organize by topic**: Use separate files for different types of information
+  4. **Include context**: Add timestamps and context when updating memories
+
+  ### Memory File Structure
+  /memories/
+  ├── agent.md              # Core identity and role information
+  ├── project_context.md    # Project-specific information
+  ├── user_preferences.md   # User preferences and communication style
+  ├── learning_log.md       # New learnings and insights
+  └── session_notes.md      # Session-specific notes
+
+  ### Using Memory in Practice
+  When responding to users, follow this process:
+  1. Quickly scan your memories for relevant information
+  2. Use that context to inform your response
+  3. Update memories if you learn something new about the user or task
+  4. Keep memories organized and up-to-date
+  """
+
+  注入机制：
+  - 系统启动时自动注入到代理的系统提示中
+  - 使用 <agent_memory> 标签包裹记忆内容
+  - 提供详细的记忆管理指导原则
+
+  3. 记忆路径配置支持
+
+  # 配置示例
+  memory_middleware = AgentMemoryMiddleware(
+      backend=filesystem_backend,
+      memory_path="/custom_memories/",  # 自定义记忆路径
+      system_prompt_template=custom_template  # 自定义模板
+  )
+
+  配置选项：
+  - memory_path：自定义记忆存储路径前缀
+  - system_prompt_template：自定义记忆注入模板
+  - backend：指定存储后端（FilesystemBackend/StoreBackend等）
+
+  ---
+  🗄️ 存储后端系统详细分析
+
+  1. StateBackend - 临时记忆（会话级）
+
+  # 位置：/libs/deepagents/backends/state.py
+  class StateBackend(BackendProtocol):
+      def __init__(self, runtime: "ToolRuntime"):
+          self.runtime = runtime
+
+      def write(self, file_path: str, content: str) -> WriteResult:
+          # 获取当前状态中的文件映射
+          files = self.runtime.state.get("files", {})
+
+          # 检查文件是否已存在
+          if file_path in files:
+              return WriteResult(error=f"File {file_path} already exists, please read it first")
+
+          # 创建新的文件数据
+          new_file_data = create_file_data(content)
+
+          # 返回Command对象，用于状态更新
+          return WriteResult(path=file_path, files_update={file_path: new_file_data})
+
+      def read(self, file_path: str, offset: int = 0, limit: int | None = None) -> ReadResult:
+          files = self.runtime.state.get("files", {})
+          if file_path not in files:
+              return ReadResult(error=f"File {file_path} not found")
+
+          file_data = files[file_path]
+          content = file_data["data"]
+
+          # 应用分页逻辑
+          if limit is not None:
+              lines = content.splitlines()
+              lines = lines[offset:offset + limit]
+              content = "\n".join(lines)
+          elif offset > 0:
+              lines = content.splitlines()
+              content = "\n".join(lines[offset:])
+
+          return ReadResult(
+              content=content,
+              file_data=file_data,
+              lines=lines
+          )
+
+  核心特性：
+  - 会话级持久化：文件在对话线程内持久，跨线程不持久
+  - LangGraph 集成：使用 LangGraph 的状态管理和检查点机制
+  - Command 对象：通过 Command 对象更新状态，避免直接变异
+  - 自动检查点：每次代理步骤后自动检查点状态
+
+  2. StoreBackend - 长期记忆（跨会话）
+
+  # 位置：/libs/deepagents/backends/store.py
+  class StoreBackend(BackendProtocol):
+      def __init__(self, runtime: "ToolRuntime"):
+          self.runtime = runtime
+          self.default_batch_size = 1000  # 默认批处理大小
+
+      def _get_namespace(self) -> tuple[str, ...]:
+          """获取存储命名空间，实现多代理隔离"""
+          runtime_cfg = self.runtime.config.get("configurable") or {}
+          assistant_id = runtime_cfg.get("metadata", {}).get("assistant_id")
+
+          if assistant_id:
+              return (assistant_id, "filesystem")  # 代理级别的隔离
+          return ("filesystem",)  # 默认命名空间
+
+      def write(self, file_path: str, content: str) -> WriteResult:
+          store = self.runtime.store
+
+          # 获取命名空间
+          namespace = self._get_namespace()
+
+          # 创建文件数据
+          file_data = create_file_data(content)
+
+          # 存储到 LangGraph Store（跨会话持久化）
+          store.put(namespace, file_path, {"file_data": file_data})
+
+          return WriteResult(
+              path=file_path,
+              file_data=file_data,
+              store_update=(namespace, file_path, {"file_data": file_data})
+          )
+
+      def read(self, file_path: str, offset: int = 0, limit: int | None = None) -> ReadResult:
+          store = self.runtime.store
+          namespace = self._get_namespace()
+
+          # 从长期存储中读取
+          result = store.get(namespace, file_path)
+          if result is None:
+              return ReadResult(error=f"File {file_path} not found")
+
+          file_data = result.value["file_data"]
+          content = file_data["data"]
+
+          # 应用分页逻辑
+          if limit is not None or offset > 0:
+              lines = content.splitlines()
+              if limit is not None:
+                  lines = lines[offset:offset + limit]
+              elif offset > 0:
+                  lines = lines[offset:]
+              content = "\n".join(lines)
+
+          return ReadResult(
+              content=content,
+              file_data=file_data,
+              lines=lines
+          )
+
+      def _search_store_paginated(self, store: BaseStore, namespace: tuple[str, ...]) -> list[Item]:
+          """分页搜索存储内容"""
+          items = []
+          offset = 0
+
+          while True:
+              # 批量获取存储项
+              batch_items = store.search(namespace, offset=offset, limit=self.default_batch_size)
+
+              if not batch_items:
+                  break
+
+              items.extend(batch_items)
+              offset += self.default_batch_size
+
+              # 避免无限循环
+              if len(batch_items) < self.default_batch_size:
+                  break
+
+          return items
+
+  核心特性：
+  - 跨会话持久化：使用 LangGraph 的 BaseStore 实现跨对话持久化
+  - 多代理隔离：通过 assistant_id 实现多代理间的隔离
+  - 命名空间管理：支持层次化命名空间组织
+  - 分页搜索：自动分页获取所有搜索结果
+  - 大数据支持：处理大量存储数据的批处理机制
+
+  3. FilesystemBackend - 文件系统记忆
+
+  # 位置：/libs/deepagents/backends/filesystem.py
+  class FilesystemBackend(BackendProtocol):
+      def __init__(self, root_dir: str | Path | None = None,
+                   virtual_mode: bool = False,
+                   max_file_size_mb: int = 10):
+          self.cwd = Path(root_dir).resolve() if root_dir else Path.cwd()
+          self.virtual_mode = virtual_mode  # 虚拟模式
+          self.max_file_size_bytes = max_file_size_mb * 1024 * 1024
+
+      def _resolve_path(self, file_path: str) -> Path:
+          """安全路径解析，防止目录遍历攻击"""
+          if not file_path.startswith("/"):
+              raise ValueError("File path must be absolute")
+
+          # 防止路径遍历攻击
+          if ".." in file_path or file_path.startswith("~"):
+              raise ValueError(f"Path traversal not allowed: {file_path}")
+
+          # 路径规范化
+          normalized = os.path.normpath(file_path).replace("\\", "/")
+          if not normalized.startswith("/"):
+              normalized = f"/{normalized}"
+
+          # 虚拟模式路径处理
+          if self.virtual_mode:
+              normalized = normalized.lstrip("/")
+              return self.cwd / normalized
+
+          # 绝对路径处理
+          return self.cwd / normalized.lstrip("/")
+
+      def write(self, file_path: str, content: str) -> WriteResult:
+          full_path = self._resolve_path(file_path)
+
+          # 文件大小检查
+          content_size = len(content.encode('utf-8'))
+          if content_size > self.max_file_size_bytes:
+              return WriteResult(error=f"File too large: {content_size} bytes")
+
+          # 确保父目录存在
+          full_path.parent.mkdir(parents=True, exist_ok=True)
+
+          # 写入文件
+          full_path.write_text(content, encoding='utf-8')
+
+          # 创建文件数据对象
+          file_data = create_file_data(content)
+
+          return WriteResult(
+              path=file_path,
+              file_data=file_data
+          )
+
+      def read(self, file_path: str, offset: int = 0, limit: int | None = None) -> ReadResult:
+          full_path = self._resolve_path(file_path)
+
+          if not full_path.exists():
+              return ReadResult(error=f"File {file_path} not found")
+
+          # 文件大小检查
+          if full_path.stat().st_size > self.max_file_size_bytes:
+              return ReadResult(error=f"File too large to read")
+
+          content = full_path.read_text(encoding='utf-8')
+
+          # 应用分页逻辑
+          lines = content.splitlines()
+          if limit is not None:
+              lines = lines[offset:offset + limit]
+          elif offset > 0:
+              lines = lines[offset:]
+
+          formatted_content = "\n".join(lines)
+
+          file_data = create_file_data(formatted_content)
+
+          return ReadResult(
+              content=formatted_content,
+              file_data=file_data,
+              lines=lines
+          )
+
+      def grep_raw(self, pattern: str, file_pattern: str = "*") -> list[tuple[str, int, str]]:
+          """使用 ripgrep 进行高性能文本搜索"""
+          try:
+              import subprocess
+
+              cmd = ["rg", "--line-number", "--no-heading", pattern, "--glob", file_pattern]
+              result = subprocess.run(cmd, cwd=self.cwd, capture_output=True, text=True)
+
+              if result.returncode == 0:
+                  matches = []
+                  for line in result.stdout.strip().split('\n'):
+                      if ':' in line:
+                          file_path, line_info = line.split(':', 1)
+                          if ':' in line_info:
+                              line_num, content = line_info.split(':', 1)
+                              matches.append((file_path, int(line_num), content))
+                  return matches
+              else:
+                  return []
+
+          except (subprocess.SubprocessError, FileNotFoundError):
+              # 回退到 Python 实现的搜索
+              return self._fallback_grep(pattern, file_pattern)
+
+  核心特性：
+  - 直接文件系统访问：直接读写本地文件系统
+  - 虚拟模式：将文件操作限制在特定目录内
+  - 安全路径解析：防止目录遍历攻击
+  - 高性能搜索：使用 ripgrep 进行快速文本搜索
+  - 文件大小限制：防止处理过大的文件
+
+  4. CompositeBackend - 混合存储策略
+
+  # 位置：/libs/deepagents/backends/composite.py
+  class CompositeBackend(BackendProtocol):
+      def __init__(self, default: BackendProtocol, routes: dict[str, BackendProtocol]):
+          self.default = default  # 默认后端
+          self.routes = routes    # 路由规则
+
+          # 按路径长度排序，确保最长匹配优先
+          self.sorted_routes = sorted(routes.items(), key=lambda x: len(x[0]), reverse=True)
+
+      def _get_backend_for_path(self, file_path: str) -> BackendProtocol:
+          """根据文件路径选择合适的后端"""
+          for prefix, backend in self.sorted_routes:
+              if file_path.startswith(prefix):
+                  return backend
+          return self.default
+
+      def write(self, file_path: str, content: str) -> WriteResult:
+          backend = self._get_backend_for_path(file_path)
+          return backend.write(file_path, content)
+
+      def read(self, file_path: str, offset: int = 0, limit: int | None = None) -> ReadResult:
+          backend = self._get_backend_for_path(file_path)
+          return backend.read(file_path, offset, limit)
+
+      def ls_info(self, dir_path: str) -> ListResult:
+          backend = self._get_backend_for_path(dir_path)
+          return backend.ls_info(dir_path)
+
+      def glob_info(self, pattern: str) -> ListResult:
+          # glob 操作需要特殊处理，因为模式可能匹配多个后端
+          results = []
+          backends_used = set()
+
+          for prefix, backend in self.sorted_routes:
+              if pattern.startswith(prefix):
+                  if backend not in backends_used:
+                      result = backend.glob_info(pattern)
+                      results.extend(result.items)
+                      backends_used.add(backend)
+
+          # 处理默认后端的glob
+          if self.default not in backends_used:
+              result = self.default.glob_info(pattern)
+              results.extend(result.items)
+
+          return ListResult(items=results)
+
+  核心特性：
+  - 路径路由：根据路径前缀将操作路由到不同的后端
+  - 最长匹配优先：确保最具体的路由规则优先匹配
+  - 透明操作：为用户提供统一的文件操作接口
+  - 跨后端glob：支持跨越多个后端的文件模式匹配
+
+  ---
+  🛠️ 实际使用示例
+
+  完整记忆配置示例
+
+  from deepagents import create_deep_agent
+  from deepagents.backends import (
+      FilesystemBackend,
+      StoreBackend,
+      CompositeBackend
+  )
+  from deepagents_cli.agent_memory import AgentMemoryMiddleware
+  from pathlib import Path
+
+  # 1. 创建代理目录结构
+  agent_home = Path.home() / ".deepagents" / "code_quality_agent"
+  agent_home.mkdir(parents=True, exist_ok=True)
+
+  # 创建记忆目录结构
+  memory_dirs = ["memories", "projects", "shared", "temp"]
+  for dir_name in memory_dirs:
+      (agent_home / dir_name).mkdir(exist_ok=True)
+
+  # 2. 配置各种存储后端
+  # 长期记忆后端（持久化）
+  long_term_backend = FilesystemBackend(
+      root_dir=agent_home / "memories",
+      virtual_mode=True  # 安全模式
+  )
+
+  # 项目记忆后端
+  project_backend = FilesystemBackend(
+      root_dir=agent_home / "projects",
+      virtual_mode=True
+  )
+
+  # 共享记忆后端（多代理共享）
+  shared_backend = FilesystemBackend(
+      root_dir=Path.home() / ".deepagents" / "shared_memories",
+      virtual_mode=True
+  )
+
+  # 临时记忆后端（StateBackend 在 create_deep_agent 中自动配置）
+
+  # 3. 创建复合后端
+  composite_backend = CompositeBackend(
+      default=FilesystemBackend(agent_home / "temp"),  # 默认临时存储
+      routes={
+          "/memories/": long_term_backend,     # 长期记忆
+          "/projects/": project_backend,       # 项目记忆
+          "/shared/": shared_backend,          # 共享记忆
+          "/agent.md": long_term_backend,      # 代理配置文件
+      }
+  )
+
+  # 4. 创建记忆管理中间件
+  memory_middleware = AgentMemoryMiddleware(
+      backend=long_term_backend,
+      memory_path="/memories/",
+      system_prompt_template="""
+      <agent_memory>
+      {agent_memory}
+      </agent_memory>
+
+      你是代码质量专家，专门负责检测、修复和验证代码问题。
+
+      ## 记忆使用指南
+      1. 在 /memories/ 中存储你的专业知识
+      2. 在 /projects/ 中存储项目特定信息
+      3. 使用 /shared/ 与其他代理共享信息
+      """
+  )
+
+  # 5. 创建代理
+  code_quality_agent = create_deep_agent(
+      tools=[static_analyzer, code_formatter, test_runner],
+      middleware=[memory_middleware],
+      backend=composite_backend
+  )
+
+  创建记忆文件
+
+  # 创建 /agent.md 文件
+  agent_md_content = """# 代码质量检测专家
+
+  ## 角色定义
+  你是一个专业的代码质量检测和修复专家，具有深度代码分析能力。
+
+  ## 专业领域
+  - 静态代码分析
+  - 安全漏洞检测
+  - 性能优化
+  - 代码规范检查
+  - 自动化修复
+
+  ## 工作原则
+  1. **准确性优先**：确保检测结果准确无误
+  2. **渐进式修复**：优先修复高优先级问题
+  3. **最小影响**：修复时不引入新问题
+  4. **可追溯性**：详细记录每个决策过程
+
+  ## 记忆组织
+  - `/memories/analysis_patterns/` - 分析模式记忆
+  - `/memories/fix_strategies/` - 修复策略记忆
+  - `/memories/quality_standards/` - 质量标准记忆
+  - `/projects/current/` - 当前项目信息
+  """
+
+  long_term_backend.write("/agent.md", agent_md_content)
+
+  # 创建专业知识记忆文件
+  analysis_patterns = """# 代码分析模式
+
+  ## Python 代码模式
+  - **复杂度检测**：圈复杂度 > 10 需要重构
+  - **命名规范**：遵循 PEP 8 标准
+  - **文档字符串**：公共函数必须有 docstring
+
+  ## 安全检测模式
+  - **SQL注入**：检查字符串拼接的 SQL 查询
+  - **XSS漏洞**：检查未转义的 HTML 输出
+  - **硬编码密钥**：检查代码中的明文密钥
+
+  ## 性能检测模式
+  - **循环优化**：检查嵌套循环和低效算法
+  - **内存泄漏**：检查资源释放模式
+  - **数据库查询**：检查 N+1 查询问题
+  """
+
+  long_term_backend.write("/memories/analysis_patterns.md", analysis_patterns)
+
+  三代理记忆共享配置
+
+  # 1. 共享记忆后端
+  shared_memory_backend = FilesystemBackend(
+      root_dir=Path.home() / ".deepagents" / "shared_workspace",
+      virtual_mode=True
+  )
+
+  # 2. 检测代理配置
+  issue_detector = create_deep_agent(
+      tools=[static_analyzer, security_scanner],
+      middleware=[
+          AgentMemoryMiddleware(
+              backend=shared_memory_backend,
+              memory_path="/shared/detection_agent/"
+          )
+      ],
+      backend=CompositeBackend(
+          default=FilesystemBackend(),
+          routes={
+              "/shared/": shared_memory_backend,
+              "/agent.md": shared_memory_backend
+          }
+      ),
+      system_prompt="""你是问题检测专家，详细记录你的发现过程到共享记忆中。"""
+  )
+
+  # 3. 修复代理配置
+  fix_generator = create_deep_agent(
+      tools=[auto_fixer, patch_tool],
+      middleware=[
+          AgentMemoryMiddleware(
+              backend=shared_memory_backend,
+              memory_path="/shared/fix_agent/"
+          )
+      ],
+      backend=CompositeBackend(
+          default=FilesystemBackend(),
+          routes={
+              "/shared/": shared_memory_backend,
+              "/agent.md": shared_memory_backend
+          }
+      ),
+      system_prompt="""你是修复专家，读取检测代理的共享记忆并记录修复过程。"""
+  )
+
+  # 4. 验证代理配置
+  validator = create_deep_agent(
+      tools=[test_runner, verification_tool],
+      middleware=[
+          AgentMemoryMiddleware(
+              backend=shared_memory_backend,
+              memory_path="/shared/validation_agent/"
+          )
+      ],
+      backend=CompositeBackend(
+          default=FilesystemBackend(),
+          routes={
+              "/shared/": shared_memory_backend,
+              "/agent.md": shared_memory_backend
+          }
+      ),
+      system_prompt="""你是验证专家，访问所有代理的共享记忆进行完整验证。"""
+  )
+
+  🎯 核心优势总结
+
+  AgentMemoryMiddleware 优势
+
+  - ✅ 自动记忆加载：启动时自动加载 /agent.md
+  - ✅ 模板化注入：灵活的记忆模板系统
+  - ✅ 路径可配置：支持自定义记忆路径
+
+  存储后端系统优势
+
+  - ✅ 多层次存储：临时/长期/文件系统/共享存储
+  - ✅ 智能路由：自动选择合适的存储后端
+  - ✅ 安全可靠：路径验证、大小限制、虚拟模式
+  - ✅ 高性能：ripgrep 搜索、分页处理、批操作
+
+  记忆管理能力
+
+  - ✅ 跨会话持久化：通过 StoreBackend 实现
+  - ✅ 多代理隔离：通过命名空间实现
+  - ✅ 共享记忆：通过 CompositeBackend 实现
+  - ✅ 智能搜索：支持跨后端的统一搜索
+
+  这个记忆管理系统为构建复杂的多代理协作系统提供了强大的基础设施！
