@@ -12,7 +12,13 @@ from langchain.agents.middleware import HostExecutionPolicy
 from langgraph.checkpoint.memory import InMemorySaver
 
 from .agent_memory import AgentMemoryMiddleware
-from .config import COLORS, config, console, get_default_coding_instructions,get_system_prompt
+from .config import (
+    COLORS,
+    config,
+    console,
+    get_default_coding_instructions,
+    get_system_prompt,
+)
 
 
 def list_agents():
@@ -82,9 +88,6 @@ def reset_agent(agent_name: str, source_agent: str = None):
         f"✓ Agent '{agent_name}' reset to {action_desc}", style=COLORS["primary"]
     )
     console.print(f"Location: {agent_dir}\n", style=COLORS["dim"])
-
-
-
 
 
 def create_agent_with_config(model, assistant_id: str, tools: list):
@@ -190,11 +193,7 @@ def create_agent_with_config(model, assistant_id: str, tools: list):
         "debug": True,
     }
 
-    subagents = [
-        defect_analyzer_subagent,
-        code_fixer_subagent,
-        fix_validator_subagent
-    ]
+    subagents = [defect_analyzer_subagent, code_fixer_subagent, fix_validator_subagent]
 
     # Helper functions for formatting tool descriptions in HITL prompts
     def format_write_file_description(tool_call: dict) -> str:

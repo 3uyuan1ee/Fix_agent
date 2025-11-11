@@ -11,9 +11,9 @@ dotenv.load_dotenv()
 
 # Color scheme with deep green and deep blue
 COLORS = {
-    "primary": "#0d9488",      # 深蓝绿色
-    "secondary": "#1e40af",    # 深蓝色
-    "accent": "#059669",       # 深绿色
+    "primary": "#0d9488",  # 深蓝绿色
+    "secondary": "#1e40af",  # 深蓝色
+    "accent": "#059669",  # 深绿色
     "dim": "#475569",
     "user": "#f8fafc",
     "agent": "#0d9488",
@@ -141,6 +141,7 @@ def create_model():
     console.print("  export OPENAI_API_KEY=your_api_key_here")
     console.print("\nOr add it to your .env file.")
     sys.exit(1)
+
 
 def get_system_prompt():
 

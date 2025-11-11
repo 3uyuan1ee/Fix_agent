@@ -232,6 +232,7 @@ def cli_main():
         console.print(f"\n[bold red]❌ Fatal Error:[/bold red] {e}")
         console.print("[dim]Detailed error information:[/dim]")
         import traceback
+
         console.print(traceback.format_exc())
         sys.exit(1)
 
