@@ -19,6 +19,12 @@ from .error_detector import (
     analyze_existing_logs
 )
 
+# 导入project_explorer中的工具
+from .project_explorer import (
+    explore_project_structure,
+    analyze_code_complexity
+)
+
 # 保持原有的analyze_code_defects工具链实现
 @tool(
     description="智能代码缺陷分析工具链，集成了代码静态分析和智能缺陷聚合功能。一键完成从代码分析到缺陷聚合的全流程，自动检测多语言代码问题，智能去重和聚类，提供优先级排序的缺陷报告。支持Python、JavaScript、Java、C/C++、Go、Rust等主流编程语言。"
@@ -182,13 +188,18 @@ __all__ = [
     "run_and_monitor",
     "run_tests_with_error_capture",
     "analyze_existing_logs",
+
+    # 项目探索工具（从project_explorer导入）
+    "explore_project_structure",
+    "analyze_code_complexity",
 ]
 
 # 工具分类字典（便于管理和使用）
 TOOL_CATEGORIES = {
     "网络工具": ["http_request", "web_search"],
-    "代码分析": ["analyze_code_defects"],
+    "代码分析": ["analyze_code_defects", "analyze_code_complexity"],
     "错误检测": ["compile_project", "run_and_monitor", "run_tests_with_error_capture", "analyze_existing_logs"],
+    "项目探索": ["explore_project_structure", "analyze_code_complexity"],
 }
 
 def get_all_tools():

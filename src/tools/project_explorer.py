@@ -844,19 +844,59 @@ class ProjectExplorer:
 
 # 创建工具函数
 @tool(
-    "explore_project_structure",
-    description="深度分析项目结构，识别技术栈、架构模式和依赖关系",
+    description="深度分析项目结构，识别技术栈、架构模式和依赖关系。智能扫描项目文件，检测项目类型、编程语言、框架依赖和架构模式，为代码分析和重构提供全面的项目上下文信息。"
 )
 def explore_project_structure(project_path: str, max_files: int = 1000) -> str:
     """
-    探索项目结构
+    探索项目结构，提供给agent使用的项目结构分析工具。
+
+    此工具提供全面的项目结构分析功能：
+    - 智能识别项目类型和架构模式（单体、微服务、库、插件等）
+    - 自动检测技术栈和依赖关系（语言、框架、工具、数据库等）
+    - 深度扫描文件结构，分类源码、测试、配置和文档文件
+    - 分析项目度量和统计信息，提供量化评估
+    - 生成项目优化建议和技术栈升级指导
 
     Args:
-        project_path: 项目根目录路径
-        max_files: 最大分析文件数量
+        project_path: 项目根目录路径，支持相对路径和绝对路径
+        max_files: 最大分析文件数量，默认1000，用于控制分析规模避免内存占用
 
     Returns:
-        项目分析结果的JSON字符串
+        项目分析结果的JSON字符串，包含：
+            - success: 分析是否成功
+            - project_path: 项目根目录路径
+            - project_type: 项目类型枚举值（python_package、react_app等）
+            - architecture_pattern: 架构模式（monolith、microservice、library等）
+            - primary_language: 主要编程语言
+            - technologies: 技术栈列表，包含名称、类别、版本、置信度和证据
+            - files: 文件详细信息列表，包含路径、语言、分类、大小等
+            - directories: 目录结构列表
+            - dependencies: 依赖关系分析结果
+            - metrics: 项目度量指标（文件数、代码行数、复杂度等）
+            - recommendations: 项目优化建议列表
+            - analysis_timestamp: 分析执行时间戳
+            - summary: 分析摘要信息（总文件数、目录数、技术栈数量等）
+
+    使用场景：
+        - 项目架构分析和重构规划
+        - 技术栈识别和依赖管理
+        - 代码质量评估和优化建议
+        - 新团队成员项目快速理解
+        - 技术债务评估和清理计划
+        - 项目迁移和升级决策支持
+
+    工具优势：
+        - 深度分析项目结构和架构模式，超越表面文件扫描
+        - 智能识别技术栈和依赖关系，支持多语言项目
+        - 提供详细的项目元数据和量化度量指标
+        - 支持多种编程语言和主流项目类型
+        - 生成实用的优化建议和最佳实践指导
+
+    注意事项：
+        - 大型项目分析可能需要较长时间，建议适当调整max_files参数
+        - 某些复杂的项目结构可能需要人工审核和补充分析
+        - 隐藏文件和临时目录会被自动过滤
+        - 分析结果基于文件模式匹配，可能存在误识别情况
     """
     try:
         explorer = ProjectExplorer()
@@ -922,17 +962,62 @@ def explore_project_structure(project_path: str, max_files: int = 1000) -> str:
         )
 
 
-@tool("analyze_code_complexity", description="分析代码复杂度，识别潜在问题和改进点")
+@tool(
+    description="分析代码复杂度，识别潜在问题和改进点。智能扫描项目源代码，计算圈复杂度、函数和类统计，识别复杂文件并提供重构建议，帮助改善代码质量和可维护性。"
+)
 def analyze_code_complexity(project_path: str, min_lines: int = 10) -> str:
     """
-    分析代码复杂度
+    分析代码复杂度，提供给agent使用的代码复杂度分析工具。
+
+    此工具提供全面的代码复杂度分析功能：
+    - 智能识别和分析多种编程语言的源代码文件
+    - 计算圈复杂度指标，识别代码逻辑复杂程度
+    - 统计函数和类的数量，评估代码结构合理性
+    - 识别复杂文件，提供具体的重构建议和优化方向
+    - 生成项目整体复杂度评估和改进指导
 
     Args:
-        project_path: 项目根目录路径
-        min_lines: 最小分析行数
+        project_path: 项目根目录路径，支持相对路径和绝对路径
+        min_lines: 最小分析行数，默认10行，过滤过小文件避免噪声
 
     Returns:
-        复杂度分析结果的JSON字符串
+        复杂度分析结果的JSON字符串，包含：
+            - success: 分析是否成功
+            - files_analyzed: 分析的源代码文件数量
+            - total_lines: 总代码行数统计
+            - functions_found: 发现的函数总数
+            - classes_found: 发现的类总数
+            - complex_files: 复杂文件列表，每个文件包含：
+                - file: 相对文件路径
+                - lines: 文件行数
+                - functions: 文件内函数数量
+                - classes: 文件内类数量
+                - complexity_score: 复杂度得分
+                - avg_complexity: 平均复杂度
+            - recommendations: 具体的改进建议列表
+            - project_path: 分析的项目路径
+            - analysis_timestamp: 分析执行时间戳
+
+    使用场景：
+        - 代码重构前的复杂度评估
+        - 技术债务分析和清理计划制定
+        - 代码质量审查和改进指导
+        - 新项目架构设计复杂度控制
+        - 团队代码质量标准和最佳实践制定
+
+    工具优势：
+        - 支持多种主流编程语言的复杂度分析
+        - 基于圈复杂度指标的科学评估方法
+        - 智能识别复杂文件，提供具体重构建议
+        - 提供量化指标，便于代码质量对比和跟踪
+        - 生成实用的改进指导，支持实际开发决策
+
+    注意事项：
+        - 分析结果基于静态代码扫描，可能存在误判
+        - 复杂度阈值应根据项目实际情况调整
+        - 建议结合人工代码审查进行综合评估
+        - 某些设计模式可能自然增加复杂度，需要理性判断
+        - 分析范围默认限制为20个文件，大型项目可考虑分批分析
     """
     try:
         import re
@@ -1035,11 +1120,20 @@ def analyze_code_complexity(project_path: str, min_lines: int = 10) -> str:
         if complexity_analysis["total_lines"] > 10000:
             complexity_analysis["recommendations"].append("项目较大，建议模块化拆分")
 
-        return json.dumps(
-            {"success": True, "complexity_analysis": complexity_analysis},
-            indent=2,
-            ensure_ascii=False,
-        )
+        # 将结果提升到顶级，便于访问
+        result = {
+            "success": True,
+            "files_analyzed": complexity_analysis["files_analyzed"],
+            "total_lines": complexity_analysis["total_lines"],
+            "functions_found": complexity_analysis["functions_found"],
+            "classes_found": complexity_analysis["classes_found"],
+            "complex_files": complexity_analysis["complex_files"],
+            "recommendations": complexity_analysis["recommendations"],
+            "project_path": str(project_dir),
+            "analysis_timestamp": datetime.now().isoformat(),
+        }
+
+        return json.dumps(result, indent=2, ensure_ascii=False)
 
     except Exception as e:
         return json.dumps(
