@@ -536,6 +536,12 @@ def show_help():
     console.print(
         "  /tokens         Show token usage for current session", style=COLORS["dim"]
     )
+    console.print(
+        "  /sys, /system, /info  Show system information and platform features", style=COLORS["dim"]
+    )
+    console.print(
+        "  /services, /svc  Manage Windows services (Windows only)", style=COLORS["dim"]
+    )
     console.print("  /quit, /exit    Exit the session", style=COLORS["dim"])
     console.print(
         "  quit, exit, q   Exit the session (just type and press Enter)",

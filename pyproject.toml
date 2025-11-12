@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "Fix_agent"
-version = "0.1.1"
+version = "0.1.2"
 description = "AI Coding Assistant - 代码缺陷修复和分析工具"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -109,6 +109,13 @@ docs = [
 # 完整开发环境 - 包含所有开发工具
 full = [
     "Fix_agent[test,dev,release,docs]",
+]
+
+# Windows构建工具
+windows = [
+    "Fix_agent[release]",
+    "pywin32>=226",  # Windows API支持
+    "wmi>=1.5.1",    # Windows管理接口
 ]
 
 [project.urls]

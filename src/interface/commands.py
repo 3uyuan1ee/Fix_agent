@@ -51,6 +51,12 @@ def handle_command(command: str, agent, token_tracker: TokenTracker) -> str | bo
     if command_name == "config":
         return handle_config_command(command_args)
 
+    if command_name in ["sys", "system", "info"]:
+        return handle_system_info_command(command_args)
+
+    if command_name in ["services", "svc"]:
+        return handle_services_command(command_args)
+
     # 使用震动效果显示未知命令错误
     typewriter.error_shake(f"Unknown command: /{cmd}")
     console.print("[dim]Type /help for available commands.[/dim]")
@@ -217,10 +223,22 @@ def get_user_choice(prompt: str, valid_choices: list[str]) -> str:
 def edit_env_file(env_path: Path) -> bool:
     """Edit .env file in external editor."""
     try:
-        editor = os.environ.get("EDITOR", "nano")
+        import platform
+
+        # 跨平台编辑器选择
+        if platform.system() == "Windows":
+            editor = os.environ.get("EDITOR", "notepad")
+        else:
+            editor = os.environ.get("EDITOR", "nano")
+
         typewriter.info(f"Opening {env_path} in {editor}...")
 
-        result = subprocess.run([editor, str(env_path)], check=True)
+        # Windows特殊处理
+        if platform.system() == "Windows" and editor == "notepad":
+            result = subprocess.run(["notepad", str(env_path)], check=True)
+        else:
+            result = subprocess.run([editor, str(env_path)], check=True)
+
         typewriter.success(f"✅ Saved changes to {env_path}")
 
         # Reload environment variables
@@ -232,6 +250,10 @@ def edit_env_file(env_path: Path) -> bool:
 
     except subprocess.CalledProcessError as e:
         typewriter.error_shake(f"❌ Editor exited with error: {e}")
+        return True
+    except FileNotFoundError:
+        typewriter.error_shake(f"❌ Editor '{editor}' not found. Please set EDITOR environment variable.")
+        typewriter.info("Windows users can set EDITOR=notepad or EDITOR=path/to/your/editor")
         return True
     except Exception as e:
         typewriter.error_shake(f"❌ Error opening editor: {e}")
@@ -392,31 +414,48 @@ def handle_cd_command(args: list[str]) -> bool:
         current_dir = Path.cwd()
         typewriter.success(f" Changed directory to: {current_dir}")
         
-        # Display directory contents (like ls -la)
+        # Display directory contents (cross-platform)
         try:
             console.print()
             console.print("[dim]Directory contents:[/dim]")
-            result = subprocess.run(
-                ["ls", "-la"],
-                check=True,
-                capture_output=True,
-                text=True,
-                timeout=10,
-                cwd=current_dir
-            )
-            console.print(result.stdout, style=COLORS["dim"], markup=False)
-        except (subprocess.TimeoutExpired, subprocess.CalledProcessError, Exception):
-            # Fallback to simple ls if ls -la fails
-            try:
+
+            # 使用Python内置功能，避免依赖系统命令
+            import platform
+            if platform.system() == "Windows":
+                # Windows: 使用dir命令
                 result = subprocess.run(
-                    ["ls"],
+                    ["cmd", "/c", "dir"],
                     check=True,
                     capture_output=True,
                     text=True,
                     timeout=10,
                     cwd=current_dir
                 )
-                console.print(result.stdout, style=COLORS["dim"], markup=False)
+            else:
+                # Unix/Linux: 使用ls -la
+                result = subprocess.run(
+                    ["ls", "-la"],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                    cwd=current_dir
+                )
+            console.print(result.stdout, style=COLORS["dim"], markup=False)
+        except (subprocess.TimeoutExpired, subprocess.CalledProcessError, Exception):
+            # Fallback: 使用Python内置os.listdir
+            try:
+                import os
+                items = []
+                for item in sorted(os.listdir(current_dir)):
+                    item_path = current_dir / item
+                    if item_path.is_dir():
+                        items.append(f"📁 {item}/")
+                    else:
+                        items.append(f"📄 {item}")
+
+                for item in items:
+                    console.print(f"  {item}", style=COLORS["dim"])
             except Exception:
                 console.print("[dim]Unable to list directory contents[/dim]")
         console.print()
@@ -462,7 +501,7 @@ def is_path_safe(path: Path) -> bool:
 
 
 def execute_bash_command(command: str) -> bool:
-    """Execute a bash command and display output. Returns True if handled."""
+    """Execute a command with cross-platform shell support. Returns True if handled."""
     cmd = command.strip().lstrip("!")
 
     if not cmd:
@@ -470,18 +509,48 @@ def execute_bash_command(command: str) -> bool:
 
     try:
         console.print()
-        console.print(f"[dim]$ {cmd}[/dim]")
 
-        # Execute the command
-        result = subprocess.run(
-            cmd,
-            check=False,
-            shell=True,
-            capture_output=True,
-            text=True,
-            timeout=30,
-            cwd=Path.cwd(),
-        )
+        import platform
+
+        # 检测是否为PowerShell命令
+        is_powershell = cmd.startswith("pwsh ") or cmd.startswith("powershell ")
+
+        if platform.system() == "Windows":
+            if is_powershell:
+                console.print(f"[dim]PS> {cmd}[/dim]")
+                # 使用PowerShell执行
+                result = subprocess.run(
+                    ["powershell", "-Command", cmd],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                    cwd=Path.cwd(),
+                )
+            else:
+                console.print(f"[dim]C:> {cmd}[/dim]")
+                # 使用cmd执行
+                result = subprocess.run(
+                    cmd,
+                    check=False,
+                    shell=True,
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                    cwd=Path.cwd(),
+                )
+        else:
+            console.print(f"[dim]$ {cmd}[/dim]")
+            # Unix/Linux系统
+            result = subprocess.run(
+                cmd,
+                check=False,
+                shell=True,
+                capture_output=True,
+                text=True,
+                timeout=30,
+                cwd=Path.cwd(),
+            )
 
         # Display output
         if result.stdout:
@@ -500,7 +569,295 @@ def execute_bash_command(command: str) -> bool:
         console.print("[red]Command timed out after 30 seconds[/red]")
         console.print()
         return True
+    except FileNotFoundError as e:
+        if platform.system() == "Windows":
+            console.print(f"[red]Command not found. Try using 'powershell {cmd}' or ensure the command is in PATH[/red]")
+        else:
+            console.print(f"[red]Command not found: {e}[/red]")
+        console.print()
+        return True
     except Exception as e:
         console.print(f"[red]Error executing command: {e}[/red]")
         console.print()
+        return True
+
+
+def get_system_info() -> dict:
+    """获取系统信息，包括WSL检测."""
+    import platform
+    import subprocess
+
+    info = {
+        "system": platform.system(),
+        "version": platform.version(),
+        "machine": platform.machine(),
+        "processor": platform.processor(),
+        "python_version": platform.python_version(),
+        "wsl": False,
+        "powershell_available": False
+    }
+
+    # WSL检测
+    if platform.system() == "Linux":
+        try:
+            with open("/proc/version", "r") as f:
+                version_info = f.read().lower()
+                if "microsoft" in version_info or "wsl" in version_info:
+                    info["wsl"] = True
+        except:
+            pass
+
+    # PowerShell可用性检测
+    if platform.system() == "Windows":
+        try:
+            result = subprocess.run(
+                ["powershell", "-Command", "Get-Host"],
+                capture_output=True,
+                timeout=5
+            )
+            info["powershell_available"] = result.returncode == 0
+        except:
+            try:
+                result = subprocess.run(
+                    ["pwsh", "-Command", "Get-Host"],
+                    capture_output=True,
+                    timeout=5
+                )
+                info["powershell_available"] = result.returncode == 0
+            except:
+                pass
+
+    return info
+
+
+def handle_system_info_command(args: list[str]) -> bool:
+    """显示系统信息，包括WSL和PowerShell状态."""
+    try:
+        info = get_system_info()
+
+        console.print("[bold]🖥️  System Information:[/bold]", style=COLORS["primary"])
+        console.print()
+
+        # 基本信息
+        console.print(f"[dim]Operating System:[/dim] {info['system']} {info['version']}")
+        console.print(f"[dim]Architecture:[/dim] {info['machine']}")
+        console.print(f"[dim]Processor:[/dim] {info['processor']}")
+        console.print(f"[dim]Python Version:[/dim] {info['python_version']}")
+
+        # 特殊功能状态
+        console.print()
+        console.print("[bold]Special Features:[/bold]", style=COLORS["primary"])
+
+        if info['wsl']:
+            console.print(f"🐧 WSL: [green]Enabled[/green] (Windows Subsystem for Linux)")
+        else:
+            console.print(f"🐧 WSL: [dim]Not detected[/dim]")
+
+        if info['powershell_available']:
+            console.print(f"💻 PowerShell: [green]Available[/green]")
+        else:
+            console.print(f"💻 PowerShell: [red]Not available[/red]")
+
+        # 平台特定提示
+        console.print()
+        console.print("[bold]Platform-Specific Features:[/bold]", style=COLORS["primary"])
+
+        if info['system'] == "Windows":
+            console.print("🔧 Use 'pwsh' or 'powershell' prefix for PowerShell commands")
+            console.print("🔧 Use '/services' to view Windows services")
+            console.print("🔧 Default editor: notepad")
+        elif info['wsl']:
+            console.print("🐧 Running in WSL - Windows integration available")
+            console.print("🔧 Can access Windows files via /mnt/c/")
+        else:
+            console.print("🐧 Unix/Linux environment detected")
+            console.print("🔧 Default editor: nano")
+
+        console.print()
+        return True
+
+    except Exception as e:
+        typewriter.error_shake(f"❌ Error getting system info: {e}")
+        return True
+
+
+def handle_services_command(args: list[str]) -> bool:
+    """处理Windows服务管理命令."""
+    import platform
+
+    if platform.system() != "Windows":
+        typewriter.error_shake("❌ Services command is only available on Windows")
+        typewriter.info("Use 'systemctl' or 'service' commands on Linux")
+        return True
+
+    try:
+        if not args:
+            # 显示帮助信息
+            console.print("[bold]🔧 Windows Services Management:[/bold]", style=COLORS["primary"])
+            console.print()
+            typewriter.print_fast("Available commands:", "primary")
+            console.print("  /services list           - List running services")
+            console.print("  /services search <name>  - Search for a service")
+            console.print("  /services status <name>  - Get service status")
+            console.print("  /services start <name>   - Start a service")
+            console.print("  /services stop <name>    - Stop a service")
+            console.print("  /services restart <name> - Restart a service")
+            console.print()
+            return True
+
+        subcommand = args[0].lower()
+
+        if subcommand == "list":
+            return list_windows_services()
+        elif subcommand == "search" and len(args) > 1:
+            return search_windows_service(args[1])
+        elif subcommand == "status" and len(args) > 1:
+            return get_service_status(args[1])
+        elif subcommand in ["start", "stop", "restart"] and len(args) > 1:
+            return manage_windows_service(subcommand, args[1])
+        else:
+            typewriter.error_shake("❌ Invalid services command")
+            typewriter.info("Use '/services' for help")
+            return True
+
+    except Exception as e:
+        typewriter.error_shake(f"❌ Error managing services: {e}")
+        return True
+
+
+def list_windows_services() -> bool:
+    """列出Windows服务."""
+    try:
+        console.print("[dim]Fetching Windows services...[/dim]")
+
+        result = subprocess.run(
+            ["powershell", "-Command", "Get-Service | Select-Object Name, Status, DisplayName | Format-Table -AutoSize"],
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+
+        if result.returncode == 0:
+            console.print(result.stdout, style=COLORS["dim"], markup=False)
+        else:
+            console.print("[red]Failed to retrieve services list[/red]")
+            console.print(result.stderr, style="red")
+
+        console.print()
+        return True
+
+    except subprocess.TimeoutExpired:
+        console.print("[red]Command timed out[/red]")
+        return True
+    except Exception as e:
+        console.print(f"[red]Error listing services: {e}[/red]")
+        return True
+
+
+def search_windows_service(service_name: str) -> bool:
+    """搜索Windows服务."""
+    try:
+        console.print(f"[dim]Searching for service: {service_name}[/dim]")
+
+        ps_command = f'Get-Service "*{service_name}*" | Select-Object Name, Status, DisplayName | Format-Table -AutoSize'
+
+        result = subprocess.run(
+            ["powershell", "-Command", ps_command],
+            capture_output=True,
+            text=True,
+            timeout=15
+        )
+
+        if result.returncode == 0:
+            if result.stdout.strip():
+                console.print(result.stdout, style=COLORS["dim"], markup=False)
+            else:
+                console.print(f"[dim]No services found matching: {service_name}[/dim]")
+        else:
+            console.print(f"[red]Error searching for service: {service_name}[/red]")
+
+        console.print()
+        return True
+
+    except subprocess.TimeoutExpired:
+        console.print("[red]Search timed out[/red]")
+        return True
+    except Exception as e:
+        console.print(f"[red]Error searching service: {e}[/red]")
+        return True
+
+
+def get_service_status(service_name: str) -> bool:
+    """获取Windows服务状态."""
+    try:
+        console.print(f"[dim]Getting status for service: {service_name}[/dim]")
+
+        ps_command = f'Get-Service -Name "*{service_name}*" | Select-Object Name, Status, DisplayName, StartType | Format-Table -AutoSize'
+
+        result = subprocess.run(
+            ["powershell", "-Command", ps_command],
+            capture_output=True,
+            text=True,
+            timeout=15
+        )
+
+        if result.returncode == 0:
+            console.print(result.stdout, style=COLORS["dim"], markup=False)
+        else:
+            console.print(f"[red]Service '{service_name}' not found or error occurred[/red]")
+            console.print(result.stderr, style="red")
+
+        console.print()
+        return True
+
+    except subprocess.TimeoutExpired:
+        console.print("[red]Command timed out[/red]")
+        return True
+    except Exception as e:
+        console.print(f"[red]Error getting service status: {e}[/red]")
+        return True
+
+
+def manage_windows_service(action: str, service_name: str) -> bool:
+    """管理Windows服务（启动/停止/重启）."""
+    try:
+        # 确认操作
+        console.print(f"[yellow]About to {action} service: {service_name}[/yellow]")
+        console.print("[dim]This may require administrator privileges[/dim]")
+
+        choice = input("Continue? (y/N): ").strip().lower()
+        if choice != 'y' and choice != 'yes':
+            typewriter.info("Operation cancelled")
+            return True
+
+        # PowerShell命令映射
+        actions = {
+            "start": "Start-Service",
+            "stop": "Stop-Service",
+            "restart": "Restart-Service"
+        }
+
+        ps_command = f'Try {{ {actions[action]} -Name "*{service_name}*" -ErrorAction Stop; Write-Host "Service {action}ed successfully" -ForegroundColor Green }} Catch {{ Write-Host "Error: $_" -ForegroundColor Red }}'
+
+        console.print(f"[dim]Executing: {action} service...[/dim]")
+
+        result = subprocess.run(
+            ["powershell", "-Command", ps_command],
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+
+        console.print(result.stdout, style="green" if "successfully" in result.stdout.lower() else "red")
+        if result.stderr:
+            console.print(result.stderr, style="red")
+
+        console.print()
+        return True
+
+    except subprocess.TimeoutExpired:
+        console.print("[red]Operation timed out[/red]")
+        return True
+    except Exception as e:
+        console.print(f"[red]Error managing service: {e}[/red]")
         return True

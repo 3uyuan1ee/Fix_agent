@@ -79,6 +79,11 @@ COMMANDS = {
     "tokens": "Show token usage for current session",
     "cd": "Change working directory",
     "config": "Edit .env configuration file",
+    "sys": "Show system information and platform features",
+    "system": "Show system information and platform features",
+    "info": "Show system information and platform features",
+    "services": "Manage Windows services (Windows only)",
+    "svc": "Manage Windows services (Windows only)",
     "quit": "Exit the CLI",
     "exit": "Exit the CLI",
 }

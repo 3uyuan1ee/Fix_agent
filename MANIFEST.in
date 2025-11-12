@@ -1,0 +1,40 @@
+# 包含重要文件到发布包中
+include README.md
+include LICENSE
+include CHANGELOG.md
+include WINDOWS.md
+include pyproject.toml
+include MANIFEST.in
+
+# 包含配置文件和模板
+include *.env.template
+include src/prompt/*.md
+include src/prompt/*.yml
+
+# 包含Windows特定文件
+recursive-include windows *.bat *.ps1 *.cmd
+recursive-include docs *.md *.txt *.rst
+
+# 包含配置文件
+recursive-include src *.yml *.yaml *.json *.toml
+
+# 排除不需要的文件
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude *.pyd
+global-exclude __pycache__
+global-exclude .git*
+global-exclude .DS_Store
+global-exclude *.so
+global-exclude .coverage
+global-exclude htmlcov
+global-exclude .pytest_cache
+global-exclude .mypy_cache
+global-exclude build
+global-exclude dist
+global-exclude *.egg-info
+
+# 排除开发文件
+exclude .env
+exclude development.md
+exclude notes.txt
