@@ -119,7 +119,6 @@ async def simple_cli(
 
     typewriter.welcome()
 
-    console.print(f"  [dim]Working directory: {Path.cwd()}[/dim]")
     console.print()
 
     if session_state.auto_approve:
@@ -147,7 +146,7 @@ async def simple_cli(
             break
         except KeyboardInterrupt:
             # Ctrl+C 提示符 - 推出程序
-            console.print("\n\nGoodbye!", style=COLORS["primary"])
+            typewriter.goodbye()
             break
 
         if not user_input:
@@ -177,11 +176,11 @@ async def simple_cli(
 
 
 async def main(assistant_id: str, session_state):
-    """Main entry point."""
-    # Create the model (checks API keys)
+    """主入口点"""
+    # 创建模型 (检查 API keys)
     model = create_model()
 
-    # Create agent with conditional tools
+    # 用可选的工具创建模型
     tools = [http_request]
     if tavily_client is not None:
         tools.append(web_search)

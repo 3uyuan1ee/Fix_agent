@@ -22,7 +22,7 @@ from ..midware.agent_memory import AgentMemoryMiddleware
 
 
 def list_agents():
-    """List all available agents."""
+    """列出所有可用的agents"""
     agents_dir = Path.home() / ".deepagents"
 
     if not agents_dir.exists() or not any(agents_dir.iterdir()):
@@ -54,7 +54,7 @@ def list_agents():
 
 
 def reset_agent(agent_name: str, source_agent: str = None):
-    """Reset an agent to default or copy from another agent."""
+    """重置agent或复制另一个agent"""
     agents_dir = Path.home() / ".deepagents"
     agent_dir = agents_dir / agent_name
 
@@ -91,7 +91,7 @@ def reset_agent(agent_name: str, source_agent: str = None):
 
 
 def create_agent_with_config(model, assistant_id: str, tools: list):
-    """Create and configure an agent with the specified model and tools using our custom architecture."""
+    """使用自定义架构创建并配置具有指定模型和工具的代理"""
     shell_middleware = ResumableShellToolMiddleware(
         workspace_root=os.getcwd(), execution_policy=HostExecutionPolicy()
     )
