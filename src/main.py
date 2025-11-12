@@ -10,7 +10,7 @@ from .config.config import COLORS, SessionState, console, create_model
 from .interface.commands import execute_bash_command, handle_command
 from .interface.execution import execute_task
 from .interface.input import create_prompt_session
-from .tools.tools import http_request, tavily_client, web_search
+from .tools.tools import http_request, tavily_client, web_search,analyze_code_defects
 from .ui.dynamicCli import typewriter
 from .ui.ui import TokenTracker, show_help
 
@@ -184,6 +184,7 @@ async def main(assistant_id: str, session_state):
     tools = [http_request]
     if tavily_client is not None:
         tools.append(web_search)
+    tools.append(analyze_code_defects)
 
     agent = create_agent_with_config(model, assistant_id, tools)
 

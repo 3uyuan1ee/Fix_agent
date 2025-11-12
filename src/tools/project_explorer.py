@@ -719,7 +719,7 @@ class ProjectExplorer:
                             if dep:
                                 version = "latest"
                                 if ">=" in dep or "==" in dep or "<=" in dep:
-                                    parts = re.split(r"([<>=]+)", dep)
+                                    parts = req_section.split(r"([<>=]+)", dep)
                                     if len(parts) > 1:
                                         dep = parts[0]
                                         version = parts[0] + parts[1]
@@ -1029,7 +1029,7 @@ def analyze_code_complexity(project_path: str, min_lines: int = 10) -> str:
         # 生成建议
         if complexity_analysis["complex_files"]:
             complexity_analysis["recommendations"].append(
-                f"发现 {len(complex_analysis['complex_files'])} 个复杂文件，建议重构降低复杂度"
+                f"发现 {len(complexity_analysis['complex_files'])} 个复杂文件，建议重构降低复杂度"
             )
 
         if complexity_analysis["total_lines"] > 10000:

@@ -1,7 +1,7 @@
 """
 多语言代码分析工具模块
 包含Python、JavaScript/TypeScript、Java、C/C++、Go、Rust等语言的代码分析工具
-采用软件工程设计思路，提供统一的接口和可扩展的架构
+提供统一的接口和可扩展的架构
 """
 
 import json
@@ -703,19 +703,33 @@ class PythonAnalyzer(BaseCodeAnalyzer):
                 subprocess.run(["pylint", "--version"], capture_output=True, timeout=5)
                 return True
             except (FileNotFoundError, subprocess.TimeoutExpired):
-                return False
+                # pylint未安装，尝试降级到flake8
+                try:
+                    subprocess.run(["flake8", "--version"], capture_output=True, timeout=5)
+                    self.tool = "flake8"  # 降级到flake8
+                    return True
+                except (FileNotFoundError, subprocess.TimeoutExpired):
+                    # 如果flake8也未安装，使用Python内置的语法检查
+                    self.tool = "python_builtin"
+                    return True
         elif self.tool == "flake8":
             try:
                 subprocess.run(["flake8", "--version"], capture_output=True, timeout=5)
                 return True
             except (FileNotFoundError, subprocess.TimeoutExpired):
-                return False
+                # flake8未安装，降级到Python内置检查
+                self.tool = "python_builtin"
+                return True
         elif self.tool == "mypy":
             try:
                 subprocess.run(["mypy", "--version"], capture_output=True, timeout=5)
                 return True
             except (FileNotFoundError, subprocess.TimeoutExpired):
-                return False
+                # mypy未安装，降级到Python内置检查
+                self.tool = "python_builtin"
+                return True
+        elif self.tool == "python_builtin":
+            return True  # Python内置检查总是可用
         return False
 
     def _build_command(self, file_path: Path) -> List[str]:
@@ -725,6 +739,9 @@ class PythonAnalyzer(BaseCodeAnalyzer):
             return ["flake8", "--format=json", str(file_path)]
         elif self.tool == "mypy":
             return ["mypy", "--show-error-codes", "--no-error-summary", str(file_path)]
+        elif self.tool == "python_builtin":
+            # 使用Python内置的语法检查
+            return ["python", "-m", "py_compile", str(file_path)]
         else:
             raise ValueError(f"Unsupported tool: {self.tool}")
 

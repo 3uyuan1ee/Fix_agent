@@ -543,18 +543,39 @@ class DefectAggregator:
 
 # 创建工具函数
 @tool(
-    "aggregate_defects",
-    description="智能聚合和分类代码缺陷，提供去重、聚类和优先级排序",
+    description="智能聚合和分类代码缺陷，提供去重、聚类和优先级排序。能够识别重复缺陷、进行语义相似度聚类、分析根因、评估修复复杂度，并提供智能修复建议。支持多种输入格式，输出包含聚类结果、优先级排序和修复建议的综合报告。"
 )
 def aggregate_defects_tool(defects_json: str) -> str:
     """
-    聚合和分析代码缺陷
+    智能聚合和分析代码缺陷，提供给agent使用的缺陷分析工具。
+
+    此工具能够处理来自不同代码分析工具的原始缺陷输出，通过智能算法：
+    - 去除重复和相似的缺陷报告
+    - 基于语义相似度对缺陷进行聚类
+    - 分析缺陷的根本原因
+    - 评估修复的复杂度和优先级
+    - 提供针对性的修复建议
 
     Args:
-        defects_json: 原始缺陷列表的JSON字符串
+        defects_json: 原始缺陷列表的JSON字符串。支持多种格式：
+            - 直接缺陷列表: [{"file": "test.py", "line": 10, "message": "..."}]
+            - 带结构的结果: {"defects_found": [...]} 或 {"result": {"defects": [...]}}
 
     Returns:
-        聚合分析结果的JSON字符串
+        聚合分析结果的JSON字符串，包含：
+            - total_defects: 缺陷总数
+            - deduplication_rate: 去重率
+            - clusters: 缺陷聚类列表，每个聚类包含相似缺陷
+            - priority_ranking: 优先级排序的缺陷列表
+            - recommendations: 修复建议和行动计划
+            - root_cause_analysis: 根因分析结果
+            - execution_plan: 执行计划建议
+
+    使用场景：
+        - 在代码修复前整理和分析大量的缺陷报告
+        - 识别需要优先处理的关键问题
+        - 了解项目中常见的缺陷模式
+        - 制定代码质量改进计划
     """
     try:
         data = json.loads(defects_json)

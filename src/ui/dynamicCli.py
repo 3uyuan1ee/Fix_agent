@@ -87,11 +87,10 @@ class TypewriterPrinter:
         """优雅的告别消息"""
         if message is None:
             messages = [
-                "Goodbye! 👋",
-                "Farewell, adventurer! ✨",
-                "See you next time! 😊",
-                "Until we meet again! 🙏",
-                "Session ended. Thank you! ✅",
+                "Goodbye! ",
+                "See you next time! ",
+                "Until we meet again! ",
+                "Session ended. Thank you! ",
             ]
             message = random.choice(messages)
             style = random.choice(["primary", "success", "warning", "info"])

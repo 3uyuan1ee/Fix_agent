@@ -842,20 +842,51 @@ from pathlib import Path
 
 
 # 创建工具函数
-@tool(description="为代码缺陷和修复生成针对性的验证测试")
+@tool(
+    description="为代码缺陷和修复生成针对性的验证测试。支持多种测试类型（单元测试、集成测试、回归测试、冒烟测试）和多个测试框架（pytest、JUnit、Jest、Go Test、Catch2）。能够分析缺陷模式，生成相应的测试用例，评估测试覆盖率，并提供测试执行建议。"
+)
 def generate_validation_tests_tool(
     defects_json: str, fixes_json: str, project_context_json: Optional[str] = None
 ) -> str:
     """
-    生成验证测试
+    为代码缺陷和修复生成针对性的验证测试，提供给agent使用的智能测试生成工具。
+
+    此工具能够根据代码缺陷和对应的修复方案，自动生成高质量的验证测试用例：
+    - 分析缺陷类型，生成相应类型的测试用例
+    - 检测项目语言和测试框架，生成兼容的测试代码
+    - 生成单元测试、集成测试、回归测试和冒烟测试
+    - 评估测试覆盖率和测试质量
+    - 提供测试执行计划和优先级建议
 
     Args:
-        defects_json: 缺陷列表的JSON字符串
-        fixes_json: 修复列表的JSON字符串
-        project_context_json: 项目上下文的JSON字符串（可选）
+        defects_json: 缺陷列表的JSON字符串，格式为：
+            [{"file": "test.py", "line": 10, "message": "...", "severity": "...", ...}]
+        fixes_json: 修复列表的JSON字符串，描述已实施的修复方案
+        project_context_json: 项目上下文JSON字符串，包含：
+            - project_type: 项目类型
+            - testing_framework: 测试框架
+            - language: 主要编程语言
+            - dependencies: 项目依赖
 
     Returns:
-        测试生成结果的JSON字符串
+        测试生成结果的JSON字符串，包含：
+            - test_cases: 生成的测试用例列表
+            - test_files: 测试文件路径和内容
+            - coverage_analysis: 测试覆盖率分析
+            - execution_plan: 测试执行计划
+            - quality_metrics: 测试质量指标
+            - recommendations: 测试改进建议
+
+    使用场景：
+        - 代码修复后的验证测试生成
+        - 持续集成流水线的测试自动化
+        - 代码质量保证流程
+        - 回归测试套件构建
+
+    注意事项：
+        - 生成的测试需要人工review和调整
+        - 建议在测试环境中执行验证
+        - 复杂的业务逻辑可能需要手动编写测试
     """
     try:
         defects_data = json.loads(defects_json)
@@ -903,17 +934,48 @@ def generate_validation_tests_tool(
         return json.dumps({"success": False, "error": f"测试生成失败: {str(e)}"})
 
 
-@tool(description="执行测试套件并生成验证报告")
+@tool(
+    description="执行测试套件并生成详细的验证报告。支持在项目环境中运行生成的测试用例，收集测试结果，分析代码覆盖率，检测新的问题，并提供质量改进建议。能够处理多种测试框架的输出，统一分析测试结果。"
+)
 def execute_test_suite_tool(test_files_json: str, project_root: str) -> str:
     """
-    执行测试套件
+    执行测试套件并生成验证报告，提供给agent使用的测试执行工具。
+
+    此工具能够在一个隔离的环境中执行测试用例，并收集详细的执行结果：
+    - 在项目根目录中执行测试文件
+    - 收集测试执行结果（通过、失败、跳过）
+    - 分析代码覆盖率数据
+    - 检测执行过程中发现的新问题
+    - 生成详细的验证报告和质量指标
+    - 提供基于结果的改进建议
 
     Args:
-        test_files_json: 测试文件列表的JSON字符串
-        project_root: 项目根目录路径
+        test_files_json: 测试文件列表的JSON字符串，格式为：
+            {"test_file.py": "test code", "another_test.py": "test code"}
+        project_root: 项目根目录路径，测试将在此目录中执行
 
     Returns:
-        测试执行结果的JSON字符串
+        测试执行结果的JSON字符串，包含：
+            - validation_report: 验证报告
+                - total_tests: 总测试数量
+                - passed_tests: 通过的测试数量
+                - failed_tests: 失败的测试数量
+                - skipped_tests: 跳过的测试数量
+                - coverage_percentage: 代码覆盖率百分比
+                - quality_metrics: 质量指标字典
+                - recommendations: 改进建议列表
+                - new_issues: 测试中发现的新问题
+
+    使用场景：
+        - 验证代码修复的有效性
+        - 持续集成流水线中的测试阶段
+        - 代码质量评估和监控
+        - 回归测试验证
+
+    注意事项：
+        - 需要确保项目根目录存在且可访问
+        - 测试执行可能会修改项目状态
+        - 建议在隔离环境中执行测试
     """
     try:
         test_files = json.loads(test_files_json)
