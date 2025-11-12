@@ -525,6 +525,9 @@ def show_help():
         "  /help           Show available commands and features", style=COLORS["dim"]
     )
     console.print(
+        "  /cd <path>      Change working directory", style=COLORS["dim"]
+    )
+    console.print(
         "  /clear          Clear screen and reset conversation", style=COLORS["dim"]
     )
     console.print(
