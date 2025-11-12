@@ -1,0 +1,65 @@
+{
+  "name": "fix-agent-web",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@types/node": "^20.9.0",
+    "@types/react": "^18.2.37",
+    "@types/react-dom": "^18.2.15",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "5.0.1",
+    "typescript": "^5.2.2",
+    "web-vitals": "^3.5.0",
+    "@monaco-editor/react": "^4.6.0",
+    "monaco-editor": "^0.45.0",
+    "@types/socket.io-client": "^3.0.0",
+    "socket.io-client": "^4.7.4",
+    "@tanstack/react-query": "^5.8.4",
+    "axios": "^1.6.2",
+    "react-router-dom": "^6.18.0",
+    "@types/react-router-dom": "^5.3.3",
+    "react-hook-form": "^7.47.0",
+    "react-hot-toast": "^2.4.1",
+    "lucide-react": "^0.292.0",
+    "tailwindcss": "^3.3.5",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.31",
+    "@headlessui/react": "^1.7.17",
+    "clsx": "^2.0.0",
+    "date-fns": "^2.30.0",
+    "react-markdown": "^9.0.1",
+    "react-syntax-highlighter": "^15.5.0",
+    "@types/react-syntax-highlighter": "^15.5.11",
+    "framer-motion": "^10.16.4",
+    "zustand": "^4.4.6"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.8"
+  },
+  "proxy": "http://localhost:8000"
+}
