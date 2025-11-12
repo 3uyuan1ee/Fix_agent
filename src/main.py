@@ -10,7 +10,7 @@ from .config.config import COLORS, SessionState, console, create_model
 from .interface.commands import execute_bash_command, handle_command
 from .interface.execution import execute_task
 from .interface.input import create_prompt_session
-# 从统一的工具导出模块导入所有工具
+# 从统一的工具导出模块导入工具
 from .tools.tools import (
     http_request,
     web_search,
@@ -18,7 +18,9 @@ from .tools.tools import (
     compile_project,
     run_and_monitor,
     run_tests_with_error_capture,
-    analyze_existing_logs
+    analyze_existing_logs,
+    explore_project_structure,
+    analyze_code_complexity
 )
 
 # 导入tavily客户端（如果需要）
@@ -209,6 +211,10 @@ async def main(assistant_id: str, session_state):
     tools.append(run_and_monitor)
     tools.append(run_tests_with_error_capture)
     tools.append(analyze_existing_logs)
+
+    #添加项目探索工具
+    tools.append(analyze_code_complexity)
+    tools.append(explore_project_structure)
 
     agent = create_agent_with_config(model, assistant_id, tools)
 
