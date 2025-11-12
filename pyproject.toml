@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "Fix_agent"
-version = "0.1.0"
+version = "0.1.1"
 description = "AI Coding Assistant - 代码缺陷修复和分析工具"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -12,28 +12,50 @@ license = {text = "MIT"}
 authors = [
     {name = "3uyuan1ee", email = "1481059602@qq.com"}
 ]
-keywords = ["ai", "coding", "assistant", "cli", "code-analysis", "bug-detection","deepagents"]
+maintainers = [
+    {name = "3uyuan1ee", email = "1481059602@qq.com"}
+]
+keywords = [
+    "ai", "coding", "assistant", "cli", "code-analysis",
+    "bug-detection", "deepagents", "code-review", "automated-testing",
+    "code-quality", "static-analysis", "python", "javascript", "java"
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX",
+    "Operating System :: Unix",
+    "Operating System :: MacOS",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3 :: Only",
     "Topic :: Software Development :: Code Generators",
     "Topic :: Software Development :: Debuggers",
     "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Utilities",
+    "Environment :: Console",
 ]
 
 dependencies = [
+    # CLI和UI
     "rich>=13.0.0",
-    "requests",
     "prompt-toolkit>=3.0.52",
+    "requests>=2.28.0",
+
+    # AI和ML依赖
     "langchain-openai>=0.1.0",
-    "tavily-python",
-    "python-dotenv",
     "deepagents==0.2.4",
+    "python-dotenv>=1.0.0",
+
+    # 联网搜索
+    "tavily-python",
     # 核心Python代码分析工具 - 确保开箱即用
     "pylint>=2.17.0",         # 全面的Python代码分析
     "flake8>=6.0.0",           # Python代码风格和基础检查
@@ -50,19 +72,51 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# 测试工具 - 仅用于开发和测试环境
+test = [
+    "pytest>=7.0.0",           # 测试框架
+    "pytest-cov>=4.0.0",       # 测试覆盖率
+    "pytest-mock>=3.10.0",     # Mock支持
+    "pytest-asyncio>=0.21.0",  # 异步测试支持
+    "pytest-xdist>=3.3.0",     # 并行测试
+]
+
+# 开发工具 - 仅用于代码开发和质量控制
 dev = [
-    "pytest>=7.0.0",
-    "pytest-cov",
-    "black",
-    "flake8",
-    "mypy",
+    "Fix_agent[test]",          # 包含测试依赖
+    "black>=23.0.0",            # 代码格式化
+    "flake8>=6.0.0",            # 代码风格检查
+    "mypy>=1.0.0",              # 静态类型检查
+    "pre-commit>=3.0.0",        # Git钩子
+]
+
+# 发布工具 - 仅用于打包和发布
+release = [
+    "Fix_agent[dev]",           # 包含开发依赖
+    "twine>=4.0.0",             # PyPI上传工具
+    "wheel>=0.41.0",            # 打包工具
+    "build>=0.10.0",            # 构建工具
+]
+
+# 文档工具 - 仅用于文档生成
+docs = [
+    "sphinx>=5.0.0",                    # 文档生成
+    "sphinx-rtd-theme>=1.2.0",          # RTD主题
+    "myst-parser>=0.18.0",              # Markdown支持
+    "sphinx-autodoc-typehints>=1.22.0", # 类型提示支持
+]
+
+# 完整开发环境 - 包含所有开发工具
+full = [
+    "Fix_agent[test,dev,release,docs]",
 ]
 
 [project.urls]
 Homepage = "https://github.com/3uyuan1ee/Fix_agent"
-Repository = "https://github.com/3uyuan1ee/Fix_agent"
 Documentation = "https://github.com/3uyuan1ee/Fix_agent#readme"
+Repository = "https://github.com/3uyuan1ee/Fix_agent"
 "Bug Tracker" = "https://github.com/3uyuan1ee/Fix_agent/issues"
+"Changelog" = "https://github.com/3uyuan1ee/Fix_agent/blob/main/CHANGELOG.md"
 
 [project.scripts]
 fix-agent = "src.main:cli_main"
@@ -73,7 +127,7 @@ where = ["."]
 include = ["src*"]
 
 [tool.setuptools.package-data]
-src = ["*.md", "*.txt"]
+src = ["*.md", "*.txt", "*.yml", "*.yaml", "*.json", "*.toml"]
 
 [tool.black]
 line-length = 88
