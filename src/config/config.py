@@ -77,6 +77,7 @@ COMMANDS = {
     "clear": "Clear screen and reset conversation",
     "help": "Show help information",
     "tokens": "Show token usage for current session",
+    "cd": "Change working directory",
     "quit": "Exit the CLI",
     "exit": "Exit the CLI",
 }
