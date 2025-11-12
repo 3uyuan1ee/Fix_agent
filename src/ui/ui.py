@@ -528,6 +528,9 @@ def show_help():
         "  /cd <path>      Change working directory", style=COLORS["dim"]
     )
     console.print(
+        "  /config         Edit .env configuration file", style=COLORS["dim"]
+    )
+    console.print(
         "  /clear          Clear screen and reset conversation", style=COLORS["dim"]
     )
     console.print(

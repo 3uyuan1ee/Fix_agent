@@ -78,6 +78,7 @@ COMMANDS = {
     "help": "Show help information",
     "tokens": "Show token usage for current session",
     "cd": "Change working directory",
+    "config": "Edit .env configuration file",
     "quit": "Exit the CLI",
     "exit": "Exit the CLI",
 }
