@@ -49,12 +49,53 @@ def calculate_baseline_tokens(model, agent_dir: Path, system_prompt: str) -> int
         # Tool tokens will be included in the API response after first message
         token_count = model.get_num_tokens_from_messages(messages)
         return token_count
-    except Exception as e:
-        # Fallback if token counting fails
+    except NotImplementedError as e:
+        # 某些模型（如GLM、自定义模型）没有实现token计数方法
         console.print(
-            f"[yellow]Warning: Could not calculate baseline tokens: {e}[/yellow]"
+            f"[yellow]Token计数不可用: {e}[/yellow]"
         )
+        console.print("[dim]使用估算方法计算token数...[/dim]")
+        return estimate_token_count(full_system_prompt)
+    except Exception as e:
+        # 其他错误的处理
+        console.print(
+            f"[yellow]Token计算失败: {e}[/yellow]"
+        )
+        console.print("[dim]使用估算方法计算token数...[/dim]")
+        return estimate_token_count(full_system_prompt)
+
+
+def estimate_token_count(text: str) -> int:
+    """估算文本的token数量。
+
+    这是一个简单的估算方法，对于中英文混合文本比较有效。
+    注意：这是一个估算值，实际token数可能因模型而异。
+
+    Args:
+        text: 要估算token数的文本
+
+    Returns:
+        估算的token数量
+    """
+    if not text:
         return 0
+
+    # 基本的token估算规则：
+    # 1. 英文单词平均约 1.3 tokens
+    # 2. 中文字符通常 1 个字符约 2 tokens
+    # 3. 代码、标点、空格等按字符计数
+
+    import re
+
+    # 分离中文字符和英文内容
+    chinese_chars = len(re.findall(r'[\u4e00-\u9fff]', text))
+    english_words = len(re.findall(r'\b[a-zA-Z]+\b', text))
+    other_chars = len(text) - chinese_chars - len(''.join(re.findall(r'\b[a-zA-Z]+\b', text)))
+
+    # 估算token数
+    estimated_tokens = chinese_chars * 2 + english_words * 1.3 + other_chars * 0.5
+
+    return int(estimated_tokens)
 
 
 def get_memory_system_prompt() -> str:
