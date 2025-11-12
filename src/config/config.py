@@ -108,7 +108,7 @@ MAX_ARG_LENGTH = 150
 # Agent configuration
 config = {"recursion_limit": 1000}
 
-# Rich console instance
+# Rich console 实例
 console = Console(highlight=False)
 
 

@@ -1,0 +1,142 @@
+AgentMemoryMiddleware 中间件工作原理深度分析
+
+  核心架构概述
+
+  AgentMemoryMiddleware是一个跨会话持久记忆中间件，它通过将代理的长期记忆从文件系统动态注入到系统提示中，实现了AI代理的记忆持久化功能。
+
+  工作机制详解
+
+  1. 中间件生命周期
+
+  阶段一：初始化阶段
+
+  # 在 src/agents/agent.py:119 中的配置
+  AgentMemoryMiddleware(
+      backend=long_term_backend,    # FilesystemBackend实例
+      memory_path="/memories/"      # 虚拟记忆路径
+  )
+
+  关键组件：
+  - FilesystemBackend: 负责文件系统操作
+  - CompositeBackend: 路由不同文件操作到不同后端
+  - 虚拟路径: /memories/ 映射到 ~/.deepagents/{agent_name}/
+
+  阶段二：记忆加载（before_agent）
+
+  def before_agent(self, state: AgentMemoryState, runtime) -> AgentMemoryState:
+      # 懒加载机制：仅在首次需要时加载
+      if "agent_memory" not in state or state.get("agent_memory") is None:
+          file_data = self.backend.read(AGENT_MEMORY_FILE_PATH)  # 读取 /agent.md
+          return {"agent_memory": file_data}
+
+  特点：
+  - 懒加载：只在第一次对话时加载记忆
+  - 幂等性：重复调用不会重复加载
+  - 状态缓存：记忆内容保存在代理状态中
+
+  阶段三：记忆注入（wrap_model_call）
+
+  def wrap_model_call(self, request: ModelRequest, handler) -> ModelResponse:
+      # 1. 获取记忆内容
+      agent_memory = request.state.get("agent_memory", "")
+
+      # 2. 构建记忆段落
+      memory_section = self.system_prompt_template.format(agent_memory=agent_memory)
+
+      # 3. 注入到系统提示
+      if request.system_prompt:
+          request.system_prompt = memory_section + "\n\n" + request.system_prompt
+      else:
+          request.system_prompt = memory_section
+
+      # 4. 添加记忆使用指南
+      request.system_prompt += "\n\n" + LONGTERM_MEMORY_SYSTEM_PROMPT.format(
+          memory_path=self.memory_path
+      )
+
+      return handler(request)
+
+  2. 系统提示构建层次
+
+  最终的系统提示包含三层结构：
+
+  ┌─────────────────────────────────────┐
+  │ <agent_memory>                      │ ← 来自agent.md的记忆内容
+  │   {用户定义的代理角色和指令}            │
+  │ </agent_memory>                     │
+  ├─────────────────────────────────────┤
+  │ 原始系统提示                          │ ← 来自prompt_template.py
+  ├─────────────────────────────────────┤
+  │ 记忆系统指南                          │ ← 告诉代理如何使用记忆
+  │ - 何时检查记忆                        │
+  │ - 何时更新记忆                        │
+  │ - 记忆文件操作                        │
+  └─────────────────────────────────────┘
+
+  3. 文件系统架构
+
+  目录结构
+
+  ~/.deepagents/{agent_name}/
+  ├── agent.md              # 主要记忆文件
+  └── [其他记忆文件]        # 通过/memories/路径访问
+
+  路由机制
+
+  # CompositeBackend的路由规则
+  backend = CompositeBackend(
+      default=FilesystemBackend(),           # 默认：当前工作目录
+      routes={"/memories/": long_term_backend}  # 记忆：代理专属目录
+  )
+
+  4. 与Token计算的协作
+
+  在token_utils.py中，基线token计算完全模拟了中间件的提示构建过程：
+
+  def calculate_baseline_tokens(model, agent_dir: Path, system_prompt: str) -> int:
+      # 1. 加载记忆内容
+      agent_memory = agent_md_path.read_text()
+
+      # 2. 模拟中间件的提示构建
+      memory_section = f"<agent_memory>\n{agent_memory}\n</agent_memory>"
+
+      # 3. 构建完整提示（与中间件保持一致）
+      full_system_prompt = (
+          memory_section + "\n\n" +
+          system_prompt + "\n\n" +
+          get_memory_system_prompt()
+      )
+
+      # 4. 使用模型分词器计算token数
+      return model.get_num_tokens_from_messages([SystemMessage(content=full_system_prompt)])
+
+  核心设计亮点
+
+  1. 安全的虚拟文件系统
+
+  - 使用virtual_mode=True防止路径遍历攻击
+  - 虚拟路径/memories/提供统一的记忆访问接口
+
+  2. 高效的懒加载机制
+
+  - 记忆只在首次需要时加载一次
+  - 避免重复文件读取操作
+
+  3. 灵活的记忆管理
+
+  - 代理可以通过工具更新自己的记忆文件
+  - 支持结构化的Markdown格式记忆
+
+  4. 透明的集成方式
+
+  - 通过中间件模式无侵入式集成
+  - 不影响原有的代理逻辑
+
+  实际应用场景
+
+  1. 角色记忆：代理记住自己在不同项目中的角色定位
+  2. 偏好学习：记录用户的编码风格和工作流程偏好
+  3. 上下文保持：跨会话保持对项目和任务的理解
+  4. 知识积累：逐步积累特定领域的专业知识
+
+  这个中间件通过巧妙的设计，让AI代理获得了类似人类的"长期记忆"能力，大大提升了代理的实用性和智能化水平。

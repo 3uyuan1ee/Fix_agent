@@ -18,65 +18,13 @@ from typing_extensions import NotRequired, TypedDict
 
 
 class AgentMemoryState(AgentState):
-    """State for the agent memory middleware."""
+    """代理记忆中间件的状态"""
 
     agent_memory: NotRequired[str | None]
-    """Long-term memory content for the agent."""
+    """代理的长期记忆内容"""
 
 
 AGENT_MEMORY_FILE_PATH = "/agent.md"
-
-# Long-term Memory Documentation
-# LONGTERM_MEMORY_SYSTEM_PROMPT = """
-#
-# ## Long-term Memory
-#
-# You have access to a long-term memory system using the {memory_path} path prefix.
-# Files stored in {memory_path} persist across sessions and conversations.
-#
-# Your system prompt is loaded from {memory_path}agent.md at startup. You can update your own instructions by editing this file.
-#
-# **When to CHECK/READ memories (CRITICAL - do this FIRST):**
-# - **At the start of ANY new session**: Run `ls {memory_path}` to see what you know
-# - **BEFORE answering questions**: If asked "what do you know about X?" or "how do I do Y?", check `ls {memory_path}` for relevant files FIRST
-# - **When user asks you to do something**: Check if you have guides, examples, or patterns in {memory_path} before proceeding
-# - **When user references past work or conversations**: Search {memory_path} for related content
-# - **If you're unsure**: Check your memories rather than guessing or using only general knowledge
-#
-# **Memory-first response pattern:**
-# 1. User asks a question → Run `ls {memory_path}` to check for relevant files
-# 2. If relevant files exist → Read them with `read_file {memory_path}[filename]`
-# 3. Base your answer on saved knowledge (from memories) supplemented by general knowledge
-# 4. If no relevant memories exist → Use general knowledge, then consider if this is worth saving
-#
-# **When to update memories:**
-# - **IMMEDIATELY when the user describes your role or how you should behave** (e.g., "you are a web researcher", "you are an expert in X")
-# - **IMMEDIATELY when the user gives feedback on your work** - Before continuing, update memories to capture what was wrong and how to do it better
-# - When the user explicitly asks you to remember something
-# - When patterns or preferences emerge (coding styles, conventions, workflows)
-# - After significant work where context would help in future sessions
-#
-# **Learning from feedback:**
-# - When user says something is better/worse, capture WHY and encode it as a pattern
-# - Each correction is a chance to improve permanently - don't just fix the immediate issue, update your instructions
-# - When user says "you should remember X" or "be careful about Y", treat this as HIGH PRIORITY - update memories IMMEDIATELY
-# - Look for the underlying principle behind corrections, not just the specific mistake
-# - If it's something you "should have remembered", identify where that instruction should live permanently
-#
-# **What to store where:**
-# - **{memory_path}agent.md**: Update this to modify your core instructions and behavioral patterns
-# - **Other {memory_path} files**: Use for project-specific context, reference information, or structured notes
-#   - If you create additional memory files, add references to them in {memory_path}agent.md so you remember to consult them
-#
-# The portion of your system prompt that comes from {memory_path}agent.md is marked with `<agent_memory>` tags so you can identify what instructions come from your persistent memory.
-#
-# Example: `ls {memory_path}` to see what memories you have
-# Example: `read_file '{memory_path}deep-agents-guide.md'` to recall saved knowledge
-# Example: `edit_file('{memory_path}agent.md', ...)` to update your instructions
-# Example: `write_file('{memory_path}project_context.md', ...)` for project-specific notes, then reference it in agent.md
-#
-# Remember: To interact with the longterm filesystem, you must prefix the filename with the {memory_path} path."""
-
 
 DEFAULT_MEMORY_SNIPPET = """<agent_memory>
 {agent_memory}
@@ -85,17 +33,15 @@ DEFAULT_MEMORY_SNIPPET = """<agent_memory>
 
 
 class AgentMemoryMiddleware(AgentMiddleware):
-    """Middleware for loading agent-specific long-term memory.
+    """用于加载代理特定长期记忆的中间件
 
-    This middleware loads the agent's long-term memory from a file (agent.md)
-    and injects it into the system prompt. The memory is loaded once at the
-    start of the conversation and stored in state.
+    这个中间件从文件(agent.md)中加载代理的长期记忆，并将其注入到系统提示中。
+    记忆在对话开始时加载一次，并存储在状态中。
 
     Args:
-        backend: Backend to use for loading the agent memory file.
-        system_prompt_template: Optional custom template for how to inject
-            the agent memory into the system prompt. Use {agent_memory} as
-            a placeholder. Defaults to a simple section header.
+        backend: 用于加载代理记忆文件的后端。
+        system_prompt_template: 用于将代理记忆注入系统提示的可选自定义模板。
+            使用 {agent_memory} 作为占位符。默认为简单的节标题。
 
     Example:
         ```python
@@ -103,11 +49,11 @@ class AgentMemoryMiddleware(AgentMiddleware):
         from deepagents.memory.backends import FilesystemBackend
         from pathlib import Path
 
-        # Set up backend pointing to agent's directory
+        # 设置指向代理目录的后端
         agent_dir = Path.home() / ".deepagents" / "my-agent"
         backend = FilesystemBackend(root_dir=agent_dir)
 
-        # Create middleware
+        # 创建中间件
         middleware = AgentMemoryMiddleware(backend=backend)
         ```
     """
@@ -121,12 +67,12 @@ class AgentMemoryMiddleware(AgentMiddleware):
         memory_path: str,
         system_prompt_template: str | None = None,
     ) -> None:
-        """Initialize the agent memory middleware.
+        """初始化代理记忆中间件。
 
         Args:
-            backend: Backend to use for loading the agent memory file.
-            system_prompt_template: Optional custom template for injecting
-                agent memory into system prompt.
+            backend: 用于加载代理记忆文件的后端。
+            memory_path: 记忆文件路径。
+            system_prompt_template: 用于将代理记忆注入系统提示的可选自定义模板。
         """
         self.backend = backend
         self.memory_path = memory_path
@@ -137,16 +83,16 @@ class AgentMemoryMiddleware(AgentMiddleware):
         state: AgentMemoryState,
         runtime,
     ) -> AgentMemoryState:
-        """Load agent memory from file before agent execution.
+        """在代理执行前从文件加载代理记忆。
 
         Args:
-            state: Current agent state.
-            handler: Handler function to call after loading memory.
+            state: 当前代理状态。
+            runtime: 运行时实例。
 
         Returns:
-            Updated state with agent_memory populated.
+            填充 agent_memory 的更新状态。
         """
-        # Only load memory if it hasn't been loaded yet
+        # 仅在记忆尚未加载时加载
         if "agent_memory" not in state or state.get("agent_memory") is None:
             file_data = self.backend.read(AGENT_MEMORY_FILE_PATH)
             return {"agent_memory": file_data}
@@ -156,16 +102,16 @@ class AgentMemoryMiddleware(AgentMiddleware):
         state: AgentMemoryState,
         runtime,
     ) -> AgentMemoryState:
-        """(async) Load agent memory from file before agent execution.
+        """（异步）在代理执行前从文件加载代理记忆。
 
         Args:
-            state: Current agent state.
-            handler: Handler function to call after loading memory.
+            state: 当前代理状态。
+            runtime: 运行时实例。
 
         Returns:
-            Updated state with agent_memory populated.
+            填充 agent_memory 的更新状态。
         """
-        # Only load memory if it hasn't been loaded yet
+        # 仅在记忆尚未加载时加载
         if "agent_memory" not in state or state.get("agent_memory") is None:
             file_data = self.backend.read(AGENT_MEMORY_FILE_PATH)
             return {"agent_memory": file_data}
@@ -175,16 +121,16 @@ class AgentMemoryMiddleware(AgentMiddleware):
         request: ModelRequest,
         handler: Callable[[ModelRequest], ModelResponse],
     ) -> ModelResponse:
-        """Inject agent memory into the system prompt.
+        """将代理记忆注入到系统提示中
 
         Args:
-            request: The model request being processed.
-            handler: The handler function to call with the modified request.
+            request: 正在处理的模型请求
+            handler: 调用修改后请求的处理器函数
 
         Returns:
-            The model response from the handler.
+            来自处理器的模型响应
         """
-        # Get agent memory from state
+        # 从状态中获取代理记忆
         agent_memory = request.state.get("agent_memory", "")
 
         memory_section = self.system_prompt_template.format(agent_memory=agent_memory)
@@ -205,16 +151,16 @@ class AgentMemoryMiddleware(AgentMiddleware):
         request: ModelRequest,
         handler: Callable[[ModelRequest], Awaitable[ModelResponse]],
     ) -> ModelResponse:
-        """(async) Inject agent memory into the system prompt.
+        """（异步）将代理记忆注入到系统提示中
 
         Args:
-            request: The model request being processed.
-            handler: The handler function to call with the modified request.
+            request: 正在处理的模型请求
+            handler: 调用修改后请求的处理器函数
 
         Returns:
-            The model response from the handler.
+            来自处理器的模型响应
         """
-        # Get agent memory from state
+        # 从状态中获取代理记忆
         agent_memory = request.state.get("agent_memory", "")
 
         memory_section = self.system_prompt_template.format(agent_memory=agent_memory)

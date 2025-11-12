@@ -97,7 +97,7 @@ def create_agent_with_config(model, assistant_id: str, tools: list):
         workspace_root=os.getcwd(), execution_policy=HostExecutionPolicy()
     )
 
-    # For long-term memory, point to ~/.deepagents/AGENT_NAME/ with /memories/ prefix
+    # 长期记忆目录, 指向 ~/.deepagents/AGENT_NAME/ with /memories/ prefix
     agent_dir = Path.home() / ".deepagents" / assistant_id
     agent_dir.mkdir(parents=True, exist_ok=True)
     agent_md = agent_dir / "agent.md"
@@ -105,8 +105,9 @@ def create_agent_with_config(model, assistant_id: str, tools: list):
         source_content = get_default_coding_instructions()
         agent_md.write_text(source_content)
 
-    # Long-term backend - rooted at agent directory
-    # This handles both /memories/ files and /agent.md
+    # 长期记忆后端 - rooted at agent directory
+    # 处理 /memories/ files 和 /agent.md
+    # virtual_mode放置路径遍历攻击
     long_term_backend = FilesystemBackend(root_dir=agent_dir, virtual_mode=True)
 
     # Composite backend: current working directory for default, agent directory for /memories/
@@ -120,8 +121,7 @@ def create_agent_with_config(model, assistant_id: str, tools: list):
         shell_middleware,
     ]
 
-
-
+    #创建subagents
     subagents = [defect_analyzer_subagent, code_fixer_subagent, fix_validator_subagent]
 
     # Helper functions for formatting tool descriptions in HITL prompts
