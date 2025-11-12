@@ -1,7 +1,7 @@
 """CLI agent的自定义工具。"""
 
 import os
-from typing import Any, Literal, Optional
+from typing import Any, Literal, Optional, List
 
 import requests
 from tavily import TavilyClient
@@ -290,3 +290,345 @@ def analyze_code_defects(file_path: str, language: Optional[str] = None) -> str:
             "file_path": file_path,
             "suggestion": "请检查文件路径是否正确，以及相关工具是否已安装"
         })
+
+
+@tool(
+    description="编译项目并检测编译错误和警告。支持Python、JavaScript、Java、C/C++、Go、Rust等多种编程语言的编译检查。自动检测项目类型，使用相应的编译工具进行语法检查和编译验证，返回详细的错误和警告信息。"
+)
+def compile_project(project_path: str, build_config: Optional[str] = None) -> str:
+    """
+    编译项目并检测编译错误，提供给agent使用的一站式项目编译检查工具。
+
+    此工具整合了多语言项目的编译检查功能：
+    - 自动检测项目类型（Python、Node.js、Java、Go、C++、Rust等）
+    - 执行相应语言的语法检查和编译验证
+    - 识别编译错误、语法错误和警告信息
+    - 提供详细的错误位置和修复建议
+    - 支持自定义构建配置和超时设置
+
+    Args:
+        project_path: 项目根目录路径，支持相对路径和绝对路径
+        build_config: 可选的构建配置JSON字符串，包含编译参数和设置
+
+    Returns:
+        编译检查结果的JSON字符串，包含：
+            - success: 编译是否成功
+            - project_type: 检测到的项目类型
+            - compilation_result: 编译结果详情
+                - success: 编译状态
+                - errors: 错误列表，包含文件路径、错误类型、错误消息等
+                - warnings: 警告列表
+                - summary: 错误和警告统计信息
+                - timestamp: 检查时间戳
+
+    使用场景：
+        - 代码提交前的编译检查
+        - CI/CD流水线的质量门禁
+        - 项目构建失败诊断
+        - 多语言项目的统一编译检查
+        - 语法错误快速定位
+
+    工具优势：
+        - 多语言统一接口，无需关心具体编译工具
+        - 智能项目类型检测，自动选择合适的编译方式
+        - 详细的错误定位和分类
+        - 支持自定义构建配置，适应不同项目需求
+
+    注意事项：
+        - 需要系统中安装相应的编译工具
+        - 大型项目编译可能需要较长时间
+        - 建议在项目根目录执行
+    """
+    import json
+    try:
+        from .error_detector import compile_project as compile_project_impl
+
+        # 调用原始实现
+        result = compile_project_impl.invoke({"project_path": project_path, "build_config": build_config})
+
+        # 确保返回有效的JSON格式
+        try:
+            parsed_result = json.loads(result)
+            return json.dumps(parsed_result, indent=2, ensure_ascii=False)
+        except json.JSONDecodeError:
+            return json.dumps({
+                "success": False,
+                "error": "编译结果格式错误",
+                "raw_result": result
+            }, indent=2, ensure_ascii=False)
+
+    except ImportError as e:
+        return json.dumps({
+            "success": False,
+            "error": f"编译模块导入失败: {str(e)}",
+            "project_path": project_path,
+            "suggestion": "请确保error_detector.py模块可用"
+        })
+    except Exception as e:
+        return json.dumps({
+            "success": False,
+            "error": f"编译检查失败: {str(e)}",
+            "project_path": project_path
+        }, indent=2, ensure_ascii=False)
+
+
+@tool(
+    description="运行项目并监控运行时错误。实时监控程序执行过程，捕获和分析运行时错误、异常和系统错误。支持自定义运行命令、超时设置和日志捕获。提供详细的错误堆栈跟踪和诊断信息。"
+)
+def run_and_monitor(
+    project_path: str,
+    run_command: str,
+    timeout: int = 30,
+    capture_logs: bool = True
+) -> str:
+    """
+    运行项目并监控运行时错误，提供给agent使用的程序运行监控工具。
+
+    此工具提供完整的程序运行监控功能：
+    - 启动并监控程序执行过程
+    - 实时捕获和分析运行时错误、异常和系统错误
+    - 支持多种错误模式的识别和分类
+    - 提供详细的错误堆栈跟踪和诊断信息
+    - 可配置的超时控制和日志捕获功能
+
+    Args:
+        project_path: 项目根目录路径，程序执行的工作目录
+        run_command: 要执行的具体命令（如"python main.py"、"npm start"等）
+        timeout: 超时时间（秒），超过此时间将终止程序，默认30秒
+        capture_logs: 是否捕获程序输出日志，默认为True
+
+    Returns:
+        运行监控结果的JSON字符串，包含：
+            - success: 程序是否成功运行完成
+            - runtime_result: 运行时监控详情
+                - runtime_errors: 捕获的错误列表
+                - output_log: 程序输出日志（如果启用）
+                - exit_code: 程序退出码
+                - timestamp: 运行时间戳
+
+    使用场景：
+        - 应用程序的运行时测试
+        - 服务启动和健康检查
+        - 长时间运行任务的监控
+        - 脚本和工具的执行验证
+        - 调试和故障诊断
+
+    工具优势：
+        - 实时错误监控，及时发现运行时问题
+        - 智能错误分类，区分错误类型和严重程度
+        - 完整的执行日志，便于问题排查
+        - 灵活的超时控制，防止程序无限运行
+
+    注意事项：
+        - 运行命令需要在系统PATH中可访问
+        - 长时间运行的程序建议设置合适的超时
+        - 某些交互式程序可能无法正常监控
+    """
+    import json
+    try:
+        from .error_detector import run_and_monitor as run_and_monitor_impl
+
+        # 调用原始实现
+        result = run_and_monitor_impl.invoke({
+            "project_path": project_path,
+            "run_command": run_command,
+            "timeout": timeout,
+            "capture_logs": capture_logs
+        })
+
+        # 确保返回有效的JSON格式
+        try:
+            parsed_result = json.loads(result)
+            return json.dumps(parsed_result, indent=2, ensure_ascii=False)
+        except json.JSONDecodeError:
+            return json.dumps({
+                "success": False,
+                "error": "运行监控结果格式错误",
+                "raw_result": result
+            }, indent=2, ensure_ascii=False)
+
+    except ImportError as e:
+        return json.dumps({
+            "success": False,
+            "error": f"运行监控模块导入失败: {str(e)}",
+            "project_path": project_path,
+            "suggestion": "请确保error_detector.py模块可用"
+        })
+    except Exception as e:
+        return json.dumps({
+            "success": False,
+            "error": f"运行时监控失败: {str(e)}",
+            "project_path": project_path
+        }, indent=2, ensure_ascii=False)
+
+
+@tool(
+    description="运行测试并捕获测试错误。支持多种测试框架（pytest、jest、junit、go test等），自动检测项目使用的测试框架，执行测试并捕获测试失败和错误信息。提供详细的测试结果和错误诊断。"
+)
+def run_tests_with_error_capture(
+    project_path: str,
+    test_framework: str = "auto"
+) -> str:
+    """
+    运行测试并捕获测试错误，提供给agent使用的自动化测试执行工具。
+
+    此工具提供完整的测试执行和错误捕获功能：
+    - 自动检测项目使用的测试框架
+    - 执行测试套件并收集测试结果
+    - 捕获测试失败和错误信息
+    - 支持多种测试框架和配置
+    - 提供详细的测试报告和错误诊断
+
+    Args:
+        project_path: 项目根目录路径
+        test_framework: 测试框架类型，可选值：
+            - "auto": 自动检测（默认）
+            - "pytest": Python pytest框架
+            - "jest": JavaScript Jest框架
+            - "junit": Java JUnit框架
+            - "go_test": Go测试框架
+            - 其他自定义框架
+
+    Returns:
+        测试执行结果的JSON字符串，包含：
+            - success: 测试是否全部通过
+            - test_framework: 使用的测试框架
+            - test_result: 测试执行详情
+                - success: 测试通过状态
+                - test_errors: 捕获的测试错误列表
+                - test_results: 测试结果统计
+                - timestamp: 测试执行时间戳
+
+    使用场景：
+        - 自动化测试执行和验证
+        - 持续集成流水线中的测试阶段
+        - 测试失败的快速诊断
+        - 多项目测试统一管理
+        - 测试覆盖率分析辅助
+
+    工具优势：
+        - 智能测试框架检测，无需手动配置
+        - 多测试框架统一接口
+        - 详细的测试错误捕获和分析
+        - 适合集成到自动化工作流中
+
+    注意事项：
+        - 需要项目中已配置相应的测试框架
+        - 测试执行时间可能较长，建议设置合适的超时
+        - 某些测试可能需要特定的环境依赖
+    """
+    import json
+    try:
+        from .error_detector import run_tests_with_error_capture as run_tests_impl
+
+        # 调用原始实现
+        result = run_tests_impl.invoke({"project_path": project_path, "test_framework": test_framework})
+
+        # 确保返回有效的JSON格式
+        try:
+            parsed_result = json.loads(result)
+            return json.dumps(parsed_result, indent=2, ensure_ascii=False)
+        except json.JSONDecodeError:
+            return json.dumps({
+                "success": False,
+                "error": "测试结果格式错误",
+                "raw_result": result
+            }, indent=2, ensure_ascii=False)
+
+    except ImportError as e:
+        return json.dumps({
+            "success": False,
+            "error": f"测试模块导入失败: {str(e)}",
+            "project_path": project_path,
+            "suggestion": "请确保error_detector.py模块可用"
+        })
+    except Exception as e:
+        return json.dumps({
+            "success": False,
+            "error": f"测试执行失败: {str(e)}",
+            "project_path": project_path
+        }, indent=2, ensure_ascii=False)
+
+
+@tool(
+    description="分析现有日志文件中的错误。智能搜索和分析项目中的日志文件，识别错误、异常和关键事件。支持多种日志格式和模式匹配，提供错误统计、分类和趋势分析。"
+)
+def analyze_existing_logs(
+    project_path: str,
+    log_patterns: Optional[List[str]] = None
+) -> str:
+    """
+    分析现有日志文件中的错误，提供给agent使用的日志分析工具。
+
+    此工具提供全面的日志错误分析功能：
+    - 智能搜索和分析项目中的日志文件
+    - 使用错误模式匹配识别异常和错误事件
+    - 支持多种日志格式和编码处理
+    - 提供错误统计、分类和趋势分析
+    - 生成详细的分析报告和建议
+
+    Args:
+        project_path: 项目根目录路径，包含要分析的日志文件
+        log_patterns: 可选的日志文件模式列表，用于指定要分析的日志文件
+            - 默认模式：["*.log", "logs/*.log", "*.out", "*.err", "error.log"]
+            - 支持glob模式，如"app/*.log", "**/*debug*"
+
+    Returns:
+        日志分析结果的JSON字符串，包含：
+            - success: 分析是否成功完成
+            - log_files_analyzed: 分析的日志文件数量
+            - log_analysis: 日志分析详情
+                - analyzed_files: 已分析的文件列表
+                - total_errors: 发现的错误总数
+                - errors: 错误详细信息（前50个）
+                - error_summary: 错误统计和分类
+
+    使用场景：
+        - 生产环境日志分析和故障排查
+        - 应用程序错误趋势分析
+        - 系统健康检查和监控
+        - 错误模式识别和预防
+        - 运维团队的技术支持
+
+    工具优势：
+        - 智能错误识别，多种错误模式匹配
+        - 支持多种日志格式和编码
+        - 提供错误统计和趋势分析
+        - 适合大量日志文件的批量分析
+
+    注意事项：
+        - 大型日志文件分析可能需要较长时间
+        - 某些日志格式可能需要自定义模式
+        - 敏感信息日志需要谨慎处理
+    """
+    import json
+    try:
+        from .error_detector import analyze_existing_logs as analyze_logs_impl
+
+        # 调用原始实现
+        result = analyze_logs_impl.invoke({"project_path": project_path, "log_patterns": log_patterns})
+
+        # 确保返回有效的JSON格式
+        try:
+            parsed_result = json.loads(result)
+            return json.dumps(parsed_result, indent=2, ensure_ascii=False)
+        except json.JSONDecodeError:
+            return json.dumps({
+                "success": False,
+                "error": "日志分析结果格式错误",
+                "raw_result": result
+            }, indent=2, ensure_ascii=False)
+
+    except ImportError as e:
+        return json.dumps({
+            "success": False,
+            "error": f"日志分析模块导入失败: {str(e)}",
+            "project_path": project_path,
+            "suggestion": "请确保error_detector.py模块可用"
+        })
+    except Exception as e:
+        return json.dumps({
+            "success": False,
+            "error": f"日志分析失败: {str(e)}",
+            "project_path": project_path
+        }, indent=2, ensure_ascii=False)

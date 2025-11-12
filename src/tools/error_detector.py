@@ -159,7 +159,7 @@ def _detect_project_type(project_path: Path) -> str:
         return "cpp"
     elif (
         list(project_path.glob("*.py"))
-        and (project_path / "setup.py" or project_path / "pyproject.toml").exists()
+        and (project_path / "setup.py").exists() or (project_path / "pyproject.toml").exists()
     ):
         return "python"
     else:

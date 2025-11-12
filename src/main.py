@@ -10,7 +10,7 @@ from .config.config import COLORS, SessionState, console, create_model
 from .interface.commands import execute_bash_command, handle_command
 from .interface.execution import execute_task
 from .interface.input import create_prompt_session
-from .tools.tools import http_request, tavily_client, web_search,analyze_code_defects
+from .tools.tools import http_request, tavily_client, web_search,analyze_code_defects,compile_project,run_and_monitor,run_tests_with_error_capture,analyze_existing_logs
 from .ui.dynamicCli import typewriter
 from .ui.ui import TokenTracker, show_help
 
@@ -181,10 +181,22 @@ async def main(assistant_id: str, session_state):
     model = create_model()
 
     # 用可选的工具创建模型
+
+    #添加http请求工具
     tools = [http_request]
+
+    #检查tavily是否可用并添加
     if tavily_client is not None:
         tools.append(web_search)
+
+    #添加静态分析工具
     tools.append(analyze_code_defects)
+
+    #添加动态分析工具
+    tools.append(compile_project)
+    tools.append(run_and_monitor)
+    tools.append(run_tests_with_error_capture)
+    tools.append(analyze_existing_logs)
 
     agent = create_agent_with_config(model, assistant_id, tools)
 
