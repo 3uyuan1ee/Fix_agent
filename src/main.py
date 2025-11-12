@@ -10,7 +10,19 @@ from .config.config import COLORS, SessionState, console, create_model
 from .interface.commands import execute_bash_command, handle_command
 from .interface.execution import execute_task
 from .interface.input import create_prompt_session
-from .tools.tools import http_request, tavily_client, web_search,analyze_code_defects,compile_project,run_and_monitor,run_tests_with_error_capture,analyze_existing_logs
+# 从统一的工具导出模块导入所有工具
+from .tools.tools import (
+    http_request,
+    web_search,
+    analyze_code_defects,
+    compile_project,
+    run_and_monitor,
+    run_tests_with_error_capture,
+    analyze_existing_logs
+)
+
+# 导入tavily客户端（如果需要）
+from .tools.network_tools import tavily_client
 from .ui.dynamicCli import typewriter
 from .ui.ui import TokenTracker, show_help
 
