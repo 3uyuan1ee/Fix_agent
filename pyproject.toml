@@ -34,6 +34,19 @@ dependencies = [
     "tavily-python",
     "python-dotenv",
     "deepagents==0.2.4",
+    # 核心Python代码分析工具 - 确保开箱即用
+    "pylint>=2.17.0",         # 全面的Python代码分析
+    "flake8>=6.0.0",           # Python代码风格和基础检查
+    "mypy>=1.0.0",             # Python静态类型检查
+    "bandit>=1.7.0",           # Python安全漏洞检查
+    "black>=23.0.0",           # Python代码格式化
+    "astroid>=2.15.0",         # pylint依赖
+    "isort>=5.12.0",           # 导入排序工具
+    "pydocstyle>=6.0.0",      # 文档字符串风格检查
+    # 基础解析和配置支持
+    "lxml>=4.9.0",             # XML解析（用于工具输出解析）
+    "pyyaml>=6.0.0",           # YAML配置文件解析
+    "toml>=0.10.0",            # TOML配置文件解析
 ]
 
 [project.optional-dependencies]

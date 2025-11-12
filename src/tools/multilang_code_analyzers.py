@@ -117,8 +117,9 @@ class BaseCodeAnalyzer(ABC):
         """解析工具输出"""
         pass
 
-    def can_analyze(self, file_path: Path) -> bool:
+    def can_analyze(self, file_path: Union[str, Path]) -> bool:
         """检查是否可以分析指定文件"""
+        file_path = Path(file_path)  # 确保转换为Path对象
         return (
             file_path.exists()
             and file_path.suffix in self.get_supported_extensions()

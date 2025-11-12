@@ -220,7 +220,7 @@ def analyze_code_defects(file_path: str, language: Optional[str] = None) -> str:
             })
 
         # 第二步：聚合和智能分析缺陷
-        defects = analysis_data.get("result", {}).get("detailed_result", {}).get("issues", [])
+        defects = analysis_data.get("detailed_result", {}).get("issues", [])
         if defects:
             aggregation_result = aggregate_defects.invoke({"defects_json": json.dumps(defects)})
             try:
@@ -247,23 +247,24 @@ def analyze_code_defects(file_path: str, language: Optional[str] = None) -> str:
             }
 
         # 组合结果
+        detailed_result = analysis_data.get("detailed_result", {})
         combined_result = {
             "success": True,
             "file_path": file_path,
             "analysis": {
-                "file_path": analysis_data.get("result", {}).get("detailed_result", {}).get("file_path", file_path),
-                "language": analysis_data.get("result", {}).get("detailed_result", {}).get("language", "unknown"),
-                "tool_name": analysis_data.get("result", {}).get("detailed_result", {}).get("tool_name", "unknown"),
+                "file_path": detailed_result.get("file_path", file_path),
+                "language": detailed_result.get("language", "unknown"),
+                "tool_name": detailed_result.get("tool_name", "unknown"),
                 "issues": defects,
-                "score": analysis_data.get("result", {}).get("detailed_result", {}).get("score", 0),
-                "execution_time": analysis_data.get("result", {}).get("detailed_result", {}).get("execution_time", 0),
-                "success": analysis_data.get("result", {}).get("detailed_result", {}).get("success", False)
+                "score": detailed_result.get("score", 0),
+                "execution_time": detailed_result.get("execution_time", 0),
+                "success": detailed_result.get("success", False)
             },
             "aggregation": aggregation_data.get("result", {}),
             "metadata": {
-                "analysis_timestamp": analysis_data.get("result", {}).get("detailed_result", {}).get("metadata", {}).get("aggregation_timestamp", ""),
+                "analysis_timestamp": detailed_result.get("metadata", {}).get("aggregation_timestamp", ""),
                 "toolchain_version": "1.0.0",
-                "language_detected": analysis_data.get("result", {}).get("detailed_result", {}).get("language", "unknown")
+                "language_detected": detailed_result.get("language", "unknown")
             }
         }
 
