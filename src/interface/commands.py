@@ -445,7 +445,6 @@ def handle_cd_command(args: list[str]) -> bool:
         except (subprocess.TimeoutExpired, subprocess.CalledProcessError, Exception):
             # Fallback: 使用Python内置os.listdir
             try:
-                import os
                 items = []
                 for item in sorted(os.listdir(current_dir)):
                     item_path = current_dir / item
