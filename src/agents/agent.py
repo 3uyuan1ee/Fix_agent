@@ -20,6 +20,7 @@ from ..config.config import (
     get_system_prompt,
 )
 from ..midware.agent_memory import AgentMemoryMiddleware
+from ..midware.performance_monitor import PerformanceMonitorMiddleware
 
 
 def list_agents():
@@ -116,10 +117,27 @@ def create_agent_with_config(model, assistant_id: str, tools: list):
     )
 
     # Use the same backend for agent memory middleware
-    agent_middleware = [
+    # 添加性能监控中间件（可选，如果系统支持）
+    agent_middleware = []
+
+    # 尝试添加性能监控中间件
+    try:
+        performance_middleware = PerformanceMonitorMiddleware(
+            backend=long_term_backend,
+            metrics_path="/performance/",
+            enable_system_monitoring=True,
+            max_records=1000
+        )
+        agent_middleware.append(performance_middleware)
+    except Exception as e:
+        # 性能监控失败不影响其他功能
+        console.print(f"[yellow]Warning: Performance monitoring disabled: {e}[/yellow]")
+
+    # 添加其他中间件
+    agent_middleware.extend([
         AgentMemoryMiddleware(backend=long_term_backend, memory_path="/memories/"),
         shell_middleware,
-    ]
+    ])
 
     #创建subagents
     subagents = [defect_analyzer_subagent, code_fixer_subagent, fix_validator_subagent]
