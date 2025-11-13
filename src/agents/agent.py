@@ -205,7 +205,7 @@ def create_agent_with_config(model, assistant_id: str, tools: list, memory_mode:
 
     # 第三层：框架默认中间件（会自动追加到这里）
     # 框架会自动添加：TodoList, Filesystem, SubAgent, Summarization, Caching, PatchToolCalls
-    console.print("[blue]ℹ 框架默认中间件将自动追加[/blue]")
+    console.print("""[green]✓[/green] 任务管理,文件系统操作,子代理管理,对话摘要,提示缓存,工具调用补丁中间件""")
 
     # 第四层：工具层（最内层）
     # 5. 安全检查中间件
