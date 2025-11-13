@@ -22,6 +22,11 @@ def _import_cli_modules():
         from tools.tools import get_all_tools
         from midware.agent_memory import AgentMemoryMiddleware
         from midware.performance_monitor import PerformanceMonitorMiddleware
+        from midware.layered_memory import LayeredMemoryMiddleware
+        from midware.context_enhancement import ContextEnhancementMiddleware
+        from midware.security import SecurityMiddleware
+        from midware.logging import LoggingMiddleware
+        from midware.memory_adapter import MemoryMiddlewareFactory
         from deepagents.backends.filesystem import FilesystemBackend
         from deepagents.backends.composite import CompositeBackend
         from deepagents.middleware.resumable_shell import ResumableShellToolMiddleware
@@ -154,14 +159,34 @@ class AIAdapter:
                 routes={"/memories/": long_term_backend}
             )
 
-            # 记忆中间件
-            memory_middleware = cli_modules['AgentMemoryMiddleware'](
-                backend=long_term_backend,
-                memory_path="/memories/"
-            )
+            # 使用分层记忆系统（自动选择最佳配置）
+            try:
+                memory_middleware = MemoryMiddlewareFactory.auto_upgrade_memory(
+                    backend=long_term_backend,
+                    memory_path="/memories/",
+                    enable_layered=None,  # 自动检测
+                    working_memory_size=10,
+                    enable_semantic_memory=True,
+                    enable_episodic_memory=True
+                )
+
+                if isinstance(memory_middleware, list):
+                    # 混合模式，返回多个中间件
+                    middleware_list = memory_middleware + [shell_middleware]
+                else:
+                    # 单个中间件
+                    middleware_list = [memory_middleware, shell_middleware]
+
+            except Exception as e:
+                # 如果分层记忆失败，回退到传统记忆
+                print(f"Warning: Layered memory failed, falling back to legacy: {e}")
+                memory_middleware = cli_modules['AgentMemoryMiddleware'](
+                    backend=long_term_backend,
+                    memory_path="/memories/"
+                )
+                middleware_list = [memory_middleware, shell_middleware]
 
             # 性能监控中间件（可选）
-            performance_middleware = None
             try:
                 performance_middleware = cli_modules['PerformanceMonitorMiddleware'](
                     backend=long_term_backend,
@@ -169,13 +194,9 @@ class AIAdapter:
                     enable_system_monitoring=True,
                     max_records=1000
                 )
+                middleware_list.insert(0, performance_middleware)  # 性能监控放在最外层
             except Exception as e:
                 print(f"Warning: Performance monitoring middleware disabled: {e}")
-
-            # 构建中间件列表
-            middleware_list = [memory_middleware, shell_middleware]
-            if performance_middleware:
-                middleware_list.insert(0, performance_middleware)  # 性能监控放在最外层
 
             return middleware_list
         except Exception as e:

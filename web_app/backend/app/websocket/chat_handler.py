@@ -4,7 +4,7 @@ import json
 import logging
 from typing import Dict, Any, List
 
-from fastapi import WebSocket, Depends
+from fastapi import WebSocket, WebSocketDisconnect, Depends
 
 from ..services.session_service import SessionService
 from .connection_manager import manager

@@ -12,7 +12,7 @@ from app.models.database import engine, Base
 from app.services.session_service import SessionService
 from app.websocket.chat_handler import ChatHandler
 from app.websocket.connection_manager import manager
-from app.api import sessions, files, projects, memory, config
+from app.api import sessions, memory, config
 
 # Configure logging
 logging.basicConfig(
@@ -63,8 +63,6 @@ app.add_middleware(
 
 # Include API routers
 app.include_router(sessions.router, prefix="/api/sessions", tags=["sessions"])
-app.include_router(files.router, prefix="/api/files", tags=["files"])
-app.include_router(projects.router, prefix="/api/projects", tags=["projects"])
 app.include_router(memory.router, prefix="/api/memory", tags=["memory"])
 app.include_router(config.router, prefix="/api", tags=["config"])
 
@@ -118,16 +116,12 @@ async def health_check():
     }
 
 
-# Root endpoint
+# Root endpoint - serve the web interface
 @app.get("/")
 async def root():
-    """Root endpoint."""
-    return {
-        "message": "Fix Agent Web API",
-        "version": settings.app_version,
-        "docs": "/docs",
-        "health": "/health"
-    }
+    """Root endpoint - serve the web interface."""
+    from fastapi.responses import FileResponse
+    return FileResponse("../index.html")
 
 
 # Exception handlers
