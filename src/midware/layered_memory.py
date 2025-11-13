@@ -480,9 +480,13 @@ class LayeredMemoryMiddleware(AgentMiddleware):
         handler: Callable[[ModelRequest], ModelResponse],
     ) -> ModelResponse:
         """包装模型调用，注入分层记忆上下文"""
+        # 调试信息：显示中间件被调用
+        print(f"[DEBUG] LayeredMemoryMiddleware.wrap_model_call() 被调用")
+
         # 提取请求上下文
         request_context = self._extract_context_from_request(request)
         if request_context:
+            print(f"[DEBUG] 提取到请求上下文: {request_context[:50]}...")
             self._update_working_memory(request_context, importance=1.0)
             session_id = self._get_session_id(request.state)
             self._update_session_memory(session_id, request_context)
