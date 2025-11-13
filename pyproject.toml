@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "Fix_agent"
-version = "0.1.2"
+version = "0.1.3"
 description = "AI Coding Assistant - 代码缺陷修复和分析工具"
 readme = "README.md"
 requires-python = ">=3.11"
