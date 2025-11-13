@@ -20,7 +20,7 @@ class SessionService:
     def __init__(self, db: Session):
         self.db = db
 
-    def create_session(self, session_data: SessionCreate, user_id: int = None) -> SessionResponse:
+    def create_session(self, session_data: SessionCreate, user_id: int = 1) -> SessionResponse:
         """Create a new session."""
         session_id = str(uuid.uuid4())
 
@@ -115,7 +115,7 @@ class SessionService:
             session_id=session_id,
             content=content,
             role=role,
-            metadata=metadata or {}
+            extra_data=metadata or {}
         )
 
         self.db.add(message)

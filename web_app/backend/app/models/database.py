@@ -1,11 +1,23 @@
 """Database models for the web application."""
 
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, DateTime, Text, JSON, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, Text, JSON, Boolean, ForeignKey, create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, sessionmaker
+
+# Database engine
+engine = create_engine("sqlite:///./fix_agent_web.db", connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
+
+# Dependency to get DB session
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 
 class User(Base):
@@ -52,7 +64,7 @@ class Message(Base):
     session_id = Column(String, ForeignKey("sessions.session_id"), nullable=False)
     content = Column(Text, nullable=False)
     role = Column(String, nullable=False)  # 'user' or 'assistant'
-    metadata = Column(JSON)  # Store additional data like tool calls, files, etc.
+    extra_data = Column(JSON)  # Store additional data like tool calls, files, etc.
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships
@@ -86,7 +98,7 @@ class Project(Base):
     description = Column(Text)
     project_path = Column(String, nullable=False)
     project_type = Column(String)  # python, javascript, etc.
-    metadata = Column(JSON)  # Store project analysis results, settings, etc.
+    project_data = Column(JSON)  # Store project analysis results, settings, etc.
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

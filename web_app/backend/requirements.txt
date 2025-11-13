@@ -1,42 +1,42 @@
 # Web框架
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
-websockets==12.0
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+websockets>=12.0
 
 # 数据库和缓存
-sqlalchemy==2.0.23
-alembic==1.12.1
-redis==5.0.1
+sqlalchemy>=2.0.0
+alembic>=1.12.0
+redis>=5.0.0
 
 # 认证和安全
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
-python-multipart==0.0.6
-
-# 现有CLI项目依赖（直接复用）
-deepagents==0.2.4
-langchain-openai>=0.1.0
-tavily-python
-python-dotenv
-rich>=13.0.0
-requests
-prompt-toolkit>=3.0.52
-
-# 代码分析工具（复用）
-pylint>=2.17.0
-flake8>=6.0.0
-mypy>=1.0.0
-bandit>=1.7.0
-black>=23.0.0
-astroid>=2.15.0
-isort>=5.12.0
-pydocstyle>=6.0.0
-
-# 解析和配置
-lxml>=4.9.0
-pyyaml>=6.0.0
-toml>=0.10.0
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+python-multipart>=0.0.6
 
 # 工具库
-pydantic==2.5.0
-python-json-logger==2.0.7
+pydantic-settings>=2.0.0
+python-json-logger>=2.0.7
+
+# 现有CLI项目依赖（直接复用 - 已安装）
+# deepagents==0.2.4
+# langchain-openai>=0.1.0
+# tavily-python
+# python-dotenv
+# rich>=13.0.0
+# requests
+# prompt-toolkit>=3.0.52
+
+# 代码分析工具（复用 - 已安装）
+# pylint>=2.17.0
+# flake8>=6.0.0
+# mypy>=1.0.0
+# bandit>=1.7.0
+# black>=23.0.0
+# astroid>=2.15.0
+# isort>=5.12.0
+# pydocstyle>=6.0.0
+
+# 解析和配置
+# lxml>=4.9.0
+# pyyaml>=6.0.0
+# toml>=0.10.0

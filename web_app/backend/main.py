@@ -7,12 +7,12 @@ from contextlib import asynccontextmanager
 import logging
 import uvicorn
 
-from .core.config import settings
-from .models.database import engine, Base
-from .services.session_service import SessionService
-from .websocket.chat_handler import ChatHandler
-from .websocket.connection_manager import manager
-from .api import sessions, files, projects, memory, config
+from app.core.config import settings
+from app.models.database import engine, Base
+from app.services.session_service import SessionService
+from app.websocket.chat_handler import ChatHandler
+from app.websocket.connection_manager import manager
+from app.api import sessions, files, projects, memory, config
 
 # Configure logging
 logging.basicConfig(
@@ -83,7 +83,7 @@ async def websocket_endpoint(
     """WebSocket endpoint for real-time chat."""
     try:
         # Create session service instance
-        from .core.database import SessionLocal
+        from app.models.database import SessionLocal
         db = SessionLocal()
         session_service = SessionService(db)
 

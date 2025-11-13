@@ -1,7 +1,5 @@
 # Docker Compose configuration for Fix Agent Web Application
 
-version: '3.8'
-
 services:
   # Backend API service
   backend:
