@@ -3,15 +3,33 @@
 import os
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, AsyncGenerator
 
 # 导入应用配置
 from .config import settings
 
 # 添加CLI项目路径到Python路径
+# 从 backend/app/core/ai_adapter.py 到 Fix Agent/src 的路径是向上5级
 cli_root = Path(__file__).parent.parent.parent.parent.parent / "src"
 if cli_root.exists():
     sys.path.insert(0, str(cli_root))
+    # 同时添加Fix Agent根目录到路径，以便相对导入正常工作
+    fix_agent_root = cli_root.parent
+    sys.path.insert(0, str(fix_agent_root))
+    print(f"✅ CLI root added to path: {cli_root}")
+    print(f"✅ Fix Agent root added to path: {fix_agent_root}")
+else:
+    print(f"❌ CLI root not found at: {cli_root}")
+    # 尝试不同的路径
+    alt_paths = [
+        Path(__file__).parent.parent.parent.parent / "src",  # 向上4级
+        Path(__file__).parent.parent.parent / "src",  # 向上3级
+    ]
+    for alt_path in alt_paths:
+        if alt_path.exists():
+            sys.path.insert(0, str(alt_path))
+            print(f"✅ CLI root found at alternative path: {alt_path}")
+            break
 
 # 延迟导入CLI模块
 def _import_cli_modules():
@@ -22,14 +40,10 @@ def _import_cli_modules():
         from tools.tools import get_all_tools
         from midware.agent_memory import AgentMemoryMiddleware
         from midware.performance_monitor import PerformanceMonitorMiddleware
-        from midware.layered_memory import LayeredMemoryMiddleware
-        from midware.context_enhancement import ContextEnhancementMiddleware
-        from midware.security import SecurityMiddleware
-        from midware.logging import LoggingMiddleware
-        from midware.memory_adapter import MemoryMiddlewareFactory
         from deepagents.backends.filesystem import FilesystemBackend
         from deepagents.backends.composite import CompositeBackend
         from deepagents.middleware.resumable_shell import ResumableShellToolMiddleware
+        from langchain.agents.middleware import HostExecutionPolicy
         from langgraph.checkpoint.memory import InMemorySaver
 
         return {
@@ -41,6 +55,7 @@ def _import_cli_modules():
             'FilesystemBackend': FilesystemBackend,
             'CompositeBackend': CompositeBackend,
             'ResumableShellToolMiddleware': ResumableShellToolMiddleware,
+            'HostExecutionPolicy': HostExecutionPolicy,
             'InMemorySaver': InMemorySaver
         }
     except ImportError as e:
@@ -104,6 +119,9 @@ class AIAdapter:
             # 设置内存检查点
             self.checkpointer = cli_modules['InMemorySaver']()
             self.agent.checkpointer = self.checkpointer
+
+            print(f"✅ AI Agent initialized for session {self.session_id}")
+
         except Exception as e:
             print(f"Failed to initialize AI agent: {e}")
             self.cli_available = False
@@ -144,7 +162,7 @@ class AIAdapter:
             # Shell中间件（限制在用户工作空间）
             shell_middleware = cli_modules['ResumableShellToolMiddleware'](
                 workspace_root=str(self.workspace_path),
-                execution_policy=None  # 使用默认策略
+                execution_policy=cli_modules['HostExecutionPolicy']()
             )
 
             # 记忆后端
@@ -159,13 +177,14 @@ class AIAdapter:
                 routes={"/memories/": long_term_backend}
             )
 
-            # 按照架构构建中间件管道
-            middleware_list = []
+            # 记忆中间件
+            memory_middleware = cli_modules['AgentMemoryMiddleware'](
+                backend=long_term_backend,
+                memory_path="/memories/"
+            )
 
-            print(f"[Web App] 🏗️ 构建中间件管道 for session {self.session_id}")
-
-            # 第一层：全局监控（最外层）
-            # 1. 性能监控中间件
+            # 性能监控中间件（可选）
+            performance_middleware = None
             try:
                 performance_middleware = cli_modules['PerformanceMonitorMiddleware'](
                     backend=long_term_backend,
@@ -173,106 +192,20 @@ class AIAdapter:
                     enable_system_monitoring=True,
                     max_records=1000
                 )
-                middleware_list.append(performance_middleware)
-                print(f"[Web App] ✓ 性能监控中间件 (最外层)")
             except Exception as e:
-                print(f"[Web App] ⚠ 性能监控中间件失败: {e}")
+                print(f"Warning: Performance monitoring middleware disabled: {e}")
 
-            # 2. 日志记录中间件
-            try:
-                logging_middleware = cli_modules['LoggingMiddleware'](
-                    backend=long_term_backend,
-                    session_id=self.session_id,
-                    log_path="/logs/",
-                    enable_conversation_logging=True,
-                    enable_tool_logging=True,
-                    enable_performance_logging=True,
-                    enable_error_logging=True
-                )
-                middleware_list.append(logging_middleware)
-                print(f"[Web App] ✓ 日志记录中间件")
-            except Exception as e:
-                print(f"[Web App] ⚠ 日志记录中间件失败: {e}")
-
-            # 第二层：上下文增强
-            # 3. 上下文增强中间件
-            try:
-                context_middleware = cli_modules['ContextEnhancementMiddleware'](
-                    backend=long_term_backend,
-                    context_path="/context/",
-                    enable_project_analysis=True,
-                    enable_user_preferences=True,
-                    enable_conversation_enhancement=True,
-                    max_context_length=4000
-                )
-                middleware_list.append(context_middleware)
-                print(f"[Web App] ✓ 上下文增强中间件")
-            except Exception as e:
-                print(f"[Web App] ⚠ 上下文增强中间件失败: {e}")
-
-            # 4. 分层记忆中间件
-            try:
-                memory_middleware = MemoryMiddlewareFactory.auto_upgrade_memory(
-                    backend=long_term_backend,
-                    memory_path="/memories/",
-                    enable_layered=None,  # 自动检测
-                    working_memory_size=10,
-                    enable_semantic_memory=True,
-                    enable_episodic_memory=True
-                )
-
-                if isinstance(memory_middleware, list):
-                    # 混合模式，返回多个中间件
-                    middleware_list.extend(memory_middleware)
-                    print(f"[Web App] ✓ 分层记忆系统 (混合模式)")
-                else:
-                    # 单个中间件
-                    middleware_list.append(memory_middleware)
-                    if hasattr(memory_middleware, '__class__'):
-                        if isinstance(memory_middleware, LayeredMemoryMiddleware):
-                            print(f"[Web App] ✓ 分层记忆系统")
-                        elif isinstance(memory_middleware, AgentMemoryMiddleware):
-                            print(f"[Web App] ✓ 传统记忆系统")
-
-            except Exception as e:
-                # 如果分层记忆失败，回退到传统记忆
-                print(f"[Web App] ⚠ 记忆系统失败，使用传统模式: {e}")
-                middleware_list.append(
-                    cli_modules['AgentMemoryMiddleware'](backend=long_term_backend, memory_path="/memories/")
-                )
-
-            # 第三层：框架默认中间件（会自动追加到这里）
-
-            # 第四层：工具层（最内层）
-            # 5. 安全检查中间件
-            try:
-                security_middleware = cli_modules['SecurityMiddleware'](
-                    backend=long_term_backend,
-                    security_level="medium",
-                    workspace_root=str(self.workspace_path),
-                    enable_file_security=True,
-                    enable_command_security=True,
-                    enable_content_security=True,
-                    allow_path_traversal=False,
-                    max_file_size=10 * 1024 * 1024  # 10MB
-                )
-                middleware_list.append(security_middleware)
-                print(f"[Web App] ✓ 安全检查中间件")
-            except Exception as e:
-                print(f"[Web App] ⚠ 安全检查中间件失败: {e}")
-
-            # 6. Shell工具中间件（最内层）
-            middleware_list.append(shell_middleware)
-            print(f"[Web App] ✓ Shell工具中间件 (最内层)")
-
-            print(f"[Web App] 🎉 中间件管道构建完成！共 {len(middleware_list)} 个中间件")
+            # 构建中间件列表
+            middleware_list = [memory_middleware, shell_middleware]
+            if performance_middleware:
+                middleware_list.insert(0, performance_middleware)  # 性能监控放在最外层
 
             return middleware_list
         except Exception as e:
             print(f"Failed to create middleware: {e}")
             return []
 
-    async def stream_response(self, message: str, file_references: List[str] = None):
+    async def stream_response(self, message: str, file_references: List[str] = None) -> AsyncGenerator[Dict[str, Any], None]:
         """Stream AI response for web interface.
 
         Args:
@@ -315,9 +248,10 @@ class AIAdapter:
                     yield processed_chunk
 
         except Exception as e:
+            print(f"Error in AI streaming: {e}")
             yield {
                 "type": "error",
-                "content": str(e),
+                "content": f"AI响应错误: {str(e)}",
                 "session_id": self.session_id
             }
 
