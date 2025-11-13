@@ -345,7 +345,13 @@ class LayeredMemoryMiddleware(AgentMiddleware):
         elif hasattr(request, 'messages') and request.messages:
             for msg in request.messages:
                 if hasattr(msg, 'content') and msg.content:
-                    role = getattr(msg, 'role', 'unknown')
+                    # 兼容LangChain Message对象和字典格式
+                    if hasattr(msg, 'type'):
+                        role = "用户" if msg.type == "human" else "助手" if msg.type == "ai" else "未知"
+                    elif hasattr(msg, 'get'):
+                        role = "用户" if msg.get("role") == "user" else "助手" if msg.get("role") == "assistant" else "未知"
+                    else:
+                        role = "未知"
                     content_parts.append(f"{role}: {msg.content}")
 
         return " | ".join(content_parts)
@@ -359,7 +365,13 @@ class LayeredMemoryMiddleware(AgentMiddleware):
         elif hasattr(response, 'messages') and response.messages:
             for msg in response.messages:
                 if hasattr(msg, 'content') and msg.content:
-                    role = getattr(msg, 'role', 'assistant')
+                    # 兼容LangChain Message对象和字典格式
+                    if hasattr(msg, 'type'):
+                        role = "用户" if msg.type == "human" else "助手" if msg.type == "ai" else "未知"
+                    elif hasattr(msg, 'get'):
+                        role = "用户" if msg.get("role") == "user" else "助手" if msg.get("role") == "assistant" else "未知"
+                    else:
+                        role = "未知"
                     content_parts.append(f"{role}: {msg.content}")
 
         return " | ".join(content_parts)
@@ -480,13 +492,10 @@ class LayeredMemoryMiddleware(AgentMiddleware):
         handler: Callable[[ModelRequest], ModelResponse],
     ) -> ModelResponse:
         """包装模型调用，注入分层记忆上下文"""
-        # 调试信息：显示中间件被调用
-        print(f"[DEBUG] LayeredMemoryMiddleware.wrap_model_call() 被调用")
 
         # 提取请求上下文
         request_context = self._extract_context_from_request(request)
         if request_context:
-            print(f"[DEBUG] 提取到请求上下文: {request_context[:50]}...")
             self._update_working_memory(request_context, importance=1.0)
             session_id = self._get_session_id(request.state)
             self._update_session_memory(session_id, request_context)

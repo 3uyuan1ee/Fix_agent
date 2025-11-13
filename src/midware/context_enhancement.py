@@ -287,11 +287,11 @@ class ContextEnhancementMiddleware(AgentMiddleware):
         if not messages:
             return "general"
 
-        user_messages = [msg for msg in messages if msg.get("role") == "user"]
+        user_messages = [msg for msg in messages if (hasattr(msg, 'type') and msg.type == "human") or (hasattr(msg, 'get') and msg.get("role") == "user")]
         if not user_messages:
             return "general"
 
-        last_message = user_messages[-1].get("content", "").lower()
+        last_message = (user_messages[-1].content if hasattr(user_messages[-1], 'content') else user_messages[-1].get("content", "")).lower()
 
         intent_keywords = {
             "coding": ["code", "code", "code", "function", "函数", "代码", "编程"],
@@ -313,8 +313,8 @@ class ContextEnhancementMiddleware(AgentMiddleware):
             return "intermediate"
 
         all_content = " ".join([
-            msg.get("content", "") for msg in messages
-            if msg.get("role") in ["user", "assistant"]
+            (msg.content if hasattr(msg, 'content') else msg.get("content", "")) for msg in messages
+            if (hasattr(msg, 'type') and msg.type in ["human", "ai"]) or (hasattr(msg, 'get') and msg.get("role") in ["user", "assistant"])
         ]).lower()
 
         beginner_keywords = ["new", "beginner", "初学者", "新手", "入门", "简单"]
@@ -329,11 +329,11 @@ class ContextEnhancementMiddleware(AgentMiddleware):
 
     def _analyze_response_preferences(self, messages: List[Dict]) -> str:
         """分析响应偏好"""
-        assistant_messages = [msg for msg in messages if msg.get("role") == "assistant"]
+        assistant_messages = [msg for msg in messages if (hasattr(msg, 'type') and msg.type == "ai") or (hasattr(msg, 'get') and msg.get("role") == "assistant")]
         if len(assistant_messages) < 2:
             return "medium"
 
-        avg_length = sum(len(msg.get("content", "")) for msg in assistant_messages) / len(assistant_messages)
+        avg_length = sum(len(msg.content if hasattr(msg, 'content') else msg.get("content", "")) for msg in assistant_messages) / len(assistant_messages)
 
         if avg_length < 200:
             return "short"
@@ -355,8 +355,8 @@ class ContextEnhancementMiddleware(AgentMiddleware):
         ]
 
         all_content = " ".join([
-            msg.get("content", "") for msg in messages
-            if msg.get("role") in ["user", "assistant"]
+            (msg.content if hasattr(msg, 'content') else msg.get("content", "")) for msg in messages
+            if (hasattr(msg, 'type') and msg.type in ["human", "ai"]) or (hasattr(msg, 'get') and msg.get("role") in ["user", "assistant"])
         ]).lower()
 
         found_keywords = [
@@ -368,11 +368,11 @@ class ContextEnhancementMiddleware(AgentMiddleware):
 
     def _detect_conversation_style(self, messages: List[Dict]) -> str:
         """检测对话风格"""
-        user_messages = [msg for msg in messages if msg.get("role") == "user"]
+        user_messages = [msg for msg in messages if (hasattr(msg, 'type') and msg.type == "human") or (hasattr(msg, 'get') and msg.get("role") == "user")]
         if not user_messages:
             return "professional"
 
-        last_message = user_messages[-1].get("content", "")
+        last_message = user_messages[-1].content if hasattr(user_messages[-1], 'content') else user_messages[-1].get("content", "")
 
         informal_indicators = ["!", "哈", "呵呵", "哈哈", "😊", "👍", "谢谢"]
         formal_indicators = ["请", "请问", "能否", "可否", "感谢"]

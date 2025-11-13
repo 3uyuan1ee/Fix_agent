@@ -122,7 +122,18 @@ class LoggingMiddleware(AgentMiddleware):
 
             # 写入日志
             log_line = json.dumps(entry, ensure_ascii=False, separators=(',', ':'))
-            self.backend.write(log_path, log_line + "\n", mode='a')
+            try:
+                # 先检查文件是否存在并读取现有内容
+                existing_content = ""
+                if self.backend.exists(log_path):
+                    existing_content = self.backend.read(log_path) or ""
+
+                # 添加新行
+                new_content = existing_content + log_line + "\n"
+                self.backend.write(log_path, new_content)
+            except Exception:
+                # 如果追加失败，尝试直接写入
+                self.backend.write(log_path, log_line + "\n")
         except Exception as e:
             print(f"Warning: Failed to write log entry to {log_path}: {e}")
 
@@ -220,8 +231,15 @@ class LoggingMiddleware(AgentMiddleware):
         elif hasattr(request, 'messages') and request.messages:
             # 获取最后一条用户消息
             for msg in reversed(request.messages):
-                if msg.get("role") == "user" and hasattr(msg, 'content'):
-                    return msg.get("content", "")
+                # 兼容LangChain Message对象和字典格式
+                role = None
+                if hasattr(msg, 'type'):
+                    role = "user" if msg.type == "human" else "assistant" if msg.type == "ai" else None
+                elif hasattr(msg, 'get'):
+                    role = msg.get("role")
+
+                if role == "user":
+                    return msg.content if hasattr(msg, 'content') else msg.get("content", "")
         return ""
 
     def _extract_response_content(self, response: ModelResponse) -> str:
@@ -231,8 +249,15 @@ class LoggingMiddleware(AgentMiddleware):
         elif hasattr(response, 'messages') and response.messages:
             # 获取最后一条助手消息
             for msg in reversed(response.messages):
-                if msg.get("role") == "assistant" and hasattr(msg, 'content'):
-                    return msg.get("content", "")
+                # 兼容LangChain Message对象和字典格式
+                role = None
+                if hasattr(msg, 'type'):
+                    role = "user" if msg.type == "human" else "assistant" if msg.type == "ai" else None
+                elif hasattr(msg, 'get'):
+                    role = msg.get("role")
+
+                if role == "assistant":
+                    return msg.content if hasattr(msg, 'content') else msg.get("content", "")
         return ""
 
     def _extract_tool_calls(self, response: ModelResponse) -> List[Dict[str, Any]]:

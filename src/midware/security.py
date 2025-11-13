@@ -397,8 +397,8 @@ class SecurityMiddleware(AgentMiddleware):
 
         elif hasattr(request, 'messages') and request.messages:
             all_content = " ".join([
-                msg.get("content", "") for msg in request.messages
-                if hasattr(msg, 'content')
+                msg.content if hasattr(msg, 'content') else msg.get("content", "") for msg in request.messages
+                if hasattr(msg, 'content') or hasattr(msg, 'get')
             ])
             content_violations = self._check_content_security(all_content)
             for violation in content_violations:
@@ -440,8 +440,8 @@ class SecurityMiddleware(AgentMiddleware):
 
         elif hasattr(request, 'messages') and request.messages:
             all_content = " ".join([
-                msg.get("content", "") for msg in request.messages
-                if hasattr(msg, 'content')
+                msg.content if hasattr(msg, 'content') else msg.get("content", "") for msg in request.messages
+                if hasattr(msg, 'content') or hasattr(msg, 'get')
             ])
             content_violations = self._check_content_security(all_content)
             for violation in content_violations:
