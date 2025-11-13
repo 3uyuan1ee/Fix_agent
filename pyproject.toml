@@ -56,6 +56,9 @@ dependencies = [
 
     # 联网搜索
     "tavily-python",
+
+    # 性能监控
+    "psutil>=5.9.0",
     # 核心Python代码分析工具 - 确保开箱即用
     "pylint>=2.17.0",         # 全面的Python代码分析
     "flake8>=6.0.0",           # Python代码风格和基础检查

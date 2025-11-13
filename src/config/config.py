@@ -217,18 +217,59 @@ def create_model():
 
         return ChatAnthropic(**model_kwargs)
 
-    console.print("[bold red]Error:[/bold red] No API key configured.")
-    console.print("\nPlease set one of the following environment variables:")
-    console.print("  - OPENAI_API_KEY     (for OpenAI models like gpt-5-mini)")
-    console.print("  - ANTHROPIC_API_KEY  (for Claude models)")
-    console.print("\nOptional base URL configuration:")
-    console.print("  - OPENAI_API_BASE    (for custom OpenAI-compatible endpoints)")
-    console.print("  - ANTHROPIC_BASE_URL (for custom Anthropic endpoints)")
-    console.print("\nExample:")
-    console.print("  export OPENAI_API_KEY=your_api_key_here")
-    console.print("  export OPENAI_API_BASE=https://your-custom-endpoint.com/v1")
-    console.print("\nOr add it to your .env file.")
-    sys.exit(1)
+    # 没有配置 API 密钥，触发首次配置向导
+    console.print("[bold yellow]⚠️  No API key configured.[/bold yellow]")
+    console.print("\n[bold cyan]🚀 Let's set up your API configuration:[/bold cyan]")
+    console.print()
+
+    # 尝试运行首次配置向导
+    try:
+        from ..utils.first_time_setup import create_interactive_env
+        if create_interactive_env():
+            # 配置成功，重新加载环境变量并重试
+            dotenv.load_dotenv(override=True)
+            # 递归调用 create_model 来重新检查配置
+            return create_model()
+        else:
+            # 用户取消了配置
+            console.print("[bold red]❌ Configuration cancelled. Cannot proceed without API keys.[/bold red]")
+            sys.exit(1)
+    except ImportError:
+        # 无法导入配置向导，显示原始错误信息
+        console.print("[bold red]Error:[/bold red] No API key configured.")
+        console.print("\nPlease set one of the following environment variables:")
+        console.print("  - OPENAI_API_KEY     (for OpenAI models like gpt-5-mini)")
+        console.print("  - ANTHROPIC_API_KEY  (for Claude models)")
+        console.print("\nOptional base URL configuration:")
+        console.print("  - OPENAI_API_BASE    (for custom OpenAI-compatible endpoints)")
+        console.print("  - ANTHROPIC_BASE_URL (for custom Anthropic endpoints)")
+
+        # 显示跨平台的设置说明
+        import platform
+        if platform.system() == "Windows":
+            console.print("\n[bold cyan]Windows setup:[/bold cyan]")
+            console.print("  Command line (temporary):")
+            console.print("    set OPENAI_API_KEY=your_api_key_here")
+            console.print("  System environment variables (permanent):")
+            console.print("    Win+R → sysdm.cpl → Advanced → Environment Variables")
+        else:
+            console.print("\n[bold cyan]macOS/Linux setup:[/bold cyan]")
+            console.print("  Command line (temporary):")
+            console.print("    export OPENAI_API_KEY=your_api_key_here")
+            console.print("  Add to shell profile (permanent):")
+            console.print("    echo 'export OPENAI_API_KEY=your_api_key_here' >> ~/.bashrc")
+
+        console.print("\n[yellow]Or add it to your .env file.[/yellow]")
+        sys.exit(1)
+    except Exception as e:
+        # 配置向导出现错误
+        console.print(f"[bold red]❌ Configuration wizard failed: {e}[/bold red]")
+        console.print("[bold red]Error:[/bold red] No API key configured.")
+        console.print("\nPlease set one of the following environment variables:")
+        console.print("  - OPENAI_API_KEY     (for OpenAI models like gpt-5-mini)")
+        console.print("  - ANTHROPIC_API_KEY  (for Claude models)")
+        console.print("\n[yellow]Or add it to your .env file.[/yellow]")
+        sys.exit(1)
 
 
 def get_system_prompt():
