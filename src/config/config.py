@@ -137,8 +137,35 @@ def get_default_coding_instructions() -> str:
     These are the immutable base instructions that cannot be modified by the agent.
     Long-term memory (agent.md) is handled separately by the middleware.
     """
-    default_prompt_path = Path(__file__).parent / "default_agent_prompt.md"
+    # 修复路径问题，prompt 文件在 prompt 目录下
+    current_dir = Path(__file__).parent
+    default_prompt_path = current_dir.parent / "prompt" / "default_agent_prompt.md"
+
+    # 如果文件不存在，提供默认内容
+    if not default_prompt_path.exists():
+        return get_fallback_prompt()
+
     return default_prompt_path.read_text()
+
+
+def get_fallback_prompt() -> str:
+    """提供备用提示内容，当文件不存在时使用"""
+    return """
+你是一个AI编程助手，专门帮助用户进行代码开发、调试和优化。
+
+你的主要能力包括：
+1. 代码缺陷检测和修复
+2. 代码质量分析
+3. 项目结构优化
+4. 自动化测试建议
+5. 代码重构和优化
+
+请始终：
+- 提供清晰、可执行的代码建议
+- 解释代码修改的原因
+- 考虑最佳实践和安全性
+- 根据用户的技术水平调整解释深度
+""".strip()
 
 
 def create_model():

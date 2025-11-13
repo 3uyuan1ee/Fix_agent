@@ -138,6 +138,10 @@ include = ["src*"]
 
 [tool.setuptools.package-data]
 src = ["*.md", "*.txt", "*.yml", "*.yaml", "*.json", "*.toml"]
+"*" = [".env.template"]
+
+# 包含所有 src 目录下的文件
+"*" = ["src/**/*.md", "src/**/*.txt"]
 
 [tool.black]
 line-length = 88
