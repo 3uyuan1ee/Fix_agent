@@ -159,7 +159,58 @@ class AIAdapter:
                 routes={"/memories/": long_term_backend}
             )
 
-            # 使用分层记忆系统（自动选择最佳配置）
+            # 按照架构构建中间件管道
+            middleware_list = []
+
+            print(f"[Web App] 🏗️ 构建中间件管道 for session {self.session_id}")
+
+            # 第一层：全局监控（最外层）
+            # 1. 性能监控中间件
+            try:
+                performance_middleware = cli_modules['PerformanceMonitorMiddleware'](
+                    backend=long_term_backend,
+                    metrics_path="/performance/",
+                    enable_system_monitoring=True,
+                    max_records=1000
+                )
+                middleware_list.append(performance_middleware)
+                print(f"[Web App] ✓ 性能监控中间件 (最外层)")
+            except Exception as e:
+                print(f"[Web App] ⚠ 性能监控中间件失败: {e}")
+
+            # 2. 日志记录中间件
+            try:
+                logging_middleware = cli_modules['LoggingMiddleware'](
+                    backend=long_term_backend,
+                    session_id=self.session_id,
+                    log_path="/logs/",
+                    enable_conversation_logging=True,
+                    enable_tool_logging=True,
+                    enable_performance_logging=True,
+                    enable_error_logging=True
+                )
+                middleware_list.append(logging_middleware)
+                print(f"[Web App] ✓ 日志记录中间件")
+            except Exception as e:
+                print(f"[Web App] ⚠ 日志记录中间件失败: {e}")
+
+            # 第二层：上下文增强
+            # 3. 上下文增强中间件
+            try:
+                context_middleware = cli_modules['ContextEnhancementMiddleware'](
+                    backend=long_term_backend,
+                    context_path="/context/",
+                    enable_project_analysis=True,
+                    enable_user_preferences=True,
+                    enable_conversation_enhancement=True,
+                    max_context_length=4000
+                )
+                middleware_list.append(context_middleware)
+                print(f"[Web App] ✓ 上下文增强中间件")
+            except Exception as e:
+                print(f"[Web App] ⚠ 上下文增强中间件失败: {e}")
+
+            # 4. 分层记忆中间件
             try:
                 memory_middleware = MemoryMiddlewareFactory.auto_upgrade_memory(
                     backend=long_term_backend,
@@ -172,31 +223,49 @@ class AIAdapter:
 
                 if isinstance(memory_middleware, list):
                     # 混合模式，返回多个中间件
-                    middleware_list = memory_middleware + [shell_middleware]
+                    middleware_list.extend(memory_middleware)
+                    print(f"[Web App] ✓ 分层记忆系统 (混合模式)")
                 else:
                     # 单个中间件
-                    middleware_list = [memory_middleware, shell_middleware]
+                    middleware_list.append(memory_middleware)
+                    if hasattr(memory_middleware, '__class__'):
+                        if isinstance(memory_middleware, LayeredMemoryMiddleware):
+                            print(f"[Web App] ✓ 分层记忆系统")
+                        elif isinstance(memory_middleware, AgentMemoryMiddleware):
+                            print(f"[Web App] ✓ 传统记忆系统")
 
             except Exception as e:
                 # 如果分层记忆失败，回退到传统记忆
-                print(f"Warning: Layered memory failed, falling back to legacy: {e}")
-                memory_middleware = cli_modules['AgentMemoryMiddleware'](
-                    backend=long_term_backend,
-                    memory_path="/memories/"
+                print(f"[Web App] ⚠ 记忆系统失败，使用传统模式: {e}")
+                middleware_list.append(
+                    cli_modules['AgentMemoryMiddleware'](backend=long_term_backend, memory_path="/memories/")
                 )
-                middleware_list = [memory_middleware, shell_middleware]
 
-            # 性能监控中间件（可选）
+            # 第三层：框架默认中间件（会自动追加到这里）
+
+            # 第四层：工具层（最内层）
+            # 5. 安全检查中间件
             try:
-                performance_middleware = cli_modules['PerformanceMonitorMiddleware'](
+                security_middleware = cli_modules['SecurityMiddleware'](
                     backend=long_term_backend,
-                    metrics_path="/performance/",
-                    enable_system_monitoring=True,
-                    max_records=1000
+                    security_level="medium",
+                    workspace_root=str(self.workspace_path),
+                    enable_file_security=True,
+                    enable_command_security=True,
+                    enable_content_security=True,
+                    allow_path_traversal=False,
+                    max_file_size=10 * 1024 * 1024  # 10MB
                 )
-                middleware_list.insert(0, performance_middleware)  # 性能监控放在最外层
+                middleware_list.append(security_middleware)
+                print(f"[Web App] ✓ 安全检查中间件")
             except Exception as e:
-                print(f"Warning: Performance monitoring middleware disabled: {e}")
+                print(f"[Web App] ⚠ 安全检查中间件失败: {e}")
+
+            # 6. Shell工具中间件（最内层）
+            middleware_list.append(shell_middleware)
+            print(f"[Web App] ✓ Shell工具中间件 (最内层)")
+
+            print(f"[Web App] 🎉 中间件管道构建完成！共 {len(middleware_list)} 个中间件")
 
             return middleware_list
         except Exception as e:

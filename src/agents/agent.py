@@ -22,6 +22,9 @@ from ..config.config import (
 from ..midware.agent_memory import AgentMemoryMiddleware
 from ..midware.performance_monitor import PerformanceMonitorMiddleware
 from ..midware.layered_memory import LayeredMemoryMiddleware
+from ..midware.context_enhancement import ContextEnhancementMiddleware
+from ..midware.security import SecurityMiddleware
+from ..midware.logging import LoggingMiddleware
 from ..midware.memory_adapter import MemoryMiddlewareFactory
 
 
@@ -118,10 +121,13 @@ def create_agent_with_config(model, assistant_id: str, tools: list, memory_mode:
         default=FilesystemBackend(), routes={"/memories/": long_term_backend}
     )
 
-    # 使用新的分层记忆系统
+    # 建中间件管道
     agent_middleware = []
 
-    # 尝试添加性能监控中间件
+    console.print("[bold blue]🏗️  正在构建中间件管道系统...[/bold blue]")
+
+    # 第一层：全局监控（最外层）
+    # 1. 性能监控中间件
     try:
         performance_middleware = PerformanceMonitorMiddleware(
             backend=long_term_backend,
@@ -130,11 +136,43 @@ def create_agent_with_config(model, assistant_id: str, tools: list, memory_mode:
             max_records=1000
         )
         agent_middleware.append(performance_middleware)
+        console.print("[green]✓[/green] 性能监控中间件 (最外层)")
     except Exception as e:
-        # 性能监控失败不影响其他功能
-        console.print(f"[yellow]Warning: Performance monitoring disabled: {e}[/yellow]")
+        console.print(f"[yellow]⚠ 性能监控中间件失败: {e}[/yellow]")
 
-    # 添加分层记忆中间件（自动选择最佳配置）
+    # 2. 日志记录中间件
+    try:
+        logging_middleware = LoggingMiddleware(
+            backend=long_term_backend,
+            session_id=assistant_id,
+            log_path="/logs/",
+            enable_conversation_logging=True,
+            enable_tool_logging=True,
+            enable_performance_logging=True,
+            enable_error_logging=True
+        )
+        agent_middleware.append(logging_middleware)
+        console.print("[green]✓[/green] 日志记录中间件")
+    except Exception as e:
+        console.print(f"[yellow]⚠ 日志记录中间件失败: {e}[/yellow]")
+
+    # 第二层：上下文增强
+    # 3. 上下文增强中间件
+    try:
+        context_middleware = ContextEnhancementMiddleware(
+            backend=long_term_backend,
+            context_path="/context/",
+            enable_project_analysis=True,
+            enable_user_preferences=True,
+            enable_conversation_enhancement=True,
+            max_context_length=4000
+        )
+        agent_middleware.append(context_middleware)
+        console.print("[green]✓[/green] 上下文增强中间件")
+    except Exception as e:
+        console.print(f"[yellow]⚠ 上下文增强中间件失败: {e}[/yellow]")
+
+    # 4. 分层记忆中间件（在上下文增强之后，框架之前）
     try:
         memory_middleware = MemoryMiddlewareFactory.auto_upgrade_memory(
             backend=long_term_backend,
@@ -148,26 +186,50 @@ def create_agent_with_config(model, assistant_id: str, tools: list, memory_mode:
         if isinstance(memory_middleware, list):
             # 混合模式，返回多个中间件
             agent_middleware.extend(memory_middleware)
+            console.print("[green]✓[/green] 分层记忆系统 (混合模式)")
         else:
             # 单个中间件
             agent_middleware.append(memory_middleware)
-
-        # 显示使用的记忆模式
-        if hasattr(memory_middleware, '__class__'):
-            if isinstance(memory_middleware, LayeredMemoryMiddleware):
-                console.print("[green]✓[/green] 启用分层记忆系统", style="dim")
-            elif isinstance(memory_middleware, AgentMemoryMiddleware):
-                console.print("[yellow]⚠[/yellow] 使用传统记忆系统", style="dim")
+            if hasattr(memory_middleware, '__class__'):
+                if isinstance(memory_middleware, LayeredMemoryMiddleware):
+                    console.print("[green]✓[/green] 分层记忆系统")
+                elif isinstance(memory_middleware, AgentMemoryMiddleware):
+                    console.print("[green]✓[/green] 传统记忆系统")
 
     except Exception as e:
         # 如果分层记忆失败，回退到传统记忆
-        console.print(f"[yellow]Warning: Layered memory failed, falling back to legacy: {e}[/yellow]")
+        console.print(f"[yellow]⚠ 记忆系统失败，使用传统模式: {e}[/yellow]")
         agent_middleware.append(
             AgentMemoryMiddleware(backend=long_term_backend, memory_path="/memories/")
         )
 
-    # 添加Shell中间件
+    # 第三层：框架默认中间件（会自动追加到这里）
+    # 框架会自动添加：TodoList, Filesystem, SubAgent, Summarization, Caching, PatchToolCalls
+    console.print("[blue]ℹ 框架默认中间件将自动追加[/blue]")
+
+    # 第四层：工具层（最内层）
+    # 5. 安全检查中间件
+    try:
+        security_middleware = SecurityMiddleware(
+            backend=long_term_backend,
+            security_level="medium",
+            workspace_root=os.getcwd(),
+            enable_file_security=True,
+            enable_command_security=True,
+            enable_content_security=True,
+            allow_path_traversal=False,
+            max_file_size=10 * 1024 * 1024  # 10MB
+        )
+        agent_middleware.append(security_middleware)
+        console.print("[green]✓[/green] 安全检查中间件")
+    except Exception as e:
+        console.print(f"[yellow]⚠ 安全检查中间件失败: {e}[/yellow]")
+
+    # 6. Shell工具中间件（最内层）
     agent_middleware.append(shell_middleware)
+    console.print("[green]✓[/green] Shell工具中间件 (最内层)")
+
+    console.print(f"[bold green]🎉 中间件管道构建完成！共 {len(agent_middleware)} 个中间件[/bold green]")
 
     #创建subagents
     subagents = [defect_analyzer_subagent, code_fixer_subagent, fix_validator_subagent]
