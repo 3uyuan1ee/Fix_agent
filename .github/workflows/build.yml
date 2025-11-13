@@ -28,7 +28,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install build twine
+        pip install build twine setuptools wheel
         pip install -e .[test]
 
     - name: Run tests (if they exist)
@@ -40,10 +40,16 @@ jobs:
         fi
 
     - name: Build package
-      run: python -m build
+      run: |
+        echo "Building package..."
+        python -m build --verbose
+        echo "Build completed"
 
     - name: Check package
-      run: twine check dist/*
+      run: |
+        echo "Checking built packages..."
+        twine check dist/*
+        echo "Package check completed"
 
   build-windows:
     needs: test
@@ -56,27 +62,74 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: '3.12'
 
     - name: Install build dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install build twine
+        pip install build twine setuptools wheel
 
-    - name: Create Windows artifacts
+    - name: Create Windows Portable Package
       run: |
-        python build.py
+        echo "Creating Windows portable package..."
+        $version = "${{ github.ref_name }}"
+        $version = $version -replace '^v', ''
+        $packageName = "Fix_Agent_${version}_Portable_Windows"
+
+        # 创建目录
+        New-Item -ItemType Directory -Force -Path "dist\$packageName"
+
+        # 复制wheel文件
+        Get-ChildItem "dist\*.whl" | ForEach-Object {
+            Copy-Item $_ -Destination "dist\$packageName\"
+        }
+
+        # 创建启动脚本
+        @"
+@echo off
+title Fix Agent - AI代码缺陷修复工具
+echo Starting Fix Agent...
+echo.
+
+python --version >nul 2>&1
+if errorlevel 1 (
+    echo Error: Python not found in PATH
+    echo Please install Python 3.11+ and add it to PATH
+    pause
+    exit /b 1
+)
+
+python -m Fix_agent %*
+
+if errorlevel 1 (
+    echo.
+    echo Fix Agent exited with an error
+    pause
+)
+"@ | Out-File -FilePath "dist\$packageName\Fix_Agent.bat" -Encoding UTF8
+
+        # 复制文档
+        @("README.md", "LICENSE") | ForEach-Object {
+            if (Test-Path $_) {
+                Copy-Item $_ -Destination "dist\$packageName\"
+            }
+        }
+
+        # 创建ZIP包
+        Compress-Archive -Path "dist\$packageName\*" -DestinationPath "dist\$packageName.zip" -Force
+
+        Write-Host "Windows package created: $packageName.zip"
+      shell: powershell
 
     - name: Upload Windows artifacts
       uses: actions/upload-artifact@v3
       with:
         name: windows-artifacts
         path: |
-          windows/
-          WINDOWS.md
+          dist/Fix_Agent_*_Portable_Windows.zip
 
   publish:
-    needs: [test]
+    needs: [test, build-windows]
     runs-on: ubuntu-latest
     if: github.event_name == 'release'
 
@@ -86,7 +139,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: '3.12'
 
     - name: Install build dependencies
       run: |
@@ -95,6 +148,83 @@ jobs:
 
     - name: Build package
       run: python -m build
+
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Fix Agent ${{ github.ref_name }}
+        body: |
+          ## Fix Agent ${{ github.ref_name }}
+
+          ### 🚀 新特性
+          - PowerShell完整支持
+          - Windows服务管理功能
+          - WSL环境检测
+          - 跨平台路径处理
+          - 智能系统信息显示
+
+          ### 📦 安装方式
+          1. **推荐**: `pip install Fix_agent`
+          2. **便携版**: 下载 Assets 中的 Windows ZIP 包
+          3. **开发版**: `pip install git+https://github.com/3uyuan1ee/Fix_agent.git`
+
+          ### 🪟 Windows特定功能
+          ```cmd
+          # 系统信息
+          fix-agent
+          > /sys
+
+          # 服务管理
+          fix-agent
+          > /services list
+          > /services start mysql
+
+          # PowerShell命令
+          fix-agent
+          ! pwsh Get-Process
+          ```
+
+          ### 🔧 系统要求
+          - Python 3.11+
+          - Windows 10/11
+          - 可选: Node.js (JavaScript项目分析)
+
+          📚 [完整文档](https://github.com/3uyuan1ee/Fix_agent#readme)
+          🐛 [问题反馈](https://github.com/3uyuan1ee/Fix_agent/issues)
+        draft: false
+        prerelease: false
+
+    - name: Download Windows artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: windows-artifacts
+        path: dist/
+
+    - name: Upload Release Assets
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        # 获取上传URL
+        UPLOAD_URL=$(curl -s \
+          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Accept: application/vnd.github.v3+json" \
+          "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }}" | \
+          jq -r '.upload_url')
+
+        # 上传Windows便携包
+        for file in dist/*.zip; do
+          if [ -f "$file" ]; then
+            echo "Uploading $file..."
+            curl -X POST \
+              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Content-Type: application/octet-stream" \
+              --data-binary @"$file" \
+              "$UPLOAD_URL?name=$(basename "$file")"
+          fi
+        done
 
     - name: Publish to PyPI
       env:
