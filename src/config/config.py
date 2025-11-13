@@ -77,6 +77,8 @@ COMMANDS = {
     "clear": "Clear screen and reset conversation",
     "help": "Show help information",
     "tokens": "Show token usage for current session",
+    "memory": "Manage agent memory and knowledge base",
+    "memory help": "Show memory detail",
     "cd": "Change working directory",
     "config": "Edit .env configuration file",
     "sys": "Show system information and platform features",

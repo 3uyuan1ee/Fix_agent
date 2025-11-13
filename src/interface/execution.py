@@ -663,6 +663,7 @@ def execute_task(
         # User pressed Ctrl+C - clean up and exit gracefully
         if spinner_active:
             status.stop()
+            spinner_active = False
         console.print("\n[yellow]Interrupted by user[/yellow]\n")
 
         # Inform the agent in background thread (non-blocking)
@@ -684,8 +685,10 @@ def execute_task(
         threading.Thread(target=notify_agent, daemon=True).start()
         return
 
+    # 确保 spinner 总是被停止
     if spinner_active:
         status.stop()
+        spinner_active = False
 
     if has_responded:
         console.print()

@@ -534,6 +534,9 @@ def show_help():
         "  /clear          Clear screen and reset conversation", style=COLORS["dim"]
     )
     console.print(
+        "  /memory          Clear screen and reset conversation", style=COLORS["dim"]
+    )
+    console.print(
         "  /tokens         Show token usage for current session", style=COLORS["dim"]
     )
     console.print(

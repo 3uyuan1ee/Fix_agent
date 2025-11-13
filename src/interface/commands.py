@@ -9,6 +9,20 @@ from langgraph.checkpoint.memory import InMemorySaver
 from ..config.config import COLORS, DEEP_AGENTS_ASCII, console
 from ..ui.ui import TokenTracker, show_interactive_help
 from ..ui.dynamicCli import typewriter
+from ..agents.agent import get_current_assistant_id
+from .memory_commands import (
+    MemoryManager,
+    handle_memory_edit,
+    view_agent_memory,
+    handle_memory_search,
+    handle_memory_export,
+    handle_memory_import,
+    handle_memory_backup,
+    handle_memory_restore,
+    handle_memory_clear,
+    handle_memory_stats,
+    show_memory_menu
+)
 
 
 def handle_command(command: str, agent, token_tracker: TokenTracker) -> str | bool:
@@ -56,6 +70,9 @@ def handle_command(command: str, agent, token_tracker: TokenTracker) -> str | bo
 
     if command_name in ["services", "svc"]:
         return handle_services_command(command_args)
+
+    if command_name == "memory":
+        return handle_memory_command(agent, command_args)
 
     # 使用震动效果显示未知命令错误
     typewriter.error_shake(f"Unknown command: /{cmd}")
@@ -859,4 +876,98 @@ def manage_windows_service(action: str, service_name: str) -> bool:
         return True
     except Exception as e:
         console.print(f"[red]Error managing service: {e}[/red]")
+        return True
+
+
+def handle_memory_command(agent, args: list[str]) -> bool:
+    """Handle /memory command for agent memory management.
+
+    Args:
+        agent: The AI agent instance
+        args: Command arguments
+
+    Returns:
+        True if command was handled
+    """
+    try:
+        # 获取助手ID
+        assistant_id = get_current_assistant_id()
+
+        # 创建记忆管理器
+        memory_manager = MemoryManager(assistant_id=assistant_id)
+
+        # 如果没有参数，显示记忆概览
+        if not args:
+            view_agent_memory(memory_manager)
+            return True
+
+        # 解析子命令
+        subcommand = args[0].lower()
+        subcommand_args = args[1:] if len(args) > 1 else []
+
+        if subcommand in ["help", "h", "?"]:
+            show_memory_menu()
+            return True
+
+        elif subcommand == "edit":
+            return handle_memory_edit(memory_manager, subcommand_args)
+
+        elif subcommand in ["view", "show", "list"]:
+            view_agent_memory(memory_manager)
+            return True
+
+        elif subcommand == "search":
+            if len(subcommand_args) < 1:
+                typewriter.error_shake("❌ 请提供搜索关键词")
+                typewriter.info("用法: /memory search <关键词> [type]")
+                return True
+            query = subcommand_args[0]
+            memory_type = subcommand_args[1] if len(subcommand_args) > 1 else "all"
+            return handle_memory_search(memory_manager, [query, memory_type] if memory_type != "all" else [query])
+
+        elif subcommand == "export":
+            return handle_memory_export(memory_manager, subcommand_args)
+
+        elif subcommand == "import":
+            if len(subcommand_args) < 1:
+                typewriter.error_shake("❌ 请提供导入文件路径")
+                typewriter.info("用法: /memory import <文件路径>")
+                return True
+            return handle_memory_import(memory_manager, subcommand_args)
+
+        elif subcommand == "backup":
+            return handle_memory_backup(memory_manager, subcommand_args)
+
+        elif subcommand == "restore":
+            return handle_memory_restore(memory_manager, subcommand_args)
+
+        elif subcommand == "clean":
+            return handle_memory_clear(memory_manager, subcommand_args)
+
+        elif subcommand == "stats":
+            return handle_memory_stats(memory_manager, [])
+
+        elif subcommand == "files":
+            # 显示记忆文件列表
+            memory_files = memory_manager.list_memory_files()
+            if memory_files:
+                console.print("[bold]📄 记忆文件列表:[/bold]", style=COLORS["primary"])
+                for file_info in memory_files:
+                    icon = "📁" if file_info["type"] == "directory" else "📄"
+                    console.print(f"  {icon} {file_info['name']}")
+                    if file_info.get("size"):
+                        console.print(f"    [dim]大小: {file_info['size']}[/dim]")
+                    if file_info.get("modified"):
+                        console.print(f"    [dim]修改: {file_info['modified']}[/dim]")
+            else:
+                typewriter.info("💭 没有找到记忆文件")
+            return True
+
+        else:
+            typewriter.error_shake(f"❌ 未知的记忆子命令: {subcommand}")
+            show_memory_menu()
+            return True
+
+    except Exception as e:
+        typewriter.error_shake(f"❌ 记忆管理错误: {e}")
         return True

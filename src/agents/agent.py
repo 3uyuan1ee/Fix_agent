@@ -349,3 +349,40 @@ def create_agent_with_config(model, assistant_id: str, tools: list, memory_mode:
     agent.checkpointer = InMemorySaver()
 
     return agent
+
+
+def get_current_assistant_id() -> str:
+    """获取当前助手ID。
+
+    Returns:
+        str: 当前助手ID，如果无法获取则返回默认值
+    """
+    try:
+        # 尝试从环境变量获取
+        if os.getenv("ASSISTANT_ID"):
+            return os.getenv("ASSISTANT_ID")
+
+        # 尝试从当前工作目录推断
+        cwd = Path.cwd()
+
+        # 如果在项目中，尝试使用项目名
+        if (cwd / "pyproject.toml").exists():
+            try:
+                import toml
+                pyproject = toml.load(cwd / "pyproject.toml")
+                project_name = pyproject.get("project", {}).get("name")
+                if project_name:
+                    return project_name.replace("-", "_").replace(" ", "_")
+            except:
+                pass
+
+        # 如果在Fix Agent目录中，使用特殊标识
+        if "Fix Agent" in str(cwd) or "fix_agent" in str(cwd):
+            return "fix_agent"
+
+        # 使用目录名作为备用
+        return cwd.name.replace(" ", "_").replace("-", "_")
+
+    except Exception:
+        # 最后的备用选项
+        return "default_assistant"
