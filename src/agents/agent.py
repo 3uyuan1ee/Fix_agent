@@ -21,6 +21,8 @@ from ..config.config import (
 )
 from ..midware.agent_memory import AgentMemoryMiddleware
 from ..midware.performance_monitor import PerformanceMonitorMiddleware
+from ..midware.layered_memory import LayeredMemoryMiddleware
+from ..midware.memory_adapter import MemoryMiddlewareFactory
 
 
 def list_agents():
@@ -92,7 +94,7 @@ def reset_agent(agent_name: str, source_agent: str = None):
     console.print(f"Location: {agent_dir}\n", style=COLORS["dim"])
 
 
-def create_agent_with_config(model, assistant_id: str, tools: list):
+def create_agent_with_config(model, assistant_id: str, tools: list, memory_mode: str = "auto"):
     """使用自定义架构创建并配置具有指定模型和工具的代理"""
     shell_middleware = ResumableShellToolMiddleware(
         workspace_root=os.getcwd(), execution_policy=HostExecutionPolicy()
@@ -116,8 +118,7 @@ def create_agent_with_config(model, assistant_id: str, tools: list):
         default=FilesystemBackend(), routes={"/memories/": long_term_backend}
     )
 
-    # Use the same backend for agent memory middleware
-    # 添加性能监控中间件（可选，如果系统支持）
+    # 使用新的分层记忆系统
     agent_middleware = []
 
     # 尝试添加性能监控中间件
@@ -133,11 +134,40 @@ def create_agent_with_config(model, assistant_id: str, tools: list):
         # 性能监控失败不影响其他功能
         console.print(f"[yellow]Warning: Performance monitoring disabled: {e}[/yellow]")
 
-    # 添加其他中间件
-    agent_middleware.extend([
-        AgentMemoryMiddleware(backend=long_term_backend, memory_path="/memories/"),
-        shell_middleware,
-    ])
+    # 添加分层记忆中间件（自动选择最佳配置）
+    try:
+        memory_middleware = MemoryMiddlewareFactory.auto_upgrade_memory(
+            backend=long_term_backend,
+            memory_path="/memories/",
+            enable_layered=None,  # 自动检测
+            working_memory_size=10,
+            enable_semantic_memory=True,
+            enable_episodic_memory=True
+        )
+
+        if isinstance(memory_middleware, list):
+            # 混合模式，返回多个中间件
+            agent_middleware.extend(memory_middleware)
+        else:
+            # 单个中间件
+            agent_middleware.append(memory_middleware)
+
+        # 显示使用的记忆模式
+        if hasattr(memory_middleware, '__class__'):
+            if isinstance(memory_middleware, LayeredMemoryMiddleware):
+                console.print("[green]✓[/green] 启用分层记忆系统", style="dim")
+            elif isinstance(memory_middleware, AgentMemoryMiddleware):
+                console.print("[yellow]⚠[/yellow] 使用传统记忆系统", style="dim")
+
+    except Exception as e:
+        # 如果分层记忆失败，回退到传统记忆
+        console.print(f"[yellow]Warning: Layered memory failed, falling back to legacy: {e}[/yellow]")
+        agent_middleware.append(
+            AgentMemoryMiddleware(backend=long_term_backend, memory_path="/memories/")
+        )
+
+    # 添加Shell中间件
+    agent_middleware.append(shell_middleware)
 
     #创建subagents
     subagents = [defect_analyzer_subagent, code_fixer_subagent, fix_validator_subagent]

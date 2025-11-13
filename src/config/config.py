@@ -6,7 +6,7 @@ from pathlib import Path
 
 import dotenv
 from rich.console import Console
-from ..prompt.prompt_template import system_prompt
+from ..prompt.prompt_template import system_prompt,memory_default_prompt
 
 dotenv.load_dotenv()
 
@@ -159,22 +159,7 @@ def get_default_coding_instructions() -> str:
 
 def get_fallback_prompt() -> str:
     """提供备用提示内容，当文件不存在时使用"""
-    return """
-你是一个AI编程助手，专门帮助用户进行代码开发、调试和优化。
-
-你的主要能力包括：
-1. 代码缺陷检测和修复
-2. 代码质量分析
-3. 项目结构优化
-4. 自动化测试建议
-5. 代码重构和优化
-
-请始终：
-- 提供清晰、可执行的代码建议
-- 解释代码修改的原因
-- 考虑最佳实践和安全性
-- 根据用户的技术水平调整解释深度
-""".strip()
+    return memory_default_prompt.strip()
 
 
 def create_model():
