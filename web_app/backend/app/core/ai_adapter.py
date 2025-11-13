@@ -5,8 +5,11 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+# 导入应用配置
+from .config import settings
+
 # 添加CLI项目路径到Python路径
-cli_root = Path(__file__).parent.parent.parent.parent / "src"
+cli_root = Path(__file__).parent.parent.parent.parent.parent / "src"
 if cli_root.exists():
     sys.path.insert(0, str(cli_root))
 
@@ -18,6 +21,7 @@ def _import_cli_modules():
         from config.config import create_model
         from tools.tools import get_all_tools
         from midware.agent_memory import AgentMemoryMiddleware
+        from midware.performance_monitor import PerformanceMonitorMiddleware
         from deepagents.backends.filesystem import FilesystemBackend
         from deepagents.backends.composite import CompositeBackend
         from deepagents.middleware.resumable_shell import ResumableShellToolMiddleware
@@ -28,6 +32,7 @@ def _import_cli_modules():
             'create_model': create_model,
             'get_all_tools': get_all_tools,
             'AgentMemoryMiddleware': AgentMemoryMiddleware,
+            'PerformanceMonitorMiddleware': PerformanceMonitorMiddleware,
             'FilesystemBackend': FilesystemBackend,
             'CompositeBackend': CompositeBackend,
             'ResumableShellToolMiddleware': ResumableShellToolMiddleware,
@@ -57,11 +62,12 @@ class AIAdapter:
         self.cli_available = cli_modules is not None
 
         # 创建会话专用目录
-        self.session_dir = Path("workspaces") / "sessions" / session_id
+        workspace_root = Path(settings.workspace_root)
+        self.session_dir = workspace_root / "sessions" / session_id
         self.session_dir.mkdir(parents=True, exist_ok=True)
 
         # 记忆目录
-        self.memory_dir = Path("workspaces") / "memories" / session_id
+        self.memory_dir = workspace_root / "memories" / session_id
         self.memory_dir.mkdir(parents=True, exist_ok=True)
 
         # 只有在CLI模块可用时才初始化AI代理
@@ -154,7 +160,24 @@ class AIAdapter:
                 memory_path="/memories/"
             )
 
-            return [memory_middleware, shell_middleware]
+            # 性能监控中间件（可选）
+            performance_middleware = None
+            try:
+                performance_middleware = cli_modules['PerformanceMonitorMiddleware'](
+                    backend=long_term_backend,
+                    metrics_path="/performance/",
+                    enable_system_monitoring=True,
+                    max_records=1000
+                )
+            except Exception as e:
+                print(f"Warning: Performance monitoring middleware disabled: {e}")
+
+            # 构建中间件列表
+            middleware_list = [memory_middleware, shell_middleware]
+            if performance_middleware:
+                middleware_list.insert(0, performance_middleware)  # 性能监控放在最外层
+
+            return middleware_list
         except Exception as e:
             print(f"Failed to create middleware: {e}")
             return []
