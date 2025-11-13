@@ -92,7 +92,7 @@ if errorlevel 1 (
           name: windows-package
           path: dist/Fix_Agent_*_Portable_Windows.zip
 
-  create-release:
+  upload:
     needs: [build, build-windows]
     runs-on: ubuntu-latest
 
