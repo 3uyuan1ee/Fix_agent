@@ -145,7 +145,16 @@ def get_default_coding_instructions() -> str:
     if not default_prompt_path.exists():
         return get_fallback_prompt()
 
-    return default_prompt_path.read_text()
+    # 修复 Windows 编码问题，强制使用 UTF-8 编码
+    try:
+        return default_prompt_path.read_text(encoding='utf-8')
+    except UnicodeDecodeError:
+        # 如果 UTF-8 失败，尝试其他编码
+        try:
+            return default_prompt_path.read_text(encoding='gbk')
+        except UnicodeDecodeError:
+            # 如果都失败，使用备用内容
+            return get_fallback_prompt()
 
 
 def get_fallback_prompt() -> str:
