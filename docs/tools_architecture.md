@@ -1,1674 +1,1376 @@
-# Fix Agent Tools 深度架构分析与说明
+# Fix Agent Tools 系统开发指南
 
-## 📋 目录
+## 概述
 
-- [1. 架构概览](#1-架构概览)
-- [2. 模块详解](#2-模块详解)
-- [3. 设计模式分析](#3-设计模式分析)
-- [4. 数据流与调用链](#4-数据流与调用链)
-- [5. 统一导出机制](#5-统一导出机制)
-- [6. 错误处理策略](#6-错误处理策略)
-- [7. 扩展性设计](#7-扩展性设计)
-- [8. 性能优化](#8-性能优化)
-- [9. 最佳实践](#9-最佳实践)
-- [10. 未来展望](#10-未来展望)
+Fix Agent 是一个专业的AI代码分析修复助手，采用多层次架构设计，提供完整的工具生态系统来支持代码质量管理和项目优化。本文档从开发者角度详细介绍Tools系统的设计理念、架构实现和使用方法。
 
----
-
-## 1. 架构概览
+## 1. 系统架构概览
 
 ### 1.1 整体架构图
 
 ```mermaid
 graph TB
-    subgraph "统一入口层"
-        A[tools.py<br/>统一导出入口]
+    subgraph "用户层"
+        A[用户输入] --> B[主代理]
+        B --> C[Tools系统]
+        C --> D[用户输出]
     end
 
-    subgraph "核心分析层"
-        B[multilang_code_analyzers.py<br/>多语言代码分析]
-        C[defect_aggregator.py<br/>智能缺陷聚合]
-        D[error_detector.py<br/>错误检测]
+    subgraph "Tools层"
+        C --> E[代码分析工具]
+        C --> F[项目探索工具]
+        C --> G[格式化工具]
+        C --> H[测试生成工具]
+        C --> I[网络工具]
     end
 
-    subgraph "项目分析层"
-        E[project_explorer.py<br/>项目结构探索]
-        F[project_analyzer.py<br/>动态项目分析]
+    subgraph "中间件层"
+        J[安全中间件]
+        K[性能监控中间件]
+        L[分层记忆中间件]
+        M[上下文增强中间件]
+        N[日志中间件]
     end
 
-    subgraph "开发辅助层"
-        G[professional_formatter.py<br/>专业代码格式化]
-        H[test_generator.py<br/>智能测试生成]
-        I[file_ops.py<br/>文件操作跟踪]
+    subgraph "子代理层"
+        O[defect-analyzer]
+        P[code-fixer]
+        Q[fix-validator]
     end
 
-    subgraph "基础设施层"
-        J[network_tools.py<br/>网络工具]
-        K[langchain_core.tools<br/>工具装饰器]
-    end
+    E --> O
+    O --> P
+    P --> Q
+    Q --> D
 
-    A --> B
-    A --> C
-    A --> D
-    A --> E
-    A --> F
-    A --> G
-    A --> H
-    A --> I
-    A --> J
-
-    B --> C
-    K --> A
-    K --> D
-    K --> E
-    K --> F
-    K --> G
-    K --> H
+    J --> C
+    K --> C
+    L --> C
+    M --> C
+    N --> C
 ```
 
-### 1.2 模块依赖关系
+### 1.2 核心设计原则
 
+- **分层架构**: 工具层 → 中间件层 → 代理层
+- **模块化设计**: 每个工具都是独立的模块，易于维护和扩展
+- **代理模式**: 主代理 + 专业子代理的协作模式
+- **中间件管道**: 多层中间件提供安全、性能、记忆等增强功能
+- **工具链整合**: 基于LangChain和LangGraph构建的工具生态
+
+## 2. 核心工具详解
+
+### 2.1 代码分析工具链
+
+#### analyze_code_defects - 一站式代码缺陷分析
+
+**功能描述**: 提供全面的代码缺陷分析，支持多语言静态分析和智能缺陷聚合。
+
+**技术架构**:
 ```mermaid
 graph LR
-    subgraph "Level 1 - 入口层"
-        A[tools.py]
-    end
-
-    subgraph "Level 2 - 核心层"
-        B[multilang_code_analyzers]
-        C[defect_aggregator]
-        D[error_detector]
-    end
-
-    subgraph "Level 3 - 应用层"
-        E[project_explorer]
-        F[professional_formatter]
-        G[test_generator]
-    end
-
-    subgraph "Level 4 - 基础层"
-        H[network_tools]
-        I[file_ops]
-    end
-
-    A --> B
-    A --> C
-    A --> D
-    A --> E
-    A --> F
-    A --> G
-    A --> H
-    A --> I
-
-    B --> C
-    E --> B
-    F --> B
-    G --> B
+    A[代码输入] --> B[语言检测]
+    B --> C[静态分析器]
+    C --> D[缺陷检测器]
+    D --> E[缺陷聚合器]
+    E --> F[优先级排序]
+    F --> G[修复建议]
+    G --> H[结构化输出]
 ```
 
----
+**核心组件**:
+- `CodeDefectDetector`: 基础缺陷检测器
+- `ErrorDetector`: 错误模式识别
+- `DefectAggregator`: 缺陷智能聚合
+- `StaticCodeAnalyzer`: 静态代码分析
 
-## 2. 模块详解
-
-### 2.1 tools.py - 统一导出入口
-
-#### 2.1.1 设计思想
-tools.py 是整个工具系统的统一入口，采用**门面模式（Facade Pattern）**设计，为上层应用提供统一的接口。
-
-#### 2.1.2 核心功能
-
+**使用示例**:
 ```python
-# 工具分类管理
-TOOL_CATEGORIES = {
-    "网络工具": ["http_request", "web_search"],
-    "代码分析": ["analyze_code_defects", "analyze_code_complexity"],
-    "错误检测": ["compile_project", "run_and_monitor", "run_tests_with_error_capture", "analyze_existing_logs"],
-    "项目探索": ["explore_project_structure", "analyze_code_complexity"],
+result = await analyze_code_defects(
+    file_paths=["src/main.py", "src/utils.js"],
+    language="auto",  # 自动检测
+    output_format="json",
+    include_fix_suggestions=True,
+    severity_threshold="medium"
+)
+```
+
+**输出格式**:
+```json
+{
+    "summary": {
+        "total_defects": 15,
+        "critical": 2,
+        "high": 5,
+        "medium": 8,
+        "languages": ["python", "javascript"]
+    },
+    "defects": [
+        {
+            "id": "DEF001",
+            "file": "src/main.py",
+            "line": 25,
+            "severity": "high",
+            "type": "security",
+            "description": "潜在SQL注入漏洞",
+            "fix_suggestion": "使用参数化查询"
+        }
+    ]
 }
-
-# 统一导出管理
-__all__ = [
-    # 网络工具
-    "http_request", "web_search",
-    # 代码分析工具链
-    "analyze_code_defects",
-    # 错误检测工具
-    "compile_project", "run_and_monitor", "run_tests_with_error_capture", "analyze_existing_logs",
-    # 项目探索工具
-    "explore_project_structure", "analyze_code_complexity",
-]
 ```
 
-#### 2.1.3 工具链组合示例
+#### analyze_code_file - 单文件深度分析
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant tools.py as Tools
-    participant multilang as Analyzer
-    participant aggregator as Aggregator
+**功能特性**:
+- 自动检测编程语言
+- 多维度代码质量检查
+- 语法、逻辑、安全问题识别
+- 量化质量评分
 
-    Client->>Tools: analyze_code_defects(file_path)
-    Tools->>Analyzer: analyze_code_file.invoke()
-    Analyzer-->>Tools: AnalysisResult
-    Tools->>Aggregator: aggregate_defects.invoke()
-    Aggregator-->>Tools: DefectCluster
-    Tools-->>Client: Combined JSON Result
-```
-
-### 2.2 multilang_code_analyzers.py - 多语言代码分析
-
-#### 2.2.1 架构设计
-采用**策略模式（Strategy Pattern）** + **抽象工厂模式（Abstract Factory Pattern）**：
-
-```mermaid
-classDiagram
-    class BaseCodeAnalyzer {
-        <<abstract>>
-        +analyze(file_path: str) AnalysisResult
-        +can_analyze(file_path: str) bool
-        +get_supported_extensions() list
-    }
-
-    class PythonAnalyzer {
-        +analyze(file_path: str) AnalysisResult
-        +run_pylint() dict
-        +run_mypy() dict
-        +run_black() dict
-    }
-
-    class JavaScriptAnalyzer {
-        +analyze(file_path: str) AnalysisResult
-        +run_eslint() dict
-        +run_prettier() dict
-    }
-
-    class JavaAnalyzer {
-        +analyze(file_path: str) AnalysisResult
-        +run_spotbugs() dict
-        +run_checkstyle() dict
-    }
-
-    BaseCodeAnalyzer <|-- PythonAnalyzer
-    BaseCodeAnalyzer <|-- JavaScriptAnalyzer
-    BaseCodeAnalyzer <|-- JavaAnalyzer
-```
-
-#### 2.2.2 核心数据结构
-
+**实现原理**:
 ```python
-@dataclass
-class AnalysisIssue:
-    file_path: str
-    line_number: int
-    column_number: int
-    severity: str  # error, warning, info
-    message: str
-    rule_id: str
-    category: str
-    tool_name: str
+def analyze_code_file(
+    file_path: str,
+    output_format: str = "json",
+    max_lines: int = 2000,
+    skip_comments: bool = True
+) -> str:
+    # 智能语言检测
+    language = self.detect_language(file_path)
 
-@dataclass
-class AnalysisResult:
-    success: bool
-    file_path: str
-    language: str
-    tool_name: str
-    issues: List[AnalysisIssue]
-    score: int  # 0-100
-    execution_time: float
-    metadata: Dict[str, Any]
-```
-
-### 2.3 defect_aggregator.py - 智能缺陷聚合
-
-#### 2.3.1 聚类算法
-
-```mermaid
-flowchart TD
-    A[输入缺陷列表] --> B[缺陷预处理]
-    B --> C[相似度计算]
-    C --> D{相似度 >= 0.8?}
-    D -->|是| E[合并到现有簇]
-    D -->|否| F[创建新簇]
-    E --> G[更新簇中心]
-    F --> G
-    G --> H{还有未处理缺陷?}
-    H -->|是| C
-    H -->|否| I[优先级排序]
-    I --> J[修复建议生成]
-    J --> K[输出聚合结果]
-```
-
-#### 2.3.2 相似度计算算法
-
-```python
-def _calculate_similarity(self, defect1: AnalysisIssue, defect2: AnalysisIssue) -> float:
-    """
-    多维度相似度计算：
-    - 文件相似度 (权重: 0.2)
-    - 消息语义相似度 (权重: 0.5)
-    - 类别相似度 (权重: 0.1)
-    - 规则相似度 (权重: 0.1)
-    - 位置相似度 (权重: 0.1)
-    """
-    similarity = 0.0
-
-    # 文件路径相似度
-    file_similarity = self._calculate_file_similarity(defect1.file_path, defect2.file_path)
-    similarity += file_similarity * 0.2
-
-    # 消息语义相似度
-    message_similarity = self._calculate_semantic_similarity(defect1.message, defect2.message)
-    similarity += message_similarity * 0.5
-
-    # 类别相似度
-    category_similarity = 1.0 if defect1.category == defect2.category else 0.0
-    similarity += category_similarity * 0.1
-
-    # 规则相似度
-    rule_similarity = 1.0 if defect1.rule_id == defect2.rule_id else 0.0
-    similarity += rule_similarity * 0.1
-
-    # 位置相似度
-    location_similarity = self._calculate_location_similarity(defect1, defect2)
-    similarity += location_similarity * 0.1
-
-    return min(similarity, 1.0)
-```
-
-### 2.4 error_detector.py - 错误检测
-
-#### 2.4.1 错误检测框架
-
-```mermaid
-stateDiagram-v2
-    [*] --> 编译检查
-    编译检查 --> 运行监控: 编译成功
-    编译检查 --> 错误报告: 编译失败
-
-    运行监控 --> 测试执行: 启动成功
-    运行监控 --> 错误报告: 启动失败
-
-    测试执行 --> 日志分析: 测试完成
-    测试执行 --> 错误报告: 测试失败
-
-    日志分析 --> 综合报告: 分析完成
-    错误报告 --> 综合报告: 错误收集完成
-    综合报告 --> [*]
-```
-
-#### 2.4.2 运行时监控机制
-
-```python
-def _monitor_process(self, process: subprocess.Popen, timeout: int) -> Dict[str, Any]:
-    """
-    实时进程监控：
-    1. CPU使用率监控
-    2. 内存使用监控
-    3. 错误输出捕获
-    4. 超时控制
-    5. 优雅终止
-    """
-    monitor_data = {
-        "start_time": time.time(),
-        "cpu_usage": [],
-        "memory_usage": [],
-        "errors": [],
-        "output": []
+    # 多维度分析
+    result = {
+        "language": language,
+        "analysis_type": "code_quality",
+        "total_lines": total_lines,
+        "syntax_errors": syntax_errors,
+        "logic_issues": logic_issues,
+        "security_violations": security_issues,
+        "recommendations": recommendations,
+        "quality_score": self._calculate_quality_score(analysis_results)
     }
-
-    try:
-        while process.poll() is None:
-            # 收集系统资源使用情况
-            cpu_percent = psutil.cpu_percent()
-            memory_info = psutil.virtual_memory()
-
-            monitor_data["cpu_usage"].append(cpu_percent)
-            monitor_data["memory_usage"].append(memory_info.percent)
-
-            # 检查超时
-            if time.time() - monitor_data["start_time"] > timeout:
-                process.terminate()
-                break
-
-            time.sleep(1)
-
-    except Exception as e:
-        monitor_data["errors"].append(str(e))
-
-    return monitor_data
 ```
 
-### 2.5 project_explorer.py - 项目结构探索
-
-#### 2.5.1 项目类型识别流程
-
+**质量评分算法**:
 ```mermaid
-flowchart TD
-    A[扫描项目文件] --> B[检测配置文件]
-    B --> C{识别项目类型}
-
-    C -->|Python项目| D[Python Package/Web]
-    C -->|JavaScript项目| E[Node.js/React/Vue]
-    C -->|Java项目| F[Maven/Gradle]
-    C -->|C++项目| G[CMake/Makefile]
-    C -->|Go项目| H[Go Module]
-    C -->|Rust项目| I[Rust Crate]
-    C -->|未知| J[Unknown]
-
-    D --> K[识别架构模式]
-    E --> K
-    F --> K
-    G --> K
-    H --> K
-    I --> K
-    J --> K
-
-    K --> L[检测技术栈]
-    L --> M[分析依赖关系]
-    M --> N[生成项目报告]
-```
-
-#### 2.5.2 技术栈检测算法
-
-```python
-def _detect_technologies(self, files: List[ProjectFile]) -> List[Technology]:
-    """
-    智能技术栈检测：
-    1. 文件名模式匹配
-    2. 文件内容关键词检测
-    3. 依赖关系分析
-    4. 目录结构模式识别
-    """
-    technologies = []
-
-    # 检测框架
-    for framework, patterns in self.framework_patterns.items():
-        confidence = 0.0
-        evidence = []
-
-        # 检查文件名模式
-        for pattern in patterns:
-            if self._check_file_pattern(files, pattern):
-                confidence += 0.3
-                evidence.append(f"File pattern: {pattern}")
-
-        # 检查目录结构
-        if self._check_directory_structure(files, patterns):
-            confidence += 0.2
-            evidence.append("Directory structure match")
-
-        # 检查文件内容
-        if self._check_file_content(files, patterns):
-            confidence += 0.5
-            evidence.append("Content match")
-
-        if confidence > 0.3:
-            technologies.append(Technology(
-                name=framework,
-                category="framework",
-                confidence=min(confidence, 1.0),
-                evidence=evidence
-            ))
-
-    return technologies
-```
-
----
-
-## 3. 设计模式分析
-
-### 3.1 策略模式（Strategy Pattern）
-
-**应用场景**: `multilang_code_analyzers.py`
-
-```mermaid
-classDiagram
-    class Context {
-        -analyzer: BaseCodeAnalyzer
-        +set_analyzer(analyzer: BaseCodeAnalyzer)
-        +analyze_file(file_path: str) AnalysisResult
-    }
-
-    class BaseCodeAnalyzer {
-        <<abstract>>
-        +analyze(file_path: str) AnalysisResult
-    }
-
-    class PythonStrategy {
-        +analyze(file_path: str) AnalysisResult
-    }
-
-    class JavaScriptStrategy {
-        +analyze(file_path: str) AnalysisResult
-    }
-
-    Context --> BaseCodeAnalyzer
-    BaseCodeAnalyzer <|-- PythonStrategy
-    BaseCodeAnalyzer <|-- JavaScriptStrategy
-```
-
-**优势**:
-- 算法可以自由切换
-- 避免使用多重条件判断
-- 扩展性良好，易于添加新语言支持
-
-### 3.2 装饰器模式（Decorator Pattern）
-
-**应用场景**: `@tool` 装饰器
-
-```mermaid
-classDiagram
-    class ToolFunction {
-        +invoke(args: dict) str
-    }
-
-    class ToolDecorator {
-        -tool_func: ToolFunction
-        -description: str
-        +invoke(args: dict) str
-        +validate_args(args: dict) bool
-        +handle_error(error: Exception) str
-    }
-
-    class ConcreteTool {
-        +execute_core_logic(args: dict) str
-    }
-
-    ToolDecorator --> ToolFunction
-    ToolFunction <|-- ConcreteTool
-```
-
-**优势**:
-- 动态添加功能
-- 不修改原有代码结构
-- 提供统一的工具接口
-
-### 3.3 工厂模式（Factory Pattern）
-
-**应用场景**: 分析器创建
-
-```python
-class AnalyzerFactory:
-    _analyzers = {
-        '.py': PythonAnalyzer,
-        '.js': JavaScriptAnalyzer,
-        '.ts': TypeScriptAnalyzer,
-        '.java': JavaAnalyzer,
-        '.cpp': CppAnalyzer,
-        '.go': GoAnalyzer,
-        '.rs': RustAnalyzer,
-    }
-
-    @classmethod
-    def create_analyzer(cls, file_path: str) -> BaseCodeAnalyzer:
-        """根据文件扩展名创建合适的分析器"""
-        ext = Path(file_path).suffix.lower()
-        analyzer_class = cls._analyzers.get(ext)
-
-        if not analyzer_class:
-            raise UnsupportedLanguageError(f"不支持的语言: {ext}")
-
-        return analyzer_class()
-```
-
-### 3.4 观察者模式（Observer Pattern）
-
-**应用场景**: `FileOpTracker`
-
-```mermaid
-classDiagram
-    class FileOperationSubject {
-        -observers: List[FileOpObserver]
-        +attach(observer: FileOpObserver)
-        +detach(observer: FileOpObserver)
-        +notify(operation: FileOperationRecord)
-    }
-
-    class FileOpObserver {
-        <<interface>>
-        +update(operation: FileOperationRecord)
-    }
-
-    class FileOpTracker {
-        +track_operation(operation: FileOperationRecord)
-        +update(operation: FileOperationRecord)
-    }
-
-    FileOperationSubject --> FileOpObserver
-    FileOpObserver <|-- FileOpTracker
-```
-
----
-
-## 4. 数据流与调用链
-
-### 4.1 主要数据流
-
-```mermaid
-flowchart TD
-    A[用户输入] --> B[tools.py统一入口]
-    B --> C{工具类型判断}
-
-    C -->|代码分析| D[analyze_code_defects]
-    C -->|项目探索| E[explore_project_structure]
-    C -->|错误检测| F[compile_project]
-    C -->|网络请求| G[http_request]
-
-    D --> H[multilang_code_analyzers]
-    H --> I[defect_aggregator]
-    I --> J[统一JSON输出]
-
-    E --> K[项目类型识别]
-    K --> L[技术栈检测]
-    L --> M[依赖分析]
-    M --> N[项目报告]
-
-    F --> O[编译检查]
-    O --> P[运行监控]
-    P --> Q[错误收集]
-    Q --> R[错误报告]
-
-    J --> S[用户展示]
-    N --> S
-    R --> S
-    G --> S
-```
-
-### 4.2 智能代码缺陷分析链
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant Tools
-    participant Factory
-    participant Analyzer
-    participant Aggregator
-    participant Reporter
-
-    User->>Tools: analyze_code_defects(file_path)
-    Tools->>Factory: create_analyzer(file_path)
-    Factory-->>Tools: PythonAnalyzer
-
-    Tools->>Analyzer: analyze(file_path)
-    Analyzer->>Analyzer: run_pylint()
-    Analyzer->>Analyzer: run_mypy()
-    Analyzer->>Analyzer: run_black()
-    Analyzer-->>Tools: AnalysisResult(issues)
-
-    Tools->>Aggregator: aggregate_defects(issues)
-    Aggregator->>Aggregator: calculate_similarity()
-    Aggregator->>Aggregator: cluster_defects()
-    Aggregator->>Aggregator: rank_by_priority()
-    Aggregator-->>Tools: DefectCluster
-
-    Tools->>Reporter: generate_report()
-    Reporter-->>Tools: JSON_Report
-    Tools-->>User: Analysis_Report
-```
-
-### 4.3 项目探索流程
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant Explorer
-    participant TypeDetector
-   参与 TechDetector
-    participant DependencyAnalyzer
-    participant Reporter
-
-    User->>Explorer: explore_project_structure(project_path)
-    Explorer->>Explorer: scan_files()
-
-    Explorer->>TypeDetector: detect_project_type()
-    TypeDetector->>TypeDetector: check_configuration_files()
-    TypeDetector->>TypeDetector: analyze_directory_structure()
-    TypeDetector-->>Explorer: ProjectType
-
-    Explorer->>TechDetector: detect_technologies()
-    TechDetector->>TechDetector: match_patterns()
-    TechDetector->>TechDetector: analyze_content()
-    TechDetector-->>Explorer: Technology[]
-
-    Explorer->>DependencyAnalyzer: analyze_dependencies()
-    DependencyAnalyzer->>DependencyAnalyzer: parse_package_files()
-    DependencyAnalyzer->>DependencyAnalyzer: build_dependency_graph()
-    DependencyAnalyzer-->>Explorer: DependencyGraph
-
-    Explorer->>Reporter: generate_project_report()
-    Reporter-->>Explorer: ProjectReport
-    Explorer-->>User: JSON_Report
-```
-
----
-
-## 5. 统一导出机制
-
-### 5.1 导出架构
-
-```mermaid
-graph TB
-    subgraph "工具层"
-        A[PythonAnalyzer]
-        B[JavaScriptAnalyzer]
-        C[ErrorDetector]
-        D[ProjectExplorer]
-        E[NetworkTools]
-    end
-
-    subgraph "导出层"
-        F[tools.py]
-        G[__all__ 列表]
-        H[TOOL_CATEGORIES 字典]
-    end
-
-    subgraph "接口层"
-        I[get_all_tools()]
-        J[get_tools_by_category()]
-        K[动态工具发现]
-    end
-
-    A --> F
-    B --> F
-    C --> F
-    D --> F
-    E --> F
-
-    F --> G
-    F --> H
-
-    G --> I
-    H --> J
-    I --> K
-    J --> K
-```
-
-### 5.2 工具获取机制
-
-```python
-def get_all_tools() -> Dict[str, Any]:
-    """
-    获取所有可用工具
-
-    Returns:
-        Dict[str, Any]: 工具名称到工具对象的映射
-    """
-    # 从模块全局变量中获取工具
-    available_tools = {}
-
-    for tool_name in __all__:
-        if tool_name in globals():
-            tool_obj = globals()[tool_name]
-            # 验证工具是否可用
-            if hasattr(tool_obj, 'invoke') or callable(tool_obj):
-                available_tools[tool_name] = tool_obj
-
-    return available_tools
-
-def get_tools_by_category(category: str) -> Dict[str, Any]:
-    """
-    按分类获取工具
-
-    Args:
-        category: 工具分类名称
-
-    Returns:
-        Dict[str, Any]: 该分类下的工具字典
-    """
-    if category not in TOOL_CATEGORIES:
-        return {}
-
-    category_tools = {}
-    all_tools = get_all_tools()
-
-    for tool_name in TOOL_CATEGORIES[category]:
-        if tool_name in all_tools:
-            category_tools[tool_name] = all_tools[tool_name]
-
-    return category_tools
-```
-
-### 5.3 动态工具加载
-
-```mermaid
-flowchart TD
-    A[启动应用] --> B[扫描tools目录]
-    B --> C[发现工具模块]
-    C --> D[检查@tool装饰器]
-    D --> E[注册工具到__all__]
-    E --> F[更新TOOL_CATEGORIES]
-    F --> G[工具可用性检查]
-    G --> H[构建工具注册表]
-    H --> I[工具系统就绪]
-```
-
----
-
-## 6. 错误处理策略
-
-### 6.1 分层错误处理架构
-
-```mermaid
-graph TB
-    subgraph "用户层"
-        A[用户调用]
-    end
-
-    subgraph "接口层"
-        B[tools.py统一接口]
-    end
-
-    subgraph "工具层"
-        C[各个工具模块]
-    end
-
-    subgraph "基础层"
-        D[外部工具调用]
-        E[文件系统操作]
-        F[网络请求]
-    end
-
-    A --> B
-    B --> C
-    C --> D
-    C --> E
-    C --> F
-
-    D --> G[工具错误处理]
-    E --> H[文件错误处理]
-    F --> I[网络错误处理]
-
-    G --> J[统一错误格式]
+graph TD
+    A[代码文件] --> B[语法检查权重30%]
+    A --> C[逻辑复杂度权重25%]
+    A --> D[安全性权重25%]
+    A --> E[可读性权重20%]
+
+    B --> F[语法得分]
+    C --> G[复杂度得分]
+    D --> H[安全得分]
+    E --> I[可读性得分]
+
+    F --> J[综合质量评分]
+    G --> J
     H --> J
     I --> J
-
-    J --> K[错误日志记录]
-    K --> L[用户友好反馈]
 ```
 
-### 6.2 错误处理模式
+#### analyze_code_complexity - 代码复杂度分析
 
+**评估指标**:
+- **圈复杂度**: 衡量代码的线性独立路径数量
+- **认知复杂度**: 评估代码的理解难度
+- **函数复杂度**: 分析函数的参数、返回值、嵌套层级
+- **类复杂度**: 评估类的职责和耦合度
+
+**复杂度分级标准**:
 ```python
-def handle_tool_execution(tool_func, *args, **kwargs):
-    """
-    统一的工具执行错误处理模式
-    """
-    try:
-        # 参数验证
-        if not validate_arguments(tool_func, *args, **kwargs):
-            return create_error_response("参数验证失败", "INVALID_ARGS")
-
-        # 工具执行
-        result = tool_func.invoke(*args, **kwargs)
-
-        # 结果验证
-        if not validate_result(result):
-            return create_error_response("工具结果格式错误", "INVALID_RESULT")
-
-        return result
-
-    except ImportError as e:
-        return create_error_response(
-            f"工具依赖缺失: {str(e)}",
-            "DEPENDENCY_MISSING",
-            suggestion="请安装相应的依赖包"
-        )
-
-    except FileNotFoundError as e:
-        return create_error_response(
-            f"文件或路径不存在: {str(e)}",
-            "FILE_NOT_FOUND",
-            suggestion="请检查文件路径是否正确"
-        )
-
-    except PermissionError as e:
-        return create_error_response(
-            f"权限不足: {str(e)}",
-            "PERMISSION_DENIED",
-            suggestion="请检查文件或目录的访问权限"
-        )
-
-    except TimeoutError as e:
-        return create_error_response(
-            f"操作超时: {str(e)}",
-            "TIMEOUT_ERROR",
-            suggestion="请增加超时时间或优化操作"
-        )
-
-    except Exception as e:
-        # 记录未知错误
-        logger.error(f"未知错误: {str(e)}", exc_info=True)
-        return create_error_response(
-            f"工具执行失败: {str(e)}",
-            "UNKNOWN_ERROR",
-            suggestion="请查看日志获取详细信息"
-        )
+class ComplexityLevel(Enum):
+    SIMPLE = "simple"      # 圈复杂度 < 10
+    MODERATE = "moderate"  # 圈复杂度 10-20
+    COMPLEX = "complex"    # 圈复杂度 20-50
+    VERY_COMPLEX = "very_complex"  # 圈复杂度 > 50
 ```
 
-### 6.3 优雅降级机制
+### 2.2 项目探索工具
+
+#### explore_project_structure - 项目结构智能分析
+
+**核心能力**:
+- 项目类型自动识别
+- 技术栈智能检测
+- 架构模式分析
+- 依赖关系分析
+
+**项目类型识别**:
+```mermaid
+graph TD
+    A[项目根目录] --> B{检测配置文件}
+
+    B --> C[requirements.txt/pyproject.toml]
+    B --> D[package.json]
+    B --> E[pom.xml]
+    B --> F[go.mod]
+    B --> G[Cargo.toml]
+
+    C --> H[Python项目]
+    D --> I[Node.js项目]
+    E --> J[Java项目]
+    F --> K[Go项目]
+    G --> L[Rust项目]
+```
+
+**架构模式识别**:
+```python
+class ArchitecturePattern(Enum):
+    MONOLITH = "monolith"        # 单体应用
+    MICROSERVICE = "microservice"  # 微服务
+    LIBRARY = "library"          # 库/框架
+    PLUGIN = "plugin"            # 插件系统
+    CLI_TOOL = "cli_tool"        # 命令行工具
+    WEB_APP = "web_app"          # Web应用
+    API_SERVICE = "api_service"  # API服务
+```
+
+**分析报告结构**:
+```json
+{
+    "project_info": {
+        "name": "my-project",
+        "type": "python_web",
+        "architecture": "monolith",
+        "primary_language": "python"
+    },
+    "tech_stack": {
+        "frameworks": ["Django", "Django REST Framework"],
+        "databases": ["PostgreSQL", "Redis"],
+        "testing": ["pytest", "coverage"],
+        "deployment": ["Docker", "Nginx"]
+    },
+    "structure_analysis": {
+        "total_files": 245,
+        "code_files": 189,
+        "test_files": 56,
+        "main_directories": ["src", "tests", "docs", "config"]
+    }
+}
+```
+
+### 2.3 专业代码格式化工具
+
+#### format_code_professional - 智能代码格式化
+
+**支持的语言和工具矩阵**:
+```mermaid
+graph LR
+    A[格式化器] --> B[Python]
+    A --> C[JavaScript/TypeScript]
+    A --> D[C/C++]
+
+    B --> E[black + isort]
+    C --> F[prettier]
+    D --> G[clang-format]
+
+    E --> H[PEP 8标准化]
+    F --> I[标准风格]
+    G --> J[LLVM风格]
+```
+
+**操作模式**:
+```python
+class FormatOperation(Enum):
+    AUTO_FIX = "auto_fix"      # 自动格式化并保存
+    PREVIEW = "preview"        # 预览变更，不修改文件
+    CHECK = "check"           # 检查是否需要格式化
+    DIFF = "diff"             # 显示详细差异对比
+```
+
+**智能格式化流程**:
+```mermaid
+flowchart TD
+    A[输入文件] --> B[语言检测]
+    B --> C[选择格式化器]
+    C --> D[格式化配置加载]
+    D --> E[执行格式化]
+    E --> F{操作模式}
+
+    F -->|auto_fix| G[保存格式化结果]
+    F -->|preview| H[返回预览结果]
+    F -->|check| I[返回检查状态]
+    F -->|diff| J[生成差异报告]
+```
+
+**设计模式实现**:
+```python
+class ProfessionalCodeFormatter:
+    def __init__(self):
+        self.formatters = {
+            'python': PythonFormatter(),    # black + isort
+            'javascript': JavaScriptFormatter(),  # prettier
+            'typescript': TypeScriptFormatter(),  # prettier
+            'cpp': CppFormatter(),          # clang-format
+            'c': CFormatter(),              # clang-format
+        }
+
+    def format(self, file_path: str, operation: FormatOperation):
+        language = self.detect_language(file_path)
+        formatter = self.formatters.get(language)
+
+        if formatter:
+            return formatter.format(file_path, operation)
+        else:
+            raise UnsupportedLanguageError(f"不支持的语言: {language}")
+```
+
+#### batch_format_professional - 批量格式化工具
+
+**功能特性**:
+- 支持多种文件模式匹配（glob、正则表达式）
+- 智能语言检测和分类
+- 并行处理优化
+- 详细统计报告
+
+**批量处理流程**:
+```mermaid
+graph TD
+    A[文件模式匹配] --> B[文件收集]
+    B --> C[语言分类]
+    C --> D[并行格式化]
+    D --> E[结果汇总]
+    E --> F[统计报告]
+
+    D --> G[Python文件组]
+    D --> H[JavaScript文件组]
+    D --> I[其他语言文件组]
+```
+
+**统计报告示例**:
+```json
+{
+    "summary": {
+        "total_files": 156,
+        "processed": 148,
+        "failed": 8,
+        "execution_time": "12.5s"
+    },
+    "by_language": {
+        "python": {
+            "count": 89,
+            "formatted": 85,
+            "already_compliant": 4,
+            "errors": 0
+        },
+        "javascript": {
+            "count": 45,
+            "formatted": 42,
+            "already_compliant": 2,
+            "errors": 1
+        }
+    },
+    "failed_files": [
+        {
+            "file": "src/broken.js",
+            "error": "SyntaxError: Unexpected token"
+        }
+    ]
+}
+```
+
+### 2.4 智能测试生成工具
+
+#### generate_validation_tests_tool - AI驱动测试生成
+
+**测试类型覆盖**:
+```python
+class TestType(Enum):
+    UNIT = "unit"              # 单元测试
+    INTEGRATION = "integration"  # 集成测试
+    REGRESSION = "regression"   # 回归测试
+    SMOKE = "smoke"            # 冒烟测试
+    PERFORMANCE = "performance"  # 性能测试
+```
+
+**支持的测试框架**:
+```mermaid
+graph LR
+    A[测试框架] --> B[Python]
+    A --> C[Java]
+    A --> D[JavaScript]
+    A --> E[Go]
+    A --> F[C/C++]
+
+    B --> G[pytest]
+    C --> H[JUnit]
+    D --> I[Jest]
+    E --> J[go test]
+    F --> K[Catch2]
+```
+
+**智能测试生成算法**:
+```python
+class SmartTestGenerator:
+    def generate_validation_tests(self, defects, fixes, project_context):
+        # 1. 为每个缺陷生成回归测试
+        regression_tests = self._generate_regression_tests(defects)
+
+        # 2. 为修复生成验证测试
+        validation_tests = self._generate_validation_tests(fixes, defects)
+
+        # 3. 基于代码结构生成集成测试
+        integration_tests = self._generate_integration_tests(project_context)
+
+        # 4. 生成边界和异常测试
+        edge_case_tests = self._generate_edge_case_tests(defects)
+
+        return {
+            "regression_tests": regression_tests,
+            "validation_tests": validation_tests,
+            "integration_tests": integration_tests,
+            "edge_case_tests": edge_case_tests
+        }
+```
+
+**测试质量保障**:
+- **覆盖率分析**: 确保测试覆盖关键路径
+- **断言质量**: 生成有意义的断言
+- **测试数据管理**: 智能生成测试数据
+- **Mock策略**: 自动生成必要的Mock对象
+
+### 2.5 网络工具集
+
+#### web_search - 智能网络搜索
+
+**技术栈**: 基于Tavily API构建
+**功能特性**:
+- 中英文智能搜索
+- 多主题类型支持（general、news、finance）
+- 结构化结果返回
+- 相关性评分和内容过滤
+
+**搜索流程**:
+```mermaid
+flowchart TD
+    A[用户查询] --> B[查询预处理]
+    B --> C[语言检测]
+    C --> D[主题分类]
+    D --> E[Tavily API调用]
+    E --> F[结果解析]
+    F --> G[相关性评分]
+    G --> H[内容过滤]
+    H --> I[结构化输出]
+```
+
+**使用示例**:
+```python
+result = await web_search(
+    query="Python异步编程最佳实践",
+    topic="general",
+    max_results=10,
+    include_content=True,
+    language="zh"
+)
+```
+
+#### http_request - 通用HTTP客户端
+
+**功能特性**:
+- 支持所有HTTP方法（GET、POST、PUT、DELETE等）
+- 自定义请求头和参数
+- JSON和表单数据处理
+- 完善的错误处理和超时控制
+
+## 3. 中间件系统架构
+
+### 3.1 分层记忆中间件
+
+**三层记忆架构**:
+```mermaid
+graph TD
+    A[用户输入] --> B[工作记忆层]
+    B --> C[短期记忆层]
+    C --> D[长期记忆层]
+
+    B --> E[最近10条对话]
+    C --> F[会话级上下文]
+    D --> G[语义记忆 + 情节记忆]
+
+    E --> H[临时存储]
+    F --> I[会话存储]
+    G --> J[持久化存储]
+```
+
+**记忆管理策略**:
+```python
+class LayeredMemoryMiddleware:
+    def __init__(self, backend, **kwargs):
+        self.working_memory = WorkingMemory(capacity=10)
+        self.short_term_memory = ShortTermMemory(capacity=100)
+        self.long_term_memory = LongTermMemory(backend)
+
+        # 智能管理策略
+        self.importance_scorer = ImportanceScorer()
+        self.access_tracker = AccessTracker()
+        self.reclaim_policy = ReclaimPolicy()
+```
+
+**记忆功能特性**:
+- **重要性评分**: 基于内容价值和用户行为
+- **访问频率追踪**: 优化记忆检索效率
+- **自动内存回收**: LRU和重要性结合的清理策略
+- **语义搜索**: 基于向量的相似性搜索
+
+### 3.2 安全检查中间件
+
+**多层次安全防护体系**:
+```mermaid
+graph TD
+    A[用户输入] --> B[输入验证]
+    B --> C[路径检查]
+    C --> D[文件操作安全]
+    D --> E[命令注入防护]
+    E --> F[内容安全检查]
+    F --> G[资源访问控制]
+    G --> H[安全输出]
+```
+
+**安全检查矩阵**:
+```python
+class SecurityMiddleware:
+    def __init__(self, security_level="medium"):
+        self.security_levels = {
+            "low": SecurityConfig(
+                check_dangerous_files=False,
+                validate_commands=False,
+                max_file_size=100*1024*1024  # 100MB
+            ),
+            "medium": SecurityConfig(
+                check_dangerous_files=True,
+                validate_commands=True,
+                max_file_size=50*1024*1024   # 50MB
+            ),
+            "high": SecurityConfig(
+                check_dangerous_files=True,
+                validate_commands=True,
+                max_file_size=10*1024*1024   # 10MB
+            ),
+            "strict": SecurityConfig(
+                check_dangerous_files=True,
+                validate_commands=True,
+                max_file_size=1*1024*1024    # 1MB
+            )
+        }
+```
+
+**安全防护机制**:
+- **文件操作安全**: 阻止危险文件扩展名（.exe、.bat、.sh等）
+- **命令注入防护**: 输入验证和危险命令检测
+- **路径遍历防护**: 路径规范化和白名单验证
+- **资源访问控制**: 文件大小和数量限制
+- **内容安全**: 敏感信息检测和脱敏处理
+
+### 3.3 性能监控中间件
+
+**性能指标体系**:
+```python
+@dataclass
+class PerformanceRecord:
+    timestamp: float        # 时间戳
+    response_time: float    # 响应时间（毫秒）
+    token_count: int       # Token使用量
+    tool_calls: int        # 工具调用次数
+    memory_usage: float    # 内存使用（MB）
+    cpu_usage: float       # CPU使用率（%）
+    error_count: int       # 错误次数
+```
+
+**性能监控架构**:
+```mermaid
+graph LR
+    A[工具执行] --> B[性能数据收集]
+    B --> C[实时指标计算]
+    C --> D[性能数据存储]
+    D --> E[性能分析报告]
+    E --> F[优化建议]
+
+    B --> G[响应时间]
+    B --> H[资源使用]
+    B --> I[错误率]
+    B --> J[吞吐量]
+```
+
+**监控功能特性**:
+- **实时性能数据收集**: 毫秒级精度的性能指标
+- **会话级性能分析**: 聚合分析用户会话的性能表现
+- **工具执行统计**: 各工具的性能表现对比
+- **自动性能报告**: 定期生成性能分析报告
+- **性能异常检测**: 自动识别性能异常和瓶颈
+
+### 3.4 上下文增强中间件
+
+**智能上下文管理**:
+```mermaid
+graph TD
+    A[原始上下文] --> B[项目上下文分析]
+    B --> C[用户偏好学习]
+    C --> D[对话历史增强]
+    D --> E[上下文优化]
+    E --> F[增强上下文输出]
+
+    B --> G[代码结构分析]
+    B --> H[技术栈识别]
+    C --> I[行为模式学习]
+    D --> J[语义关联]
+    E --> K[长度优化]
+```
+
+**上下文增强能力**:
+- **项目上下文智能分析**: 自动识别项目结构、技术栈和编码风格
+- **用户偏好学习**: 学习用户的使用习惯和偏好设置
+- **对话历史增强**: 基于语义关联的上下文补全
+- **上下文长度优化**: 智能压缩和筛选关键信息
+
+## 4. 子代理协作系统
+
+### 4.1 专业子代理团队
+
+#### defect-analyzer - 缺陷分析专家
+
+**职责定位**: 专门负责分析代码缺陷，包括语法错误、逻辑问题、性能问题和安全隐患
+
+**核心能力**:
+```python
+defect_analyzer_subagent = {
+    "name": "defect-analyzer",
+    "description": "专门负责分析代码缺陷，包括语法错误、逻辑问题、性能问题和安全隐患",
+    "system_prompt": defect_analyzer_subagent_system_prompt,
+    "capabilities": [
+        "static_code_analysis",
+        "security_vulnerability_detection",
+        "performance_issue_identification",
+        "code_quality_assessment"
+    ],
+    "debug": False,
+}
+```
+
+**分析流程**:
+```mermaid
+flowchart TD
+    A[代码输入] --> B[语法检查]
+    B --> C[逻辑分析]
+    C --> D[安全扫描]
+    D --> E[性能评估]
+    E --> F[缺陷分类]
+    F --> G[优先级排序]
+    G --> H[修复建议]
+    H --> I[分析报告]
+```
+
+#### code-fixer - 代码修复专家
+
+**职责定位**: 专门负责修复代码缺陷，基于缺陷分析报告进行精准的代码修改
+
+**修复策略**:
+```python
+code_fixer_subagent = {
+    "name": "code-fixer",
+    "description": "专门负责修复代码缺陷，基于缺陷分析报告进行代码修改",
+    "system_prompt": code_fixer_subagent_system_prompt,
+    "capabilities": [
+        "automated_code_repair",
+        "refactoring_suggestions",
+        "best_practices_application",
+        "compatibility_maintenance"
+    ],
+    "debug": False,
+}
+```
+
+**修复流程**:
+```mermaid
+graph TD
+    A[缺陷分析报告] --> B[修复方案制定]
+    B --> C[代码修改实施]
+    C --> D[语法验证]
+    D --> E[逻辑验证]
+    E --> F[兼容性检查]
+    F --> G[修复结果输出]
+```
+
+#### fix-validator - 修复验证专家
+
+**职责定位**: 专门负责验证代码修复的有效性，确保缺陷被正确修复且无新问题产生
+
+**验证维度**:
+```python
+fix_validator_subagent = {
+    "name": "fix-validator",
+    "description": "专门负责验证代码修复的有效性，确保缺陷被正确修复且无新问题",
+    "system_prompt": fix_validator_subagent_system_prompt,
+    "capabilities": [
+        "regression_testing",
+        "functionality_verification",
+        "performance_impact_assessment",
+        "code_quality_validation"
+    ],
+    "debug": False,
+}
+```
+
+### 4.2 协作工作流设计
+
+**标准协作流程**:
+```mermaid
+sequenceDiagram
+    participant U as 用户
+    participant M as 主代理
+    participant A as defect-analyzer
+    participant F as code-fixer
+    participant V as fix-validator
+
+    U->>M: 提交代码修复请求
+    M->>A: 分配缺陷分析任务
+    A->>A: 执行深度代码分析
+    A->>M: 返回缺陷分析报告
+    M->>F: 分配代码修复任务
+    F->>F: 实施代码修复
+    F->>M: 返回修复方案
+    M->>V: 分配验证任务
+    V->>V: 执行修复验证
+    V->>M: 返回验证报告
+    M->>U: 返回最终修复结果
+```
+
+**并行化策略**:
+对于大型项目或复杂任务，系统支持子代理的并行化执行：
+
+```mermaid
+graph TD
+    A[复杂任务] --> B[任务分解]
+    B --> C[并行子任务1]
+    B --> D[并行子任务2]
+    B --> E[并行子任务N]
+
+    C --> F[子代理1]
+    D --> G[子代理2]
+    E --> H[子代理N]
+
+    F --> I[结果1]
+    G --> J[结果2]
+    H --> K[结果N]
+
+    I --> L[结果聚合]
+    J --> L
+    K --> L
+
+    L --> M[最终输出]
+```
+
+### 4.3 智能任务分配机制
+
+**任务分配算法**:
+```python
+class TaskDispatcher:
+    def dispatch_task(self, task_description, available_agents):
+        # 1. 任务类型分析
+        task_type = self.analyze_task_type(task_description)
+
+        # 2. 代理能力匹配
+        suitable_agents = self.match_agents(task_type, available_agents)
+
+        # 3. 负载均衡考虑
+        selected_agent = self.balance_load(suitable_agents)
+
+        # 4. 任务优化分配
+        return self.optimize_assignment(task_description, selected_agent)
+```
+
+**负载均衡策略**:
+- **基于当前负载**: 选择当前任务最少的代理
+- **基于响应时间**: 优先选择响应时间短的代理
+- **基于成功率**: 考虑代理的历史成功率
+- **基于专业度**: 优先选择专业匹配度最高的代理
+
+## 5. 数据流和控制流设计
+
+### 5.1 系统数据流架构
 
 ```mermaid
 flowchart TD
-    A[工具调用] --> B{首选工具可用?}
-    B -->|是| C[使用首选工具]
-    B -->|否| D{备用工具可用?}
-    D -->|是| E[使用备用工具]
-    D -->|否| F{内置工具可用?}
-    F -->|是| G[使用内置工具]
-    F -->|否| H[返回降级结果]
+    A[用户输入] --> B[意图解析]
+    B --> C[上下文增强]
+    C --> D[工具选择]
+    D --> E[任务分解]
+    E --> F[子任务分配]
+    F --> G[并行执行]
+    G --> H[中间件处理]
+    H --> I[结果聚合]
+    I --> J[输出生成]
+    J --> K[用户输出]
 
-    C --> I{执行成功?}
-    E --> I
-    G --> I
+    C --> L[记忆查询]
+    L --> M[上下文补充]
+    M --> D
 
-    I -->|是| J[返回成功结果]
-    I -->|否| K[记录错误信息]
-    K --> L[尝试下一个工具]
-    L --> D
+    H --> N[安全检查]
+    H --> O[性能监控]
+    H --> P[日志记录]
 ```
 
----
+### 5.2 控制流决策机制
 
-## 7. 扩展性设计
+**智能决策引擎**:
+```python
+class DecisionEngine:
+    def make_decision(self, user_input, context):
+        # 1. 输入解析和理解
+        parsed_input = self.parse_input(user_input)
+
+        # 2. 意图识别
+        intent = self.identify_intent(parsed_input)
+
+        # 3. 工具选择策略
+        tools = self.select_tools(intent, context)
+
+        # 4. 执行策略制定
+        execution_plan = self.create_execution_plan(tools, context)
+
+        # 5. 风险评估
+        risk_assessment = self.assess_risks(execution_plan)
+
+        return {
+            "intent": intent,
+            "tools": tools,
+            "execution_plan": execution_plan,
+            "risk_assessment": risk_assessment
+        }
+```
+
+**决策树结构**:
+```mermaid
+graph TD
+    A[用户请求] --> B{请求类型}
+
+    B -->|代码分析| C[代码分析工具链]
+    B -->|代码修复| D[修复工作流]
+    B -->|项目探索| E[项目探索工具]
+    B -->|格式化| F[格式化工具]
+    B -->|测试生成| G[测试生成工具]
+    B -->|网络请求| H[网络工具]
+
+    C --> I{复杂度}
+    I -->|简单| J[单工具执行]
+    I -->|复杂| K[多工具协作]
+
+    D --> L[缺陷分析]
+    L --> M[代码修复]
+    M --> N[修复验证]
+
+    K --> O[子代理并行]
+    O --> P[结果聚合]
+```
+
+## 6. 关键设计模式和最佳实践
+
+### 6.1 核心设计模式
+
+#### 策略模式 - 语言检测和格式化
+```python
+class LanguageDetector:
+    def __init__(self):
+        self.detection_strategies = {
+            'extension_based': ExtensionBasedDetection(),
+            'content_based': ContentBasedDetection(),
+            'heuristic_based': HeuristicBasedDetection()
+        }
+
+    def detect_language(self, file_path):
+        for strategy_name, strategy in self.detection_strategies.items():
+            language = strategy.detect(file_path)
+            if language != "unknown":
+                return language
+        return "unknown"
+```
+
+#### 工厂模式 - 格式化器创建
+```python
+class FormatterFactory:
+    @staticmethod
+    def create_formatter(language, config=None):
+        formatters = {
+            'python': PythonFormatter,
+            'javascript': JavaScriptFormatter,
+            'typescript': TypeScriptFormatter,
+            'cpp': CppFormatter,
+            'c': CFormatter
+        }
+
+        formatter_class = formatters.get(language)
+        if formatter_class:
+            return formatter_class(config or DefaultConfig())
+        else:
+            raise UnsupportedLanguageError(f"不支持的语言: {language}")
+```
+
+#### 观察者模式 - 性能监控
+```python
+class PerformanceCollector:
+    def __init__(self):
+        self.observers = []
+        self.records = []
+
+    def add_observer(self, observer):
+        self.observers.append(observer)
+
+    def record_execution(self, tool_name, execution_time, success=True):
+        record = PerformanceRecord(
+            tool_name=tool_name,
+            execution_time=execution_time,
+            success=success,
+            timestamp=time.time()
+        )
+        self.records.append(record)
+
+        # 通知所有观察者
+        for observer in self.observers:
+            observer.on_performance_record(record)
+```
+
+#### 适配器模式 - 记忆系统集成
+```python
+class MemoryMiddlewareFactory:
+    @staticmethod
+    def auto_upgrade_memory(backend, **kwargs):
+        # 检查后端能力
+        capabilities = backend.get_capabilities()
+
+        if capabilities.supports_layered_storage:
+            return LayeredMemoryMiddleware(backend, **kwargs)
+        elif capabilities.supports_vector_search:
+            return VectorMemoryMiddleware(backend, **kwargs)
+        else:
+            return BasicMemoryMiddleware(backend, **kwargs)
+```
+
+#### 命令模式 - 工具执行
+```python
+class ToolCommand:
+    def __init__(self, tool, args, kwargs):
+        self.tool = tool
+        self.args = args
+        self.kwargs = kwargs
+
+    def execute(self):
+        return self.tool(*self.args, **self.kwargs)
+
+    def undo(self):
+        # 实现撤销逻辑（如果支持）
+        pass
+
+class ToolInvoker:
+    def __init__(self):
+        self.history = []
+
+    def execute_command(self, command):
+        try:
+            result = command.execute()
+            self.history.append(command)
+            return result
+        except Exception as e:
+            # 记录失败命令但不影响后续执行
+            self.logger.error(f"命令执行失败: {e}")
+            raise
+```
+
+### 6.2 错误处理和容错机制
+
+**分层错误处理**:
+```python
+class ErrorHandler:
+    def __init__(self):
+        self.error_handlers = {
+            ToolExecutionError: self.handle_tool_error,
+            SecurityViolationError: self.handle_security_error,
+            PerformanceError: self.handle_performance_error,
+            MemoryError: self.handle_memory_error
+        }
+
+    def handle_error(self, error, context):
+        handler = self.error_handlers.get(type(error))
+        if handler:
+            return handler(error, context)
+        else:
+            return self.handle_unknown_error(error, context)
+
+    def handle_tool_error(self, error, context):
+        # 记录错误、尝试降级方案、返回用户友好信息
+        self.logger.error(f"工具执行错误: {error}")
+        return {
+            "success": False,
+            "error_type": "tool_execution_error",
+            "user_message": "工具执行失败，请稍后重试",
+            "technical_details": str(error)
+        }
+```
+
+**重试和降级机制**:
+```python
+class ResilientExecutor:
+    def __init__(self, max_retries=3, backoff_factor=2):
+        self.max_retries = max_retries
+        self.backoff_factor = backoff_factor
+
+    def execute_with_retry(self, func, *args, **kwargs):
+        for attempt in range(self.max_retries):
+            try:
+                return func(*args, **kwargs)
+            except (TemporaryError, NetworkError) as e:
+                if attempt == self.max_retries - 1:
+                    # 最后一次尝试失败，尝试降级方案
+                    return self.fallback_execution(func, args, kwargs)
+                else:
+                    # 指数退避重试
+                    wait_time = self.backoff_factor ** attempt
+                    time.sleep(wait_time)
+            except PermanentError:
+                # 永久性错误，直接抛出
+                raise
+```
+
+### 6.3 性能优化策略
+
+**缓存机制**:
+```python
+class SmartCache:
+    def __init__(self, max_size=1000, ttl=3600):
+        self.cache = {}
+        self.access_times = {}
+        self.max_size = max_size
+        self.ttl = ttl
+
+    def get(self, key):
+        if key in self.cache:
+            # 检查是否过期
+            if time.time() - self.access_times[key] < self.ttl:
+                self.access_times[key] = time.time()
+                return self.cache[key]
+            else:
+                del self.cache[key]
+                del self.access_times[key]
+        return None
+
+    def set(self, key, value):
+        # LRU清理策略
+        if len(self.cache) >= self.max_size:
+            self._evict_lru()
+
+        self.cache[key] = value
+        self.access_times[key] = time.time()
+```
+
+**并行处理优化**:
+```python
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+
+class ParallelExecutor:
+    def __init__(self, max_workers=4):
+        self.executor = ThreadPoolExecutor(max_workers=max_workers)
+
+    async def execute_parallel(self, tasks):
+        # 将同步任务转换为异步任务
+        loop = asyncio.get_event_loop()
+        futures = [
+            loop.run_in_executor(self.executor, task)
+            for task in tasks
+        ]
+
+        # 并行执行并收集结果
+        results = await asyncio.gather(*futures, return_exceptions=True)
+
+        # 处理异常
+        successful_results = []
+        errors = []
+
+        for result in results:
+            if isinstance(result, Exception):
+                errors.append(result)
+            else:
+                successful_results.append(result)
+
+        return successful_results, errors
+```
+
+## 7. 扩展性和维护性设计
 
 ### 7.1 插件化架构
 
-```mermaid
-classDiagram
-    class ToolPlugin {
-        <<interface>>
-        +name: str
-        +version: str
-        +description: str
-        +execute(args: dict) str
-        +validate_args(args: dict) bool
-    }
-
-    class PluginManager {
-        -plugins: Dict[str, ToolPlugin]
-        +register_plugin(plugin: ToolPlugin)
-        +unregister_plugin(name: str)
-        +get_plugin(name: str) ToolPlugin
-        +list_plugins() List[str]
-    }
-
-    class CodeQualityPlugin {
-        +name: str = "code_quality"
-        +version: str = "1.0.0"
-        +execute(args: dict) str
-        +validate_args(args: dict) bool
-    }
-
-    ToolPlugin <|-- CodeQualityPlugin
-    PluginManager --> ToolPlugin
-```
-
-### 7.2 语言扩展机制
-
+**工具接口标准**:
 ```python
-class BaseCodeAnalyzer(ABC):
-    """代码分析器抽象基类"""
+from abc import ABC, abstractmethod
+
+class BaseTool(ABC):
+    def __init__(self, name, description):
+        self.name = name
+        self.description = description
 
     @abstractmethod
-    def analyze(self, file_path: str) -> AnalysisResult:
-        """分析代码文件"""
+    async def execute(self, *args, **kwargs):
+        """执行工具的核心逻辑"""
         pass
 
     @abstractmethod
-    def can_analyze(self, file_path: str) -> bool:
-        """检查是否能分析指定文件"""
+    def validate_args(self, *args, **kwargs):
+        """验证输入参数的有效性"""
         pass
 
-    @classmethod
-    def get_supported_extensions(cls) -> List[str]:
-        """获取支持的文件扩展名"""
-        return []
-
-class SwiftAnalyzer(BaseCodeAnalyzer):
-    """Swift语言分析器示例"""
-
-    def analyze(self, file_path: str) -> AnalysisResult:
-        # 实现Swift代码分析逻辑
-        pass
-
-    def can_analyze(self, file_path: str) -> bool:
-        return Path(file_path).suffix.lower() in ['.swift']
-
-    @classmethod
-    def get_supported_extensions(cls) -> List[str]:
-        return ['.swift']
-
-# 注册新语言分析器
-AnalyzerFactory.register_analyzer('.swift', SwiftAnalyzer)
-```
-
-### 7.3 自定义工具扩展
-
-```python
-@tool(
-    description="自定义安全漏洞扫描工具",
-    category="security",
-    version="1.0.0"
-)
-def security_vulnerability_scan(
-    project_path: str,
-    scan_level: str = "standard",
-    exclude_patterns: Optional[List[str]] = None
-) -> str:
-    """
-    安全漏洞扫描工具
-
-    Args:
-        project_path: 项目路径
-        scan_level: 扫描级别 (basic/standard/comprehensive)
-        exclude_patterns: 排除模式列表
-
-    Returns:
-        扫描结果JSON字符串
-    """
-    # 实现安全扫描逻辑
-    pass
-
-# 自动注册到工具系统
-# tools.py 会自动发现并注册该工具
-```
-
----
-
-## 8. 性能优化
-
-### 8.1 缓存机制
-
-```mermaid
-flowchart TD
-    A[工具调用请求] --> B{缓存中有结果?}
-    B -->|是| C[返回缓存结果]
-    B -->|否| D[执行工具]
-    D --> E[计算结果]
-    E --> F{结果可缓存?}
-    F -->|是| G[存储到缓存]
-    F -->|否| H[直接返回]
-    G --> H
-    C --> I[输出结果]
-    H --> I
-```
-
-### 8.2 并行处理
-
-```python
-import concurrent.futures
-from typing import List, Dict, Any
-
-class ParallelAnalyzer:
-    """并行代码分析器"""
-
-    def __init__(self, max_workers: int = 4):
-        self.max_workers = max_workers
-
-    def analyze_files_parallel(self, file_paths: List[str]) -> List[AnalysisResult]:
-        """
-        并行分析多个文件
-        """
-        with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            # 提交所有分析任务
-            future_to_file = {
-                executor.submit(self._analyze_single_file, file_path): file_path
-                for file_path in file_paths
-            }
-
-            results = []
-            for future in concurrent.futures.as_completed(future_to_file):
-                file_path = future_to_file[future]
-                try:
-                    result = future.result()
-                    results.append(result)
-                except Exception as e:
-                    # 创建错误结果
-                    error_result = AnalysisResult(
-                        success=False,
-                        file_path=file_path,
-                        error=str(e)
-                    )
-                    results.append(error_result)
-
-        return results
-```
-
-### 8.3 智能资源管理
-
-```mermaid
-stateDiagram-v2
-    [*] --> 资源检查
-    资源检查 --> 内存充足: 开始分析
-    资源检查 --> 内存不足: 等待释放
-    等待释放 --> 资源检查
-
-    开始分析 --> 分析进行中
-    分析进行中 --> 内存监控
-    内存监控 --> 内存正常: 继续分析
-    内存监控 --> 内存警告: 降低并发
-    内存监控 --> 内存危险: 暂停分析
-
-    降低并发 --> 继续分析
-    暂停分析 --> 等待资源
-    等待资源 --> 内存监控
-
-    继续分析 --> 分析完成
-    分析完成 --> 资源清理
-    资源清理 --> [*]
-```
-
----
-
-## 9. 最佳实践
-
-### 9.1 代码质量标准
-
-#### 9.1.1 工具开发规范
-
-```python
-# 工具函数标准模板
-@tool(
-    description="详细的功能描述，包含使用场景和优势",
-    category="工具分类",
-    version="版本号"
-)
-def tool_function(
-    required_param: str,
-    optional_param: Optional[str] = None,
-    timeout: int = 30
-) -> str:
-    """
-    工具函数标准文档格式
-
-    此工具提供给agent使用的XX功能。
-
-    功能特性：
-    - 特性1详细描述
-    - 特性2详细描述
-
-    Args:
-        required_param: 必需参数说明
-        optional_param: 可选参数说明，包含默认值
-        timeout: 超时时间，默认30秒
-
-    Returns:
-        JSON格式字符串，包含：
-            - success: 执行是否成功
-            - result: 执行结果详情
-            - error: 错误信息（如果有）
-            - metadata: 元数据信息
-
-    使用场景：
-        - 场景1描述
-        - 场景2描述
-
-    工具优势：
-        - 优势1描述
-        - 优势2描述
-
-    注意事项：
-        - 注意事项1
-        - 注意事项2
-    """
-    try:
-        # 1. 参数验证
-        if not required_param:
-            return create_error_response("必需参数不能为空", "INVALID_INPUT")
-
-        # 2. 核心逻辑实现
-        result = implement_core_logic(required_param, optional_param)
-
-        # 3. 结果格式化
-        return format_success_result(result)
-
-    except Exception as e:
-        # 4. 统一错误处理
-        return create_error_response(f"工具执行失败: {str(e)}", "EXECUTION_ERROR")
-```
-
-#### 9.1.2 测试标准
-
-```python
-import pytest
-from unittest.mock import Mock, patch
-
-class TestToolFunction:
-    """工具测试标准模板"""
-
-    def setup_method(self):
-        """测试前置设置"""
-        self.test_data = {
-            "valid_input": "test_input",
-            "expected_output": {"success": True, "result": "test_result"}
+    def get_metadata(self):
+        """返回工具的元数据信息"""
+        return {
+            "name": self.name,
+            "description": self.description,
+            "version": self.version,
+            "author": self.author,
+            "capabilities": self.capabilities
         }
-
-    def test_success_case(self):
-        """测试成功情况"""
-        result = tool_function(self.test_data["valid_input"])
-        parsed_result = json.loads(result)
-
-        assert parsed_result["success"] is True
-        assert "result" in parsed_result
-
-    def test_error_cases(self):
-        """测试错误情况"""
-        # 测试无效输入
-        result = tool_function("")
-        parsed_result = json.loads(result)
-
-        assert parsed_result["success"] is False
-        assert "error" in parsed_result
-
-    @patch('module.external_dependency')
-    def test_with_mock(self, mock_dependency):
-        """测试依赖隔离"""
-        mock_dependency.return_value = Mock()
-
-        result = tool_function(self.test_data["valid_input"])
-        assert result is not None
 ```
 
-### 9.2 性能最佳实践
-
-#### 9.2.1 内存优化
-
+**工具注册机制**:
 ```python
-class MemoryEfficientAnalyzer:
-    """内存高效的分析器"""
-
-    def __init__(self, chunk_size: int = 1000):
-        self.chunk_size = chunk_size
-
-    def analyze_large_file(self, file_path: str) -> AnalysisResult:
-        """
-        分块分析大文件，避免内存溢出
-        """
-        issues = []
-
-        with open(file_path, 'r', encoding='utf-8') as file:
-            chunk = []
-            for line_num, line in enumerate(file, 1):
-                chunk.append((line_num, line))
-
-                # 达到块大小或文件结束时处理
-                if len(chunk) >= self.chunk_size:
-                    chunk_issues = self._analyze_chunk(chunk)
-                    issues.extend(chunk_issues)
-                    chunk.clear()  # 释放内存
-
-            # 处理剩余的块
-            if chunk:
-                chunk_issues = self._analyze_chunk(chunk)
-                issues.extend(chunk_issues)
-
-        return AnalysisResult(issues=issues)
-
-    def _analyze_chunk(self, chunk: List[Tuple[int, str]]) -> List[AnalysisIssue]:
-        """分析文件块"""
-        issues = []
-        for line_num, line in chunk:
-            # 执行具体的分析逻辑
-            pass
-        return issues
-```
-
-#### 9.2.2 并发优化
-
-```python
-import asyncio
-import aiofiles
-from typing import AsyncGenerator
-
-class AsyncAnalyzer:
-    """异步代码分析器"""
-
-    async def analyze_files_async(self, file_paths: List[str]) -> AsyncGenerator[AnalysisResult, None]:
-        """
-        异步分析多个文件
-        """
-        semaphore = asyncio.Semaphore(10)  # 限制并发数
-
-        async def analyze_single_file(file_path: str) -> AnalysisResult:
-            async with semaphore:
-                return await self._analyze_file_async(file_path)
-
-        tasks = [analyze_single_file(file_path) for file_path in file_paths]
-
-        for completed_task in asyncio.as_completed(tasks):
-            result = await completed_task
-            yield result
-
-    async def _analyze_file_async(self, file_path: str) -> AnalysisResult:
-        """异步分析单个文件"""
-        async with aiofiles.open(file_path, 'r', encoding='utf-8') as file:
-            content = await file.read()
-            return self._analyze_content(content, file_path)
-```
-
-### 9.3 安全最佳实践
-
-#### 9.3.1 输入验证
-
-```python
-import re
-from pathlib import Path
-
-class SecurityValidator:
-    """安全验证器"""
-
-    @staticmethod
-    def validate_file_path(file_path: str) -> bool:
-        """
-        验证文件路径安全性
-        """
-        try:
-            path = Path(file_path).resolve()
-
-            # 检查路径是否存在
-            if not path.exists():
-                return False
-
-            # 检查是否为文件
-            if not path.is_file():
-                return False
-
-            # 检查文件大小（防止过大文件）
-            if path.stat().st_size > 100 * 1024 * 1024:  # 100MB
-                return False
-
-            # 检查文件扩展名
-            allowed_extensions = {'.py', '.js', '.ts', '.java', '.cpp', '.go', '.rs'}
-            if path.suffix.lower() not in allowed_extensions:
-                return False
-
-            return True
-
-        except (OSError, ValueError):
-            return False
-
-    @staticmethod
-    def sanitize_input(user_input: str) -> str:
-        """
-        清理用户输入
-        """
-        # 移除危险字符
-        dangerous_chars = ['<', '>', '&', '"', "'", '`', '$', '|', ';']
-        sanitized = user_input
-
-        for char in dangerous_chars:
-            sanitized = sanitized.replace(char, '')
-
-        # 限制长度
-        if len(sanitized) > 1000:
-            sanitized = sanitized[:1000]
-
-        return sanitized.strip()
-```
-
-#### 9.3.2 权限控制
-
-```python
-import os
-import stat
-
-class PermissionChecker:
-    """权限检查器"""
-
-    @staticmethod
-    def check_file_permissions(file_path: str) -> Dict[str, bool]:
-        """
-        检查文件权限
-        """
-        try:
-            file_stat = os.stat(file_path)
-            mode = file_stat.st_mode
-
-            return {
-                'readable': bool(mode & stat.S_IRUSR),
-                'writable': bool(mode & stat.S_IWUSR),
-                'executable': bool(mode & stat.S_IXUSR),
-                'owner_readable': bool(mode & stat.S_IRUSR),
-                'owner_writable': bool(mode & stat.S_IWUSR),
-                'group_readable': bool(mode & stat.S_IRGRP),
-                'other_readable': bool(mode & stat.S_IROTH),
-            }
-        except OSError:
-            return {}
-```
-
----
-
-## 10. 未来展望
-
-### 10.1 技术发展方向
-
-#### 10.1.1 AI增强分析
-
-```mermaid
-roadmap
-    title AI增强分析发展路线图
-
-    section 当前版本
-        基于规则的静态分析 : 基于规则的错误检测
-        模式匹配技术 : 简单的代码模式识别
-        统计分析 : 基础的代码质量指标
-
-    section 短期目标 (3-6个月)
-        机器学习辅助 : ML模型辅助缺陷预测
-        语义理解增强 : 更好的代码语义分析
-        上下文感知分析 : 考虑代码上下文关系
-
-    section 中期目标 (6-12个月)
-        大语言模型集成 : LLM辅助代码理解和修复建议
-        跨语言分析 : 统一的多语言代码表示
-        智能重构建议 : 基于AI的重构建议生成
-
-    section 长期目标 (1-2年)
-        自主代码修复 : AI驱动的自动代码修复
-        预测性分析 : 预测潜在问题和性能瓶颈
-        个性化分析 : 学习项目特定模式的定制分析
-```
-
-#### 10.1.2 实时协作能力
-
-```mermaid
-sequenceDiagram
-    participant Dev1 as 开发者1
-    participant System as 分析系统
-    participant AI as AI助手
-    participant Dev2 as 开发者2
-
-    Dev1->>System: 提交代码变更
-    System->>AI: 实时分析变更
-    AI-->>System: 检测到潜在问题
-    System->>Dev2: 发送通知
-    Dev2->>System: 查看分析结果
-    System->>AI: 生成修复建议
-    AI-->>Dev1: 提供修复指导
-    Dev1->>System: 应用修复
-    System->>AI: 验证修复效果
-```
-
-### 10.2 架构演进计划
-
-#### 10.2.1 微服务化架构
-
-```mermaid
-graph TB
-    subgraph "API Gateway"
-        A[API Gateway]
-    end
-
-    subgraph "分析服务"
-        B[静态分析服务]
-        C[动态分析服务]
-        D[安全扫描服务]
-        E[性能分析服务]
-    end
-
-    subgraph "AI服务"
-        F[代码理解服务]
-        G[缺陷预测服务]
-        H[修复建议服务]
-    end
-
-    subgraph "基础设施"
-        I[消息队列]
-        J[缓存层]
-        K[存储层]
-        L[监控层]
-    end
-
-    A --> B
-    A --> C
-    A --> D
-    A --> E
-
-    B --> I
-    C --> I
-    D --> I
-    E --> I
-
-    F --> I
-    G --> I
-    H --> I
-
-    I --> J
-    J --> K
-
-    B --> L
-    C --> L
-    D --> L
-    E --> L
-```
-
-#### 10.2.2 插件生态系统
-
-```mermaid
-graph LR
-    subgraph "核心平台"
-        A[Fix Agent Core]
-    end
-
-    subgraph "官方插件"
-        B[Python分析插件]
-        C[JavaScript分析插件]
-        D[安全扫描插件]
-        E[性能分析插件]
-    end
-
-    subgraph "社区插件"
-        F[自定义规则插件]
-        G[企业规范插件]
-        H[行业专用插件]
-        I[第三方工具插件]
-    end
-
-    subgraph "插件市场"
-        J[插件市场]
-        K[插件管理器]
-        L[版本控制]
-    end
-
-    A --> B
-    A --> C
-    A --> D
-    A --> E
-
-    A --> F
-    A --> G
-    A --> H
-    A --> I
-
-    J --> K
-    K --> L
-    K --> A
-```
-
-### 10.3 技术创新点
-
-#### 10.3.1 跨模态代码分析
-
-```python
-class MultiModalAnalyzer:
-    """跨模态代码分析器"""
-
+class ToolRegistry:
     def __init__(self):
-        self.text_analyzer = TextCodeAnalyzer()
-        self.visual_analyzer = VisualCodeAnalyzer()
-        self.audio_analyzer = AudioCodeAnalyzer()
+        self.tools = {}
+        self.categories = {}
 
-    def analyze_with_context(
-        self,
-        code: str,
-        documentation: Optional[str] = None,
-        screenshots: Optional[List[str]] = None,
-        voice_notes: Optional[List[str]] = None
-    ) -> ComprehensiveAnalysisResult:
-        """
-        跨模态综合分析
+    def register_tool(self, tool, category="general"):
+        if not isinstance(tool, BaseTool):
+            raise InvalidToolError("工具必须继承自BaseTool")
 
-        Args:
-            code: 代码内容
-            documentation: 文档说明
-            screenshots: 截图文件路径
-            voice_notes: 语音备注文件路径
-        """
-        results = {}
+        # 验证工具的唯一性
+        if tool.name in self.tools:
+            raise DuplicateToolError(f"工具 {tool.name} 已存在")
 
-        # 文本分析
-        code_analysis = self.text_analyzer.analyze(code)
-        results['code_analysis'] = code_analysis
+        self.tools[tool.name] = tool
 
-        # 文档分析
-        if documentation:
-            doc_analysis = self.text_analyzer.analyze_documentation(documentation)
-            results['documentation_analysis'] = doc_analysis
+        # 按类别组织
+        if category not in self.categories:
+            self.categories[category] = []
+        self.categories[category].append(tool)
 
-        # 视觉分析（截图、UI图等）
-        if screenshots:
-            visual_analysis = self.visual_analyzer.analyze_screenshots(screenshots)
-            results['visual_analysis'] = visual_analysis
+    def get_tool(self, name):
+        return self.tools.get(name)
 
-        # 音频分析（语音备注等）
-        if voice_notes:
-            audio_analysis = self.audio_analyzer.analyze_voice_notes(voice_notes)
-            results['audio_analysis'] = audio_analysis
-
-        # 综合分析
-        comprehensive_result = self._synthesize_results(results)
-        return comprehensive_result
+    def get_tools_by_category(self, category):
+        return self.categories.get(category, [])
 ```
 
-#### 10.3.2 预测性维护
+### 7.2 配置管理系统
 
+**分层配置架构**:
+```python
+class ConfigManager:
+    def __init__(self):
+        self.default_config = DefaultConfig()
+        self.user_config = UserConfig()
+        self.runtime_config = RuntimeConfig()
+
+    def get(self, key, default=None):
+        # 配置优先级：运行时 > 用户配置 > 默认配置
+        value = self.runtime_config.get(key)
+        if value is None:
+            value = self.user_config.get(key)
+        if value is None:
+            value = self.default_config.get(key, default)
+        return value
+
+    def set(self, key, value, scope="runtime"):
+        if scope == "runtime":
+            self.runtime_config.set(key, value)
+        elif scope == "user":
+            self.user_config.set(key, value)
+        elif scope == "default":
+            self.default_config.set(key, value)
+```
+
+## 8. 质量保证和测试策略
+
+### 8.1 测试架构设计
+
+**测试金字塔**:
 ```mermaid
-flowchart TD
-    A[代码提交] --> B[历史数据分析]
-    B --> C[模式识别]
-    C --> D[缺陷预测模型]
-    D --> E[风险评估]
-    E --> F{风险等级}
+graph TD
+    A[单元测试<br/>70%] --> B[集成测试<br/>20%]
+    B --> C[端到端测试<br/>10%]
 
-    F -->|低风险| G[自动批准]
-    F -->|中风险| H[人工审查]
-    F -->|高风险| I[阻止部署]
+    A --> D[工具单元测试]
+    A --> E[中间件测试]
+    A --> F[代理测试]
 
-    H --> J[审查结果]
-    J --> K{审查通过?}
-    K -->|是| G
-    K -->|否| I
+    B --> G[工具链测试]
+    B --> H[中间件集成测试]
+    B --> I[代理协作测试]
 
-    G --> L[部署监控]
-    I --> M[修复指导]
-    M --> A
+    C --> J[完整工作流测试]
+    C --> K[性能测试]
+    C --> L[安全测试]
 ```
 
-### 10.4 生态系统建设
+**测试数据管理**:
+```python
+class TestDataManager:
+    def __init__(self):
+        self.test_data_cache = {}
+        self.mock_data_generators = {}
 
-#### 10.4.1 开发者社区
+    def get_test_code(self, language, defect_type):
+        cache_key = f"{language}_{defect_type}"
+        if cache_key not in self.test_data_cache:
+            self.test_data_cache[cache_key] = self._generate_test_code(
+                language, defect_type
+            )
+        return self.test_data_cache[cache_key]
 
-```mermaid
-graph TB
-    subgraph "社区结构"
-        A[核心开发团队]
-        B[贡献者社区]
-        C[用户社区]
-        D[合作伙伴]
-    end
-
-    subgraph "贡献类型"
-        E[代码贡献]
-        F[插件开发]
-        G[文档编写]
-        H[测试反馈]
-        I[功能建议]
-    end
-
-    subgraph "支持体系"
-        J[开发者文档]
-        K[API参考]
-        L[最佳实践指南]
-        M[问题解答]
-        N[技术支持]
-    end
-
-    A --> E
-    B --> E
-    B --> F
-    C --> G
-    C --> H
-    D --> I
-
-    A --> J
-    B --> K
-    C --> L
-    D --> M
-    E --> N
+    def create_mock_project(self, structure_type):
+        generator = self.mock_data_generators.get(structure_type)
+        if generator:
+            return generator.generate()
+        else:
+            raise UnsupportedProjectTypeError(f"不支持的项目类型: {structure_type}")
 ```
 
-#### 10.4.2 企业级应用
+### 8.2 持续集成和质量监控
 
-```mermaid
-graph LR
-    subgraph "企业特性"
-        A[SSO集成]
-        B[RBAC权限控制]
-        C[审计日志]
-        D[合规性检查]
-    end
+**CI/CD流程**:
+```yaml
+# .github/workflows/quality.yml
+name: Quality Assurance
+on: [push, pull_request]
 
-    subgraph "团队协作"
-        E[代码审查工作流]
-        F[团队标准配置]
-        G[报告定制]
-        H[集成CI/CD]
-    end
+jobs:
+  quality-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
 
-    subgraph "数据管理"
-        I[私有部署]
-        J[数据加密]
-        K[备份恢复]
-        L[数据迁移]
-    end
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
 
-    A --> E
-    B --> F
-    C --> G
-    D --> H
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
 
-    E --> I
-    F --> J
-    G --> K
-    H --> L
+      - name: Run unit tests
+        run: pytest tests/unit/ --cov=src --cov-report=xml
+
+      - name: Run integration tests
+        run: pytest tests/integration/
+
+      - name: Code quality check
+        run: |
+          flake8 src/
+          black --check src/
+          mypy src/
+
+      - name: Security scan
+        run: bandit -r src/
+
+      - name: Performance test
+        run: pytest tests/performance/ --benchmark-only
 ```
 
----
+## 9. 部署和运维
 
-## 📚 总结
+### 9.1 容器化部署
 
-Fix Agent Tools 系统是一个设计精良、功能完善的代码分析和缺陷修复工具链。其核心特点包括：
+**Dockerfile设计**:
+```dockerfile
+FROM python:3.9-slim
 
-### 🎯 核心优势
-1. **模块化架构**: 高内聚低耦合的模块设计
-2. **可扩展性**: 基于插件的扩展机制
-3. **智能化**: AI增强的代码分析和缺陷预测
-4. **标准化**: 统一的接口和输出格式
-5. **安全性**: 完善的权限控制和输入验证
+WORKDIR /app
 
-### 🔮 技术前瞻
-1. **AI驱动**: 大语言模型深度集成
-2. **实时协作**: 多开发者实时协作分析
-3. **跨模态**: 文本、图像、语音多模态分析
-4. **预测性**: 基于机器学习的预测性维护
-5. **生态化**: 开放的插件生态系统
+# 安装系统依赖
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
-### 🚀 应用前景
-这个工具链代表了AI辅助开发的先进实践，其架构设计和工程经验对同类项目具有重要的参考价值。随着技术的不断发展，Fix Agent Tools 将继续演进，为开发者提供更强大、更智能的代码分析能力。
+# 复制依赖文件
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
----
+# 复制源代码
+COPY src/ ./src/
+COPY config/ ./config/
 
-*本文档将持续更新，以反映工具系统的最新发展和改进。*
+# 设置环境变量
+ENV PYTHONPATH=/app/src
+ENV LOG_LEVEL=INFO
+
+# 暴露端口
+EXPOSE 8000
+
+# 启动命令
+CMD ["python", "-m", "src.main"]
+```
+
+### 9.2 监控和日志
+
+**结构化日志设计**:
+```python
+import structlog
+
+class StructuredLogger:
+    def __init__(self, name):
+        self.logger = structlog.get_logger(name)
+
+    def log_tool_execution(self, tool_name, args, execution_time, success=True):
+        self.logger.info(
+            "tool_execution",
+            tool=tool_name,
+            args=str(args)[:100],  # 限制日志长度
+            execution_time_ms=execution_time * 1000,
+            success=success,
+            timestamp=datetime.utcnow().isoformat()
+        )
+
+    def log_error(self, error, context=None):
+        self.logger.error(
+            "error_occurred",
+            error_type=type(error).__name__,
+            error_message=str(error),
+            context=context or {},
+            timestamp=datetime.utcnow().isoformat()
+        )
+```
+
+## 10. 总结和最佳实践建议
+
+### 10.1 系统优势总结
+
+Fix Agent Tools系统的核心优势体现在以下几个方面：
+
+1. **高可扩展性**: 插件化的工具架构和标准化的接口设计，使得添加新工具变得简单直接
+2. **强可维护性**: 清晰的分层架构和模块职责分离，降低了系统复杂度
+3. **高性能**: 多层中间件优化、智能缓存和并行处理机制
+4. **安全性**: 全面的安全检查和多层次防护机制
+5. **智能化**: 分层记忆系统和上下文增强提供智能化服务
+
+### 10.2 开发最佳实践
+
+**代码开发**:
+- 遵循单一职责原则，每个工具只负责特定功能
+- 使用类型注解提高代码可读性和安全性
+- 编写全面的单元测试和集成测试
+- 采用异步编程提高并发性能
+
+**架构设计**:
+- 优先使用组合而非继承
+- 通过接口定义明确的模块边界
+- 实现优雅的降级和容错机制
+- 保持向后兼容性
+
+**性能优化**:
+- 合理使用缓存减少重复计算
+- 采用批处理和并行处理提高效率
+- 实现智能的资源管理和清理机制
+- 监控性能指标并进行持续优化
+
+这个系统代表了现代AI代码助手的一个重要演进方向，通过将AI技术与专业的软件工程实践深度结合，为开发人员提供了全方位的代码分析和修复支持，显著提升了开发效率和代码质量。
