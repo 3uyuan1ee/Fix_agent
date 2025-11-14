@@ -778,7 +778,7 @@ def view_memory_file(memory_manager: MemoryManager, file_path: str):
         file_size = full_path.stat().st_size
         file_mtime = datetime.fromtimestamp(full_path.stat().st_mtime)
 
-        console.print(f"[bold]📖 文件: {file_path}[/bold blue]")
+        console.print(f"[bold blue]📖 文件: {file_path}[/bold blue]")
         console.print(f"[dim]大小: {file_size} bytes[/dim]")
         console.print(f"[dim]修改时间: {file_mtime}[/dim]")
         console.print()
@@ -863,7 +863,7 @@ def view_all_memories(memory_manager: MemoryManager):
     files = memory_manager.list_memory_files()
 
     if files:
-        console.print("\n[bold]📁 记忆文件列表[/bold blue]")
+        console.print("\n[bold blue]📁 记忆文件列表[/bold blue]")
         files_table = Table()
         files_table.add_column("文件名", style="cyan")
         files_table.add_column("类型", style="magenta")
@@ -888,7 +888,7 @@ def handle_memory_search(memory_manager: MemoryManager, args: List[str]) -> bool
     """处理记忆搜索命令"""
     if not args:
         console.print("[red]❌ 请提供搜索关键词[/red]")
-        return
+        return False
 
     query = " ".join(args)
     memory_type = "all"
@@ -898,7 +898,7 @@ def handle_memory_search(memory_manager: MemoryManager, args: List[str]) -> bool
         query = " ".join(args[:-1])
         memory_type = args[-1]
 
-    console.print(f"[bold]🔍 搜索记忆: '{query}' (类型: {memory_type})[/bold blue]")
+    console.print(f"[bold blue]🔍 搜索记忆: '{query}' (类型: {memory_type})[/bold blue]")
 
     results = memory_manager.search_memories(query, memory_type)
 
@@ -908,14 +908,14 @@ def handle_memory_search(memory_manager: MemoryManager, args: List[str]) -> bool
 
     if total_results == 0:
         console.print(f"[yellow]⚠ 没有找到包含 '{query}' 的记忆[/yellow]")
-        return
+        return True
 
     # 显示搜索结果
     console.print(f"[green]✅ 找到 {total_results} 条匹配的记忆[/green]")
 
     # 显示Agent记忆结果
     if results["agent_memory"]:
-        console.print("\n[bold]📝 Agent记忆匹配项:[/bold blue]")
+        console.print("\n[bold blue]📝 Agent记忆匹配项:[/bold blue]")
         for i, result in enumerate(results["agent_memory"][:10], 1):
             console.print(f"  {i}. [cyan]第{result['line']}行[/cyan]: {result['content']}")
 
@@ -924,7 +924,7 @@ def handle_memory_search(memory_manager: MemoryManager, args: List[str]) -> bool
 
     # 显示语义记忆结果
     if results["semantic_memory"]:
-        console.print("\n[bold]🧠 语义记忆匹配项:[/bold blue]")
+        console.print("\n[bold blue]🧠 语义记忆匹配项:[/bold blue]")
         for i, result in enumerate(results["semantic_memory"][:5], 1):
             timestamp = result.get("timestamp", 0)
             time_str = datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
@@ -935,7 +935,7 @@ def handle_memory_search(memory_manager: MemoryManager, args: List[str]) -> bool
 
     # 显示情节记忆结果
     if results["episodic_memory"]:
-        console.print("\n[bold]📜 情节记忆匹配项:[/bold blue]")
+        console.print("\n[bold blue]📜 情节记忆匹配项:[/bold blue]")
         for i, result in enumerate(results["episodic_memory"][:5], 1):
             timestamp = result.get("timestamp", 0)
             time_str = datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
@@ -1007,7 +1007,7 @@ def handle_memory_stats(memory_manager: MemoryManager, args: List[str]) -> bool:
             if f.is_file()
         )
 
-        console.print(f"\n[bold]💾 内存使用:[/bold blue]")
+        console.print(f"\n[bold blue]💾 内存使用:[/bold blue]")
         console.print(f"  记忆目录大小: {dir_size / 1024:.2f} KB")
 
         if stats['total_memories'] > 0:
@@ -1021,13 +1021,13 @@ def handle_memory_stats(memory_manager: MemoryManager, args: List[str]) -> bool:
     episodic_count = stats['episodic_memory_count']
 
     if semantic_count + episodic_count > 0:
-        console.print(f"\n[bold]📈 记忆分布:[/bold blue]")
+        console.print(f"\n[bold blue]📈 记忆分布:[/bold blue]")
         total = semantic_count + episodic_count
         console.print(f"  语义记忆: {semantic_count} 条 ({semantic_count/total*100:.1f}%)")
         console.print(f"  情节记忆: {episodic_count} 条 ({episodic_count/total*100:.1f}%)")
 
     # 使用建议
-    console.print(f"\n[bold]💡 使用建议:[/bold blue]")
+    console.print(f"\n[bold blue]💡 使用建议:[/bold blue]")
     if stats['agent_memory_size'] == 0:
         console.print("  • Agent主记忆为空，建议添加基础配置信息")
     if stats['total_memories'] == 0:
