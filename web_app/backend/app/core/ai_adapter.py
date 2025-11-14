@@ -35,11 +35,11 @@ else:
 def _import_cli_modules():
     """Import CLI modules safely."""
     try:
-        from agents.agent import create_agent_with_config
-        from config.config import create_model
-        from tools.tools import get_all_tools
-        from midware.agent_memory import AgentMemoryMiddleware
-        from midware.performance_monitor import PerformanceMonitorMiddleware
+        from src.agents.agent import create_agent_with_config
+        from src.config.config import create_model
+        from src.tools.tools import get_all_tools
+        from src.midware.agent_memory import AgentMemoryMiddleware
+        from src.midware.performance_monitor import PerformanceMonitorMiddleware
         from deepagents.backends.filesystem import FilesystemBackend
         from deepagents.backends.composite import CompositeBackend
         from deepagents.middleware.resumable_shell import ResumableShellToolMiddleware
