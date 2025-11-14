@@ -90,6 +90,14 @@ class AIAdapter:
         self.memory_dir = workspace_root / "memories" / session_id
         self.memory_dir.mkdir(parents=True, exist_ok=True)
 
+        # 流式处理状态
+        self.pending_text = ""  # 累积的文本缓冲
+        self.tool_call_buffers = {}  # 工具调用缓冲区
+        self.last_chunk_time = 0  # 最后发送chunk的时间
+        self.chunk_timeout = 0.5  # chunk超时时间（秒）- 增加超时时间
+        self.is_thinking = False  # AI思考状态
+        self.sent_thinking = False  # 是否已发送思考状态
+
         # 只有在CLI模块可用时才初始化AI代理
         if self.cli_available:
             self._initialize_agent()
@@ -247,8 +255,18 @@ class AIAdapter:
                 if processed_chunk:
                     yield processed_chunk
 
+            # 流结束时，强制刷新所有剩余的文本
+            final_chunks = self.flush_pending_text(final=True)
+            for final_chunk in final_chunks:
+                yield final_chunk
+
         except Exception as e:
             print(f"Error in AI streaming: {e}")
+            # 即使出错也要尝试刷新缓冲的文本
+            error_chunks = self.flush_pending_text(final=True)
+            for chunk in error_chunks:
+                yield chunk
+
             yield {
                 "type": "error",
                 "content": f"AI响应错误: {str(e)}",
@@ -290,44 +308,170 @@ class AIAdapter:
         return "\n".join(context_parts)
 
     def _process_stream_chunk(self, chunk) -> Optional[Dict]:
-        """Process streaming chunk from AI agent."""
+        """Process streaming chunk from AI agent with CLI-style buffering."""
+        import time
+
         if not isinstance(chunk, tuple) or len(chunk) != 3:
             return None
 
         namespace, stream_mode, data = chunk
+        current_time = time.time()
+        results = []
 
         if stream_mode == "messages":
             if isinstance(data, tuple) and len(data) == 2:
                 message, metadata = data
 
+                # 发送思考状态（如果还没有发送）
+                if not self.sent_thinking and self.pending_text == "":
+                    self.is_thinking = True
+                    self.sent_thinking = True
+                    return {
+                        "type": "status",
+                        "content": "AI正在思考...",
+                        "session_id": self.session_id,
+                        "metadata": {"state": "thinking"}
+                    }
+
                 # 处理AI消息
                 if hasattr(message, 'content_blocks'):
                     for block in message.content_blocks:
                         if block.get("type") == "text":
-                            return {
-                                "type": "message",
-                                "content": block.get("text", ""),
-                                "session_id": self.session_id,
-                                "metadata": metadata
-                            }
+                            # 累积文本到缓冲区
+                            text_content = block.get("text", "")
+                            if text_content:
+                                self.pending_text += text_content
+                                self.last_chunk_time = current_time
+                                self.is_thinking = False  # 有文本内容，说明不在思考
 
                         elif block.get("type") == "tool_call_chunk":
-                            return {
-                                "type": "tool_call",
-                                "tool": block.get("name"),
-                                "args": block.get("args"),
-                                "session_id": self.session_id
-                            }
+                            # 处理工具调用块
+                            tool_name = block.get("name")
+                            tool_args = block.get("args", {})
+                            tool_call_id = block.get("id", "default")
+
+                            # 缓冲工具调用数据
+                            if tool_call_id not in self.tool_call_buffers:
+                                self.tool_call_buffers[tool_call_id] = {
+                                    "name": tool_name,
+                                    "args": "",
+                                    "complete": False
+                                }
+
+                            buffer = self.tool_call_buffers[tool_call_id]
+                            if tool_args:
+                                buffer["args"] += tool_args
+
+                            # 检查工具调用是否完成
+                            if block.get("complete", False):
+                                buffer["complete"] = True
+                                results.append({
+                                    "type": "tool_call",
+                                    "tool": buffer["name"],
+                                    "args": buffer["args"],
+                                    "session_id": self.session_id,
+                                    "tool_call_id": tool_call_id,
+                                    "complete": True
+                                })
+                                del self.tool_call_buffers[tool_call_id]
 
         elif stream_mode == "updates":
-            if isinstance(data, dict) and "todos" in data:
-                return {
-                    "type": "todos",
-                    "todos": data["todos"],
-                    "session_id": self.session_id
-                }
+            # 处理更新消息（包括HITL中断）
+            if isinstance(data, dict):
+                if "__interrupt__" in data:
+                    # HITL批准请求
+                    interrupt_data = data["__interrupt__"]
+                    if interrupt_data and interrupt_data.get("action_requests"):
+                        results.append({
+                            "type": "approval_request",
+                            "approval_data": interrupt_data,
+                            "session_id": self.session_id
+                        })
+
+                elif "todos" in data:
+                    # 待办事项更新
+                    results.append({
+                        "type": "todos",
+                        "todos": data["todos"],
+                        "session_id": self.session_id
+                    })
+
+        # 更智能的文本发送策略
+        should_flush_text = False
+        if self.pending_text:
+            # 检查多个条件
+            time_elapsed = current_time - self.last_chunk_time
+            text_length = len(self.pending_text)
+
+            # 条件1：时间超过阈值
+            if time_elapsed > self.chunk_timeout:
+                should_flush_text = True
+
+            # 条件2：文本长度足够且包含完整句子
+            elif text_length > 20 and self._has_complete_sentence(self.pending_text):
+                should_flush_text = True
+
+            # 条件3：文本很长（超过100字符）
+            elif text_length > 100:
+                should_flush_text = True
+
+        if should_flush_text:
+            text_to_send = self.pending_text.rstrip()
+            if text_to_send:
+                results.append({
+                    "type": "message",
+                    "content": text_to_send,
+                    "session_id": self.session_id,
+                    "is_stream": True
+                })
+                self.pending_text = ""
+                self.last_chunk_time = current_time
+
+        # 返回结果（优先返回工具调用和状态，然后是文本）
+        if results:
+            # 重新排序，优先级：状态 > 工具调用 > 其他 > 文本
+            status_messages = [r for r in results if r.get("type") == "status"]
+            tool_messages = [r for r in results if r.get("type") == "tool_call"]
+            other_messages = [r for r in results if r.get("type") not in ["status", "tool_call", "message"]]
+            text_messages = [r for r in results if r.get("type") == "message"]
+
+            if status_messages:
+                return status_messages[0]
+            elif tool_messages:
+                return tool_messages[0]
+            elif other_messages:
+                return other_messages[0]
+            elif text_messages:
+                return text_messages[0]
 
         return None
+
+    def _has_complete_sentence(self, text: str) -> bool:
+        """检查文本是否包含完整的句子。"""
+        # 检查是否以句子结束符结尾
+        end_chars = ['.', '!', '?', '\n']
+        return any(text.strip().endswith(char) for char in end_chars) and len(text.strip()) > 10
+
+    def flush_pending_text(self, final: bool = False):
+        """强制刷新累积的文本缓冲区。"""
+        results = []
+        if self.pending_text and (final or self.pending_text.strip()):
+            text_to_send = self.pending_text.rstrip()
+            if text_to_send:
+                results.append({
+                    "type": "message",
+                    "content": text_to_send,
+                    "session_id": self.session_id,
+                    "is_stream": not final
+                })
+                self.pending_text = ""
+
+        # 流结束时重置思考状态
+        if final:
+            self.sent_thinking = False
+            self.is_thinking = False
+
+        return results
 
     def get_memory_files(self) -> List[str]:
         """Get list of memory files for this session."""

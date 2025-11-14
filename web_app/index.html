@@ -317,6 +317,130 @@
             font-size: 14px;
         }
 
+        /* 批准对话框样式 */
+        .approval-dialog {
+            background: #fffbeb;
+            border: 2px solid #f59e0b;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 16px 0;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
+        }
+
+        .approval-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            color: #d97706;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .approval-content {
+            background: #fef3c7;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .approval-title {
+            font-weight: 600;
+            color: #92400e;
+            margin-bottom: 8px;
+        }
+
+        .approval-details {
+            font-size: 14px;
+            color: #78350f;
+            line-height: 1.5;
+        }
+
+        .approval-details ul {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+
+        .approval-details li {
+            margin: 4px 0;
+        }
+
+        .approval-diff {
+            background: #1f2937;
+            color: #f3f4f6;
+            padding: 12px;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            margin-top: 12px;
+        }
+
+        .approval-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .approval-button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .approval-button.approve {
+            background: #16a34a;
+            color: white;
+        }
+
+        .approval-button.approve:hover {
+            background: #15803d;
+        }
+
+        .approval-button.reject {
+            background: #dc2626;
+            color: white;
+        }
+
+        .approval-button.reject:hover {
+            background: #b91c1c;
+        }
+
+        .approval-shortcuts {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 8px;
+            text-align: right;
+        }
+
+        /* 工具调用状态样式 */
+        .tool-call-message {
+            background: #f0f9ff;
+            border-left: 4px solid #0ea5e9;
+            padding: 12px 16px;
+            margin: 8px 0;
+            border-radius: 6px;
+        }
+
+        .tool-call-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            color: #075985;
+            margin-bottom: 4px;
+        }
+
+        .tool-call-details {
+            font-size: 13px;
+            color: #0c4a6e;
+            font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+        }
+
         @media (max-width: 768px) {
             .main-content {
                 flex-direction: column;
@@ -547,6 +671,18 @@
                         this.addMessage('assistant', data.content);
                         break;
 
+                    case 'tool_call':
+                        this.handleToolCall(data);
+                        break;
+
+                    case 'approval_request':
+                        this.handleApprovalRequest(data);
+                        break;
+
+                    case 'todos':
+                        this.handleTodosUpdate(data);
+                        break;
+
                     case 'error':
                         this.showTypingIndicator(false);
                         this.addMessage('system', `❌ ${data.content}`);
@@ -554,6 +690,138 @@
 
                     default:
                         console.log('未知消息类型:', data);
+                }
+            }
+
+            handleToolCall(data) {
+                const toolIcons = {
+                    'read_file': '📖',
+                    'write_file': '✏️',
+                    'edit_file': '✂️',
+                    'shell': '⚡',
+                    'web_search': '🌐',
+                    'bash': '⚡',
+                    'task': '🔧',
+                };
+
+                const icon = toolIcons[data.tool] || '🔧';
+                const content = `${icon} ${data.tool}: ${data.args}`;
+
+                // 添加工具调用消息
+                this.addMessage('system', content, 'tool-call');
+            }
+
+            handleApprovalRequest(data) {
+                const approvalData = data.approval_data;
+                const actionRequests = approvalData.action_requests || [];
+
+                actionRequests.forEach((request, index) => {
+                    this.addApprovalDialog(request, index);
+                });
+            }
+
+            addApprovalDialog(request, index) {
+                const messagesContainer = document.getElementById('messages');
+
+                const approvalDiv = document.createElement('div');
+                approvalDiv.className = 'approval-dialog';
+                approvalDiv.id = `approval-${index}`;
+
+                const toolName = request.tool_name || 'unknown';
+                const description = request.description || '需要批准的操作';
+
+                approvalDiv.innerHTML = `
+                    <div class="approval-header">
+                        ⚠️ 工具操作需要批准
+                    </div>
+                    <div class="approval-content">
+                        <div class="approval-title">操作详情</div>
+                        <div class="approval-details">
+                            ${description}
+                        </div>
+                    </div>
+                    <div class="approval-actions">
+                        <button class="approval-button approve" onclick="chat.approveAction(${index})">
+                            ✅ 批准
+                        </button>
+                        <button class="approval-button reject" onclick="chat.rejectAction(${index})">
+                            ❌ 拒绝
+                        </button>
+                    </div>
+                    <div class="approval-shortcuts">
+                        快捷键: A=批准, R=拒绝
+                    </div>
+                `;
+
+                messagesContainer.appendChild(approvalDiv);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+                // 添加键盘快捷键支持
+                this.setupApprovalShortcuts(index);
+            }
+
+            setupApprovalShortcuts(index) {
+                const handleKeyPress = (e) => {
+                    if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+
+                    if (e.key.toLowerCase() === 'a') {
+                        this.approveAction(index);
+                    } else if (e.key.toLowerCase() === 'r') {
+                        this.rejectAction(index);
+                    }
+                };
+
+                document.addEventListener('keydown', handleKeyPress);
+
+                // 清理事件监听器
+                this.approvalShortcuts = this.approvalShortcuts || [];
+                this.approvalShortcuts.push({ handle: handleKeyPress, index });
+            }
+
+            approveAction(index) {
+                this.removeApprovalDialog(index);
+                this.sendApprovalResponse(index, 'approve');
+                this.addMessage('system', '✅ 操作已批准', 'success');
+            }
+
+            rejectAction(index) {
+                this.removeApprovalDialog(index);
+                this.sendApprovalResponse(index, 'reject');
+                this.addMessage('system', '❌ 操作已拒绝', 'error');
+            }
+
+            removeApprovalDialog(index) {
+                const approvalDiv = document.getElementById(`approval-${index}`);
+                if (approvalDiv) {
+                    approvalDiv.remove();
+                }
+
+                // 清理快捷键监听器
+                if (this.approvalShortcuts) {
+                    const shortcut = this.approvalShortcuts.find(s => s.index === index);
+                    if (shortcut) {
+                        document.removeEventListener('keydown', shortcut.handle);
+                        this.approvalShortcuts = this.approvalShortcuts.filter(s => s.index !== index);
+                    }
+                }
+            }
+
+            sendApprovalResponse(index, decision) {
+                if (this.isConnected && this.websocket) {
+                    this.websocket.send(JSON.stringify({
+                        type: 'approval_response',
+                        approval_index: index,
+                        decision: decision,
+                        session_id: this.sessionId
+                    }));
+                }
+            }
+
+            handleTodosUpdate(data) {
+                const todos = data.todos || [];
+                if (todos.length > 0) {
+                    const todoText = todos.map(todo => `- ${todo}`).join('\n');
+                    this.addMessage('system', `📋 任务更新:\n${todoText}`);
                 }
             }
 
@@ -605,26 +873,41 @@
                 }
             }
 
-            addMessage(role, content) {
+            addMessage(role, content, messageType = 'default') {
                 const messagesContainer = document.getElementById('messages');
                 const messageDiv = document.createElement('div');
                 messageDiv.className = `message ${role}`;
 
-                const avatar = document.createElement('div');
-                avatar.className = 'message-avatar';
-                avatar.textContent = role === 'user' ? 'U' : role === 'assistant' ? '🤖' : 'ℹ️';
+                // 特殊处理工具调用消息
+                if (messageType === 'tool-call') {
+                    messageDiv.classList.add('tool-call-message');
+                    const headerDiv = document.createElement('div');
+                    headerDiv.className = 'tool-call-header';
+                    headerDiv.textContent = content.split(':')[0]; // 工具名称部分
 
-                const contentDiv = document.createElement('div');
-                contentDiv.className = 'message-content';
-                contentDiv.innerHTML = this.formatMessage(content);
+                    const detailsDiv = document.createElement('div');
+                    detailsDiv.className = 'tool-call-details';
+                    detailsDiv.textContent = content.substring(content.indexOf(':') + 1).trim(); // 工具参数部分
 
-                const timeDiv = document.createElement('div');
-                timeDiv.className = 'message-time';
-                timeDiv.textContent = new Date().toLocaleTimeString();
+                    messageDiv.appendChild(headerDiv);
+                    messageDiv.appendChild(detailsDiv);
+                } else {
+                    const avatar = document.createElement('div');
+                    avatar.className = 'message-avatar';
+                    avatar.textContent = role === 'user' ? 'U' : role === 'assistant' ? '🤖' : 'ℹ️';
 
-                messageDiv.appendChild(avatar);
-                messageDiv.appendChild(contentDiv);
-                contentDiv.appendChild(timeDiv);
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'message-content';
+                    contentDiv.innerHTML = this.formatMessage(content);
+
+                    const timeDiv = document.createElement('div');
+                    timeDiv.className = 'message-time';
+                    timeDiv.textContent = new Date().toLocaleTimeString();
+
+                    messageDiv.appendChild(avatar);
+                    messageDiv.appendChild(contentDiv);
+                    contentDiv.appendChild(timeDiv);
+                }
 
                 messagesContainer.appendChild(messageDiv);
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
