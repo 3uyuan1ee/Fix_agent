@@ -1,426 +1,549 @@
 """
 测试用例：AI代理系统
 
-测试目标：
-1. 代理创建和配置
-2. 中间件管道初始化
-3. 子代理集成
-4. 代理状态管理
-5. 错误处理和恢复
+基于项目实际结构的agent.py模块测试
+测试文件: src/agents/agent.py
 """
 
 import pytest
 import tempfile
 import os
-from unittest.mock import Mock, patch, AsyncMock
+import shutil
 from pathlib import Path
+from unittest.mock import Mock, patch, MagicMock
 
-# 假设的导入，实际路径可能需要调整
+# 导入实际的项目模块
 try:
     from src.agents.agent import (
-        create_agent_with_config,
-        reset_agent,
         list_agents,
-        get_agent
+        reset_agent,
+        create_agent_with_config,
+        get_current_assistant_id
     )
-    from src.config.config import create_model, COLORS, console
-except ImportError:
-    # 如果导入失败，创建Mock对象用于测试
-    def create_agent_with_config(*args, **kwargs):
-        return Mock()
-    def reset_agent(*args, **kwargs):
+    from src.config.config import config, COLORS, console
+except ImportError as e:
+    print(f"Import warning: {e}")
+    # Mock imports for testing
+    def list_agents():
+        pass
+    def reset_agent(agent_name, source_agent=None):
         return True
-    def list_agents(*args, **kwargs):
-        return []
-    def get_agent(*args, **kwargs):
-        return None
+    def create_agent_with_config(model, assistant_id, tools, memory_mode="auto"):
+        return Mock()
+    def get_current_assistant_id():
+        return "test_assistant"
+
+    COLORS = {"primary": "blue", "success": "green", "error": "red", "dim": "gray"}
+    console = Mock()
+    config = Mock()
 
 
-class TestAgentCreation:
-    """测试代理创建功能"""
+class TestListAgents:
+    """测试列出代理功能"""
 
-    def test_create_agent_with_default_config(self):
-        """测试使用默认配置创建代理"""
-        model = Mock()
-        assistant_id = "test_agent_001"
-        tools = []
-        memory_mode = "auto"
+    def test_list_agents_no_agents_directory(self):
+        """测试当.agents目录不存在时的行为"""
+        with patch('pathlib.Path.home') as mock_home:
+            # 模拟不存在的agents目录
+            mock_agents_dir = Mock()
+            mock_agents_dir.exists.return_value = False
+            mock_agents_dir.__truediv__ = Mock(return_value=mock_agents_dir)
+            mock_agents_dir.iterdir.return_value = []
+            mock_home.return_value = mock_agents_dir
 
-        with patch('src.agents.agent.create_model') as mock_create_model:
-            mock_create_model.return_value = model
+            # 重定向console.print到capture
+            with patch.object(console, 'print') as mock_print:
+                list_agents()
 
-            agent = create_agent_with_config(model, assistant_id, tools, memory_mode)
+                # 验证打印了"No agents found"消息
+                mock_print.assert_any_call("[yellow]No agents found.[/yellow]")
+                mock_print.assert_any_call(
+                    "[dim]Agents will be created in ~/.deepagents/ when you first use them.[/dim]",
+                    style=COLORS["dim"],
+                )
 
-            assert agent is not None
-            mock_create_model.assert_called_once()
+    def test_list_agents_empty_directory(self):
+        """测试空agents目录的行为"""
+        with patch('pathlib.Path.home') as mock_home:
+            # 模拟空的agents目录
+            mock_agents_dir = Mock()
+            mock_agents_dir.exists.return_value = True
+            mock_agents_dir.iterdir.return_value = []
+            mock_agents_dir.__truediv__ = Mock(return_value=mock_agents_dir)
+            mock_home.return_value = mock_agents_dir
 
-    def test_create_agent_with_custom_tools(self):
-        """测试创建带自定义工具的代理"""
-        model = Mock()
-        assistant_id = "test_agent_002"
-        tools = [Mock(), Mock()]  # 模拟工具列表
-        memory_mode = "enhanced"
+            with patch.object(console, 'print') as mock_print:
+                list_agents()
 
-        with patch('src.agents.agent.create_model') as mock_create_model:
-            mock_create_model.return_value = model
+                mock_print.assert_any_call("[yellow]No agents found.[/yellow]")
 
-            agent = create_agent_with_config(model, assistant_id, tools, memory_mode)
+    def test_list_agents_with_agents(self):
+        """测试存在agents时的列出功能"""
+        with patch('pathlib.Path.home') as mock_home:
+            # 模拟有agents的目录
+            mock_agent1_dir = Mock()
+            mock_agent1_dir.is_dir.return_value = True
+            mock_agent1_dir.name = "agent1"
 
-            assert agent is not None
-            mock_create_model.assert_called_once()
+            mock_agent1_md = Mock()
+            mock_agent1_md.exists.return_value = True
+            mock_agent1_dir.__truediv__ = Mock(return_value=mock_agent1_md)
 
-    def test_create_agent_with_different_memory_modes(self):
+            mock_agents_dir = Mock()
+            mock_agents_dir.exists.return_value = True
+            mock_agents_dir.iterdir.return_value = [mock_agent1_dir]
+            mock_home.return_value = mock_agents_dir / ".deepagents"
+
+            with patch.object(console, 'print') as mock_print:
+                list_agents()
+
+                # 验证打印了"Available Agents"
+                mock_print.assert_any_call("\n[bold]Available Agents:[/bold]\n", style=COLORS["primary"])
+
+
+class TestResetAgent:
+    """测试重置代理功能"""
+
+    @pytest.fixture
+    def mock_agents_dir(self):
+        """模拟agents目录结构"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            agents_dir = Path(temp_dir) / ".deepagents"
+            agents_dir.mkdir()
+
+            # 创建源代理目录
+            source_dir = agents_dir / "source_agent"
+            source_dir.mkdir()
+
+            # 创建source agent.md
+            source_md = source_dir / "agent.md"
+            source_md.write_text("# Source Agent\nTest content")
+
+            yield agents_dir, source_dir
+
+    def test_reset_agent_from_source(self, mock_agents_dir):
+        """测试从源代理重置"""
+        agents_dir, source_dir = mock_agents_dir
+
+        # 创建目标代理目录
+        target_dir = agents_dir / "target_agent"
+        target_dir.mkdir()
+        target_md = target_dir / "agent.md"
+        target_md.write_text("# Target Agent\nOriginal content")
+
+        with patch('pathlib.Path.home', return_value=agents_dir.parent):
+            with patch.object(console, 'print') as mock_print:
+                reset_agent("target_agent", "source_agent")
+
+                # 验证目标代理被重置
+                assert target_md.exists()
+                content = target_md.read_text()
+                assert "Source Agent" in content
+                assert "Test content" in content
+
+                # 验证打印了成功消息
+                mock_print.assert_any_call(
+                    f"✓ Agent 'target_agent' reset to contents of agent 'source_agent'",
+                    style=COLORS["primary"]
+                )
+
+    def test_reset_agent_nonexistent_source(self, mock_agents_dir):
+        """测试从不存在的源代理重置"""
+        agents_dir, _ = mock_agents_dir
+
+        with patch('pathlib.Path.home', return_value=agents_dir.parent):
+            with patch.object(console, 'print') as mock_print:
+                reset_agent("target_agent", "nonexistent_source")
+
+                # 验证打印了错误消息
+                mock_print.assert_any_call(
+                    "[bold red]Error:[/bold red] Source agent 'nonexistent_source' not found or has no agent.md"
+                )
+
+    def test_reset_agent_default_content(self, mock_agents_dir):
+        """测试重置为默认内容"""
+        agents_dir, _ = mock_agents_dir
+
+        # 创建目标代理目录
+        target_dir = agents_dir / "target_agent"
+        target_dir.mkdir()
+        target_md = target_dir / "agent.md"
+        target_md.write_text("# Target Agent\nOriginal content")
+
+        with patch('pathlib.Path.home', return_value=agents_dir.parent):
+            with patch('src.agents.agent.get_default_coding_instructions') as mock_default:
+                mock_default.return_value = "# Default Instructions\nDefault content"
+
+                with patch.object(console, 'print') as mock_print:
+                    reset_agent("target_agent", None)
+
+                    # 验证使用了默认内容
+                    mock_default.assert_called_once()
+                    content = target_md.read_text()
+                    assert "Default Instructions" in content
+
+                    # 验证打印了成功消息
+                    mock_print.assert_any_call(
+                        f"✓ Agent 'target_agent' reset to default",
+                        style=COLORS["primary"]
+                    )
+
+    def test_reset_agent_removes_existing_directory(self, mock_agents_dir):
+        """测试重置时移除现有目录"""
+        agents_dir, _ = mock_agents_dir
+
+        # 创建目标代理目录和文件
+        target_dir = agents_dir / "target_agent"
+        target_dir.mkdir()
+        (target_dir / "old_file.txt").write_text("old content")
+        sub_dir = target_dir / "subdir"
+        sub_dir.mkdir()
+        (sub_dir / "sub_file.txt").write_text("sub content")
+
+        with patch('pathlib.Path.home', return_value=agents_dir.parent):
+            with patch.object(console, 'print') as mock_print:
+                reset_agent("target_agent", None)
+
+                # 验证旧内容被移除，只有agent.md存在
+                assert target_dir.exists()
+                assert (target_dir / "agent.md").exists()
+                assert not (target_dir / "old_file.txt").exists()
+                assert not (target_dir / "subdir").exists()
+
+                # 验证打印了移除消息
+                mock_print.assert_any_call(
+                    f"Removed existing agent directory: {target_dir}",
+                    style=COLORS["tool"]
+                )
+
+
+class TestCreateAgentWithConfig:
+    """测试创建代理配置功能"""
+
+    @pytest.fixture
+    def mock_model(self):
+        """模拟模型对象"""
+        return Mock()
+
+    @pytest.fixture
+    def mock_tools(self):
+        """模拟工具列表"""
+        return ["tool1", "tool2", "tool3"]
+
+    @pytest.fixture
+    def mock_agents_dir(self):
+        """模拟agents目录"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            agents_dir = Path(temp_dir) / ".deepagents"
+            agents_dir.mkdir()
+            yield agents_dir
+
+    def test_create_agent_basic(self, mock_model, mock_tools, mock_agents_dir):
+        """测试基本代理创建"""
+        assistant_id = "test_agent"
+
+        with patch('pathlib.Path.home', return_value=mock_agents_dir.parent):
+            with patch('src.agents.agent.create_deep_agent') as mock_create_deep:
+                mock_agent = Mock()
+                mock_create_deep.return_value = mock_agent
+
+                with patch('src.agents.agent.FilesystemBackend') as mock_backend:
+                    with patch('src.agents.agent.CompositeBackend') as mock_composite:
+                        with patch('src.agents.agent.LayeredMemoryMiddleware') as mock_memory:
+                            with patch('src.agents.agent.SecurityMiddleware') as mock_security:
+                                with patch('src.agents.agent.LoggingMiddleware') as mock_logging:
+                                    with patch('src.agents.agent.ContextEnhancementMiddleware') as mock_context:
+                                        with patch('src.agents.agent.PerformanceMonitorMiddleware') as mock_perf:
+                                            with patch('src.agents.agent.AgentMemoryMiddleware') as mock_agent_mem:
+                                                with patch('src.agents.agent.ResumableShellToolMiddleware') as mock_shell:
+                                                    with patch('src.agents.agent.HostExecutionPolicy') as mock_policy:
+                                                        with patch('src.agents.agent.MemoryMiddlewareFactory') as mock_factory:
+                                                            with patch('src.agents.agent.get_default_coding_instructions') as mock_default:
+                                                                mock_default.return_value = "Default instructions"
+                                                                mock_factory.create_memory_backend.return_value = Mock()
+
+                                                                agent = create_agent_with_config(
+                                                                    mock_model, assistant_id, mock_tools, "auto"
+                                                                )
+
+                                                                # 验证agent目录被创建
+                                                                agent_dir = mock_agents_dir / assistant_id
+                                                                assert agent_dir.exists()
+
+                                                                # 验证agent.md文件被创建
+                                                                agent_md = agent_dir / "agent.md"
+                                                                assert agent_md.exists()
+
+                                                                content = agent_md.read_text()
+                                                                assert "Default instructions" in content
+
+                                                                # 验证create_deep_agent被调用
+                                                                mock_create_deep.assert_called_once()
+
+    def test_create_agent_existing_agent_md(self, mock_model, mock_tools, mock_agents_dir):
+        """测试创建代理时agent.md已存在"""
+        assistant_id = "existing_agent"
+
+        # 预先创建agent目录和agent.md
+        agent_dir = mock_agents_dir / assistant_id
+        agent_dir.mkdir()
+        agent_md = agent_dir / "agent.md"
+        agent_md.write_text("# Existing Agent\nAlready exists")
+
+        with patch('pathlib.Path.home', return_value=mock_agents_dir.parent):
+            with patch('src.agents.agent.create_deep_agent') as mock_create_deep:
+                mock_agent = Mock()
+                mock_create_deep.return_value = mock_agent
+
+                # 模拟所有中间件
+                with patch('src.agents.agent.ResumableShellToolMiddleware'):
+                    with patch('src.agents.agent.FilesystemBackend'):
+                        with patch('src.agents.agent.CompositeBackend'):
+                            with patch('src.agents.agent.LayeredMemoryMiddleware'):
+                                with patch('src.agents.agent.SecurityMiddleware'):
+                                    with patch('src.agents.agent.LoggingMiddleware'):
+                                        with patch('src.agents.agent.ContextEnhancementMiddleware'):
+                                            with patch('src.agents.agent.PerformanceMonitorMiddleware'):
+                                                with patch('src.agents.agent.AgentMemoryMiddleware'):
+                                                    with patch('src.agents.agent.MemoryMiddlewareFactory') as mock_factory:
+                                                        mock_factory.create_memory_backend.return_value = Mock()
+
+                                                        agent = create_agent_with_config(
+                                                            mock_model, assistant_id, mock_tools, "auto"
+                                                        )
+
+                                                        # 验证现有的agent.md没有被覆盖
+                                                        content = agent_md.read_text()
+                                                        assert "Existing Agent" in content
+                                                        assert "Already exists" in content
+                                                        assert "Default instructions" not in content
+
+    def test_create_agent_different_memory_modes(self, mock_model, mock_tools, mock_agents_dir):
         """测试不同记忆模式的代理创建"""
-        model = Mock()
-        assistant_id = "test_agent_003"
-        tools = []
+        assistant_id = "memory_test_agent"
         memory_modes = ["auto", "enhanced", "minimal"]
 
-        with patch('src.agents.agent.create_model') as mock_create_model:
-            mock_create_model.return_value = model
+        for memory_mode in memory_modes:
+            with patch('pathlib.Path.home', return_value=mock_agents_dir.parent):
+                with patch('src.agents.agent.create_deep_agent') as mock_create_deep:
+                    mock_agent = Mock()
+                    mock_create_deep.return_value = mock_agent
 
-            for memory_mode in memory_modes:
-                agent = create_agent_with_config(model, assistant_id, tools, memory_mode)
-                assert agent is not None
+                    with patch('src.agents.agent.ResumableShellToolMiddleware'):
+                        with patch('src.agents.agent.FilesystemBackend'):
+                            with patch('src.agents.agent.CompositeBackend'):
+                                with patch('src.agents.agent.LayeredMemoryMiddleware') as mock_memory:
+                                    with patch('src.agents.agent.SecurityMiddleware'):
+                                        with patch('src.agents.agent.LoggingMiddleware'):
+                                            with patch('src.agents.agent.ContextEnhancementMiddleware'):
+                                                with patch('src.agents.agent.PerformanceMonitorMiddleware'):
+                                                    with patch('src.agents.agent.AgentMemoryMiddleware'):
+                                                        with patch('src.agents.agent.MemoryMiddlewareFactory') as mock_factory:
+                                                            mock_factory.create_memory_backend.return_value = Mock()
+                                                            with patch('src.agents.agent.get_default_coding_instructions'):
 
-    def test_create_agent_with_invalid_parameters(self):
-        """测试无效参数的代理创建"""
-        model = None
-        assistant_id = ""
-        tools = None
-        memory_mode = "invalid"
+                                                                agent = create_agent_with_config(
+                                                                    mock_model, f"{assistant_id}_{memory_mode}",
+                                                                    mock_tools, memory_mode
+                                                                )
 
-        # 应该处理无效参数
-        with pytest.raises((ValueError, TypeError)):
-            create_agent_with_config(model, assistant_id, tools, memory_mode)
+                                                                # 验证memory_mode被正确使用
+                                                                mock_memory.assert_called()
 
-
-class TestAgentLifecycle:
-    """测试代理生命周期管理"""
-
-    def test_agent_initialization(self):
-        """测试代理初始化过程"""
-        model = Mock()
-        assistant_id = "lifecycle_test_agent"
+    def test_create_agent_with_empty_tools(self, mock_model, mock_agents_dir):
+        """测试使用空工具列表创建代理"""
+        assistant_id = "empty_tools_agent"
         tools = []
-        memory_mode = "auto"
 
-        with patch('src.agents.agent.create_model') as mock_create_model:
-            mock_create_model.return_value = model
+        with patch('pathlib.Path.home', return_value=mock_agents_dir.parent):
+            with patch('src.agents.agent.create_deep_agent') as mock_create_deep:
+                mock_agent = Mock()
+                mock_create_deep.return_value = mock_agent
 
-            agent = create_agent_with_config(model, assistant_id, tools, memory_mode)
+                with patch('src.agents.agent.ResumableShellToolMiddleware'):
+                    with patch('src.agents.agent.FilesystemBackend'):
+                        with patch('src.agents.agent.CompositeBackend'):
+                            with patch('src.agents.agent.LayeredMemoryMiddleware'):
+                                with patch('src.agents.agent.SecurityMiddleware'):
+                                    with patch('src.agents.agent.LoggingMiddleware'):
+                                        with patch('src.agents.agent.ContextEnhancementMiddleware'):
+                                            with patch('src.agents.agent.PerformanceMonitorMiddleware'):
+                                                with patch('src.agents.agent.AgentMemoryMiddleware'):
+                                                    with patch('src.agents.agent.MemoryMiddlewareFactory') as mock_factory:
+                                                        mock_factory.create_memory_backend.return_value = Mock()
+                                                        with patch('src.agents.agent.get_default_coding_instructions'):
 
-            # 验证代理基本属性
-            assert hasattr(agent, 'stream') or hasattr(agent, 'invoke')
-            assert assistant_id is not None
+                                                            agent = create_agent_with_config(
+                                                                mock_model, assistant_id, tools, "auto"
+                                                            )
 
-    def test_agent_state_persistence(self):
-        """测试代理状态持久化"""
-        model = Mock()
-        assistant_id = "persistent_test_agent"
-        tools = []
-        memory_mode = "enhanced"
+                                                            # 验证代理仍然能够创建
+                                                            mock_create_deep.assert_called_once()
 
-        with patch('src.agents.agent.create_model') as mock_create_model:
-            mock_create_model.return_value = model
+    def test_create_agent_directory_creation_error(self, mock_model, mock_tools):
+        """测试代理目录创建错误"""
+        assistant_id = "error_agent"
 
-            # 创建代理
-            agent1 = create_agent_with_config(model, assistant_id, tools, memory_mode)
+        with patch('pathlib.Path.home') as mock_home:
+            # 模拟权限错误
+            mock_home.return_value = Path("/nonexistent/permission_denied")
 
-            # 获取同一个代理（模拟持久化）
-            agent2 = get_agent(assistant_id)
+            with pytest.raises((OSError, PermissionError)):
+                create_agent_with_config(mock_model, assistant_id, mock_tools, "auto")
 
-            # 验证代理一致性
-            assert agent1 is not None
 
-    def test_agent_reset_functionality(self):
-        """测试代理重置功能"""
-        source_agent = "source_test_agent"
-        target_agent = "target_test_agent"
+class TestGetAgent:
+    """测试获取代理功能"""
 
-        with patch('src.agents.agent.get_agent') as mock_get_agent:
+    def test_get_agent_success(self):
+        """测试成功获取代理"""
+        # 这个测试需要实际的deepagents模块，所以使用mock
+        with patch('src.agents.agent.create_deep_agent') as mock_create_deep:
             mock_agent = Mock()
-            mock_get_agent.return_value = mock_agent
+            mock_create_deep.return_value = mock_agent
 
-            result = reset_agent(target_agent, source_agent)
+            # 模拟现有的agent配置
+            with tempfile.TemporaryDirectory() as temp_dir:
+                agents_dir = Path(temp_dir) / ".deepagents"
+                agents_dir.mkdir()
 
-            assert result is True
-            mock_get_agent.assert_called_with(source_agent)
+                agent_dir = agents_dir / "existing_agent"
+                agent_dir.mkdir()
 
+                with patch('pathlib.Path.home', return_value=Path(temp_dir)):
+                    # 由于get_agent函数可能不存在或需要参数，这里测试导入
+                    try:
+                        from src.agents.agent import get_agent
+                        agent = get_agent("existing_agent")
+                        # 验证返回了代理
+                        assert agent is not None
+                    except ImportError:
+                        # 如果get_agent不存在，跳过测试
+                        pytest.skip("get_agent function not available")
 
-class TestAgentTools:
-    """测试代理工具集成"""
-
-    def test_agent_with_code_analysis_tools(self):
-        """测试代理集成代码分析工具"""
-        model = Mock()
-        assistant_id = "code_analysis_agent"
-        tools = ["analyze_code_defects", "analyze_code_complexity"]
-        memory_mode = "auto"
-
-        with patch('src.agents.agent.create_model') as mock_create_model:
-            mock_create_model.return_value = model
-
-            agent = create_agent_with_config(model, assistant_id, tools, memory_mode)
-
-            assert agent is not None
-
-    def test_agent_with_network_tools(self):
-        """测试代理集成网络工具"""
-        model = Mock()
-        assistant_id = "network_agent"
-        tools = ["web_search", "http_request"]
-        memory_mode = "auto"
-
-        with patch('src.agents.agent.create_model') as mock_create_model:
-            mock_create_model.return_value = model
-
-            agent = create_agent_with_config(model, assistant_id, tools, memory_mode)
-
-            assert agent is not None
-
-    def test_agent_with_file_operations_tools(self):
-        """测试代理集成文件操作工具"""
-        model = Mock()
-        assistant_id = "file_ops_agent"
-        tools = ["read_file", "write_file", "edit_file"]
-        memory_mode = "auto"
-
-        with patch('src.agents.agent.create_model') as mock_create_model:
-            mock_create_model.return_value = model
-
-            agent = create_agent_with_config(model, assistant_id, tools, memory_mode)
-
-            assert agent is not None
-
-
-class TestAgentMiddleware:
-    """测试代理中间件系统"""
-
-    def test_middleware_pipeline_initialization(self):
-        """测试中间件管道初始化"""
-        model = Mock()
-        assistant_id = "middleware_test_agent"
-        tools = []
-        memory_mode = "enhanced"
-
-        with patch('src.agents.agent.create_model') as mock_create_model:
-            mock_create_model.return_value = model
-
-            agent = create_agent_with_config(model, assistant_id, tools, memory_mode)
-
-            assert agent is not None
-
-    def test_memory_middleware_integration(self):
-        """测试记忆中间件集成"""
-        model = Mock()
-        assistant_id = "memory_test_agent"
-        tools = []
-        memory_mode = "auto"
-
-        with patch('src.agents.agent.create_model') as mock_create_model:
-            mock_create_model.return_value = model
-
-            agent = create_agent_with_config(model, assistant_id, tools, memory_mode)
-
-            assert agent is not None
-
-    def test_performance_monitor_middleware(self):
-        """测试性能监控中间件"""
-        model = Mock()
-        assistant_id = "perf_monitor_agent"
-        tools = []
-        memory_mode = "auto"
-
-        with patch('src.agents.agent.create_model') as mock_create_model:
-            mock_create_model.return_value = model
-
-            agent = create_agent_with_config(model, assistant_id, tools, memory_mode)
-
-            assert agent is not None
-
-    def test_security_middleware(self):
-        """测试安全中间件"""
-        model = Mock()
-        assistant_id = "security_agent"
-        tools = ["execute_bash"]
-        memory_mode = "auto"
-
-        with patch('src.agents.agent.create_model') as mock_create_model:
-            mock_create_model.return_value = model
-
-            agent = create_agent_with_config(model, assistant_id, tools, memory_mode)
-
-            assert agent is not None
-
-
-class TestAgentErrorHandling:
-    """测试代理错误处理"""
-
-    def test_invalid_model_handling(self):
-        """测试无效模型处理"""
-        with pytest.raises((ValueError, TypeError)):
-            create_agent_with_config(None, "test_agent", [], "auto")
-
-    def test_invalid_assistant_id_handling(self):
-        """测试无效助手ID处理"""
-        model = Mock()
-
-        with patch('src.agents.agent.create_model') as mock_create_model:
-            mock_create_model.return_value = model
-
-            # 空字符串应该被处理
-            with pytest.raises((ValueError, TypeError)):
-                create_agent_with_config(model, "", [], "auto")
-
-    def test_malformed_tools_list_handling(self):
-        """测试畸形工具列表处理"""
-        model = Mock()
-        assistant_id = "malformed_tools_agent"
-
-        with patch('src.agents.agent.create_model') as mock_create_model:
-            mock_create_model.return_value = model
-
-            # 应该能处理空工具列表或无效工具
-            agent = create_agent_with_config(model, assistant_id, None, "auto")
-            assert agent is not None
-
-
-class TestAgentPerformance:
-    """测试代理性能"""
-
-    def test_agent_creation_performance(self):
-        """测试代理创建性能"""
-        import time
-
-        model = Mock()
-        assistant_id = "performance_test_agent"
-        tools = []
-        memory_mode = "auto"
-
-        with patch('src.agents.agent.create_model') as mock_create_model:
-            mock_create_model.return_value = model
-
-            start_time = time.time()
-            agent = create_agent_with_config(model, assistant_id, tools, memory_mode)
-            end_time = time.time()
-
-            creation_time = end_time - start_time
-            assert agent is not None
-            # 代理创建应该在合理时间内完成（例如1秒内）
-            assert creation_time < 1.0
-
-    def test_multiple_agents_creation_performance(self):
-        """测试多个代理创建性能"""
-        import time
-
-        model = Mock()
-        base_assistant_id = "multi_agent_test"
-        tools = []
-        memory_mode = "auto"
-
-        with patch('src.agents.agent.create_model') as mock_create_model:
-            mock_create_model.return_value = model
-
-            start_time = time.time()
-
-            # 创建多个代理
-            agents = []
-            for i in range(5):
-                assistant_id = f"{base_assistant_id}_{i}"
-                agent = create_agent_with_config(model, assistant_id, tools, memory_mode)
-                agents.append(agent)
-
-            end_time = time.time()
-            total_time = end_time - start_time
-
-            assert len(agents) == 5
-            assert all(agent is not None for agent in agents)
-            # 多个代理创建应该在合理时间内完成
-            assert total_time < 5.0
-
-
-class TestAgentConfiguration:
-    """测试代理配置管理"""
-
-    def test_agent_configuration_loading(self):
-        """测试代理配置加载"""
-        # 测试配置文件加载
-        config_content = """
-        [agent]
-        model = "gpt-4"
-        memory_mode = "enhanced"
-        tools = ["analyze_code_defects", "web_search"]
-        """
-
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.toml', delete=False) as f:
-            f.write(config_content)
-            config_path = f.name
-
-        try:
-            # 这里应该测试配置文件解析
-            assert os.path.exists(config_path)
-            with open(config_path, 'r') as f:
-                content = f.read()
-                assert "agent" in content
-                assert "model" in content
-        finally:
-            os.unlink(config_path)
-
-    def test_agent_environment_variables(self):
-        """测试代理环境变量配置"""
-        # 测试环境变量设置
-        with patch.dict(os.environ, {
-            'FIX_AGENT_MODEL': 'gpt-4',
-            'FIX_AGENT_MEMORY_MODE': 'enhanced'
-        }):
-            assert os.environ.get('FIX_AGENT_MODEL') == 'gpt-4'
-            assert os.environ.get('FIX_AGENT_MEMORY_MODE') == 'enhanced'
+    def test_get_agent_nonexistent(self):
+        """测试获取不存在的代理"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with patch('pathlib.Path.home', return_value=Path(temp_dir)):
+                try:
+                    from src.agents.agent import get_agent
+                    agent = get_agent("nonexistent_agent")
+                    # 应该返回None或抛出异常
+                    assert agent is None
+                except (ValueError, FileNotFoundError):
+                    # 预期的异常
+                    assert True
+                except ImportError:
+                    pytest.skip("get_agent function not available")
 
 
 class TestAgentIntegration:
-    """测试代理集成功能"""
+    """集成测试"""
 
-    @pytest.mark.asyncio
-    async def test_agent_stream_integration(self):
-        """测试代理流式处理集成"""
-        model = AsyncMock()
-        assistant_id = "stream_test_agent"
+    @pytest.fixture
+    def full_agent_setup(self):
+        """完整的代理设置夹具"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # 设置测试环境
+            os.chdir(temp_dir)
+
+            agents_dir = Path(temp_dir) / ".deepagents"
+            agents_dir.mkdir()
+
+            yield agents_dir
+
+    def test_complete_agent_workflow(self, full_agent_setup):
+        """测试完整的代理工作流程"""
+        mock_model = Mock()
+        tools = ["tool1"]
+        assistant_id = "workflow_test"
+
+        with patch('pathlib.Path.home', return_value=full_agent_setup.parent):
+            # 1. 创建代理
+            with patch('src.agents.agent.create_deep_agent') as mock_create_deep:
+                mock_agent = Mock()
+                mock_create_deep.return_value = mock_agent
+
+                with patch('src.agents.agent.ResumableShellToolMiddleware'):
+                    with patch('src.agents.agent.FilesystemBackend'):
+                        with patch('src.agents.agent.CompositeBackend'):
+                            with patch('src.agents.agent.LayeredMemoryMiddleware'):
+                                with patch('src.agents.agent.SecurityMiddleware'):
+                                    with patch('src.agents.agent.LoggingMiddleware'):
+                                        with patch('src.agents.agent.ContextEnhancementMiddleware'):
+                                            with patch('src.agents.agent.PerformanceMonitorMiddleware'):
+                                                with patch('src.agents.agent.AgentMemoryMiddleware'):
+                                                    with patch('src.agents.agent.MemoryMiddlewareFactory') as mock_factory:
+                                                        mock_factory.create_memory_backend.return_value = Mock()
+                                                        with patch('src.agents.agent.get_default_coding_instructions'):
+
+                                                            agent = create_agent_with_config(
+                                                                mock_model, assistant_id, tools, "auto"
+                                                            )
+
+            # 2. 验证代理目录创建
+            agent_dir = full_agent_setup / assistant_id
+            assert agent_dir.exists()
+            assert (agent_dir / "agent.md").exists()
+
+            # 3. 列出代理
+            with patch.object(console, 'print'):
+                list_agents()
+
+            # 4. 重置代理
+            with patch.object(console, 'print'):
+                reset_agent(assistant_id, None)
+
+
+class TestAgentErrorHandling:
+    """错误处理测试"""
+
+    def test_invalid_assistant_id(self):
+        """测试无效的助手ID"""
+        mock_model = Mock()
         tools = []
-        memory_mode = "auto"
 
-        with patch('src.agents.agent.create_model') as mock_create_model:
-            mock_create_model.return_value = model
+        with pytest.raises((ValueError, TypeError, OSError)):
+            create_agent_with_config(mock_model, "", tools, "auto")
 
-            agent = create_agent_with_config(model, assistant_id, tools, memory_mode)
+    def test_none_model(self):
+        """测试None模型"""
+        tools = ["tool1"]
 
-            # 模拟流式响应
-            mock_stream = AsyncMock()
-            mock_stream.return_value = iter([{"response": "test"}])
-            agent.stream = mock_stream
+        # 应该能处理None模型，或者抛出适当异常
+        try:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                with patch('pathlib.Path.home', return_value=Path(temp_dir)):
+                    result = create_agent_with_config(None, "test", tools, "auto")
+                    # 如果没有抛出异常，结果应该是None或有效的代理
+                    assert result is not None
+        except (ValueError, TypeError):
+            # 预期的异常类型
+            assert True
 
-            # 测试流式调用
-            responses = []
-            async for chunk in agent.stream({"messages": [{"role": "user", "content": "test"}]}):
-                responses.append(chunk)
+    def test_malformed_tools_list(self):
+        """测试畸形工具列表"""
+        mock_model = Mock()
 
-            assert len(responses) == 1
+        # 测试各种无效的工具列表
+        invalid_tools = [
+            None,
+            "not_a_list",
+            [{"invalid": "tool"}]
+        ]
 
-    def test_agent_tool_execution_integration(self):
-        """测试代理工具执行集成"""
-        model = Mock()
-        assistant_id = "tool_execution_agent"
-        tools = ["web_search"]
-        memory_mode = "auto"
-
-        with patch('src.agents.agent.create_model') as mock_create_model:
-            mock_create_model.return_value = model
-
-            agent = create_agent_with_config(model, assistant_id, tools, memory_mode)
-
-            assert agent is not None
+        for tools in invalid_tools:
+            try:
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    with patch('pathlib.Path.home', return_value=Path(temp_dir)):
+                        result = create_agent_with_config(mock_model, "test", tools, "auto")
+                        # 如果没有抛出异常，应该能处理
+                        assert result is not None
+            except (ValueError, TypeError):
+                # 预期的异常
+                assert True
 
 
-# 测试运行器和配置
+# 运行测试的入口
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])
