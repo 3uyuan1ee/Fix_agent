@@ -441,6 +441,19 @@
             font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
         }
 
+        .tool-result-message {
+            background: #f0fdf4;
+            border-left: 4px solid #22c55e;
+            padding: 12px 16px;
+            margin: 8px 0;
+            border-radius: 6px;
+            white-space: pre-line;
+            font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+            font-size: 13px;
+            color: #14532d;
+            line-height: 1.4;
+        }
+
         @media (max-width: 768px) {
             .main-content {
                 flex-direction: column;
@@ -675,6 +688,10 @@
                         this.handleToolCall(data);
                         break;
 
+                    case 'tool_result':
+                        this.handleToolResult(data);
+                        break;
+
                     case 'approval_request':
                         this.handleApprovalRequest(data);
                         break;
@@ -709,6 +726,11 @@
 
                 // 添加工具调用消息
                 this.addMessage('system', content, 'tool-call');
+            }
+
+            handleToolResult(data) {
+                // 添加工具结果消息，使用预格式化文本以保持换行
+                this.addMessage('system', data.content, 'tool-result');
             }
 
             handleApprovalRequest(data) {
@@ -891,6 +913,9 @@
 
                     messageDiv.appendChild(headerDiv);
                     messageDiv.appendChild(detailsDiv);
+                } else if (messageType === 'tool-result') {
+                    messageDiv.classList.add('tool-result-message');
+                    messageDiv.textContent = content;
                 } else {
                     const avatar = document.createElement('div');
                     avatar.className = 'message-avatar';
