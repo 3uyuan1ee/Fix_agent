@@ -198,9 +198,12 @@ class TestWorkingMemory:
         working_memory.add("item3")
 
         assert len(working_memory.items) == 3
-        assert "item1" in working_memory.items
-        assert "item2" in working_memory.items
-        assert "item3" in working_memory.items
+        # 验证items包含的是字典，不是字符串
+        items_list = list(working_memory.items)
+        contents = [item['content'] for item in items_list]
+        assert "item1" in contents
+        assert "item2" in contents
+        assert "item3" in contents
 
     def test_working_memory_capacity_limit(self):
         """测试容量限制"""
@@ -213,23 +216,25 @@ class TestWorkingMemory:
         working_memory.add("item4")  # 应该移除最旧的项目
 
         assert len(working_memory.items) == 3
-        assert "item1" not in working_memory.items  # 最旧的被移除
-        assert "item4" in working_memory.items
-        assert "item2" in working_memory.items
-        assert "item3" in working_memory.items
+        # 验证items包含的是字典，不是字符串
+        items_list = list(working_memory.items)
+        contents = [item['content'] for item in items_list]
+        assert "item1" not in contents  # 最旧的被移除
+        assert "item4" in contents
+        assert "item2" in contents
+        assert "item3" in contents
 
-    def test_working_memory_get_items(self):
-        """测试获取项目"""
+    def test_working_memory_get_context(self):
+        """测试获取工作记忆上下文"""
         working_memory = WorkingMemory(max_size=3)
 
         working_memory.add("item1")
         working_memory.add("item2")
 
-        items = working_memory.get_items()
-        assert isinstance(items, list)
-        assert len(items) == 2
-        assert "item1" in items
-        assert "item2" in items
+        context = working_memory.get_context()
+        assert isinstance(context, str)
+        assert "item1" in context
+        assert "item2" in context
 
     def test_working_memory_clear(self):
         """测试清空工作记忆"""
@@ -247,51 +252,48 @@ class TestSessionMemory:
 
     def test_session_memory_operations(self):
         """测试会话记忆基本操作"""
-        session_memory = SessionMemory()
+        session_memory = SessionMemory("test_session")
 
-        # 测试偏好设置
-        session_memory.add_preference("theme", "dark")
-        session_memory.add_preference("language", "zh")
+        # 测试添加话题
+        session_memory.add_topic("programming")
+        session_memory.add_topic("python")
 
-        assert session_memory.get_preference("theme") == "dark"
-        assert session_memory.get_preference("language") == "zh"
+        assert "programming" in session_memory.key_topics
+        assert "python" in session_memory.key_topics
 
-        # 测试更新偏好
-        session_memory.add_preference("theme", "light")
-        assert session_memory.get_preference("theme") == "light"
+        # 测试更新摘要
+        session_memory.update_summary("User asked about Python programming")
+        assert "Python programming" in session_memory.conversation_summary
 
-        # 测试不存在的偏好
-        assert session_memory.get_preference("nonexistent") is None
+        # 测试交互计数
+        initial_count = session_memory.interaction_count
+        session_memory.update_summary("Another interaction")
+        assert session_memory.interaction_count > initial_count
 
-    def test_session_memory_multiple_preferences(self):
-        """测试多个偏好管理"""
-        session_memory = SessionMemory()
+    def test_session_memory_multiple_topics(self):
+        """测试多个话题管理"""
+        session_memory = SessionMemory("test_session")
 
-        preferences = {
-            "theme": "dark",
-            "language": "en",
-            "auto_save": True,
-            "notifications": False
-        }
+        topics = ["programming", "python", "algorithms", "data structures"]
 
-        for key, value in preferences.items():
-            session_memory.add_preference(key, value)
+        for topic in topics:
+            session_memory.add_topic(topic)
 
-        for key, expected_value in preferences.items():
-            assert session_memory.get_preference(key) == expected_value
+        # 验证所有话题都被正确存储
+        for topic in topics:
+            assert topic in session_memory.key_topics
 
-    def test_session_memory_get_all(self):
-        """测试获取所有偏好"""
-        session_memory = SessionMemory()
+    def test_session_memory_get_context(self):
+        """测试获取会话上下文"""
+        session_memory = SessionMemory("test_session")
 
-        session_memory.add_preference("theme", "dark")
-        session_memory.add_preference("language", "zh")
+        session_memory.add_topic("python")
+        session_memory.update_summary("Discussed Python basics")
 
-        all_preferences = session_memory.get_all_preferences()
-        assert isinstance(all_preferences, dict)
-        assert len(all_preferences) == 2
-        assert all_preferences["theme"] == "dark"
-        assert all_preferences["language"] == "zh"
+        context = session_memory.get_context()
+        assert isinstance(context, str)
+        assert "python" in context
+        assert "Python basics" in context
 
 
 class TestLongTermMemory:
