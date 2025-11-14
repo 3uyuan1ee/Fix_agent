@@ -34,11 +34,11 @@ from .input import parse_file_mentions
 
 
 def is_summary_message(content: str) -> bool:
-    """Detect if a message is from SummarizationMiddleware."""
+    """检测消息是否来自SummarizationMiddleware"""
     if not isinstance(content, str):
         return False
     content_lower = content.lower()
-    # Common patterns from SummarizationMiddleware
+    # 中间件的常见模式
     return (
         "conversation summary" in content_lower
         or "previous conversation" in content_lower
@@ -49,7 +49,7 @@ def is_summary_message(content: str) -> bool:
 
 
 def _extract_tool_args(action_request: dict) -> dict | None:
-    """Best-effort extraction of tool call arguments from an action request."""
+    """从动作请求中提取工具调用参数。"""
     if "tool_call" in action_request and isinstance(action_request["tool_call"], dict):
         args = action_request["tool_call"].get("args")
         if isinstance(args, dict):
@@ -61,7 +61,7 @@ def _extract_tool_args(action_request: dict) -> dict | None:
 
 
 def prompt_for_tool_approval(action_request: dict, assistant_id: str | None) -> dict:
-    """Prompt user to approve/reject a tool action with arrow key navigation."""
+    """提示用户使用方向键导航来批准/拒绝工具操作"""
     description = action_request.get("description", "No description available")
     tool_name = action_request.get("name") or action_request.get("tool")
     tool_args = _extract_tool_args(action_request)
@@ -83,7 +83,7 @@ def prompt_for_tool_approval(action_request: dict, assistant_id: str | None) -> 
     else:
         body_lines.append(description)
 
-    # Display action info first
+    # 首先显示操作信息
     console.print()
     console.print(
         Panel(
@@ -100,7 +100,7 @@ def prompt_for_tool_approval(action_request: dict, assistant_id: str | None) -> 
     console.print()
 
     options = ["approve", "reject"]
-    selected = 0  # Start with approve selected
+    selected = 0  # 默认选中approve
 
     if TERMIOS_AVAILABLE:
         try:
@@ -190,10 +190,10 @@ def prompt_for_tool_approval(action_request: dict, assistant_id: str | None) -> 
 
     console.print()
 
-    # Return decision based on selection
+    # 根据选择返回决策
     if selected == 0:
         return {"type": "approve"}
-    return {"type": "reject", "message": "User rejected the command"}
+    return {"type": "reject", "message": "用户拒绝了命令"}
 
 
 def execute_task(
@@ -203,10 +203,10 @@ def execute_task(
     session_state,
     token_tracker: TokenTracker | None = None,
 ):
-    """Execute any task by passing it directly to the AI agent."""
+    """通过将任务直接传递给AI代理来执行任务"""
     console.print()
 
-    # Parse file mentions and inject content if any
+    # 解析文件提及并注入内容（如果有的话）
     prompt_text, mentioned_files = parse_file_mentions(user_input)
 
     if mentioned_files:
@@ -214,15 +214,15 @@ def execute_task(
         for file_path in mentioned_files:
             try:
                 content = file_path.read_text()
-                # Limit file content to reasonable size
+                # 将文件内容限制在合理大小
                 if len(content) > 50000:
-                    content = content[:50000] + "\n... (file truncated)"
+                    content = content[:50000] + "\n... (文件已截断)"
                 context_parts.append(
                     f"\n### {file_path.name}\nPath: `{file_path}`\n```\n{content}\n```"
                 )
             except Exception as e:
                 context_parts.append(
-                    f"\n### {file_path.name}\n[Error reading file: {e}]"
+                    f"\n### {file_path.name}\n[读取文件错误: {e}]"
                 )
 
         final_input = "\n".join(context_parts)
@@ -237,7 +237,7 @@ def execute_task(
     has_responded = False
     captured_input_tokens = 0
     captured_output_tokens = 0
-    current_todos = None  # Track current todo list state
+    current_todos = None  # 跟踪当前待办事项列表状态
 
     status = console.status(
         f"[bold {COLORS['thinking']}]Agent is thinking...", spinner="dots"
@@ -261,18 +261,18 @@ def execute_task(
 
     file_op_tracker = FileOpTracker(assistant_id=assistant_id)
 
-    # Track which tool calls we've displayed to avoid duplicates
+    # 跟踪已显示的工具调用以避免重复
     displayed_tool_ids = set()
-    # Buffer partial tool-call chunks keyed by streaming index
+    # 按流式索引缓冲部分工具调用块
     tool_call_buffers: dict[str | int, dict] = {}
-    # Buffer assistant text so we can render complete markdown segments
+    # 缓冲助手文本以便渲染完整的markdown段落
     pending_text = ""
-    # Track if we're buffering a summary message
+    # 跟踪是否正在缓冲摘要消息
     summary_mode = False
     summary_buffer = ""
 
     def flush_text_buffer(*, final: bool = False) -> None:
-        """Flush accumulated assistant text as rendered markdown when appropriate."""
+        """在适当时机将累积的助手文本作为markdown渲染并输出"""
         nonlocal pending_text, spinner_active, has_responded
         if not final or not pending_text.strip():
             return
@@ -287,7 +287,7 @@ def execute_task(
         pending_text = ""
 
     def flush_summary_buffer() -> None:
-        """Render any buffered summary panel output."""
+        """渲染任何缓冲的摘要面板输出"""
         nonlocal summary_mode, summary_buffer, spinner_active, has_responded
         if not summary_mode or not summary_buffer.strip():
             summary_mode = False
@@ -305,7 +305,7 @@ def execute_task(
         summary_mode = False
         summary_buffer = ""
 
-    # Stream input - may need to loop if there are interrupts
+    # 流式输入 - 如果有中断可能需要循环
     stream_input = {"messages": [{"role": "user", "content": final_input}]}
 
     try:
@@ -321,18 +321,18 @@ def execute_task(
                 config=config,
                 durability="exit",
             ):
-                # Unpack chunk - with subgraphs=True and dual-mode, it's (namespace, stream_mode, data)
+                # 解包 - with subgraphs=True and dual-mode, it's (namespace, stream_mode, data)
                 if not isinstance(chunk, tuple) or len(chunk) != 3:
                     continue
 
                 namespace, current_stream_mode, data = chunk
 
-                # Handle UPDATES stream - for interrupts and todos
+                # 处理UPDATES stream - for interrupts and todos
                 if current_stream_mode == "updates":
                     if not isinstance(data, dict):
                         continue
 
-                    # Check for interrupts
+                    # 检查是否打断
                     if "__interrupt__" in data:
                         interrupt_data = data["__interrupt__"]
                         if interrupt_data:
@@ -470,12 +470,12 @@ def execute_task(
                         # results are hidden from user - agent will process and respond
                         continue
 
-                    # Check if this is an AIMessageChunk
+                    # 检查是否是ai的消息块
                     if not hasattr(message, "content_blocks"):
                         # Fallback for messages without content_blocks
                         continue
 
-                    # Extract token usage if available
+                    # 如果可用的话题区token用量
                     if token_tracker and hasattr(message, "usage_metadata"):
                         usage = message.usage_metadata
                         if usage:
@@ -489,11 +489,11 @@ def execute_task(
                                     captured_output_tokens, output_toks
                                 )
 
-                    # Process content blocks (this is the key fix!)
+                    # 处理'content' (this is the key fix!)
                     for block in message.content_blocks:
                         block_type = block.get("type")
 
-                        # Handle text blocks
+                        # 处理文本消息
                         if block_type == "text":
                             text = block.get("text", "")
                             if text:
@@ -513,7 +513,7 @@ def execute_task(
 
                                 pending_text += text
 
-                        # Handle reasoning blocks
+                        # 处理推理消息
                         elif block_type == "reasoning":
                             flush_summary_buffer()
                             flush_text_buffer(final=True)
@@ -525,7 +525,7 @@ def execute_task(
                                 # Could display reasoning differently if desired
                                 # For now, skip it or handle minimally
 
-                        # Handle tool call chunks
+                        # 处理工具调用
                         elif block_type == "tool_call_chunk":
                             chunk_name = block.get("name")
                             chunk_args = block.get("args")
@@ -627,7 +627,7 @@ def execute_task(
                         flush_summary_buffer()
                         flush_text_buffer(final=True)
 
-            # After streaming loop - handle interrupt if it occurred
+            # 流式传递消息以后 - 如果有打断就进行处理
             flush_summary_buffer()
             flush_text_buffer(final=True)
             if interrupt_occurred and hitl_response:
@@ -660,13 +660,13 @@ def execute_task(
                 break
 
     except KeyboardInterrupt:
-        # User pressed Ctrl+C - clean up and exit gracefully
+        # Ctrl+C - clean up and exit gracefully
         if spinner_active:
             status.stop()
             spinner_active = False
         console.print("\n[yellow]Interrupted by user[/yellow]\n")
 
-        # Inform the agent in background thread (non-blocking)
+        # 非阻塞地在background线程中通知agent
         def notify_agent():
             try:
                 agent.update_state(
@@ -693,7 +693,7 @@ def execute_task(
     if has_responded:
         console.print()
 
-        # Track token usage (display only via /tokens command)
+        # 跟踪token使用情况（仅通过/tokens命令显示）
         if token_tracker and (captured_input_tokens or captured_output_tokens):
             token_tracker.add(captured_input_tokens, captured_output_tokens)
 
