@@ -643,19 +643,66 @@ class ProfessionalCodeFormatter:
 
 # 创建工具函数
 @tool(
-    "format_code_professional",
-    description="专业代码格式化工具，基于black/isort(Python)、prettier(JS/TS)、clang-format(C/C++)等原生包",
+    description="专业代码格式化工具，基于black/isort(Python)、prettier(JS/TS)、clang-format(C/C++)等业界标准原生包，提供多语言统一的专业级代码格式化能力。支持自动修复、预览变更、检查状态和差异显示四种操作模式。"
 )
 def format_code_professional(file_path: str, operation: str = "auto_fix") -> str:
     """
-    使用专业工具格式化代码文件
+    使用专业工具格式化代码文件，提供给agent使用的专业级代码格式化工具。
+
+    此工具基于业界标准原生包提供多语言统一的代码格式化能力：
+    - Python: 使用black和isort进行代码风格标准化和导入排序
+    - JavaScript/TypeScript: 使用prettier进行代码格式化
+    - C/C++: 使用clang-format进行代码格式化
+    - 支持四种操作模式：自动修复、预览变更、检查状态、差异显示
+    - 智能检测文件语言，自动选择合适的格式化工具
+    - 提供详细的格式化结果和统计信息
 
     Args:
-        file_path: 文件路径
-        operation: 操作类型 (auto_fix, preview, check, diff)
+        file_path: 要格式化的文件路径，支持相对路径和绝对路径
+        operation: 格式化操作类型，可选值：
+            - "auto_fix": 自动格式化并保存文件（默认）
+            - "preview": 预览格式化变更，不修改文件
+            - "check": 检查文件是否需要格式化
+            - "diff": 显示详细的格式化差异
 
     Returns:
-        格式化结果的JSON字符串
+        格式化结果的JSON字符串，包含：
+            - success: 格式化是否成功
+            - file_path: 处理的文件路径
+            - tool_name: 使用的格式化工具名称
+            - operation: 执行的操作类型
+            - needs_formatting: 文件是否需要格式化
+            - changes_made: 是否进行了修改（仅在auto_fix操作时有意义）
+            - execution_time: 格式化执行时间（秒）
+            - error: 错误信息（如果有）
+            - stats: 详细统计信息，包含：
+                - file_extension: 文件扩展名
+                - detected_language: 检测到的编程语言
+                - timestamp: 执行时间戳
+                - diff_lines: 差异行数（如果有diff输出）
+            - has_diff: 是否有差异输出
+
+    使用场景：
+        - 代码提交前的格式化检查和修复
+        - CI/CD流水线中的代码质量门禁
+        - 代码审查前的代码风格统一
+        - 团队开发中的代码标准化
+        - 重构后的代码格式整理
+        - 新项目开发中的代码规范建立
+
+    工具优势：
+        - 基于业界标准的原生工具，保证专业性
+        - 多语言统一接口，简化格式化流程
+        - 智能语言检测，无需手动指定格式化工具
+        - 多种操作模式，满足不同场景需求
+        - 详细的执行结果和错误报告
+
+    注意事项：
+        - 需要系统中安装相应的格式化工具（black、isort、prettier、clang-format等）
+        - auto_fix操作会直接修改原文件，建议在版本控制下使用
+        - 大文件格式化可能需要较长时间
+        - 某些复杂的项目可能需要自定义配置文件
+        - 格式化工具的具体行为可能受项目配置文件影响
     """
     try:
         formatter = ProfessionalCodeFormatter()
@@ -691,7 +738,9 @@ def format_code_professional(file_path: str, operation: str = "auto_fix") -> str
         )
 
 
-@tool("batch_format_professional", description="批量使用专业工具格式化项目代码")
+@tool(
+    description="批量使用专业工具格式化项目代码。支持多种编程语言的批量格式化操作，包括Python、JavaScript/TypeScript、C/C++等。提供智能文件匹配、语言检测、批量处理和详细统计报告功能，适用于整个项目的代码标准化和CI/CD集成。"
+)
 def batch_format_professional(
     project_path: str,
     operation: str = "check",

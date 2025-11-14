@@ -20,7 +20,11 @@ from .tools.tools import (
     run_tests_with_error_capture,
     analyze_existing_logs,
     explore_project_structure,
-    analyze_code_complexity
+    analyze_code_complexity,
+    format_code_professional,
+    batch_format_professional,
+    generate_validation_tests_tool,
+    execute_test_suite_tool
 )
 
 # 导入tavily客户端（如果需要）
@@ -215,6 +219,14 @@ async def main(assistant_id: str, session_state):
     #添加项目探索工具
     tools.append(analyze_code_complexity)
     tools.append(explore_project_structure)
+
+    #添加代码格式化工具
+    tools.append(format_code_professional)
+    tools.append(batch_format_professional)
+
+    #添加智能测试工具
+    tools.append(generate_validation_tests_tool)
+    tools.append(execute_test_suite_tool)
 
     agent = create_agent_with_config(model, assistant_id, tools)
 

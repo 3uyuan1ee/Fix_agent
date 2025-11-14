@@ -939,43 +939,67 @@ def generate_validation_tests_tool(
 )
 def execute_test_suite_tool(test_files_json: str, project_root: str) -> str:
     """
-    执行测试套件并生成验证报告，提供给agent使用的测试执行工具。
+    执行测试套件并生成验证报告，提供给agent使用的测试执行和验证工具。
 
     此工具能够在一个隔离的环境中执行测试用例，并收集详细的执行结果：
-    - 在项目根目录中执行测试文件
-    - 收集测试执行结果（通过、失败、跳过）
-    - 分析代码覆盖率数据
-    - 检测执行过程中发现的新问题
-    - 生成详细的验证报告和质量指标
-    - 提供基于结果的改进建议
+    - 在项目根目录中执行测试文件，支持多种测试框架
+    - 收集测试执行结果（通过、失败、跳过）和详细错误信息
+    - 分析代码覆盖率数据，评估测试覆盖质量
+    - 检测执行过程中发现的新问题和异常
+    - 生成详细的验证报告和质量评估指标
+    - 提供基于测试结果的改进建议和优化方案
 
     Args:
         test_files_json: 测试文件列表的JSON字符串，格式为：
-            {"test_file.py": "test code", "another_test.py": "test code"}
+            {
+                "test_file.py": "测试代码内容",
+                "another_test.py": "测试代码内容"
+            }
+            支持Python pytest、JavaScript Jest、Java JUnit、Go test等格式
         project_root: 项目根目录路径，测试将在此目录中执行
+            支持相对路径和绝对路径，确保测试环境正确配置
 
     Returns:
         测试执行结果的JSON字符串，包含：
-            - validation_report: 验证报告
+            - success: 测试执行是否成功完成
+            - validation_report: 详细验证报告
                 - total_tests: 总测试数量
                 - passed_tests: 通过的测试数量
                 - failed_tests: 失败的测试数量
                 - skipped_tests: 跳过的测试数量
                 - coverage_percentage: 代码覆盖率百分比
-                - quality_metrics: 质量指标字典
-                - recommendations: 改进建议列表
-                - new_issues: 测试中发现的新问题
+                - execution_time: 总执行时间（秒）
+                - quality_metrics: 质量评估指标字典
+                    - test_density: 测试密度
+                    - assertion_coverage: 断言覆盖率
+                    - flakiness_score: 测试稳定性评分
+                - recommendations: 基于结果的改进建议列表
+                - new_issues: 测试执行中发现的新问题列表
+                - test_framework: 使用的测试框架
+                - environment_info: 测试环境信息
 
     使用场景：
-        - 验证代码修复的有效性
-        - 持续集成流水线中的测试阶段
-        - 代码质量评估和监控
-        - 回归测试验证
+        - 验证代码修复和重构的有效性
+        - 持续集成流水线中的自动化测试阶段
+        - 代码质量评估和监控基准
+        - 回归测试验证和回归风险控制
+        - 新功能开发后的质量保证检查
+        - 生产部署前的安全测试验证
+
+    工具优势：
+        - 支持多种测试框架和编程语言
+        - 智能测试环境配置和隔离执行
+        - 详细的覆盖率分析和质量评估
+        - 自动化问题检测和改进建议
+        - 生成专业级的测试报告
 
     注意事项：
-        - 需要确保项目根目录存在且可访问
-        - 测试执行可能会修改项目状态
-        - 建议在隔离环境中执行测试
+        - 需要确保项目根目录存在且具有读写权限
+        - 测试执行可能会修改项目状态（创建临时文件等）
+        - 建议在隔离的测试环境中执行，避免影响生产数据
+        - 某些测试可能需要特定的环境依赖或配置
+        - 长时间运行的测试建议设置合适的超时时间
+        - 测试结果依赖于项目的测试配置和依赖安装
     """
     try:
         test_files = json.loads(test_files_json)

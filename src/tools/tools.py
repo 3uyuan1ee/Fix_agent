@@ -25,9 +25,35 @@ from .project_explorer import (
     analyze_code_complexity
 )
 
+# 导入代码格式化工具
+from .professional_formatter import (
+    format_code_professional,
+    batch_format_professional
+)
+
+# 导入智能测试生成工具
+from .test_generator import (
+    generate_validation_tests_tool,
+    execute_test_suite_tool
+)
+
 # 保持原有的analyze_code_defects工具链实现
 @tool(
-    description="智能代码缺陷分析工具链，集成了代码静态分析和智能缺陷聚合功能。一键完成从代码分析到缺陷聚合的全流程，自动检测多语言代码问题，智能去重和聚类，提供优先级排序的缺陷报告。支持Python、JavaScript、Java、C/C++、Go、Rust等主流编程语言。"
+    description="""智能代码缺陷分析工具链，提供一站式代码质量检测服务。
+
+核心功能：
+- 自动检测编程语言并选择专业分析工具
+- 执行多维度代码分析（语法、逻辑、安全、性能）
+- 智能聚合和去重相似的缺陷报告
+- 基于语义相似度进行缺陷聚类分析
+- 评估修复复杂度和优先级排序
+- 生成结构化的分析报告
+
+支持语言：Python、JavaScript、Java、C/C++、Go、Rust、TypeScript等
+
+使用场景：代码审查、重构前分析、CI/CD质量门禁、技术债务评估
+
+输出：JSON格式的详细缺陷分析报告，包含问题定位、影响评估和修复建议"""
 )
 def analyze_code_defects(file_path: str, language: Optional[str] = None) -> str:
     """
@@ -192,6 +218,14 @@ __all__ = [
     # 项目探索工具（从project_explorer导入）
     "explore_project_structure",
     "analyze_code_complexity",
+
+    # 代码格式化工具（从professional_formatter导入）
+    "format_code_professional",
+    "batch_format_professional",
+
+    # 智能测试工具（从test_generator导入）
+    "generate_validation_tests_tool",
+    "execute_test_suite_tool",
 ]
 
 # 工具分类字典（便于管理和使用）
@@ -199,7 +233,9 @@ TOOL_CATEGORIES = {
     "网络工具": ["http_request", "web_search"],
     "代码分析": ["analyze_code_defects", "analyze_code_complexity"],
     "错误检测": ["compile_project", "run_and_monitor", "run_tests_with_error_capture", "analyze_existing_logs"],
-    "项目探索": ["explore_project_structure", "analyze_code_complexity"],
+    "项目探索": ["explore_project_structure"],
+    "代码格式化": ["format_code_professional", "batch_format_professional"],
+    "测试生成": ["generate_validation_tests_tool", "execute_test_suite_tool"],
 }
 
 def get_all_tools():
