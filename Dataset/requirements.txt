@@ -1,0 +1,44 @@
+# 核心依赖
+deepagents>=0.1.0
+langchain>=0.1.0
+langchain-openai>=0.1.0
+langchain-community>=0.0.20
+
+# 异步支持
+asyncio
+aiohttp>=3.8.0
+
+# 数据处理
+pandas>=2.0.0
+numpy>=1.24.0
+pydantic>=2.0.0
+
+# 网络和下载
+requests>=2.31.0
+tqdm>=4.65.0
+
+# 代码分析工具（复用原项目）
+pylint>=2.17.0
+black>=23.0.0
+isort>=5.12.0
+flake8>=6.0.0
+mypy>=1.5.0
+
+# 可视化（可选）
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.15.0
+
+# 配置和日志
+pyyaml>=6.0
+colorlog>=6.7.0
+
+# 测试
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+
+# 开发工具
+pre-commit>=3.3.0
+black>=23.0.0
+isort>=5.12.0
