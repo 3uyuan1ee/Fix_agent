@@ -4,7 +4,7 @@
 [![DeepAgent](https://img.shields.io/badge/DeepAgent-Framework-orange.svg)](https://github.com/3uyuan1ee/Fix_agent)
 
 ---
-![img](https://github.com/3uyuan1ee/Fix_agent/master/images/Agents_and_Command.gif)
+![img](https://github.com/3uyuan1ee/Fix_agent/main/master/images/Agents_and_Command.gif)
 
 基于Langchian1.0和Deepagents，实现项目问题检测->自动修复->效果验证的闭环
 - **智能分析** - 自动识别语法、逻辑、性能和安全缺陷
@@ -96,7 +96,7 @@ fixagent
 # Shell命令集成
 > !git status
 ```
-![img](https://github.com/3uyuan1ee/Fix_agent/master/images/Commands.gif)
+![img](https://github.com/3uyuan1ee/Fix_agent/main/master/images/Commands.gif)
 
 ### 双模式支持
 
@@ -263,17 +263,6 @@ graph TD
     K --> N[输出结果]
     L --> N
     M --> N
-
-    style A fill:#e1f5fe
-    style B fill:#f3e5f5
-    style J fill:#e8f5e8
-    style N fill:#fff3e0
-    style T fill:#ffecb3
-    style T1 fill:#fff8e1
-    style T2 fill:#fff8e1
-    style T3 fill:#fff8e1
-    style T4 fill:#fff8e1
-    style T5 fill:#fff8e1
 ```
 ---
 
