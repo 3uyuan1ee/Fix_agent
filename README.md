@@ -5,13 +5,15 @@
 
 ---
 
-![img](https://cdn.jsdelivr.net/gh/3uyuan1ee/Fix_agent@main/master/images/Agents_and_Command.gif)
+
 
 基于Langchian1.0和Deepagents，实现项目问题检测->自动修复->效果验证的闭环
 - **智能分析** - 自动识别语法、逻辑、性能和安全缺陷
 - **精准修复** - 基于深度分析提供针对性修复方案并在human-in-loop下执行修复
 - **自动验证** - 确保修复不破坏现有功能
 - **持续学习** - 具备记忆能力，越用越智能
+
+![img](https://raw.githubusercontent.com/3uyuan1ee/Fix_agent/main/images/Agents_and_Command.gif)
 
 ### 与众不同的技术架构
 
@@ -88,7 +90,7 @@ fixagent
 # Shell命令集成
 > !git status
 ```
-![img](https://raw.githubusercontent.com/3uyuan1ee/Fix_agent/main/master/images/Commands.gif)
+![img](https://raw.githubusercontent.com/3uyuan1ee/Fix_agent/main/images/Commands.gif)
 
 ### 双模式支持
 
