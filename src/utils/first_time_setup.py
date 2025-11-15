@@ -6,6 +6,8 @@ import sys
 from pathlib import Path
 from typing import Dict, Optional
 
+from rich.panel import Panel
+
 from ..config.config import COLORS, console
 from ..ui.dynamicCli import typewriter
 
