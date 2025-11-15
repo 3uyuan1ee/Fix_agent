@@ -4,7 +4,7 @@
 [![DeepAgent](https://img.shields.io/badge/DeepAgent-Framework-orange.svg)](https://github.com/3uyuan1ee/Fix_agent)
 
 ---
-![img](https://github.com/3uyuan1ee/Fix_agent/blob/main/master/images/Agents_and_Command.gif?raw=true)
+![img](https://github.com/3uyuan1ee/Fix_agent/raw/main/master/images/Agents_and_Command.gif)
 
 基于Langchian1.0和Deepagents，实现项目问题检测->自动修复->效果验证的闭环
 - **智能分析** - 自动识别语法、逻辑、性能和安全缺陷
@@ -25,15 +25,6 @@ graph LR
     E --> F[框架默认]
     F --> G[安全检查]
     G --> H[Shell工具]
-
-    style A fill:#e1f5fe
-    style B fill:#f3e5f5
-    style C fill:#e8f5e8
-    style D fill:#fff3e0
-    style E fill:#fce4ec
-    style F fill:#f8bbd9
-    style G fill:#ff8a80
-    style H fill:#a5d6a7
 ```
 
 确保了代码修复的高效性和安全性，同时提供了智能化的用户体验。
