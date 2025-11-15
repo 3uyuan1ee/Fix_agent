@@ -277,41 +277,42 @@ console.log(x.value);  // null引用错误
 class TestNetworkTools:
     """测试网络工具"""
 
-    @patch('src.tools.network_tools.requests')
-    def test_web_search_success(self, mock_requests):
+    @patch('src.tools.network_tools.tavily_client')
+    def test_web_search_success(self, mock_tavily):
         """测试网络搜索成功"""
-        mock_response = Mock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
+        mock_tavily.search.return_value = {
             "results": [
-                {"title": "Test Result 1", "url": "https://example.com/1"},
-                {"title": "Test Result 2", "url": "https://example.com/2"}
-            ]
+                {"title": "Test Result 1", "url": "https://example.com/1", "content": "Test content 1"},
+                {"title": "Test Result 2", "url": "https://example.com/2", "content": "Test content 2"}
+            ],
+            "query": "Python programming"
         }
-        mock_response.raise_for_status.return_value = None
-        mock_requests.get.return_value = mock_response
 
         result = web_search("Python programming", max_results=5)
         assert result is not None
         assert isinstance(result, dict)
-        # 检查是否有预期的结构
-        assert "query" in result or "error" in result
+        assert "results" in result
+        assert len(result["results"]) == 2
 
-        # 验证requests.get被调用
-        mock_requests.get.assert_called_once()
+        # 验证Tavily客户端被调用
+        mock_tavily.search.assert_called_once_with(
+            "Python programming",
+            max_results=5,
+            include_raw_content=False,
+            topic="general"
+        )
 
-    @patch('src.tools.network_tools.requests')
-    def test_web_search_failure(self, mock_requests):
+    @patch('src.tools.network_tools.tavily_client')
+    def test_web_search_failure(self, mock_tavily):
         """测试网络搜索失败"""
-        mock_requests.get.side_effect = Exception("Network error")
+        mock_tavily.search.side_effect = Exception("API error")
 
         result = web_search("test query")
         assert result is not None
-        assert isinstance(result, str)
-
-        # 验证错误被处理
-        result_data = json.loads(result)
-        assert result_data["success"] == False
+        assert isinstance(result, dict)
+        assert "error" in result
+        assert "query" in result
+        assert result["query"] == "test query"
 
     @patch('src.tools.network_tools.requests')
     def test_http_request_get_success(self, mock_requests):
@@ -319,14 +320,19 @@ class TestNetworkTools:
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {"message": "Success", "data": [1, 2, 3]}
-        mock_response.raise_for_status.return_value = None
-        mock_requests.get.return_value = mock_response
+        mock_response.text = '{"message": "Success", "data": [1, 2, 3]}'
+        mock_response.url = "https://api.example.com/data"
+        mock_response.headers = {"Content-Type": "application/json"}
+        mock_requests.request.return_value = mock_response
 
-        result = http_request("GET", "https://api.example.com/data")
+        result = http_request("https://api.example.com/data")
         assert result is not None
-        assert isinstance(result, str)
+        assert isinstance(result, dict)
+        assert result["success"] is True
+        assert result["status_code"] == 200
+        assert "content" in result
 
-        mock_requests.get.assert_called_once()
+        mock_requests.request.assert_called_once()
 
     @patch('src.tools.network_tools.requests')
     def test_http_request_post_success(self, mock_requests):
@@ -334,27 +340,29 @@ class TestNetworkTools:
         mock_response = Mock()
         mock_response.status_code = 201
         mock_response.json.return_value = {"id": 123, "status": "created"}
-        mock_response.raise_for_status.return_value = None
-        mock_requests.post.return_value = mock_response
+        mock_response.text = '{"id": 123, "status": "created"}'
+        mock_response.url = "https://api.example.com/create"
+        mock_response.headers = {"Content-Type": "application/json"}
+        mock_requests.request.return_value = mock_response
 
         data = {"name": "test", "value": 123}
-        result = http_request("POST", "https://api.example.com/create", data=data)
+        result = http_request("https://api.example.com/create", method="POST", data=data)
         assert result is not None
-        assert isinstance(result, str)
+        assert isinstance(result, dict)
+        assert result["success"] is True
+        assert result["status_code"] == 201
 
-        mock_requests.post.assert_called_once()
+        mock_requests.request.assert_called_once()
 
-    @patch('src.tools.network_tools.requests')
-    def test_http_request_failure(self, mock_requests):
-        """测试HTTP请求失败"""
-        mock_requests.get.side_effect = Exception("Connection error")
-
-        result = http_request("GET", "https://nonexistent.example.com")
+    def test_http_request_failure(self):
+        """测试HTTP请求失败 - 使用无Mock的方式"""
+        # 测试无效URL，这会触发异常处理
+        result = http_request("http://invalid-url-that-does-not-exist.test", timeout=1)
         assert result is not None
-        assert isinstance(result, str)
-
-        result_data = json.loads(result)
-        assert result_data["success"] == False
+        assert isinstance(result, dict)
+        assert result["success"] is False
+        assert "status_code" in result
+        assert result["status_code"] == 0
 
 
 class TestErrorDetectionTools:
