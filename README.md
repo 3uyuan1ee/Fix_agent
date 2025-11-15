@@ -138,7 +138,7 @@ fixagent
 - 支持的操作系统：Windows, macOS, Linux
 
 ### 安装
-
+#### Clone
 ```bash
 # 克隆项目
 git clone https://github.com/3uyuan1ee/Fix_agent.git
@@ -150,9 +150,16 @@ pip install -r requirements.txt
 # 安装Fix Agent
 pip install -e .
 ```
+#### PYPI
+包已上传到PYPI,支持在python环境下pip一键安装
+
+```
+# 建议在虚拟python环境下安装
+pip install Fix-agent
+```
 
 ### 配置
-#### Clone
+
 ```bash
 # 配置环境变量
 export OPENAI_API_KEY="your-api-key"
@@ -171,12 +178,7 @@ TAVILY_API_KEY=your_tavily_api_key_here
 ```
 点这里获取[TAVILY_API](https://www.tavily.com/)
 
-#### PYPI
-包已上传到PYPI,支持在python环境下pip一键安装
-```
-# 建议在虚拟python环境下安装
-pip install Fix_agent
-```
+
 
 ### 启动使用
 
