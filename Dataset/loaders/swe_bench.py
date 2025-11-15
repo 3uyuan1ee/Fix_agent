@@ -7,39 +7,43 @@ SWE-bench是一个用于评估软件工程agent能力的数据集，
 
 import json
 import os
+import shutil
 import subprocess
-from typing import List, Dict, Optional, Any
-from pathlib import Path
-import requests
 import tarfile
 import tempfile
-import shutil
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import requests
 
 # 使用多层导入策略
 try:
-    from .base import BaseDatasetLoader
     from ..data_types import EvaluationTask
+    from .base import BaseDatasetLoader
 except ImportError:
     try:
         from base import BaseDatasetLoader
         from data_types import EvaluationTask
     except ImportError:
         try:
-            from Dataset.loaders.base import BaseDatasetLoader
             from Dataset.data_types import EvaluationTask
+            from Dataset.loaders.base import BaseDatasetLoader
         except ImportError:
             # 最后尝试：从当前目录导入
             import sys
             from pathlib import Path
+
             current_dir = Path(__file__).parent
             if str(current_dir) not in sys.path:
                 sys.path.insert(0, str(current_dir))
             from base import BaseDatasetLoader
+
             # 从根目录导入data_types
             root_dir = current_dir.parent
             if str(root_dir) not in sys.path:
                 sys.path.insert(0, str(root_dir))
             from ..data_types import EvaluationTask
+
 
 class SWEBenchLoader(BaseDatasetLoader):
     """
@@ -52,7 +56,9 @@ class SWEBenchLoader(BaseDatasetLoader):
     - 提供难度分级过滤
     """
 
-    def __init__(self, dataset_path: str = "./datasets/swe-bench", cache_dir: str = None):
+    def __init__(
+        self, dataset_path: str = "./datasets/swe-bench", cache_dir: str = None
+    ):
         super().__init__(dataset_path, cache_dir)
         self.testbed_path = self.dataset_path / "testbed"
         self.data_file = self.testbed_path / "swe-bench-test.json"
@@ -73,11 +79,16 @@ class SWEBenchLoader(BaseDatasetLoader):
             # 下载主仓库
             if not (self.dataset_path / "SWE-bench").exists():
                 print("[SWEBenchLoader] 克隆SWE-bench仓库...")
-                result = subprocess.run([
-                    "git", "clone",
-                    "git@github.com:princeton-nlp/SWE-bench.git",
-                    str(self.dataset_path / "SWE-bench")
-                ], capture_output=True, text=True)
+                result = subprocess.run(
+                    [
+                        "git",
+                        "clone",
+                        "git@github.com:princeton-nlp/SWE-bench.git",
+                        str(self.dataset_path / "SWE-bench"),
+                    ],
+                    capture_output=True,
+                    text=True,
+                )
 
                 if result.returncode != 0:
                     print(f"[SWEBenchLoader] 克隆失败: {result.stderr}")
@@ -91,7 +102,7 @@ class SWEBenchLoader(BaseDatasetLoader):
                 testbed_urls = [
                     "https://huggingface.co/datasets/princeton-nlp/SWE-bench/resolve/main/data/testbed.tar.gz",
                     "https://huggingface.co/datasets/princeton-nlp/SWE-bench-v2/resolve/main/data/testbed.tar.gz",
-                    "https://github.com/princeton-nlp/SWE-bench/raw/main/data/testbed.tar.gz"
+                    "https://github.com/princeton-nlp/SWE-bench/raw/main/data/testbed.tar.gz",
                 ]
 
                 download_success = False
@@ -105,13 +116,13 @@ class SWEBenchLoader(BaseDatasetLoader):
                         response.raise_for_status()
 
                         self.testbed_path.mkdir(parents=True, exist_ok=True)
-                        with open(testbed_tar, 'wb') as f:
+                        with open(testbed_tar, "wb") as f:
                             for chunk in response.iter_content(chunk_size=8192):
                                 f.write(chunk)
 
                         # 解压文件
                         print("[SWEBenchLoader] 解压testbed数据...")
-                        with tarfile.open(testbed_tar, 'r:gz') as tar:
+                        with tarfile.open(testbed_tar, "r:gz") as tar:
                             tar.extractall(self.testbed_path)
 
                         # 删除tar文件
@@ -130,7 +141,9 @@ class SWEBenchLoader(BaseDatasetLoader):
 
                 if not download_success:
                     print("[SWEBenchLoader] 所有下载链接都无法访问，将创建模拟数据集")
-                    print("[SWEBenchLoader] 注意: 这是用于测试的模拟数据，不包含真实的SWE-bench数据")
+                    print(
+                        "[SWEBenchLoader] 注意: 这是用于测试的模拟数据，不包含真实的SWE-bench数据"
+                    )
                     return self._create_mock_swe_bench_dataset()
 
             print("[SWEBenchLoader] 数据集下载完成")
@@ -140,7 +153,9 @@ class SWEBenchLoader(BaseDatasetLoader):
             print(f"[SWEBenchLoader] 下载失败: {e}")
             return False
 
-    def load_tasks(self, sample_size: int = None, difficulty_filter: str = None) -> List[EvaluationTask]:
+    def load_tasks(
+        self, sample_size: int = None, difficulty_filter: str = None
+    ) -> List[EvaluationTask]:
         """
         加载SWE-bench评估任务
 
@@ -151,7 +166,9 @@ class SWEBenchLoader(BaseDatasetLoader):
         Returns:
             List[EvaluationTask]: 评估任务列表
         """
-        print(f"[SWEBenchLoader] 加载任务，样本大小: {sample_size}, 难度过滤: {difficulty_filter}")
+        print(
+            f"[SWEBenchLoader] 加载任务，样本大小: {sample_size}, 难度过滤: {difficulty_filter}"
+        )
 
         # 检查缓存
         cache_key = f"swe_bench_tasks_{sample_size}_{difficulty_filter}"
@@ -165,7 +182,7 @@ class SWEBenchLoader(BaseDatasetLoader):
             raise RuntimeError("数据集验证失败")
 
         # 加载数据
-        with open(self.data_file, 'r', encoding='utf-8') as f:
+        with open(self.data_file, "r", encoding="utf-8") as f:
             dataset = json.load(f)
 
         print(f"[SWEBenchLoader] 原始数据集大小: {len(dataset)}")
@@ -187,7 +204,9 @@ class SWEBenchLoader(BaseDatasetLoader):
                 if task:
                     tasks.append(task)
             except Exception as e:
-                print(f"[SWEBenchLoader] 转换任务失败 {item.get('instance_id', 'unknown')}: {e}")
+                print(
+                    f"[SWEBenchLoader] 转换任务失败 {item.get('instance_id', 'unknown')}: {e}"
+                )
 
         print(f"[SWEBenchLoader] 成功加载 {len(tasks)} 个任务")
 
@@ -206,7 +225,7 @@ class SWEBenchLoader(BaseDatasetLoader):
         if not self.validate_dataset():
             return {"error": "数据集不可用"}
 
-        with open(self.data_file, 'r', encoding='utf-8') as f:
+        with open(self.data_file, "r", encoding="utf-8") as f:
             dataset = json.load(f)
 
         # 统计信息
@@ -235,7 +254,7 @@ class SWEBenchLoader(BaseDatasetLoader):
             "languages": languages,
             "difficulty_distribution": difficulties,
             "path": str(self.dataset_path),
-            "description": "Software Engineering Benchmark - GitHub issues and pull requests"
+            "description": "Software Engineering Benchmark - GitHub issues and pull requests",
         }
 
     def get_required_files(self) -> List[str]:
@@ -245,12 +264,11 @@ class SWEBenchLoader(BaseDatasetLoader):
         Returns:
             List[str]: 必需文件列表
         """
-        return [
-            "SWE-bench/README.md",
-            "testbed/swe-bench-test.json"
-        ]
+        return ["SWE-bench/README.md", "testbed/swe-bench-test.json"]
 
-    def _apply_difficulty_filter(self, dataset: List[Dict], difficulty_filter: str) -> List[Dict]:
+    def _apply_difficulty_filter(
+        self, dataset: List[Dict], difficulty_filter: str
+    ) -> List[Dict]:
         """
         应用难度过滤器
 
@@ -286,13 +304,27 @@ class SWEBenchLoader(BaseDatasetLoader):
             return "unknown"
 
         # 计算修改的行数
-        lines = patch.split('\n')
-        added_lines = len([line for line in lines if line.startswith('+') and not line.startswith('+++')])
-        removed_lines = len([line for line in lines if line.startswith('-') and not line.startswith('---')])
+        lines = patch.split("\n")
+        added_lines = len(
+            [
+                line
+                for line in lines
+                if line.startswith("+") and not line.startswith("+++")
+            ]
+        )
+        removed_lines = len(
+            [
+                line
+                for line in lines
+                if line.startswith("-") and not line.startswith("---")
+            ]
+        )
         total_changes = added_lines + removed_lines
 
         # 计算修改的文件数
-        files_changed = len(set(line.split()[1] for line in lines if line.startswith('diff --git')))
+        files_changed = len(
+            set(line.split()[1] for line in lines if line.startswith("diff --git"))
+        )
 
         # 基于启发式规则估算难度
         if total_changes <= 10 and files_changed <= 2:
@@ -332,7 +364,7 @@ class SWEBenchLoader(BaseDatasetLoader):
             "mozilla/firefox": "cpp",
             "torvalds/linux": "c",
             "golang/go": "go",
-            "rust-lang/rust": "rust"
+            "rust-lang/rust": "rust",
         }
 
         return language_mapping.get(repo, "unknown")
@@ -365,7 +397,7 @@ class SWEBenchLoader(BaseDatasetLoader):
                 "name": repo,
                 "language": self._infer_language_from_repo(repo),
                 "framework": self._infer_framework_from_repo(repo),
-                "base_commit": base_commit
+                "base_commit": base_commit,
             }
 
             # 构建测试命令
@@ -385,7 +417,7 @@ class SWEBenchLoader(BaseDatasetLoader):
                 setup_commands=setup_commands,
                 timeout=300,
                 repo_info=repo_info,
-                ground_truth=patch
+                ground_truth=patch,
             )
 
         except Exception as e:
@@ -504,8 +536,12 @@ class SWEBenchLoader(BaseDatasetLoader):
                     "problem_statement": "Django的查询集在处理空列表时出现IndexError错误",
                     "patch": "@@ -1,5 +1,5 @@\n class QuerySet:\n     def __getitem__(self, k):\n-        if isinstance(k, slice):\n-            return self._slice(k)\n-        return self._get_obj(k)\n+        if isinstance(k, slice):\n+            return self._slice(k)\n+        if not self.query:\n+            return list()\n+        return self._get_obj(k)",
                     "test_patch": "",
-                    "FAIL_TO_PASS": ["tests/queryset/test_empty.py::test_empty_queryset_getitem"],
-                    "PASS_TO_PASS": ["tests/queryset/test_basic.py::test_queryset_creation"]
+                    "FAIL_TO_PASS": [
+                        "tests/queryset/test_empty.py::test_empty_queryset_getitem"
+                    ],
+                    "PASS_TO_PASS": [
+                        "tests/queryset/test_basic.py::test_queryset_creation"
+                    ],
                 },
                 {
                     "instance_id": "psf__requests-67890",
@@ -514,8 +550,10 @@ class SWEBenchLoader(BaseDatasetLoader):
                     "problem_statement": "requests库在处理重定向时丢失了原始请求的headers",
                     "patch": "@@ -10,3 +10,4 @@\n def resolve_redirects(resp, req, stream=False, timeout=None,\n                         verify=True, cert=None, proxies=None, yield_requests=False,\n                         **adapter_kwargs):\n     new_headers = req.headers.copy()\n+    if 'User-Agent' not in new_headers:\n+        new_headers['User-Agent'] = f'requests/{__version__}'\n     # redirect logic...",
                     "test_patch": "",
-                    "FAIL_TO_PASS": ["tests/test_redirects.py::test_header_preservation"],
-                    "PASS_TO_PASS": ["tests/test_basic.py::test_get_request"]
+                    "FAIL_TO_PASS": [
+                        "tests/test_redirects.py::test_header_preservation"
+                    ],
+                    "PASS_TO_PASS": ["tests/test_basic.py::test_get_request"],
                 },
                 {
                     "instance_id": "numpy__numpy-13579",
@@ -524,8 +562,10 @@ class SWEBenchLoader(BaseDatasetLoader):
                     "problem_statement": "numpy数组广播在特定维度下产生意外的结果",
                     "patch": "@@ -25,7 +25,10 @@\n def broadcast_shapes(shape_a, shape_b):\n     # existing logic\n     result_shape = []\n     for dim_a, dim_b in zip(reversed(shape_a), reversed(shape_b)):\n-        result_dim = dim_a if dim_a == 1 else dim_b\n+        if dim_a == 1:\n+            result_dim = dim_b\n+        elif dim_b == 1:\n+            result_dim = dim_a\n+        elif dim_a == dim_b:\n+            result_dim = dim_a\n+        else:\n+            raise ValueError(f'Cannot broadcast shapes {shape_a} and {shape_b}')\n         result_shape.append(result_dim)",
                     "test_patch": "",
-                    "FAIL_TO_PASS": ["tests/test_broadcast.py::test_incompatible_shapes"],
-                    "PASS_TO_PASS": ["tests/test_basic.py::test_array_creation"]
+                    "FAIL_TO_PASS": [
+                        "tests/test_broadcast.py::test_incompatible_shapes"
+                    ],
+                    "PASS_TO_PASS": ["tests/test_basic.py::test_array_creation"],
                 },
                 {
                     "instance_id": "matplotlib__matplotlib-24680",
@@ -535,7 +575,7 @@ class SWEBenchLoader(BaseDatasetLoader):
                     "patch": "@@ -50,3 +50,6 @@\n def filter_duplicate_labels(handles, labels):\n     seen = set()\n     result = []\n     for h, l in zip(handles, labels):\n         if l not in seen:\n             seen.add(l)\n             result.append((h, l))\n     return result",
                     "test_patch": "",
                     "FAIL_TO_PASS": ["tests/test_legend.py::test_duplicate_labels"],
-                    "PASS_TO_PASS": ["tests/test_basic.py::test_legend_creation"]
+                    "PASS_TO_PASS": ["tests/test_basic.py::test_legend_creation"],
                 },
                 {
                     "instance_id": "pallets__flask-98765",
@@ -545,16 +585,21 @@ class SWEBenchLoader(BaseDatasetLoader):
                     "patch": "@@ -30,4 +30,5 @@\n def url_quote(segment, charset='utf-8'):\n     try:\n         return quote(segment, safe=SAFE_CHARS, charset=charset)\n-    except UnicodeError:\n+    except (UnicodeError, AttributeError):\n         # fallback to ASCII encoding\n+        segment = str(segment) if not isinstance(segment, str) else segment\n         return quote(segment.encode('ascii', errors='ignore'), safe=SAFE_CHARS)",
                     "test_patch": "",
                     "FAIL_TO_PASS": ["tests/test_routing.py::test_special_characters"],
-                    "PASS_TO_PASS": ["tests/test_basic.py::test_route_creation"]
-                }
+                    "PASS_TO_PASS": ["tests/test_basic.py::test_route_creation"],
+                },
             ]
 
             # 写入模拟数据到JSON文件
-            with open(self.data_file, 'w', encoding='utf-8') as f:
+            with open(self.data_file, "w", encoding="utf-8") as f:
                 json.dump(mock_data, f, indent=2, ensure_ascii=False)
 
-            print(f"[SWEBenchLoader] 模拟SWE-bench数据集创建成功，包含 {len(mock_data)} 个任务")
-            print("[SWEBenchLoader] 模拟项目:", ", ".join(set(item['repo'].split('/')[0] for item in mock_data)))
+            print(
+                f"[SWEBenchLoader] 模拟SWE-bench数据集创建成功，包含 {len(mock_data)} 个任务"
+            )
+            print(
+                "[SWEBenchLoader] 模拟项目:",
+                ", ".join(set(item["repo"].split("/")[0] for item in mock_data)),
+            )
 
             return True
 

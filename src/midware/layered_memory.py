@@ -1,23 +1,19 @@
 """分层记忆中间件 - 工作记忆、短期记忆、长期记忆"""
 
-import time
 import json
-from collections.abc import Awaitable, Callable
+import time
 from collections import deque
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
-from dataclasses import dataclass, asdict
+from collections.abc import Awaitable, Callable
+from dataclasses import asdict, dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 if TYPE_CHECKING:
     from langgraph.runtime import Runtime
 
 from deepagents.backends.protocol import BackendProtocol
-from langchain.agents.middleware.types import (
-    AgentMiddleware,
-    AgentState,
-    ModelRequest,
-    ModelResponse,
-)
+from langchain.agents.middleware.types import (AgentMiddleware, AgentState,
+                                               ModelRequest, ModelResponse)
 from typing_extensions import NotRequired, TypedDict
 
 from .agent_memory import LONGTERM_MEMORY_SYSTEM_PROMPT
@@ -26,6 +22,7 @@ from .agent_memory import LONGTERM_MEMORY_SYSTEM_PROMPT
 @dataclass
 class MemoryItem:
     """记忆项数据结构"""
+
     content: str
     timestamp: float
     importance: float = 1.0  # 重要性评分 0.0-1.0
@@ -45,7 +42,7 @@ class LayeredMemoryState(AgentState):
 
     # 工作记忆
     working_memory: NotRequired[List[str]]  # 当前对话的临时信息
-    working_memory_size: NotRequired[int]   # 工作记忆最大条目数
+    working_memory_size: NotRequired[int]  # 工作记忆最大条目数
 
     # 短期记忆
     session_memory: NotRequired[Dict[str, Any]]  # 会话级别的上下文
@@ -70,11 +67,7 @@ class WorkingMemory:
 
     def add(self, content: str, importance: float = 1.0):
         """添加工作记忆项"""
-        item = {
-            "content": content,
-            "timestamp": time.time(),
-            "importance": importance
-        }
+        item = {"content": content, "timestamp": time.time(), "importance": importance}
         self.items.append(item)
 
     def get_context(self, max_items: int = 5) -> str:
@@ -107,7 +100,9 @@ class SessionMemory:
 
     def update_summary(self, new_content: str):
         """更新对话摘要"""
-        self.conversation_summary = f"{self.conversation_summary}\n{new_content}".strip()
+        self.conversation_summary = (
+            f"{self.conversation_summary}\n{new_content}".strip()
+        )
         self.interaction_count += 1
 
     def add_topic(self, topic: str):
@@ -137,7 +132,7 @@ class SessionMemory:
             "conversation_summary": self.conversation_summary,
             "key_topics": self.key_topics,
             "user_preferences": self.user_preferences,
-            "interaction_count": self.interaction_count
+            "interaction_count": self.interaction_count,
         }
 
     def from_dict(self, data: Dict[str, Any]):
@@ -181,7 +176,7 @@ class LongTermMemory:
         try:
             self.backend.write(
                 f"{self.memory_path}semantic_memory.json",
-                json.dumps(self.semantic_memory, ensure_ascii=False, indent=2)
+                json.dumps(self.semantic_memory, ensure_ascii=False, indent=2),
             )
         except Exception as e:
             print(f"Warning: Failed to save semantic memory: {e}")
@@ -189,12 +184,14 @@ class LongTermMemory:
         try:
             self.backend.write(
                 f"{self.memory_path}episodic_memory.json",
-                json.dumps(self.episodic_memory, ensure_ascii=False, indent=2)
+                json.dumps(self.episodic_memory, ensure_ascii=False, indent=2),
             )
         except Exception as e:
             print(f"Warning: Failed to save episodic memory: {e}")
 
-    def add_semantic_memory(self, content: str, importance: float = 1.0, tags: List[str] = None):
+    def add_semantic_memory(
+        self, content: str, importance: float = 1.0, tags: List[str] = None
+    ):
         """添加语义记忆"""
         memory_item = {
             "content": content,
@@ -202,16 +199,20 @@ class LongTermMemory:
             "importance": importance,
             "tags": tags or [],
             "access_count": 0,
-            "last_accessed": time.time()
+            "last_accessed": time.time(),
         }
         self.semantic_memory.append(memory_item)
 
         # 限制语义记忆大小，删除最不重要的项
         if len(self.semantic_memory) > 1000:
-            self.semantic_memory.sort(key=lambda x: (x["importance"], x["access_count"]))
+            self.semantic_memory.sort(
+                key=lambda x: (x["importance"], x["access_count"])
+            )
             self.semantic_memory = self.semantic_memory[-800:]
 
-    def add_episodic_memory(self, content: str, importance: float = 0.8, tags: List[str] = None):
+    def add_episodic_memory(
+        self, content: str, importance: float = 0.8, tags: List[str] = None
+    ):
         """添加情节记忆"""
         memory_item = {
             "content": content,
@@ -219,7 +220,7 @@ class LongTermMemory:
             "importance": importance,
             "tags": tags or [],
             "access_count": 0,
-            "last_accessed": time.time()
+            "last_accessed": time.time(),
         }
         self.episodic_memory.append(memory_item)
 
@@ -228,7 +229,9 @@ class LongTermMemory:
             self.episodic_memory.sort(key=lambda x: x["timestamp"])
             self.episodic_memory = self.episodic_memory[-400:]
 
-    def search_memory(self, query: str, memory_type: str = "all", limit: int = 5) -> List[Dict]:
+    def search_memory(
+        self, query: str, memory_type: str = "all", limit: int = 5
+    ) -> List[Dict]:
         """搜索记忆内容"""
         results = []
 
@@ -258,9 +261,11 @@ class LongTermMemory:
         context_parts = ["## 长期记忆（相关上下文）"]
 
         # 获取最重要的语义记忆
-        semantic_items = sorted(self.semantic_memory,
-                               key=lambda x: (x["importance"], x["access_count"]),
-                               reverse=True)[:max_items//2]
+        semantic_items = sorted(
+            self.semantic_memory,
+            key=lambda x: (x["importance"], x["access_count"]),
+            reverse=True,
+        )[: max_items // 2]
 
         if semantic_items:
             context_parts.append("### 语义记忆（概念、规则、偏好）:")
@@ -268,9 +273,9 @@ class LongTermMemory:
                 context_parts.append(f"- {item['content']}")
 
         # 获取最近的情节记忆
-        episodic_items = sorted(self.episodic_memory,
-                              key=lambda x: x["timestamp"],
-                              reverse=True)[:max_items//2]
+        episodic_items = sorted(
+            self.episodic_memory, key=lambda x: x["timestamp"], reverse=True
+        )[: max_items // 2]
 
         if episodic_items:
             context_parts.append("### 情节记忆（重要事件、对话）:")
@@ -340,16 +345,24 @@ class LayeredMemoryMiddleware(AgentMiddleware):
         content_parts = []
 
         # 提取用户输入
-        if hasattr(request, 'content') and request.content:
+        if hasattr(request, "content") and request.content:
             content_parts.append(f"用户: {request.content}")
-        elif hasattr(request, 'messages') and request.messages:
+        elif hasattr(request, "messages") and request.messages:
             for msg in request.messages:
-                if hasattr(msg, 'content') and msg.content:
+                if hasattr(msg, "content") and msg.content:
                     # 兼容LangChain Message对象和字典格式
-                    if hasattr(msg, 'type'):
-                        role = "用户" if msg.type == "human" else "助手" if msg.type == "ai" else "未知"
-                    elif hasattr(msg, 'get'):
-                        role = "用户" if msg.get("role") == "user" else "助手" if msg.get("role") == "assistant" else "未知"
+                    if hasattr(msg, "type"):
+                        role = (
+                            "用户"
+                            if msg.type == "human"
+                            else "助手" if msg.type == "ai" else "未知"
+                        )
+                    elif hasattr(msg, "get"):
+                        role = (
+                            "用户"
+                            if msg.get("role") == "user"
+                            else "助手" if msg.get("role") == "assistant" else "未知"
+                        )
                     else:
                         role = "未知"
                     content_parts.append(f"{role}: {msg.content}")
@@ -360,16 +373,24 @@ class LayeredMemoryMiddleware(AgentMiddleware):
         """从响应中提取上下文信息"""
         content_parts = []
 
-        if hasattr(response, 'content') and response.content:
+        if hasattr(response, "content") and response.content:
             content_parts.append(f"助手: {response.content}")
-        elif hasattr(response, 'messages') and response.messages:
+        elif hasattr(response, "messages") and response.messages:
             for msg in response.messages:
-                if hasattr(msg, 'content') and msg.content:
+                if hasattr(msg, "content") and msg.content:
                     # 兼容LangChain Message对象和字典格式
-                    if hasattr(msg, 'type'):
-                        role = "用户" if msg.type == "human" else "助手" if msg.type == "ai" else "未知"
-                    elif hasattr(msg, 'get'):
-                        role = "用户" if msg.get("role") == "user" else "助手" if msg.get("role") == "assistant" else "未知"
+                    if hasattr(msg, "type"):
+                        role = (
+                            "用户"
+                            if msg.type == "human"
+                            else "助手" if msg.type == "ai" else "未知"
+                        )
+                    elif hasattr(msg, "get"):
+                        role = (
+                            "用户"
+                            if msg.get("role") == "user"
+                            else "助手" if msg.get("role") == "assistant" else "未知"
+                        )
                     else:
                         role = "未知"
                     content_parts.append(f"{role}: {msg.content}")
@@ -445,7 +466,11 @@ class LayeredMemoryMiddleware(AgentMiddleware):
         return {
             "memory_config": memory_config,
             "working_memory_size": self.working_memory_size,
-            "session_memory": self.session_memory[session_id].to_dict() if session_id in self.session_memory else {},
+            "session_memory": (
+                self.session_memory[session_id].to_dict()
+                if session_id in self.session_memory
+                else {}
+            ),
         }
 
     async def abefore_agent(
@@ -584,7 +609,7 @@ class LayeredMemoryMiddleware(AgentMiddleware):
         return {
             "working_memory": {
                 "size": len(self.working_memory.items),
-                "max_size": self.working_memory.max_size
+                "max_size": self.working_memory.max_size,
             },
             "session_memory": {
                 "active_sessions": len(self.session_memory),
@@ -592,19 +617,21 @@ class LayeredMemoryMiddleware(AgentMiddleware):
                     sid: {
                         "interaction_count": session.interaction_count,
                         "key_topics_count": len(session.key_topics),
-                        "summary_length": len(session.conversation_summary)
+                        "summary_length": len(session.conversation_summary),
                     }
                     for sid, session in self.session_memory.items()
-                }
+                },
             },
             "long_term_memory": {
                 "semantic_memory_count": len(self.long_term_memory.semantic_memory),
                 "episodic_memory_count": len(self.long_term_memory.episodic_memory),
-                "last_save_time": self.last_save_time
-            }
+                "last_save_time": self.last_save_time,
+            },
         }
 
-    def search_memories(self, query: str, memory_type: str = "all", limit: int = 5) -> List[Dict]:
+    def search_memories(
+        self, query: str, memory_type: str = "all", limit: int = 5
+    ) -> List[Dict]:
         """搜索所有记忆层级"""
         return self.long_term_memory.search_memory(query, memory_type, limit)
 

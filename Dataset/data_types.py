@@ -5,11 +5,13 @@
 """
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
+
 
 @dataclass
 class EvaluationTask:
     """评估任务定义"""
+
     task_id: str
     dataset_name: str
     repo_name: str
@@ -23,9 +25,11 @@ class EvaluationTask:
     repo_info: Optional[Dict[str, Any]] = None
     ground_truth: Optional[str] = None  # 正确的修复补丁（用于对比）
 
+
 @dataclass
 class EvaluationResult:
     """评估结果"""
+
     task_id: str
     dataset_name: str
     success: bool
@@ -35,9 +39,11 @@ class EvaluationResult:
     error: Optional[str] = None
     metadata: Dict[str, Any] = None
 
+
 @dataclass
 class EvaluationSummary:
     """评估摘要"""
+
     dataset_name: str
     total_tasks: int
     successful_tasks: int

@@ -1,12 +1,13 @@
 # Sessions API routes
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
 from typing import List
 
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
 from ..models.database import get_db
+from ..models.schemas import MessageResponse, SessionCreate, SessionResponse
 from ..services.session_service import SessionService
-from ..models.schemas import SessionCreate, SessionResponse, MessageResponse
 
 router = APIRouter()
 
@@ -18,7 +19,7 @@ def get_session_service(db: Session = Depends(get_db)) -> SessionService:
 @router.post("/", response_model=SessionResponse)
 async def create_session(
     session_data: SessionCreate,
-    session_service: SessionService = Depends(get_session_service)
+    session_service: SessionService = Depends(get_session_service),
 ):
     """Create a new session."""
     try:
@@ -28,9 +29,7 @@ async def create_session(
 
 
 @router.get("/", response_model=List[SessionResponse])
-async def get_sessions(
-    session_service: SessionService = Depends(get_session_service)
-):
+async def get_sessions(session_service: SessionService = Depends(get_session_service)):
     """Get all sessions for the current user."""
     try:
         # For now, return all sessions (TODO: add user authentication)
@@ -41,8 +40,7 @@ async def get_sessions(
 
 @router.get("/{session_id}", response_model=SessionResponse)
 async def get_session(
-    session_id: str,
-    session_service: SessionService = Depends(get_session_service)
+    session_id: str, session_service: SessionService = Depends(get_session_service)
 ):
     """Get a specific session."""
     session = session_service.get_session(session_id)
@@ -55,7 +53,7 @@ async def get_session(
 async def update_session_title(
     session_id: str,
     title: str,
-    session_service: SessionService = Depends(get_session_service)
+    session_service: SessionService = Depends(get_session_service),
 ):
     """Update session title."""
     try:
@@ -69,8 +67,7 @@ async def update_session_title(
 
 @router.delete("/{session_id}")
 async def delete_session(
-    session_id: str,
-    session_service: SessionService = Depends(get_session_service)
+    session_id: str, session_service: SessionService = Depends(get_session_service)
 ):
     """Delete a session."""
     try:
@@ -86,7 +83,7 @@ async def delete_session(
 async def get_session_messages(
     session_id: str,
     limit: int = 100,
-    session_service: SessionService = Depends(get_session_service)
+    session_service: SessionService = Depends(get_session_service),
 ):
     """Get messages for a session."""
     try:
@@ -98,7 +95,7 @@ async def get_session_messages(
                 content=msg.content,
                 role=msg.role,
                 metadata=msg.extra_data,
-                created_at=msg.created_at
+                created_at=msg.created_at,
             )
             for msg in messages
         ]

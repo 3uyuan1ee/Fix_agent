@@ -8,6 +8,7 @@ import threading
 try:
     import termios
     import tty
+
     TERMIOS_AVAILABLE = True
 except ImportError:
     # Windows 系统不支持 termios 和 tty
@@ -21,15 +22,10 @@ from rich.panel import Panel
 
 from ..config.config import COLORS, console
 from ..tools.file_ops import FileOpTracker, build_approval_preview
-from ..ui.ui import (
-    TokenTracker,
-    format_tool_display,
-    format_tool_message_content,
-    render_diff_block,
-    render_file_operation,
-    render_summary_panel,
-    render_todo_list,
-)
+from ..ui.ui import (TokenTracker, format_tool_display,
+                     format_tool_message_content, render_diff_block,
+                     render_file_operation, render_summary_panel,
+                     render_todo_list)
 from .input import parse_file_mentions
 
 
@@ -221,9 +217,7 @@ def execute_task(
                     f"\n### {file_path.name}\nPath: `{file_path}`\n```\n{content}\n```"
                 )
             except Exception as e:
-                context_parts.append(
-                    f"\n### {file_path.name}\n[读取文件错误: {e}]"
-                )
+                context_parts.append(f"\n### {file_path.name}\n[读取文件错误: {e}]")
 
         final_input = "\n".join(context_parts)
     else:

@@ -1,15 +1,16 @@
 # Files API routes
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
-from sqlalchemy.orm import Session
-from typing import List
 import os
 import shutil
 from pathlib import Path
+from typing import List
 
-from ..models.database import get_db
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from sqlalchemy.orm import Session
+
 from ..core.config import settings
-from ..models.schemas import FileUploadResponse, FileContentResponse
+from ..models.database import get_db
+from ..models.schemas import FileContentResponse, FileUploadResponse
 
 router = APIRouter()
 
@@ -39,7 +40,7 @@ async def upload_file(
             original_filename=file.filename,
             file_size=file_size,
             mime_type=file.content_type or "application/octet-stream",
-            file_path=str(file_path.relative_to(settings.upload_dir))
+            file_path=str(file_path.relative_to(settings.upload_dir)),
         )
 
     except Exception as e:
@@ -65,21 +66,25 @@ async def list_files(
         files = []
         for item in target_path.iterdir():
             if item.is_file():
-                files.append({
-                    "name": item.name,
-                    "path": str(item.relative_to(workspace_dir)),
-                    "size": item.stat().st_size,
-                    "modified": item.stat().st_mtime,
-                    "is_file": True
-                })
+                files.append(
+                    {
+                        "name": item.name,
+                        "path": str(item.relative_to(workspace_dir)),
+                        "size": item.stat().st_size,
+                        "modified": item.stat().st_mtime,
+                        "is_file": True,
+                    }
+                )
             elif item.is_dir():
-                files.append({
-                    "name": item.name,
-                    "path": str(item.relative_to(workspace_dir)),
-                    "size": 0,
-                    "modified": item.stat().st_mtime,
-                    "is_file": False
-                })
+                files.append(
+                    {
+                        "name": item.name,
+                        "path": str(item.relative_to(workspace_dir)),
+                        "size": 0,
+                        "modified": item.stat().st_mtime,
+                        "is_file": False,
+                    }
+                )
 
         return {"files": files, "total_count": len(files)}
 
@@ -101,17 +106,24 @@ async def get_file_content(
             raise HTTPException(status_code=404, detail="File not found")
 
         # Don't read binary files
-        if file_path.suffix.lower() in ['.jpg', '.jpeg', '.png', '.gif', '.pdf', '.zip']:
+        if file_path.suffix.lower() in [
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".gif",
+            ".pdf",
+            ".zip",
+        ]:
             raise HTTPException(status_code=400, detail="Cannot read binary files")
 
-        content = file_path.read_text(encoding='utf-8')
+        content = file_path.read_text(encoding="utf-8")
         file_size = file_path.stat().st_size
 
         return FileContentResponse(
             content=content,
             file_path=path,
             file_size=file_size,
-            last_modified=file_path.stat().st_mtime
+            last_modified=file_path.stat().st_mtime,
         )
 
     except HTTPException:

@@ -5,25 +5,15 @@ import re
 from pathlib import Path
 
 from prompt_toolkit import PromptSession
-from prompt_toolkit.completion import (
-    Completer,
-    Completion,
-    PathCompleter,
-    WordCompleter,
-    merge_completers,
-)
+from prompt_toolkit.completion import (Completer, Completion, PathCompleter,
+                                       WordCompleter, merge_completers)
 from prompt_toolkit.document import Document
 from prompt_toolkit.enums import EditingMode
 from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.key_binding import KeyBindings
 
-from ..config.config import (
-    COLORS,
-    COMMANDS,
-    COMMON_BASH_COMMANDS,
-    SessionState,
-    console,
-)
+from ..config.config import (COLORS, COMMANDS, COMMON_BASH_COMMANDS,
+                             SessionState, console)
 
 
 class FilePathCompleter(Completer):

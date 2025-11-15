@@ -4,18 +4,17 @@
 这个Agent专门为数据集评估设计，复用原项目的tools和中间件，但不依赖交互式界面。
 """
 
-import os
-import json
-import time
 import asyncio
-from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass
-from pathlib import Path
-import tempfile
+import json
+import os
 import shutil
-
 # 复用原项目的核心组件
 import sys
+import tempfile
+import time
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 # 获取项目根目录
 project_root = Path(__file__).parent.parent.parent
@@ -23,7 +22,8 @@ src_path = project_root / "src"
 sys.path.insert(0, str(src_path))
 
 # 导入独立配置
-from .agent_config import get_evaluation_system_prompt, get_evaluation_subagents
+from .agent_config import (get_evaluation_subagents,
+                           get_evaluation_system_prompt)
 
 # 尝试导入工具和中间件
 tools_available = True
@@ -38,11 +38,11 @@ except ImportError as e:
 
 # 中间件导入（可选，因为它们可能也有相对导入问题）
 try:
+    from midware.context_enhancement import ContextEnhancementMiddleware
     from midware.layered_memory import LayeredMemoryMiddleware
+    from midware.logging import LoggingMiddleware
     from midware.performance_monitor import PerformanceMonitorMiddleware
     from midware.security import SecurityMiddleware
-    from midware.logging import LoggingMiddleware
-    from midware.context_enhancement import ContextEnhancementMiddleware
 except ImportError as e:
     print(f"[DatasetAgent] 中间件导入警告: {e}")
     print("[DatasetAgent] 将使用简化模式运行")
@@ -53,16 +53,19 @@ try:
     from deepagents import create_deep_agent
     from deepagents.backends import CompositeBackend
     from deepagents.backends.filesystem import FilesystemBackend
-    from deepagents.middleware.resumable_shell import ResumableShellToolMiddleware
+    from deepagents.middleware.resumable_shell import \
+        ResumableShellToolMiddleware
     from langchain.agents.middleware import HostExecutionPolicy
     from langgraph.checkpoint.memory import InMemorySaver
 except ImportError as e:
     print(f"[DatasetAgent] DeepAgents导入错误: {e}")
     raise
 
+
 @dataclass
 class AgentRequest:
     """Agent请求数据结构"""
+
     task_id: str
     problem_description: str
     failing_tests: List[str]
@@ -71,9 +74,11 @@ class AgentRequest:
     timeout: int = 300
     mode: str = "automated"  # automated: 自动模式, interactive: 交互模式
 
+
 @dataclass
 class AgentResponse:
     """Agent响应数据结构"""
+
     task_id: str
     success: bool
     message: str
@@ -83,6 +88,7 @@ class AgentResponse:
     test_results: Dict[str, Any]
     error: Optional[str] = None
     metadata: Dict[str, Any] = None
+
 
 class DatasetAgent:
     """
@@ -95,7 +101,9 @@ class DatasetAgent:
     - 提供标准化的API接口
     """
 
-    def __init__(self, agent_id: str = "dataset_eval_agent", config: Optional[Dict] = None):
+    def __init__(
+        self, agent_id: str = "dataset_eval_agent", config: Optional[Dict] = None
+    ):
         self.agent_id = agent_id
         self.config = config or {}
         self.agent = None
@@ -114,7 +122,9 @@ class DatasetAgent:
             bool: 初始化是否成功
         """
         try:
-            self.workspace_root = workspace_root or tempfile.mkdtemp(prefix="dataset_eval_")
+            self.workspace_root = workspace_root or tempfile.mkdtemp(
+                prefix="dataset_eval_"
+            )
             self.temp_dirs.append(self.workspace_root)
 
             # 切换到工作目录
@@ -136,6 +146,7 @@ class DatasetAgent:
         except Exception as e:
             print(f"[DatasetAgent] 初始化失败: {e}")
             import traceback
+
             traceback.print_exc()
             return False
 
@@ -155,7 +166,7 @@ class DatasetAgent:
             # 创建shell中间件
             shell_middleware = ResumableShellToolMiddleware(
                 workspace_root=self.workspace_root,
-                execution_policy=HostExecutionPolicy()
+                execution_policy=HostExecutionPolicy(),
             )
 
             # 创建记忆后端
@@ -164,8 +175,7 @@ class DatasetAgent:
 
             long_term_backend = FilesystemBackend(root_dir=agent_dir, virtual_mode=True)
             backend = CompositeBackend(
-                default=FilesystemBackend(),
-                routes={"/memories/": long_term_backend}
+                default=FilesystemBackend(), routes={"/memories/": long_term_backend}
             )
 
             # 构建中间件管道（简化版，专为数据集评估优化）
@@ -179,7 +189,7 @@ class DatasetAgent:
                         backend=long_term_backend,
                         metrics_path="/performance/",
                         enable_system_monitoring=True,
-                        max_records=100
+                        max_records=100,
                     )
                     agent_middleware.append(performance_middleware)
                     print("[DatasetAgent] 性能监控中间件已加载")
@@ -195,7 +205,7 @@ class DatasetAgent:
                         enable_conversation_logging=True,
                         enable_tool_logging=True,
                         enable_performance_logging=True,
-                        enable_error_logging=True
+                        enable_error_logging=True,
                     )
                     agent_middleware.append(logging_middleware)
                     print("[DatasetAgent] 日志记录中间件已加载")
@@ -212,7 +222,7 @@ class DatasetAgent:
                         enable_command_security=False,  # 禁用命令安全检查，允许编译和测试
                         enable_content_security=True,
                         allow_path_traversal=True,  # 允许路径遍历，便于项目文件操作
-                        max_file_size=50 * 1024 * 1024  # 50MB
+                        max_file_size=50 * 1024 * 1024,  # 50MB
                     )
                     agent_middleware.append(security_middleware)
                     print("[DatasetAgent] 安全检查中间件已加载")
@@ -243,7 +253,7 @@ class DatasetAgent:
                 backend=backend,
                 middleware=agent_middleware,
                 subagents=subagents,
-                interrupt_on={}  # 禁用所有交互式中断
+                interrupt_on={},  # 禁用所有交互式中断
             )
 
             self.agent.checkpointer = InMemorySaver()
@@ -252,6 +262,7 @@ class DatasetAgent:
         except Exception as e:
             print(f"[DatasetAgent] Agent创建失败: {e}")
             import traceback
+
             traceback.print_exc()
             raise
 
@@ -331,7 +342,7 @@ class DatasetAgent:
                     execution_time=execution_time,
                     intermediate_steps=result.get("steps", []),
                     test_results=test_results,
-                    metadata=result.get("metadata", {})
+                    metadata=result.get("metadata", {}),
                 )
 
             finally:
@@ -347,7 +358,7 @@ class DatasetAgent:
                 execution_time=time.time() - start_time,
                 intermediate_steps=[],
                 test_results={},
-                error=str(e)
+                error=str(e),
             )
 
     def _build_evaluation_prompt(self, request: AgentRequest) -> str:
@@ -383,15 +394,17 @@ class DatasetAgent:
 
         return prompt
 
-    async def _execute_agent(self, prompt: str, request: AgentRequest) -> Dict[str, Any]:
+    async def _execute_agent(
+        self, prompt: str, request: AgentRequest
+    ) -> Dict[str, Any]:
         """执行agent处理"""
 
         try:
             # 使用异步方式调用agent
             # 这里需要根据实际的agent接口调整
-            if hasattr(self.agent, 'ainvoke'):
+            if hasattr(self.agent, "ainvoke"):
                 result = await self.agent.ainvoke({"input": prompt})
-            elif hasattr(self.agent, 'invoke'):
+            elif hasattr(self.agent, "invoke"):
                 # 如果没有异步接口，使用同步接口
                 result = self.agent.invoke({"input": prompt})
             else:
@@ -406,7 +419,7 @@ class DatasetAgent:
                 "message": f"Agent执行失败: {str(e)}",
                 "fixed_files": [],
                 "steps": [],
-                "metadata": {"error": str(e)}
+                "metadata": {"error": str(e)},
             }
 
     def _parse_agent_result(self, result) -> Dict[str, Any]:
@@ -435,7 +448,7 @@ class DatasetAgent:
                 "message": output,
                 "fixed_files": fixed_files,
                 "steps": [{"step": "agent_processing", "output": output}],
-                "metadata": {"raw_output": output}
+                "metadata": {"raw_output": output},
             }
 
         except Exception as e:
@@ -444,7 +457,7 @@ class DatasetAgent:
                 "message": f"结果解析失败: {str(e)}",
                 "fixed_files": [],
                 "steps": [],
-                "metadata": {"parse_error": str(e)}
+                "metadata": {"parse_error": str(e)},
             }
 
     def _extract_fixed_files(self, output: str) -> List[str]:
@@ -456,13 +469,19 @@ class DatasetAgent:
         fixed_files = []
 
         # 简单的关键词匹配
-        lines = output.split('\n')
+        lines = output.split("\n")
         for line in lines:
-            if any(keyword in line.lower() for keyword in ['fixed:', 'modified:', 'updated:', 'changed:']):
+            if any(
+                keyword in line.lower()
+                for keyword in ["fixed:", "modified:", "updated:", "changed:"]
+            ):
                 # 尝试提取文件路径
                 words = line.split()
                 for word in words:
-                    if '.' in word and any(word.endswith(ext) for ext in ['.py', '.js', '.java', '.cpp', '.c']):
+                    if "." in word and any(
+                        word.endswith(ext)
+                        for ext in [".py", ".js", ".java", ".cpp", ".c"]
+                    ):
                         fixed_files.append(word)
 
         return list(set(fixed_files))  # 去重
@@ -473,7 +492,7 @@ class DatasetAgent:
         test_results = {
             "compilation": {"success": False, "output": ""},
             "unit_tests": {"success": False, "output": "", "passed": 0, "failed": 0},
-            "specific_tests": {"success": False, "output": ""}
+            "specific_tests": {"success": False, "output": ""},
         }
 
         try:
@@ -482,7 +501,9 @@ class DatasetAgent:
 
             # 2. 运行具体的失败测试
             if request.failing_tests:
-                test_results["specific_tests"] = await self._run_specific_tests(request.failing_tests)
+                test_results["specific_tests"] = await self._run_specific_tests(
+                    request.failing_tests
+                )
 
             # 3. 运行单元测试套件（如果有）
             test_results["unit_tests"] = await self._run_unit_tests()
@@ -499,21 +520,15 @@ class DatasetAgent:
             # 使用compile_project工具
             from src.tools.error_detector import compile_project
 
-            result = compile_project.invoke({
-                "project_path": ".",
-                "language": "auto"
-            })
+            result = compile_project.invoke({"project_path": ".", "language": "auto"})
 
             return {
                 "success": "成功" in result or "success" in result.lower(),
-                "output": result
+                "output": result,
             }
 
         except Exception as e:
-            return {
-                "success": False,
-                "output": f"编译测试失败: {str(e)}"
-            }
+            return {"success": False, "output": f"编译测试失败: {str(e)}"}
 
     async def _run_specific_tests(self, failing_tests: List[str]) -> Dict[str, Any]:
         """运行特定的测试"""
@@ -525,21 +540,15 @@ class DatasetAgent:
             # 构造测试命令
             test_command = self._build_test_command(failing_tests)
 
-            result = run_and_monitor.invoke({
-                "command": test_command,
-                "timeout": 60
-            })
+            result = run_and_monitor.invoke({"command": test_command, "timeout": 60})
 
             return {
                 "success": "passed" in result.lower() or "ok" in result.lower(),
-                "output": result
+                "output": result,
             }
 
         except Exception as e:
-            return {
-                "success": False,
-                "output": f"特定测试失败: {str(e)}"
-            }
+            return {"success": False, "output": f"特定测试失败: {str(e)}"}
 
     async def _run_unit_tests(self) -> Dict[str, Any]:
         """运行单元测试套件"""
@@ -551,38 +560,25 @@ class DatasetAgent:
                 "python -m unittest discover -v",
                 "python setup.py test",
                 "npm test",
-                "make test"
+                "make test",
             ]
 
             for cmd in test_commands:
                 try:
                     from src.tools.error_detector import run_and_monitor
 
-                    result = run_and_monitor.invoke({
-                        "command": cmd,
-                        "timeout": 120
-                    })
+                    result = run_and_monitor.invoke({"command": cmd, "timeout": 120})
 
                     if "passed" in result.lower() or "ok" in result.lower():
-                        return {
-                            "success": True,
-                            "output": result,
-                            "command": cmd
-                        }
+                        return {"success": True, "output": result, "command": cmd}
 
                 except:
                     continue
 
-            return {
-                "success": False,
-                "output": "无法找到合适的测试命令"
-            }
+            return {"success": False, "output": "无法找到合适的测试命令"}
 
         except Exception as e:
-            return {
-                "success": False,
-                "output": f"单元测试失败: {str(e)}"
-            }
+            return {"success": False, "output": f"单元测试失败: {str(e)}"}
 
     def _build_test_command(self, failing_tests: List[str]) -> str:
         """构建测试命令"""
@@ -614,7 +610,7 @@ class DatasetAgent:
 
     def __del__(self):
         """析构函数"""
-        if hasattr(self, 'temp_dirs'):
+        if hasattr(self, "temp_dirs"):
             for temp_dir in self.temp_dirs:
                 if os.path.exists(temp_dir):
                     try:

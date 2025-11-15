@@ -4,14 +4,15 @@ pytest配置文件
 提供测试夹具和全局配置
 """
 
-import pytest
-import tempfile
 import os
 import sys
+import tempfile
 from pathlib import Path
 
+import pytest
+
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 
 @pytest.fixture
@@ -24,7 +25,8 @@ def temp_dir():
 @pytest.fixture
 def temp_file(temp_dir):
     """创建临时文件夹具"""
-    def create_temp_file(suffix='.txt', content=''):
+
+    def create_temp_file(suffix=".txt", content=""):
         file_path = temp_dir / f"test_{temp_file.counter}{suffix}"
         temp_file.counter += 1
         file_path.write_text(content)
@@ -96,7 +98,7 @@ if __name__ == "__main__":
 @pytest.fixture
 def sample_javascript_file(temp_dir):
     """创建JavaScript示例文件夹具"""
-    js_code = '''
+    js_code = """
 // JavaScript示例代码
 class User {
     constructor(name, email) {
@@ -166,7 +168,7 @@ console.log(user.validate());
 console.log(user.getUserInfo());
 
 console.log(formatCurrency(1234.56));
-'''
+"""
 
     js_file = temp_dir / "sample_code.js"
     js_file.write_text(js_code)
@@ -186,7 +188,8 @@ def sample_project_structure(temp_dir):
     (project_dir / "config").mkdir()
 
     # 创建Python文件
-    (project_dir / "main.py").write_text('''
+    (project_dir / "main.py").write_text(
+        '''
 #!/usr/bin/env python3
 """主程序入口"""
 from src.app import create_app
@@ -197,10 +200,12 @@ def main():
 
 if __name__ == "__main__":
     main()
-''')
+'''
+    )
 
     (project_dir / "src" / "__init__.py").write_text("")
-    (project_dir / "src" / "app.py").write_text('''
+    (project_dir / "src" / "app.py").write_text(
+        '''
 """应用程序配置"""
 from flask import Flask
 
@@ -212,9 +217,11 @@ def create_app():
         return "Hello, World!"
 
     return app
-''')
+'''
+    )
 
-    (project_dir / "tests" / "test_app.py").write_text('''
+    (project_dir / "tests" / "test_app.py").write_text(
+        '''
 """应用程序测试"""
 import pytest
 from src.app import create_app
@@ -226,16 +233,20 @@ def test_hello_world():
     response = client.get('/')
     assert response.status_code == 200
     assert b"Hello, World!" in response.data
-''')
+'''
+    )
 
     # 创建配置文件
-    (project_dir / "requirements.txt").write_text('''
+    (project_dir / "requirements.txt").write_text(
+        """
 Flask>=2.0.0
 pytest>=6.0.0
 gunicorn>=20.0.0
-''')
+"""
+    )
 
-    (project_dir / "README.md").write_text('''
+    (project_dir / "README.md").write_text(
+        """
 # Sample Project
 
 这是一个示例项目，用于演示项目结构分析功能。
@@ -252,15 +263,18 @@ gunicorn>=20.0.0
 pip install -r requirements.txt
 python main.py
 ```
-''')
+"""
+    )
 
-    (project_dir / ".gitignore").write_text('''
+    (project_dir / ".gitignore").write_text(
+        """
 __pycache__/
 *.pyc
 .env
 venv/
 node_modules/
-''')
+"""
+    )
 
     return project_dir
 
@@ -272,7 +286,8 @@ def mock_memory_files(temp_dir):
     memory_dir.mkdir()
 
     # 创建记忆文件
-    (memory_dir / "python_basics.md").write_text('''
+    (memory_dir / "python_basics.md").write_text(
+        """
 # Python基础知识
 
 ## 基本语法
@@ -294,9 +309,11 @@ def mock_memory_files(temp_dir):
 - def关键字定义函数
 - 参数传递和返回值
 - 默认参数和关键字参数
-''')
+"""
+    )
 
-    (memory_dir / "javascript_tips.md").write_text('''
+    (memory_dir / "javascript_tips.md").write_text(
+        """
 # JavaScript编程技巧
 
 ## 最佳实践
@@ -314,9 +331,11 @@ def mock_memory_files(temp_dir):
 - 使用console.log调试
 - 利用浏览器开发者工具
 - 使用断点调试
-''')
+"""
+    )
 
-    (memory_dir / "project_patterns.md").write_text('''
+    (memory_dir / "project_patterns.md").write_text(
+        """
 # 项目设计模式
 
 ## 创建型模式
@@ -338,7 +357,8 @@ def mock_memory_files(temp_dir):
 - 根据项目需求选择合适的模式
 - 避免过度设计
 - 保持代码简洁性
-''')
+"""
+    )
 
     return memory_dir
 
@@ -347,32 +367,23 @@ def mock_memory_files(temp_dir):
 def mock_agent_responses():
     """模拟Agent响应夹具"""
     return [
-        {
-            "content": "我来分析您的代码。",
-            "type": "text"
-        },
-        {
-            "content": "代码分析完成，发现以下问题：",
-            "type": "text"
-        },
+        {"content": "我来分析您的代码。", "type": "text"},
+        {"content": "代码分析完成，发现以下问题：", "type": "text"},
         {
             "tool_call": {
                 "name": "analyze_code_defects",
-                "args": {"file_path": "test.py"}
+                "args": {"file_path": "test.py"},
             },
-            "type": "tool_call"
+            "type": "tool_call",
         },
-        {
-            "content": "建议进行以下改进：",
-            "type": "text"
-        }
+        {"content": "建议进行以下改进：", "type": "text"},
     ]
 
 
 @pytest.fixture
 def error_prone_code(temp_dir):
     """创建有错误的代码示例夹具"""
-    error_code = '''
+    error_code = """
 def divide_numbers(a, b):
     return a / b  # 潜在除零错误
 
@@ -408,7 +419,7 @@ def find_duplicate_slow(arr):
             if arr[i] == arr[j] and arr[i] not in duplicates:
                 duplicates.append(arr[i])
     return duplicates
-'''
+"""
 
     error_file = temp_dir / "error_prone_code.py"
     error_file.write_text(error_code)
@@ -421,12 +432,8 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')"
     )
-    config.addinivalue_line(
-        "markers", "integration: marks tests as integration tests"
-    )
-    config.addinivalue_line(
-        "markers", "unit: marks tests as unit tests"
-    )
+    config.addinivalue_line("markers", "integration: marks tests as integration tests")
+    config.addinivalue_line("markers", "unit: marks tests as unit tests")
     config.addinivalue_line(
         "markers", "requires_network: marks tests that require network access"
     )
@@ -446,11 +453,11 @@ def pytest_collection_modifyitems(config, items):
 def setup_test_environment():
     """设置测试环境"""
     # 设置测试环境变量
-    os.environ['TESTING'] = 'true'
-    os.environ['FIX_AGENT_TEST_MODE'] = 'true'
+    os.environ["TESTING"] = "true"
+    os.environ["FIX_AGENT_TEST_MODE"] = "true"
 
     yield
 
     # 清理测试环境
-    os.environ.pop('TESTING', None)
-    os.environ.pop('FIX_AGENT_TEST_MODE', None)
+    os.environ.pop("TESTING", None)
+    os.environ.pop("FIX_AGENT_TEST_MODE", None)

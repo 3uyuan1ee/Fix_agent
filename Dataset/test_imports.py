@@ -16,6 +16,7 @@ sys.path.insert(0, str(dataset_root))
 project_root = dataset_root.parent
 sys.path.insert(0, str(project_root / "src"))
 
+
 def test_imports():
     """测试所有导入"""
     print("开始测试导入...")
@@ -23,24 +24,29 @@ def test_imports():
     try:
         # 测试基础模块导入
         print("1. 测试基础模块导入...")
-        from core.agent import DatasetAgent, AgentRequest, AgentResponse
-        from core.evaluation import EvaluationFramework, EvaluationTask, EvaluationResult
+        from core.agent import AgentRequest, AgentResponse, DatasetAgent
+        from core.evaluation import (EvaluationFramework, EvaluationResult,
+                                     EvaluationTask)
+
         print("   ✓ 核心模块导入成功")
 
         import sys
         from pathlib import Path
+
         dataset_root = Path(__file__).parent
         if str(dataset_root) not in sys.path:
             sys.path.insert(0, str(dataset_root))
 
         from loaders.base import BaseDatasetLoader
-        from loaders.swe_bench import SWEBenchLoader
         from loaders.bugs_in_py import BugsInPyLoader
+        from loaders.swe_bench import SWEBenchLoader
+
         print("   ✓ 加载器模块导入成功")
 
+        from utils.config import ConfigManager, EvaluationConfig
         from utils.metrics import MetricsCalculator
         from utils.visualization import EvaluationVisualizer
-        from utils.config import EvaluationConfig, ConfigManager
+
         print("   ✓ 工具模块导入成功")
 
         print("2. 测试模块初始化...")
@@ -68,14 +74,17 @@ def test_imports():
     except ImportError as e:
         print(f"\n❌ 导入错误: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
     except Exception as e:
         print(f"\n❌ 其他错误: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_agent_creation():
     """测试agent创建"""
@@ -95,7 +104,7 @@ def test_agent_creation():
             task_id="test_001",
             problem_description="Test problem",
             failing_tests=["test_example"],
-            workspace_path="/tmp"
+            workspace_path="/tmp",
         )
         print("   ✓ AgentRequest创建成功")
 
@@ -106,7 +115,7 @@ def test_agent_creation():
             fixed_files=["test.py"],
             execution_time=1.0,
             intermediate_steps=[],
-            test_results={}
+            test_results={},
         )
         print("   ✓ AgentResponse创建成功")
 
@@ -116,12 +125,14 @@ def test_agent_creation():
     except Exception as e:
         print(f"\n❌ Agent创建测试失败: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
+
 if __name__ == "__main__":
     print("Fix Agent Dataset模块测试")
-    print("="*50)
+    print("=" * 50)
 
     # 测试导入
     import_success = test_imports()

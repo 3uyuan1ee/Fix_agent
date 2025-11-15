@@ -5,8 +5,8 @@
 测试Dataset评估框架的完整工作流程，使用模拟数据。
 """
 
-import sys
 import json
+import sys
 import tempfile
 from pathlib import Path
 
@@ -14,6 +14,7 @@ from pathlib import Path
 current_dir = Path(__file__).parent
 if str(current_dir) not in sys.path:
     sys.path.insert(0, str(current_dir))
+
 
 def create_mock_swe_bench_data():
     """创建模拟的SWE-bench数据"""
@@ -26,7 +27,7 @@ def create_mock_swe_bench_data():
             "patch": "@@ -1,3 +1,3 @@\n def authenticate(username, password):\n-    return username == password\n+    return check_password(username, password)",
             "test_patch": "",
             "FAIL_TO_PASS": ["test_auth.py::test_basic_auth"],
-            "PASS_TO_PASS": ["test_auth.py::test_existing_feature"]
+            "PASS_TO_PASS": ["test_auth.py::test_existing_feature"],
         },
         {
             "instance_id": "test_002",
@@ -36,15 +37,16 @@ def create_mock_swe_bench_data():
             "patch": "@@ -10,7 +10,7 @@\n def send_request(url, timeout=None):\n-    if timeout is None:\n-        timeout = 30\n+    timeout = timeout or 30\n     return requests.get(url, timeout=timeout)",
             "test_patch": "",
             "FAIL_TO_PASS": ["test_timeout.py::test_custom_timeout"],
-            "PASS_TO_PASS": ["test_basic.py::test_get_request"]
-        }
+            "PASS_TO_PASS": ["test_basic.py::test_get_request"],
+        },
     ]
     return mock_data
 
+
 def create_mock_bugs_in_py_structure():
     """创建模拟的BugsInPy数据结构"""
-    import tempfile
     import shutil
+    import tempfile
 
     # 创建临时目录结构
     temp_dir = Path(tempfile.mkdtemp())
@@ -59,7 +61,7 @@ def create_mock_bugs_in_py_structure():
     bug_data = {
         "type": "authentication",
         "severity": "medium",
-        "description": "Django认证系统中的密码验证存在问题"
+        "description": "Django认证系统中的密码验证存在问题",
     }
     with open(bug_dir / "bug.json", "w") as f:
         json.dump(bug_data, f)
@@ -79,6 +81,7 @@ def create_mock_bugs_in_py_structure():
 
     return str(temp_dir)
 
+
 def test_swe_bench_loader():
     """测试SWE-bench加载器"""
     print("1. 测试SWE-bench加载器...")
@@ -87,7 +90,7 @@ def test_swe_bench_loader():
         from loaders.swe_bench import SWEBenchLoader
 
         # 创建临时数据文件
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(create_mock_swe_bench_data(), f)
             temp_file = f.name
 
@@ -110,6 +113,7 @@ def test_swe_bench_loader():
     except Exception as e:
         print(f"   ❌ SWE-bench加载器测试失败: {e}")
         return False
+
 
 def test_bugs_in_py_loader():
     """测试BugsInPy加载器"""
@@ -140,6 +144,7 @@ def test_bugs_in_py_loader():
         print(f"   ❌ BugsInPy加载器测试失败: {e}")
         return False
 
+
 def test_evaluation_framework():
     """测试评估框架"""
     print("3. 测试评估框架...")
@@ -158,7 +163,7 @@ def test_evaluation_framework():
             test_command="echo '模拟测试通过'",
             setup_commands=["echo '模拟设置'"],
             timeout=30,
-            repo_info={"language": "python", "framework": "django"}
+            repo_info={"language": "python", "framework": "django"},
         )
 
         # 创建评估框架
@@ -178,6 +183,7 @@ def test_evaluation_framework():
         print(f"   ❌ 评估框架测试失败: {e}")
         return False
 
+
 def test_metrics_calculation():
     """测试指标计算"""
     print("4. 测试指标计算...")
@@ -192,22 +198,22 @@ def test_metrics_calculation():
                 "success": True,
                 "execution_time": 25.5,
                 "agent_actions": ["analyze", "fix", "validate"],
-                "error": None
+                "error": None,
             },
             {
                 "task_id": "test_002",
                 "success": False,
                 "execution_time": 45.2,
                 "agent_actions": ["analyze", "fix"],
-                "error": "TimeoutError"
+                "error": "TimeoutError",
             },
             {
                 "task_id": "test_003",
                 "success": True,
                 "execution_time": 32.1,
                 "agent_actions": ["analyze", "fix", "validate"],
-                "error": None
-            }
+                "error": None,
+            },
         ]
 
         calc = MetricsCalculator()
@@ -224,17 +230,18 @@ def test_metrics_calculation():
         print(f"   ❌ 指标计算测试失败: {e}")
         return False
 
+
 def test_complete_workflow():
     """测试完整工作流程"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("Dataset评估框架完整工作流程测试")
-    print("="*60)
+    print("=" * 60)
 
     tests = [
         test_swe_bench_loader,
         test_bugs_in_py_loader,
         test_evaluation_framework,
-        test_metrics_calculation
+        test_metrics_calculation,
     ]
 
     passed = 0
@@ -249,7 +256,7 @@ def test_complete_workflow():
             print(f"   💥 测试异常: {e}")
             print()
 
-    print("="*60)
+    print("=" * 60)
     print(f"完整工作流程测试结果: {passed}/{total} 通过")
 
     if passed == total:
@@ -264,9 +271,10 @@ def test_complete_workflow():
     else:
         print("⚠️ 部分功能存在问题，但基础框架可用")
 
-    print("="*60)
+    print("=" * 60)
 
     return passed == total
+
 
 if __name__ == "__main__":
     success = test_complete_workflow()

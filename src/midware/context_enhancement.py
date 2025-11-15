@@ -1,22 +1,18 @@
 """上下文增强中间件 - 增强对话上下文和提示词质量"""
 
-import re
-import os
 import json
+import os
+import re
 from collections.abc import Awaitable, Callable
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
 from pathlib import Path
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 if TYPE_CHECKING:
     from langgraph.runtime import Runtime
 
 from deepagents.backends.protocol import BackendProtocol
-from langchain.agents.middleware.types import (
-    AgentMiddleware,
-    AgentState,
-    ModelRequest,
-    ModelResponse,
-)
+from langchain.agents.middleware.types import (AgentMiddleware, AgentState,
+                                               ModelRequest, ModelResponse)
 from typing_extensions import NotRequired, TypedDict
 
 
@@ -163,7 +159,7 @@ class ContextEnhancementMiddleware(AgentMiddleware):
         try:
             for file_path in path.rglob("*.json"):
                 if file_path.is_file():
-                    content = file_path.read_text(encoding='utf-8').lower()
+                    content = file_path.read_text(encoding="utf-8").lower()
                     for framework, (filename, keyword) in frameworks.items():
                         if file_path.name == filename and keyword in content:
                             detected_frameworks.append(framework)
@@ -171,11 +167,15 @@ class ContextEnhancementMiddleware(AgentMiddleware):
             # 检查Python文件中的框架
             for file_path in path.rglob("*.py"):
                 if file_path.is_file():
-                    content = file_path.read_text(encoding='utf-8').lower()
+                    content = file_path.read_text(encoding="utf-8").lower()
                     for framework, (filename, keyword) in frameworks.items():
                         if filename == "settings.py" and keyword in content:
                             detected_frameworks.append(framework)
-                        elif keyword in content and framework in ["Django", "Flask", "FastAPI"]:
+                        elif keyword in content and framework in [
+                            "Django",
+                            "Flask",
+                            "FastAPI",
+                        ]:
                             detected_frameworks.append(framework)
 
         except Exception:
@@ -219,7 +219,7 @@ class ContextEnhancementMiddleware(AgentMiddleware):
         try:
             files = []
             for file_path in path.rglob("*"):
-                if file_path.is_file() and not file_path.name.startswith('.'):
+                if file_path.is_file() and not file_path.name.startswith("."):
                     try:
                         mtime = file_path.stat().st_mtime
                         files.append((mtime, str(file_path.relative_to(path))))
@@ -257,7 +257,9 @@ class ContextEnhancementMiddleware(AgentMiddleware):
             stats = {
                 "file_count": file_count,
                 "total_size_mb": round(total_size / (1024 * 1024), 2),
-                "file_types": dict(sorted(file_types.items(), key=lambda x: x[1], reverse=True)[:10])
+                "file_types": dict(
+                    sorted(file_types.items(), key=lambda x: x[1], reverse=True)[:10]
+                ),
             }
         except Exception:
             pass
@@ -273,7 +275,9 @@ class ContextEnhancementMiddleware(AgentMiddleware):
             patterns = {
                 "user_intent": self._detect_user_intent(messages),
                 "technical_level": self._assess_technical_level(messages),
-                "preferred_response_length": self._analyze_response_preferences(messages),
+                "preferred_response_length": self._analyze_response_preferences(
+                    messages
+                ),
                 "topic_keywords": self._extract_keywords(messages),
                 "conversation_style": self._detect_conversation_style(messages),
             }
@@ -287,11 +291,20 @@ class ContextEnhancementMiddleware(AgentMiddleware):
         if not messages:
             return "general"
 
-        user_messages = [msg for msg in messages if (hasattr(msg, 'type') and msg.type == "human") or (hasattr(msg, 'get') and msg.get("role") == "user")]
+        user_messages = [
+            msg
+            for msg in messages
+            if (hasattr(msg, "type") and msg.type == "human")
+            or (hasattr(msg, "get") and msg.get("role") == "user")
+        ]
         if not user_messages:
             return "general"
 
-        last_message = (user_messages[-1].content if hasattr(user_messages[-1], 'content') else user_messages[-1].get("content", "")).lower()
+        last_message = (
+            user_messages[-1].content
+            if hasattr(user_messages[-1], "content")
+            else user_messages[-1].get("content", "")
+        ).lower()
 
         intent_keywords = {
             "coding": ["code", "code", "code", "function", "函数", "代码", "编程"],
@@ -312,13 +325,25 @@ class ContextEnhancementMiddleware(AgentMiddleware):
         if not messages:
             return "intermediate"
 
-        all_content = " ".join([
-            (msg.content if hasattr(msg, 'content') else msg.get("content", "")) for msg in messages
-            if (hasattr(msg, 'type') and msg.type in ["human", "ai"]) or (hasattr(msg, 'get') and msg.get("role") in ["user", "assistant"])
-        ]).lower()
+        all_content = " ".join(
+            [
+                (msg.content if hasattr(msg, "content") else msg.get("content", ""))
+                for msg in messages
+                if (hasattr(msg, "type") and msg.type in ["human", "ai"])
+                or (hasattr(msg, "get") and msg.get("role") in ["user", "assistant"])
+            ]
+        ).lower()
 
         beginner_keywords = ["new", "beginner", "初学者", "新手", "入门", "简单"]
-        advanced_keywords = ["optimization", "architecture", "architecture", "performance", "优化", "架构", "高级"]
+        advanced_keywords = [
+            "optimization",
+            "architecture",
+            "architecture",
+            "performance",
+            "优化",
+            "架构",
+            "高级",
+        ]
 
         if any(keyword in all_content for keyword in beginner_keywords):
             return "beginner"
@@ -329,11 +354,19 @@ class ContextEnhancementMiddleware(AgentMiddleware):
 
     def _analyze_response_preferences(self, messages: List[Dict]) -> str:
         """分析响应偏好"""
-        assistant_messages = [msg for msg in messages if (hasattr(msg, 'type') and msg.type == "ai") or (hasattr(msg, 'get') and msg.get("role") == "assistant")]
+        assistant_messages = [
+            msg
+            for msg in messages
+            if (hasattr(msg, "type") and msg.type == "ai")
+            or (hasattr(msg, "get") and msg.get("role") == "assistant")
+        ]
         if len(assistant_messages) < 2:
             return "medium"
 
-        avg_length = sum(len(msg.content if hasattr(msg, 'content') else msg.get("content", "")) for msg in assistant_messages) / len(assistant_messages)
+        avg_length = sum(
+            len(msg.content if hasattr(msg, "content") else msg.get("content", ""))
+            for msg in assistant_messages
+        ) / len(assistant_messages)
 
         if avg_length < 200:
             return "short"
@@ -349,36 +382,69 @@ class ContextEnhancementMiddleware(AgentMiddleware):
 
         # 技术关键词列表
         tech_keywords = [
-            "python", "javascript", "java", "react", "vue", "angular", "docker",
-            "git", "api", "database", "frontend", "backend", "devops", "testing",
-            "bug", "feature", "refactor", "optimize", "deploy", "security"
+            "python",
+            "javascript",
+            "java",
+            "react",
+            "vue",
+            "angular",
+            "docker",
+            "git",
+            "api",
+            "database",
+            "frontend",
+            "backend",
+            "devops",
+            "testing",
+            "bug",
+            "feature",
+            "refactor",
+            "optimize",
+            "deploy",
+            "security",
         ]
 
-        all_content = " ".join([
-            (msg.content if hasattr(msg, 'content') else msg.get("content", "")) for msg in messages
-            if (hasattr(msg, 'type') and msg.type in ["human", "ai"]) or (hasattr(msg, 'get') and msg.get("role") in ["user", "assistant"])
-        ]).lower()
+        all_content = " ".join(
+            [
+                (msg.content if hasattr(msg, "content") else msg.get("content", ""))
+                for msg in messages
+                if (hasattr(msg, "type") and msg.type in ["human", "ai"])
+                or (hasattr(msg, "get") and msg.get("role") in ["user", "assistant"])
+            ]
+        ).lower()
 
         found_keywords = [
-            keyword for keyword in tech_keywords
-            if keyword in all_content
+            keyword for keyword in tech_keywords if keyword in all_content
         ]
 
         return found_keywords[:10]  # 限制数量
 
     def _detect_conversation_style(self, messages: List[Dict]) -> str:
         """检测对话风格"""
-        user_messages = [msg for msg in messages if (hasattr(msg, 'type') and msg.type == "human") or (hasattr(msg, 'get') and msg.get("role") == "user")]
+        user_messages = [
+            msg
+            for msg in messages
+            if (hasattr(msg, "type") and msg.type == "human")
+            or (hasattr(msg, "get") and msg.get("role") == "user")
+        ]
         if not user_messages:
             return "professional"
 
-        last_message = user_messages[-1].content if hasattr(user_messages[-1], 'content') else user_messages[-1].get("content", "")
+        last_message = (
+            user_messages[-1].content
+            if hasattr(user_messages[-1], "content")
+            else user_messages[-1].get("content", "")
+        )
 
         informal_indicators = ["!", "哈", "呵呵", "哈哈", "😊", "👍", "谢谢"]
         formal_indicators = ["请", "请问", "能否", "可否", "感谢"]
 
-        informal_count = sum(1 for indicator in informal_indicators if indicator in last_message)
-        formal_count = sum(1 for indicator in formal_indicators if indicator in last_message)
+        informal_count = sum(
+            1 for indicator in informal_indicators if indicator in last_message
+        )
+        formal_count = sum(
+            1 for indicator in formal_indicators if indicator in last_message
+        )
 
         if informal_count > formal_count:
             return "casual"
@@ -398,9 +464,15 @@ class ContextEnhancementMiddleware(AgentMiddleware):
             if project_info:
                 context_parts.append("## 项目上下文")
                 context_parts.append(f"- 项目类型: {project_info.get('type', '未知')}")
-                context_parts.append(f"- 编程语言: {', '.join(project_info.get('languages', []))}")
-                context_parts.append(f"- 检测框架: {', '.join(project_info.get('frameworks', []))}")
-                context_parts.append(f"- 文件统计: {project_info.get('project_stats', {}).get('file_count', 0)} 个文件")
+                context_parts.append(
+                    f"- 编程语言: {', '.join(project_info.get('languages', []))}"
+                )
+                context_parts.append(
+                    f"- 检测框架: {', '.join(project_info.get('frameworks', []))}"
+                )
+                context_parts.append(
+                    f"- 文件统计: {project_info.get('project_stats', {}).get('file_count', 0)} 个文件"
+                )
 
         # 2. 对话模式
         if self.enable_conversation_enhancement:
@@ -408,11 +480,17 @@ class ContextEnhancementMiddleware(AgentMiddleware):
             conversation_patterns = self._analyze_conversation_patterns(messages)
             if conversation_patterns:
                 context_parts.append("\n## 对话上下文")
-                context_parts.append(f"- 用户意图: {conversation_patterns.get('user_intent', 'general')}")
-                context_parts.append(f"- 技术水平: {conversation_patterns.get('technical_level', 'intermediate')}")
-                context_parts.append(f"- 响应偏好: {conversation_patterns.get('preferred_response_length', 'medium')}")
+                context_parts.append(
+                    f"- 用户意图: {conversation_patterns.get('user_intent', 'general')}"
+                )
+                context_parts.append(
+                    f"- 技术水平: {conversation_patterns.get('technical_level', 'intermediate')}"
+                )
+                context_parts.append(
+                    f"- 响应偏好: {conversation_patterns.get('preferred_response_length', 'medium')}"
+                )
 
-                keywords = conversation_patterns.get('topic_keywords', [])
+                keywords = conversation_patterns.get("topic_keywords", [])
                 if keywords:
                     context_parts.append(f"- 相关技术: {', '.join(keywords)}")
 
@@ -465,7 +543,9 @@ class ContextEnhancementMiddleware(AgentMiddleware):
         # 注入到系统提示中
         if context_enhancement:
             if request.system_prompt:
-                request.system_prompt = f"{context_enhancement}\n\n{request.system_prompt}"
+                request.system_prompt = (
+                    f"{context_enhancement}\n\n{request.system_prompt}"
+                )
             else:
                 request.system_prompt = context_enhancement
 
@@ -485,7 +565,9 @@ class ContextEnhancementMiddleware(AgentMiddleware):
         # 注入到系统提示中
         if context_enhancement:
             if request.system_prompt:
-                request.system_prompt = f"{context_enhancement}\n\n{request.system_prompt}"
+                request.system_prompt = (
+                    f"{context_enhancement}\n\n{request.system_prompt}"
+                )
             else:
                 request.system_prompt = context_enhancement
 

@@ -6,8 +6,8 @@ from pathlib import Path
 from langgraph.checkpoint.memory import InMemorySaver
 
 from ..config.config import COLORS, DEEP_AGENTS_ASCII, console
-from ..ui.ui import TokenTracker, show_interactive_help
 from ..ui.dynamicCli import typewriter
+from ..ui.ui import TokenTracker, show_interactive_help
 
 
 def handle_command(command: str, agent, token_tracker: TokenTracker) -> str | bool:
@@ -29,7 +29,9 @@ def handle_command(command: str, agent, token_tracker: TokenTracker) -> str | bo
         console.print(DEEP_AGENTS_ASCII, style=f"bold {COLORS['primary']}")
         console.print()
         # 使用滑入动画显示重置消息
-        typewriter.slide_in_text("Fresh start! Screen cleared and conversation reset.", style="agent")
+        typewriter.slide_in_text(
+            "Fresh start! Screen cleared and conversation reset.", style="agent"
+        )
         console.print()
         return True
 

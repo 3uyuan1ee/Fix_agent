@@ -706,7 +706,9 @@ class PythonAnalyzer(BaseCodeAnalyzer):
             except (FileNotFoundError, subprocess.TimeoutExpired):
                 # pylint未安装，尝试降级到flake8
                 try:
-                    subprocess.run(["flake8", "--version"], capture_output=True, timeout=5)
+                    subprocess.run(
+                        ["flake8", "--version"], capture_output=True, timeout=5
+                    )
                     self.tool = "flake8"  # 降级到flake8
                     return True
                 except (FileNotFoundError, subprocess.TimeoutExpired):

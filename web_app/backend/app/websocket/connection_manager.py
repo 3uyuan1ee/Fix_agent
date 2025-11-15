@@ -4,6 +4,7 @@ import json
 import logging
 from datetime import datetime
 from typing import Dict, List, Set
+
 from fastapi import WebSocket, WebSocketDisconnect
 
 logger = logging.getLogger(__name__)
@@ -32,7 +33,7 @@ class ConnectionManager:
         self.connection_metadata[websocket] = {
             "session_id": session_id,
             "user_id": user_id,
-            "connected_at": str(datetime.utcnow())
+            "connected_at": str(datetime.utcnow()),
         }
 
         logger.info(f"WebSocket connected for session {session_id}")
@@ -98,7 +99,10 @@ class ConnectionManager:
 
     def is_session_active(self, session_id: str) -> bool:
         """Check if a session has active connections."""
-        return session_id in self.active_connections and len(self.active_connections[session_id]) > 0
+        return (
+            session_id in self.active_connections
+            and len(self.active_connections[session_id]) > 0
+        )
 
 
 # Global connection manager instance

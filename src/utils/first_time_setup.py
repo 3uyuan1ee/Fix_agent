@@ -1,8 +1,8 @@
 """首次使用环境配置向导 - 基于 /config 命令设计模式"""
 
 import os
-import sys
 import platform
+import sys
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -86,11 +86,13 @@ ANTHROPIC_API_KEY=your_claude_key_here
         """
 
     console.print()
-    console.print(Panel(
-        instructions.strip(),
-        title="[bold blue]🔧 环境变量设置指南[/bold blue]",
-        border_style="blue"
-    ))
+    console.print(
+        Panel(
+            instructions.strip(),
+            title="[bold blue]🔧 环境变量设置指南[/bold blue]",
+            border_style="blue",
+        )
+    )
 
 
 def create_interactive_env() -> bool:
@@ -104,10 +106,12 @@ def create_interactive_env() -> bool:
             return False
 
         # 读取模板内容
-        template_content = template_path.read_text(encoding='utf-8')
+        template_content = template_path.read_text(encoding="utf-8")
 
         console.print()
-        typewriter.print_with_random_speed("🚀 欢迎使用 Fix_agent 环境配置向导", "primary")
+        typewriter.print_with_random_speed(
+            "🚀 欢迎使用 Fix_agent 环境配置向导", "primary"
+        )
         console.print()
 
         system = detect_platform()
@@ -124,7 +128,7 @@ def create_interactive_env() -> bool:
             3. 显示设置指南 - 查看详细配置说明
             4. 取消
             """,
-            "warning"
+            "warning",
         )
         console.print()
 
@@ -165,15 +169,16 @@ def interactive_setup(template_content: str, env_path: Path) -> bool:
         typewriter.print_with_random_speed("🤖 OpenAI API 配置", "cyan")
         if Prompt.ask("是否配置 OpenAI API?", choices=["y", "n"], default="y") == "y":
             api_key = Prompt.ask(
-                "请输入 OpenAI API Key",
-                password=True,
-                show_default=False
+                "请输入 OpenAI API Key", password=True, show_default=False
             )
             if api_key.strip():
                 config_values["OPENAI_API_KEY"] = api_key.strip()
 
                 # 高级选项
-                if Prompt.ask("是否配置高级选项?", choices=["y", "n"], default="n") == "y":
+                if (
+                    Prompt.ask("是否配置高级选项?", choices=["y", "n"], default="n")
+                    == "y"
+                ):
                     base_url = Prompt.ask("API Base URL (可选)", default="")
                     if base_url.strip():
                         config_values["OPENAI_API_BASE"] = base_url.strip()
@@ -181,7 +186,7 @@ def interactive_setup(template_content: str, env_path: Path) -> bool:
                     model = Prompt.ask(
                         "模型名称",
                         choices=["gpt-4", "gpt-4-turbo", "gpt-5-mini", "gpt-3.5-turbo"],
-                        default="gpt-5-mini"
+                        default="gpt-5-mini",
                     )
                     config_values["OPENAI_MODEL"] = model
 
@@ -189,25 +194,33 @@ def interactive_setup(template_content: str, env_path: Path) -> bool:
 
         # Anthropic 配置
         typewriter.print_with_random_speed("🧠 Anthropic Claude 配置", "cyan")
-        if Prompt.ask("是否配置 Anthropic API?", choices=["y", "n"], default="y") == "y":
+        if (
+            Prompt.ask("是否配置 Anthropic API?", choices=["y", "n"], default="y")
+            == "y"
+        ):
             api_key = Prompt.ask(
-                "请输入 Anthropic API Key",
-                password=True,
-                show_default=False
+                "请输入 Anthropic API Key", password=True, show_default=False
             )
             if api_key.strip():
                 config_values["ANTHROPIC_API_KEY"] = api_key.strip()
 
                 # 高级选项
-                if Prompt.ask("是否配置高级选项?", choices=["y", "n"], default="n") == "y":
+                if (
+                    Prompt.ask("是否配置高级选项?", choices=["y", "n"], default="n")
+                    == "y"
+                ):
                     base_url = Prompt.ask("Base URL (可选)", default="")
                     if base_url.strip():
                         config_values["ANTHROPIC_BASE_URL"] = base_url.strip()
 
                     model = Prompt.ask(
                         "模型名称",
-                        choices=["claude-sonnet-4-5-20250929", "claude-3-opus-20240229", "claude-3-sonnet-20240229"],
-                        default="claude-sonnet-4-5-20250929"
+                        choices=[
+                            "claude-sonnet-4-5-20250929",
+                            "claude-3-opus-20240229",
+                            "claude-3-sonnet-20240229",
+                        ],
+                        default="claude-sonnet-4-5-20250929",
                     )
                     config_values["ANTHROPIC_MODEL"] = model
 
@@ -217,9 +230,7 @@ def interactive_setup(template_content: str, env_path: Path) -> bool:
         typewriter.print_with_random_speed("🔍 Tavily 搜索 API 配置 (可选)", "cyan")
         if Prompt.ask("是否配置网络搜索功能?", choices=["y", "n"], default="n") == "y":
             api_key = Prompt.ask(
-                "请输入 Tavily API Key",
-                password=True,
-                show_default=False
+                "请输入 Tavily API Key", password=True, show_default=False
             )
             if api_key.strip():
                 config_values["TAVILY_API_KEY"] = api_key.strip()
@@ -237,12 +248,20 @@ def interactive_setup(template_content: str, env_path: Path) -> bool:
         table.add_column("说明", style="dim")
 
         if "OPENAI_API_KEY" in config_values:
-            table.add_row("OpenAI", "✅ 已配置", f"模型: {config_values.get('OPENAI_MODEL', 'gpt-5-mini')}")
+            table.add_row(
+                "OpenAI",
+                "✅ 已配置",
+                f"模型: {config_values.get('OPENAI_MODEL', 'gpt-5-mini')}",
+            )
         else:
             table.add_row("OpenAI", "❌ 未配置", "可后续添加")
 
         if "ANTHROPIC_API_KEY" in config_values:
-            table.add_row("Anthropic", "✅ 已配置", f"模型: {config_values.get('ANTHROPIC_MODEL', 'claude-sonnet-4-5-20250929')}")
+            table.add_row(
+                "Anthropic",
+                "✅ 已配置",
+                f"模型: {config_values.get('ANTHROPIC_MODEL', 'claude-sonnet-4-5-20250929')}",
+            )
         else:
             table.add_row("Anthropic", "❌ 未配置", "可后续添加")
 
@@ -257,7 +276,7 @@ def interactive_setup(template_content: str, env_path: Path) -> bool:
         console.print()
         if Prompt.ask("确认保存配置?", choices=["y", "n"], default="y") == "y":
             # 写入 .env 文件
-            env_path.write_text(env_content, encoding='utf-8')
+            env_path.write_text(env_content, encoding="utf-8")
             typewriter.success(f"✅ 配置已保存到: {env_path}")
 
             # 显示下一步操作
@@ -282,11 +301,13 @@ def interactive_setup(template_content: str, env_path: Path) -> bool:
    • 运行 [cyan]/help[/cyan] 查看所有命令
             """
 
-            console.print(Panel(
-                next_steps.strip(),
-                title="[bold blue]📚 使用指南[/bold blue]",
-                border_style="blue"
-            ))
+            console.print(
+                Panel(
+                    next_steps.strip(),
+                    title="[bold blue]📚 使用指南[/bold blue]",
+                    border_style="blue",
+                )
+            )
 
             return True
         else:

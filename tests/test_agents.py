@@ -5,31 +5,33 @@
 测试文件: src/agents/agent.py
 """
 
-import pytest
-import tempfile
 import os
 import shutil
+import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 # 导入实际的项目模块
 try:
-    from src.agents.agent import (
-        list_agents,
-        reset_agent,
-        create_agent_with_config,
-        get_current_assistant_id
-    )
-    from src.config.config import config, COLORS, console
+    from src.agents.agent import (create_agent_with_config,
+                                  get_current_assistant_id, list_agents,
+                                  reset_agent)
+    from src.config.config import COLORS, config, console
 except ImportError as e:
     print(f"Import warning: {e}")
+
     # Mock imports for testing
     def list_agents():
         pass
+
     def reset_agent(agent_name, source_agent=None):
         return True
+
     def create_agent_with_config(model, assistant_id, tools, memory_mode="auto"):
         return Mock()
+
     def get_current_assistant_id():
         return "test_assistant"
 
@@ -43,7 +45,7 @@ class TestListAgents:
 
     def test_list_agents_no_agents_directory(self):
         """测试当.agents目录不存在时的行为"""
-        with patch('pathlib.Path.home') as mock_home:
+        with patch("pathlib.Path.home") as mock_home:
             # 模拟不存在的agents目录
             mock_agents_dir = Mock()
             mock_agents_dir.exists.return_value = False
@@ -52,7 +54,7 @@ class TestListAgents:
             mock_home.return_value = mock_agents_dir
 
             # 重定向console.print到capture
-            with patch.object(console, 'print') as mock_print:
+            with patch.object(console, "print") as mock_print:
                 list_agents()
 
                 # 验证打印了"No agents found"消息
@@ -64,7 +66,7 @@ class TestListAgents:
 
     def test_list_agents_empty_directory(self):
         """测试空agents目录的行为"""
-        with patch('pathlib.Path.home') as mock_home:
+        with patch("pathlib.Path.home") as mock_home:
             # 模拟空的agents目录
             mock_agents_dir = Mock()
             mock_agents_dir.exists.return_value = True
@@ -72,14 +74,14 @@ class TestListAgents:
             mock_agents_dir.__truediv__ = Mock(return_value=mock_agents_dir)
             mock_home.return_value = mock_agents_dir
 
-            with patch.object(console, 'print') as mock_print:
+            with patch.object(console, "print") as mock_print:
                 list_agents()
 
                 mock_print.assert_any_call("[yellow]No agents found.[/yellow]")
 
     def test_list_agents_with_agents(self):
         """测试存在agents时的列出功能"""
-        with patch('pathlib.Path.home') as mock_home:
+        with patch("pathlib.Path.home") as mock_home:
             # 模拟有agents的目录
             mock_agent1_dir = Mock()
             mock_agent1_dir.is_dir.return_value = True
@@ -95,11 +97,13 @@ class TestListAgents:
             mock_agents_dir.__truediv__ = Mock(return_value=mock_agents_dir)
             mock_home.return_value = mock_agents_dir
 
-            with patch.object(console, 'print') as mock_print:
+            with patch.object(console, "print") as mock_print:
                 list_agents()
 
                 # 验证打印了"Available Agents"
-                mock_print.assert_any_call("\n[bold]Available Agents:[/bold]\n", style=COLORS["primary"])
+                mock_print.assert_any_call(
+                    "\n[bold]Available Agents:[/bold]\n", style=COLORS["primary"]
+                )
 
 
 class TestResetAgent:
@@ -132,8 +136,8 @@ class TestResetAgent:
         target_md = target_dir / "agent.md"
         target_md.write_text("# Target Agent\nOriginal content")
 
-        with patch('pathlib.Path.home', return_value=agents_dir.parent):
-            with patch.object(console, 'print') as mock_print:
+        with patch("pathlib.Path.home", return_value=agents_dir.parent):
+            with patch.object(console, "print") as mock_print:
                 reset_agent("target_agent", "source_agent")
 
                 # 验证目标代理被重置
@@ -145,15 +149,15 @@ class TestResetAgent:
                 # 验证打印了成功消息
                 mock_print.assert_any_call(
                     f"✓ Agent 'target_agent' reset to contents of agent 'source_agent'",
-                    style=COLORS["primary"]
+                    style=COLORS["primary"],
                 )
 
     def test_reset_agent_nonexistent_source(self, mock_agents_dir):
         """测试从不存在的源代理重置"""
         agents_dir, _ = mock_agents_dir
 
-        with patch('pathlib.Path.home', return_value=agents_dir.parent):
-            with patch.object(console, 'print') as mock_print:
+        with patch("pathlib.Path.home", return_value=agents_dir.parent):
+            with patch.object(console, "print") as mock_print:
                 reset_agent("target_agent", "nonexistent_source")
 
                 # 验证打印了错误消息
@@ -171,11 +175,13 @@ class TestResetAgent:
         target_md = target_dir / "agent.md"
         target_md.write_text("# Target Agent\nOriginal content")
 
-        with patch('pathlib.Path.home', return_value=agents_dir.parent):
-            with patch('src.agents.agent.get_default_coding_instructions') as mock_default:
+        with patch("pathlib.Path.home", return_value=agents_dir.parent):
+            with patch(
+                "src.agents.agent.get_default_coding_instructions"
+            ) as mock_default:
                 mock_default.return_value = "# Default Instructions\nDefault content"
 
-                with patch.object(console, 'print') as mock_print:
+                with patch.object(console, "print") as mock_print:
                     reset_agent("target_agent", None)
 
                     # 验证使用了默认内容
@@ -186,7 +192,7 @@ class TestResetAgent:
                     # 验证打印了成功消息
                     mock_print.assert_any_call(
                         f"✓ Agent 'target_agent' reset to default",
-                        style=COLORS["primary"]
+                        style=COLORS["primary"],
                     )
 
     def test_reset_agent_removes_existing_directory(self, mock_agents_dir):
@@ -201,8 +207,8 @@ class TestResetAgent:
         sub_dir.mkdir()
         (sub_dir / "sub_file.txt").write_text("sub content")
 
-        with patch('pathlib.Path.home', return_value=agents_dir.parent):
-            with patch.object(console, 'print') as mock_print:
+        with patch("pathlib.Path.home", return_value=agents_dir.parent):
+            with patch.object(console, "print") as mock_print:
                 reset_agent("target_agent", None)
 
                 # 验证旧内容被移除，只有agent.md存在
@@ -214,7 +220,7 @@ class TestResetAgent:
                 # 验证打印了移除消息
                 mock_print.assert_any_call(
                     f"Removed existing agent directory: {target_dir}",
-                    style=COLORS["tool"]
+                    style=COLORS["tool"],
                 )
 
 
@@ -243,45 +249,85 @@ class TestCreateAgentWithConfig:
         """测试基本代理创建"""
         assistant_id = "test_agent"
 
-        with patch('pathlib.Path.home', return_value=mock_agents_dir.parent):
-            with patch('src.agents.agent.create_deep_agent') as mock_create_deep:
+        with patch("pathlib.Path.home", return_value=mock_agents_dir.parent):
+            with patch("src.agents.agent.create_deep_agent") as mock_create_deep:
                 mock_agent = Mock()
                 mock_create_deep.return_value = mock_agent
 
-                with patch('src.agents.agent.FilesystemBackend') as mock_backend:
-                    with patch('src.agents.agent.CompositeBackend') as mock_composite:
-                        with patch('src.agents.agent.LayeredMemoryMiddleware') as mock_memory:
-                            with patch('src.agents.agent.SecurityMiddleware') as mock_security:
-                                with patch('src.agents.agent.LoggingMiddleware') as mock_logging:
-                                    with patch('src.agents.agent.ContextEnhancementMiddleware') as mock_context:
-                                        with patch('src.agents.agent.PerformanceMonitorMiddleware') as mock_perf:
-                                            with patch('src.agents.agent.AgentMemoryMiddleware') as mock_agent_mem:
-                                                with patch('src.agents.agent.ResumableShellToolMiddleware') as mock_shell:
-                                                    with patch('src.agents.agent.HostExecutionPolicy') as mock_policy:
-                                                        with patch('src.agents.agent.MemoryMiddlewareFactory') as mock_factory:
-                                                            with patch('src.agents.agent.get_default_coding_instructions') as mock_default:
+                with patch("src.agents.agent.FilesystemBackend") as mock_backend:
+                    with patch("src.agents.agent.CompositeBackend") as mock_composite:
+                        with patch(
+                            "src.agents.agent.LayeredMemoryMiddleware"
+                        ) as mock_memory:
+                            with patch(
+                                "src.agents.agent.SecurityMiddleware"
+                            ) as mock_security:
+                                with patch(
+                                    "src.agents.agent.LoggingMiddleware"
+                                ) as mock_logging:
+                                    with patch(
+                                        "src.agents.agent.ContextEnhancementMiddleware"
+                                    ) as mock_context:
+                                        with patch(
+                                            "src.agents.agent.PerformanceMonitorMiddleware"
+                                        ) as mock_perf:
+                                            with patch(
+                                                "src.agents.agent.AgentMemoryMiddleware"
+                                            ) as mock_agent_mem:
+                                                with patch(
+                                                    "src.agents.agent.ResumableShellToolMiddleware"
+                                                ) as mock_shell:
+                                                    with patch(
+                                                        "src.agents.agent.HostExecutionPolicy"
+                                                    ) as mock_policy:
+                                                        with patch(
+                                                            "src.agents.agent.MemoryMiddlewareFactory"
+                                                        ) as mock_factory:
+                                                            with patch(
+                                                                "src.agents.agent.get_default_coding_instructions"
+                                                            ) as mock_default:
                                                                 mock_default.return_value = "Default instructions"
-                                                                mock_factory.create_memory_backend.return_value = Mock()
+                                                                mock_factory.create_memory_backend.return_value = (
+                                                                    Mock()
+                                                                )
 
                                                                 agent = create_agent_with_config(
-                                                                    mock_model, assistant_id, mock_tools, "auto"
+                                                                    mock_model,
+                                                                    assistant_id,
+                                                                    mock_tools,
+                                                                    "auto",
                                                                 )
 
                                                                 # 验证agent目录被创建
-                                                                agent_dir = mock_agents_dir / assistant_id
-                                                                assert agent_dir.exists()
+                                                                agent_dir = (
+                                                                    mock_agents_dir
+                                                                    / assistant_id
+                                                                )
+                                                                assert (
+                                                                    agent_dir.exists()
+                                                                )
 
                                                                 # 验证agent.md文件被创建
-                                                                agent_md = agent_dir / "agent.md"
+                                                                agent_md = (
+                                                                    agent_dir
+                                                                    / "agent.md"
+                                                                )
                                                                 assert agent_md.exists()
 
-                                                                content = agent_md.read_text()
-                                                                assert "Default instructions" in content
+                                                                content = (
+                                                                    agent_md.read_text()
+                                                                )
+                                                                assert (
+                                                                    "Default instructions"
+                                                                    in content
+                                                                )
 
                                                                 # 验证create_deep_agent被调用
                                                                 mock_create_deep.assert_called_once()
 
-    def test_create_agent_existing_agent_md(self, mock_model, mock_tools, mock_agents_dir):
+    def test_create_agent_existing_agent_md(
+        self, mock_model, mock_tools, mock_agents_dir
+    ):
         """测试创建代理时agent.md已存在"""
         assistant_id = "existing_agent"
 
@@ -291,61 +337,104 @@ class TestCreateAgentWithConfig:
         agent_md = agent_dir / "agent.md"
         agent_md.write_text("# Existing Agent\nAlready exists")
 
-        with patch('pathlib.Path.home', return_value=mock_agents_dir.parent):
-            with patch('src.agents.agent.create_deep_agent') as mock_create_deep:
+        with patch("pathlib.Path.home", return_value=mock_agents_dir.parent):
+            with patch("src.agents.agent.create_deep_agent") as mock_create_deep:
                 mock_agent = Mock()
                 mock_create_deep.return_value = mock_agent
 
                 # 模拟所有中间件
-                with patch('src.agents.agent.ResumableShellToolMiddleware'):
-                    with patch('src.agents.agent.FilesystemBackend'):
-                        with patch('src.agents.agent.CompositeBackend'):
-                            with patch('src.agents.agent.LayeredMemoryMiddleware'):
-                                with patch('src.agents.agent.SecurityMiddleware'):
-                                    with patch('src.agents.agent.LoggingMiddleware'):
-                                        with patch('src.agents.agent.ContextEnhancementMiddleware'):
-                                            with patch('src.agents.agent.PerformanceMonitorMiddleware'):
-                                                with patch('src.agents.agent.AgentMemoryMiddleware'):
-                                                    with patch('src.agents.agent.MemoryMiddlewareFactory') as mock_factory:
-                                                        mock_factory.create_memory_backend.return_value = Mock()
+                with patch("src.agents.agent.ResumableShellToolMiddleware"):
+                    with patch("src.agents.agent.FilesystemBackend"):
+                        with patch("src.agents.agent.CompositeBackend"):
+                            with patch("src.agents.agent.LayeredMemoryMiddleware"):
+                                with patch("src.agents.agent.SecurityMiddleware"):
+                                    with patch("src.agents.agent.LoggingMiddleware"):
+                                        with patch(
+                                            "src.agents.agent.ContextEnhancementMiddleware"
+                                        ):
+                                            with patch(
+                                                "src.agents.agent.PerformanceMonitorMiddleware"
+                                            ):
+                                                with patch(
+                                                    "src.agents.agent.AgentMemoryMiddleware"
+                                                ):
+                                                    with patch(
+                                                        "src.agents.agent.MemoryMiddlewareFactory"
+                                                    ) as mock_factory:
+                                                        mock_factory.create_memory_backend.return_value = (
+                                                            Mock()
+                                                        )
 
-                                                        agent = create_agent_with_config(
-                                                            mock_model, assistant_id, mock_tools, "auto"
+                                                        agent = (
+                                                            create_agent_with_config(
+                                                                mock_model,
+                                                                assistant_id,
+                                                                mock_tools,
+                                                                "auto",
+                                                            )
                                                         )
 
                                                         # 验证现有的agent.md没有被覆盖
                                                         content = agent_md.read_text()
-                                                        assert "Existing Agent" in content
-                                                        assert "Already exists" in content
-                                                        assert "Default instructions" not in content
+                                                        assert (
+                                                            "Existing Agent" in content
+                                                        )
+                                                        assert (
+                                                            "Already exists" in content
+                                                        )
+                                                        assert (
+                                                            "Default instructions"
+                                                            not in content
+                                                        )
 
-    def test_create_agent_different_memory_modes(self, mock_model, mock_tools, mock_agents_dir):
+    def test_create_agent_different_memory_modes(
+        self, mock_model, mock_tools, mock_agents_dir
+    ):
         """测试不同记忆模式的代理创建"""
         assistant_id = "memory_test_agent"
         memory_modes = ["auto", "enhanced", "minimal"]
 
         for memory_mode in memory_modes:
-            with patch('pathlib.Path.home', return_value=mock_agents_dir.parent):
-                with patch('src.agents.agent.create_deep_agent') as mock_create_deep:
+            with patch("pathlib.Path.home", return_value=mock_agents_dir.parent):
+                with patch("src.agents.agent.create_deep_agent") as mock_create_deep:
                     mock_agent = Mock()
                     mock_create_deep.return_value = mock_agent
 
-                    with patch('src.agents.agent.ResumableShellToolMiddleware'):
-                        with patch('src.agents.agent.FilesystemBackend'):
-                            with patch('src.agents.agent.CompositeBackend'):
-                                with patch('src.agents.agent.LayeredMemoryMiddleware') as mock_memory:
-                                    with patch('src.agents.agent.SecurityMiddleware'):
-                                        with patch('src.agents.agent.LoggingMiddleware'):
-                                            with patch('src.agents.agent.ContextEnhancementMiddleware'):
-                                                with patch('src.agents.agent.PerformanceMonitorMiddleware'):
-                                                    with patch('src.agents.agent.AgentMemoryMiddleware'):
-                                                        with patch('src.agents.agent.MemoryMiddlewareFactory') as mock_factory:
-                                                            mock_factory.create_memory_backend.return_value = Mock()
-                                                            with patch('src.agents.agent.get_default_coding_instructions', return_value="# Default instructions"):
+                    with patch("src.agents.agent.ResumableShellToolMiddleware"):
+                        with patch("src.agents.agent.FilesystemBackend"):
+                            with patch("src.agents.agent.CompositeBackend"):
+                                with patch(
+                                    "src.agents.agent.LayeredMemoryMiddleware"
+                                ) as mock_memory:
+                                    with patch("src.agents.agent.SecurityMiddleware"):
+                                        with patch(
+                                            "src.agents.agent.LoggingMiddleware"
+                                        ):
+                                            with patch(
+                                                "src.agents.agent.ContextEnhancementMiddleware"
+                                            ):
+                                                with patch(
+                                                    "src.agents.agent.PerformanceMonitorMiddleware"
+                                                ):
+                                                    with patch(
+                                                        "src.agents.agent.AgentMemoryMiddleware"
+                                                    ):
+                                                        with patch(
+                                                            "src.agents.agent.MemoryMiddlewareFactory"
+                                                        ) as mock_factory:
+                                                            mock_factory.create_memory_backend.return_value = (
+                                                                Mock()
+                                                            )
+                                                            with patch(
+                                                                "src.agents.agent.get_default_coding_instructions",
+                                                                return_value="# Default instructions",
+                                                            ):
 
                                                                 agent = create_agent_with_config(
-                                                                    mock_model, f"{assistant_id}_{memory_mode}",
-                                                                    mock_tools, memory_mode
+                                                                    mock_model,
+                                                                    f"{assistant_id}_{memory_mode}",
+                                                                    mock_tools,
+                                                                    memory_mode,
                                                                 )
 
                                                                 # 验证memory_mode被正确使用
@@ -357,26 +446,42 @@ class TestCreateAgentWithConfig:
         assistant_id = "empty_tools_agent"
         tools = []
 
-        with patch('pathlib.Path.home', return_value=mock_agents_dir.parent):
-            with patch('src.agents.agent.create_deep_agent') as mock_create_deep:
+        with patch("pathlib.Path.home", return_value=mock_agents_dir.parent):
+            with patch("src.agents.agent.create_deep_agent") as mock_create_deep:
                 mock_agent = Mock()
                 mock_create_deep.return_value = mock_agent
 
-                with patch('src.agents.agent.ResumableShellToolMiddleware'):
-                    with patch('src.agents.agent.FilesystemBackend'):
-                        with patch('src.agents.agent.CompositeBackend'):
-                            with patch('src.agents.agent.LayeredMemoryMiddleware'):
-                                with patch('src.agents.agent.SecurityMiddleware'):
-                                    with patch('src.agents.agent.LoggingMiddleware'):
-                                        with patch('src.agents.agent.ContextEnhancementMiddleware'):
-                                            with patch('src.agents.agent.PerformanceMonitorMiddleware'):
-                                                with patch('src.agents.agent.AgentMemoryMiddleware'):
-                                                    with patch('src.agents.agent.MemoryMiddlewareFactory') as mock_factory:
-                                                        mock_factory.create_memory_backend.return_value = Mock()
-                                                        with patch('src.agents.agent.get_default_coding_instructions', return_value="# Default instructions"):
+                with patch("src.agents.agent.ResumableShellToolMiddleware"):
+                    with patch("src.agents.agent.FilesystemBackend"):
+                        with patch("src.agents.agent.CompositeBackend"):
+                            with patch("src.agents.agent.LayeredMemoryMiddleware"):
+                                with patch("src.agents.agent.SecurityMiddleware"):
+                                    with patch("src.agents.agent.LoggingMiddleware"):
+                                        with patch(
+                                            "src.agents.agent.ContextEnhancementMiddleware"
+                                        ):
+                                            with patch(
+                                                "src.agents.agent.PerformanceMonitorMiddleware"
+                                            ):
+                                                with patch(
+                                                    "src.agents.agent.AgentMemoryMiddleware"
+                                                ):
+                                                    with patch(
+                                                        "src.agents.agent.MemoryMiddlewareFactory"
+                                                    ) as mock_factory:
+                                                        mock_factory.create_memory_backend.return_value = (
+                                                            Mock()
+                                                        )
+                                                        with patch(
+                                                            "src.agents.agent.get_default_coding_instructions",
+                                                            return_value="# Default instructions",
+                                                        ):
 
                                                             agent = create_agent_with_config(
-                                                                mock_model, assistant_id, tools, "auto"
+                                                                mock_model,
+                                                                assistant_id,
+                                                                tools,
+                                                                "auto",
                                                             )
 
                                                             # 验证代理仍然能够创建
@@ -386,7 +491,7 @@ class TestCreateAgentWithConfig:
         """测试代理目录创建错误"""
         assistant_id = "error_agent"
 
-        with patch('pathlib.Path.home') as mock_home:
+        with patch("pathlib.Path.home") as mock_home:
             # 模拟权限错误
             mock_home.return_value = Path("/nonexistent/permission_denied")
 
@@ -400,7 +505,7 @@ class TestGetAgent:
     def test_get_agent_success(self):
         """测试成功获取代理"""
         # 这个测试需要实际的deepagents模块，所以使用mock
-        with patch('src.agents.agent.create_deep_agent') as mock_create_deep:
+        with patch("src.agents.agent.create_deep_agent") as mock_create_deep:
             mock_agent = Mock()
             mock_create_deep.return_value = mock_agent
 
@@ -412,10 +517,11 @@ class TestGetAgent:
                 agent_dir = agents_dir / "existing_agent"
                 agent_dir.mkdir()
 
-                with patch('pathlib.Path.home', return_value=Path(temp_dir)):
+                with patch("pathlib.Path.home", return_value=Path(temp_dir)):
                     # 由于get_agent函数可能不存在或需要参数，这里测试导入
                     try:
                         from src.agents.agent import get_agent
+
                         agent = get_agent("existing_agent")
                         # 验证返回了代理
                         assert agent is not None
@@ -426,9 +532,10 @@ class TestGetAgent:
     def test_get_agent_nonexistent(self):
         """测试获取不存在的代理"""
         with tempfile.TemporaryDirectory() as temp_dir:
-            with patch('pathlib.Path.home', return_value=Path(temp_dir)):
+            with patch("pathlib.Path.home", return_value=Path(temp_dir)):
                 try:
                     from src.agents.agent import get_agent
+
                     agent = get_agent("nonexistent_agent")
                     # 应该返回None或抛出异常
                     assert agent is None
@@ -460,27 +567,43 @@ class TestAgentIntegration:
         tools = ["tool1"]
         assistant_id = "workflow_test"
 
-        with patch('pathlib.Path.home', return_value=full_agent_setup.parent):
+        with patch("pathlib.Path.home", return_value=full_agent_setup.parent):
             # 1. 创建代理
-            with patch('src.agents.agent.create_deep_agent') as mock_create_deep:
+            with patch("src.agents.agent.create_deep_agent") as mock_create_deep:
                 mock_agent = Mock()
                 mock_create_deep.return_value = mock_agent
 
-                with patch('src.agents.agent.ResumableShellToolMiddleware'):
-                    with patch('src.agents.agent.FilesystemBackend'):
-                        with patch('src.agents.agent.CompositeBackend'):
-                            with patch('src.agents.agent.LayeredMemoryMiddleware'):
-                                with patch('src.agents.agent.SecurityMiddleware'):
-                                    with patch('src.agents.agent.LoggingMiddleware'):
-                                        with patch('src.agents.agent.ContextEnhancementMiddleware'):
-                                            with patch('src.agents.agent.PerformanceMonitorMiddleware'):
-                                                with patch('src.agents.agent.AgentMemoryMiddleware'):
-                                                    with patch('src.agents.agent.MemoryMiddlewareFactory') as mock_factory:
-                                                        mock_factory.create_memory_backend.return_value = Mock()
-                                                        with patch('src.agents.agent.get_default_coding_instructions', return_value="# Default instructions"):
+                with patch("src.agents.agent.ResumableShellToolMiddleware"):
+                    with patch("src.agents.agent.FilesystemBackend"):
+                        with patch("src.agents.agent.CompositeBackend"):
+                            with patch("src.agents.agent.LayeredMemoryMiddleware"):
+                                with patch("src.agents.agent.SecurityMiddleware"):
+                                    with patch("src.agents.agent.LoggingMiddleware"):
+                                        with patch(
+                                            "src.agents.agent.ContextEnhancementMiddleware"
+                                        ):
+                                            with patch(
+                                                "src.agents.agent.PerformanceMonitorMiddleware"
+                                            ):
+                                                with patch(
+                                                    "src.agents.agent.AgentMemoryMiddleware"
+                                                ):
+                                                    with patch(
+                                                        "src.agents.agent.MemoryMiddlewareFactory"
+                                                    ) as mock_factory:
+                                                        mock_factory.create_memory_backend.return_value = (
+                                                            Mock()
+                                                        )
+                                                        with patch(
+                                                            "src.agents.agent.get_default_coding_instructions",
+                                                            return_value="# Default instructions",
+                                                        ):
 
                                                             agent = create_agent_with_config(
-                                                                mock_model, assistant_id, tools, "auto"
+                                                                mock_model,
+                                                                assistant_id,
+                                                                tools,
+                                                                "auto",
                                                             )
 
             # 2. 验证代理目录创建
@@ -489,11 +612,11 @@ class TestAgentIntegration:
             assert (agent_dir / "agent.md").exists()
 
             # 3. 列出代理
-            with patch.object(console, 'print'):
+            with patch.object(console, "print"):
                 list_agents()
 
             # 4. 重置代理
-            with patch.object(console, 'print'):
+            with patch.object(console, "print"):
                 reset_agent(assistant_id, None)
 
 
@@ -515,8 +638,8 @@ class TestAgentErrorHandling:
         # 应该能处理None模型，或者抛出适当异常
         try:
             with tempfile.TemporaryDirectory() as temp_dir:
-                with patch('pathlib.Path.home', return_value=Path(temp_dir)):
-                    with patch('src.agents.agent.os.getcwd', return_value=temp_dir):
+                with patch("pathlib.Path.home", return_value=Path(temp_dir)):
+                    with patch("src.agents.agent.os.getcwd", return_value=temp_dir):
                         result = create_agent_with_config(None, "test", tools, "auto")
                         # 如果没有抛出异常，结果应该是None或有效的代理
                     assert result is not None
@@ -529,18 +652,16 @@ class TestAgentErrorHandling:
         mock_model = Mock()
 
         # 测试各种无效的工具列表
-        invalid_tools = [
-            None,
-            "not_a_list",
-            [{"invalid": "tool"}]
-        ]
+        invalid_tools = [None, "not_a_list", [{"invalid": "tool"}]]
 
         for tools in invalid_tools:
             try:
                 with tempfile.TemporaryDirectory() as temp_dir:
-                    with patch('pathlib.Path.home', return_value=Path(temp_dir)):
-                        with patch('src.agents.agent.os.getcwd', return_value=temp_dir):
-                            result = create_agent_with_config(mock_model, "test", tools, "auto")
+                    with patch("pathlib.Path.home", return_value=Path(temp_dir)):
+                        with patch("src.agents.agent.os.getcwd", return_value=temp_dir):
+                            result = create_agent_with_config(
+                                mock_model, "test", tools, "auto"
+                            )
                             # 如果没有抛出异常，应该能处理
                             assert result is not None
             except (ValueError, TypeError):

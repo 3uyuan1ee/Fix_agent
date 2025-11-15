@@ -4,41 +4,49 @@
 提供标准化的数据集评估框架，支持SWE-bench和BugsInPy等数据集。
 """
 
-import os
-import json
-import time
 import asyncio
-from typing import Dict, List, Optional, Any, Tuple, Union
-from dataclasses import dataclass, asdict
-from pathlib import Path
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import tempfile
+import json
+import os
 import shutil
+import tempfile
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import asdict, dataclass
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 # 使用多层导入策略
 try:
-    from .agent import DatasetAgent, AgentRequest, AgentResponse
-    from ..data_types import EvaluationTask, EvaluationResult, EvaluationSummary
+    from ..data_types import (EvaluationResult, EvaluationSummary,
+                              EvaluationTask)
+    from .agent import AgentRequest, AgentResponse, DatasetAgent
 except ImportError:
     try:
-        from core.agent import DatasetAgent, AgentRequest, AgentResponse
-        from data_types import EvaluationTask, EvaluationResult, EvaluationSummary
+        from core.agent import AgentRequest, AgentResponse, DatasetAgent
+        from data_types import (EvaluationResult, EvaluationSummary,
+                                EvaluationTask)
     except ImportError:
         try:
-            from Dataset.core.agent import DatasetAgent, AgentRequest, AgentResponse
-            from Dataset.data_types import EvaluationTask, EvaluationResult, EvaluationSummary
+            from Dataset.core.agent import (AgentRequest, AgentResponse,
+                                            DatasetAgent)
+            from Dataset.data_types import (EvaluationResult,
+                                            EvaluationSummary, EvaluationTask)
         except ImportError:
             # 最后尝试：添加路径后导入
             import sys
             from pathlib import Path
+
             current_dir = Path(__file__).parent
             root_dir = current_dir.parent
             if str(current_dir) not in sys.path:
                 sys.path.insert(0, str(current_dir))
             if str(root_dir) not in sys.path:
                 sys.path.insert(0, str(root_dir))
-            from agent import DatasetAgent, AgentRequest, AgentResponse
-            from ..data_types import EvaluationTask, EvaluationResult, EvaluationSummary
+            from agent import AgentRequest, AgentResponse, DatasetAgent
+
+            from ..data_types import (EvaluationResult, EvaluationSummary,
+                                      EvaluationTask)
+
 
 class EvaluationFramework:
     """
@@ -69,8 +77,7 @@ class EvaluationFramework:
         try:
             # 创建DatasetAgent实例
             self.agent = DatasetAgent(
-                agent_id="evaluation_agent",
-                config=self.config.get("agent", {})
+                agent_id="evaluation_agent", config=self.config.get("agent", {})
             )
 
             # 初始化agent
@@ -86,13 +93,16 @@ class EvaluationFramework:
         except Exception as e:
             print(f"[EvaluationFramework] 初始化异常: {e}")
             import traceback
+
             traceback.print_exc()
             return False
 
-    async def evaluate_dataset(self,
-                             tasks: List[EvaluationTask],
-                             max_workers: int = 4,
-                             progress_callback: Optional[callable] = None) -> EvaluationSummary:
+    async def evaluate_dataset(
+        self,
+        tasks: List[EvaluationTask],
+        max_workers: int = 4,
+        progress_callback: Optional[callable] = None,
+    ) -> EvaluationSummary:
         """
         评估数据集
 
@@ -127,9 +137,7 @@ class EvaluationFramework:
             future_to_task = {}
             for task in tasks:
                 future = executor.submit(
-                    self._evaluate_single_task_sync,
-                    task,
-                    task_workspaces[task.task_id]
+                    self._evaluate_single_task_sync, task, task_workspaces[task.task_id]
                 )
                 future_to_task[future] = task
 
@@ -147,7 +155,9 @@ class EvaluationFramework:
 
                     # 实时进度报告
                     success = result.success
-                    print(f"[{i}/{len(tasks)}] 任务 {task.task_id}: {'成功' if success else '失败'}")
+                    print(
+                        f"[{i}/{len(tasks)}] 任务 {task.task_id}: {'成功' if success else '失败'}"
+                    )
 
                 except Exception as e:
                     print(f"[{i}/{len(tasks)}] 任务 {task.task_id}: 异常 - {str(e)}")
@@ -160,7 +170,7 @@ class EvaluationFramework:
                         execution_time=0,
                         agent_response=None,
                         test_results={},
-                        error=str(e)
+                        error=str(e),
                     )
                     results.append(error_result)
 
@@ -176,7 +186,9 @@ class EvaluationFramework:
 
         return summary
 
-    def _evaluate_single_task_sync(self, task: EvaluationTask, workspace_path: str) -> EvaluationResult:
+    def _evaluate_single_task_sync(
+        self, task: EvaluationTask, workspace_path: str
+    ) -> EvaluationResult:
         """同步评估单个任务（在线程池中运行）"""
 
         start_time = time.time()
@@ -196,11 +208,12 @@ class EvaluationFramework:
                 workspace_path=workspace_path,
                 repo_info=task.repo_info,
                 timeout=task.timeout,
-                mode="automated"
+                mode="automated",
             )
 
             # 执行agent修复（同步调用）
             import asyncio
+
             agent_response = asyncio.run(self.agent.process_request(agent_request))
 
             execution_time = time.time() - start_time
@@ -210,9 +223,7 @@ class EvaluationFramework:
 
             # 判断修复是否成功
             success = self._determine_fix_success(
-                initial_test_result,
-                final_test_result,
-                task.failing_tests
+                initial_test_result, final_test_result, task.failing_tests
             )
 
             return EvaluationResult(
@@ -223,13 +234,13 @@ class EvaluationFramework:
                 agent_response=agent_response,
                 test_results={
                     "initial": initial_test_result,
-                    "final": final_test_result
+                    "final": final_test_result,
                 },
                 metadata={
                     "workspace": workspace_path,
                     "repo_name": task.repo_name,
-                    "patch_available": task.patch_file is not None
-                }
+                    "patch_available": task.patch_file is not None,
+                },
             )
 
         except Exception as e:
@@ -241,7 +252,7 @@ class EvaluationFramework:
                 agent_response=None,
                 test_results={},
                 error=str(e),
-                metadata={"workspace": workspace_path}
+                metadata={"workspace": workspace_path},
             )
 
     def _setup_task_environment(self, task: EvaluationTask, workspace_path: str):
@@ -278,7 +289,7 @@ class EvaluationFramework:
                 ["git", "apply", patch_file],
                 cwd=workspace_path,
                 capture_output=True,
-                text=True
+                text=True,
             )
 
             if result.returncode != 0:
@@ -287,7 +298,7 @@ class EvaluationFramework:
                     ["patch", "-p1", "-i", patch_file],
                     cwd=workspace_path,
                     capture_output=True,
-                    text=True
+                    text=True,
                 )
 
                 if result.returncode != 0:
@@ -296,7 +307,9 @@ class EvaluationFramework:
         except Exception as e:
             raise Exception(f"应用patch失败: {e}")
 
-    def _run_initial_tests(self, task: EvaluationTask, workspace_path: str) -> Dict[str, Any]:
+    def _run_initial_tests(
+        self, task: EvaluationTask, workspace_path: str
+    ) -> Dict[str, Any]:
         """运行初始测试"""
 
         try:
@@ -314,7 +327,9 @@ class EvaluationFramework:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    def _run_final_tests(self, task: EvaluationTask, workspace_path: str) -> Dict[str, Any]:
+    def _run_final_tests(
+        self, task: EvaluationTask, workspace_path: str
+    ) -> Dict[str, Any]:
         """运行修复后测试"""
 
         try:
@@ -344,7 +359,7 @@ class EvaluationFramework:
                 cwd=workspace_path,
                 capture_output=True,
                 text=True,
-                timeout=120  # 2分钟超时
+                timeout=120,  # 2分钟超时
             )
 
             output = result.stdout + result.stderr
@@ -352,19 +367,13 @@ class EvaluationFramework:
             return {
                 "success": result.returncode == 0,
                 "output": output,
-                "return_code": result.returncode
+                "return_code": result.returncode,
             }
 
         except subprocess.TimeoutExpired:
-            return {
-                "success": False,
-                "error": "测试执行超时"
-            }
+            return {"success": False, "error": "测试执行超时"}
         except Exception as e:
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            return {"success": False, "error": str(e)}
 
     def _build_test_command(self, failing_tests: List[str]) -> str:
         """构建测试命令"""
@@ -378,10 +387,12 @@ class EvaluationFramework:
         else:
             return f"python -m pytest {' '.join(failing_tests)} -v"
 
-    def _determine_fix_success(self,
-                               initial_result: Dict[str, Any],
-                               final_result: Dict[str, Any],
-                               failing_tests: List[str]) -> bool:
+    def _determine_fix_success(
+        self,
+        initial_result: Dict[str, Any],
+        final_result: Dict[str, Any],
+        failing_tests: List[str],
+    ) -> bool:
         """判断修复是否成功"""
 
         # 如果初始测试成功，说明bug未重现
@@ -394,13 +405,17 @@ class EvaluationFramework:
 
         # 检查输出中是否包含通过的测试
         final_output = final_result.get("output", "")
-        if any("passed" in final_output.lower() or "ok" in final_output.lower()
-               for test in failing_tests):
+        if any(
+            "passed" in final_output.lower() or "ok" in final_output.lower()
+            for test in failing_tests
+        ):
             return True
 
         return False
 
-    def _generate_summary(self, results: List[EvaluationResult], total_time: float) -> EvaluationSummary:
+    def _generate_summary(
+        self, results: List[EvaluationResult], total_time: float
+    ) -> EvaluationSummary:
         """生成评估摘要"""
 
         # 基础统计
@@ -410,7 +425,9 @@ class EvaluationFramework:
 
         # 时间统计
         execution_times = [r.execution_time for r in results if r.execution_time > 0]
-        avg_execution_time = sum(execution_times) / len(execution_times) if execution_times else 0
+        avg_execution_time = (
+            sum(execution_times) / len(execution_times) if execution_times else 0
+        )
 
         # 错误分析
         error_analysis = self._analyze_errors(results)
@@ -429,7 +446,9 @@ class EvaluationFramework:
                 dataset_stats[dataset]["success"] += 1
 
         return EvaluationSummary(
-            dataset_name="multiple" if len(dataset_stats) > 1 else list(dataset_stats.keys())[0],
+            dataset_name=(
+                "multiple" if len(dataset_stats) > 1 else list(dataset_stats.keys())[0]
+            ),
             total_tasks=total_tasks,
             successful_tasks=successful_tasks,
             failed_tasks=failed_tasks,
@@ -440,8 +459,8 @@ class EvaluationFramework:
             error_analysis=error_analysis,
             performance_metrics={
                 **performance_metrics,
-                "dataset_breakdown": dataset_stats
-            }
+                "dataset_breakdown": dataset_stats,
+            },
         )
 
     def _analyze_errors(self, results: List[EvaluationResult]) -> Dict[str, Any]:
@@ -460,7 +479,9 @@ class EvaluationFramework:
                 dataset = result.dataset_name
                 if dataset not in error_by_dataset:
                     error_by_dataset[dataset] = {}
-                error_by_dataset[dataset][error_msg] = error_by_dataset[dataset].get(error_msg, 0) + 1
+                error_by_dataset[dataset][error_msg] = (
+                    error_by_dataset[dataset].get(error_msg, 0) + 1
+                )
 
                 # 按阶段统计
                 if result.agent_response:
@@ -477,10 +498,14 @@ class EvaluationFramework:
             "error_types": error_counts,
             "error_by_dataset": error_by_dataset,
             "error_by_phase": error_by_phase,
-            "most_common_errors": sorted(error_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+            "most_common_errors": sorted(
+                error_counts.items(), key=lambda x: x[1], reverse=True
+            )[:10],
         }
 
-    def _calculate_performance_metrics(self, results: List[EvaluationResult]) -> Dict[str, Any]:
+    def _calculate_performance_metrics(
+        self, results: List[EvaluationResult]
+    ) -> Dict[str, Any]:
         """计算性能指标"""
 
         execution_times = [r.execution_time for r in results if r.execution_time > 0]
@@ -491,17 +516,26 @@ class EvaluationFramework:
         return {
             "min_execution_time": min(execution_times),
             "max_execution_time": max(execution_times),
-            "median_execution_time": sorted(execution_times)[len(execution_times)//2],
-            "std_execution_time": (sum((t - sum(execution_times)/len(execution_times))**2 for t in execution_times) / len(execution_times))**0.5,
+            "median_execution_time": sorted(execution_times)[len(execution_times) // 2],
+            "std_execution_time": (
+                sum(
+                    (t - sum(execution_times) / len(execution_times)) ** 2
+                    for t in execution_times
+                )
+                / len(execution_times)
+            )
+            ** 0.5,
             "execution_time_distribution": {
                 "under_30s": len([t for t in execution_times if t < 30]),
                 "30s_to_60s": len([t for t in execution_times if 30 <= t < 60]),
                 "60s_to_120s": len([t for t in execution_times if 60 <= t < 120]),
-                "over_120s": len([t for t in execution_times if t >= 120])
-            }
+                "over_120s": len([t for t in execution_times if t >= 120]),
+            },
         }
 
-    def _save_results(self, results: List[EvaluationResult], summary: EvaluationSummary):
+    def _save_results(
+        self, results: List[EvaluationResult], summary: EvaluationSummary
+    ):
         """保存评估结果"""
 
         # 创建输出目录
@@ -512,12 +546,18 @@ class EvaluationFramework:
 
         # 保存详细结果
         results_file = output_dir / f"results_{timestamp}.json"
-        with open(results_file, 'w', encoding='utf-8') as f:
-            json.dump([asdict(result) for result in results], f, indent=2, ensure_ascii=False, default=str)
+        with open(results_file, "w", encoding="utf-8") as f:
+            json.dump(
+                [asdict(result) for result in results],
+                f,
+                indent=2,
+                ensure_ascii=False,
+                default=str,
+            )
 
         # 保存摘要
         summary_file = output_dir / f"summary_{timestamp}.json"
-        with open(summary_file, 'w', encoding='utf-8') as f:
+        with open(summary_file, "w", encoding="utf-8") as f:
             json.dump(asdict(summary), f, indent=2, ensure_ascii=False, default=str)
 
         print(f"[EvaluationFramework] 结果已保存:")
@@ -541,7 +581,11 @@ class EvaluationFramework:
 
     def __del__(self):
         """析构函数"""
-        if hasattr(self, 'temp_workspace') and self.temp_workspace and os.path.exists(self.temp_workspace):
+        if (
+            hasattr(self, "temp_workspace")
+            and self.temp_workspace
+            and os.path.exists(self.temp_workspace)
+        ):
             try:
                 shutil.rmtree(self.temp_workspace)
             except:

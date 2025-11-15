@@ -1,6 +1,7 @@
 # Configuration API routes
 
 from fastapi import APIRouter
+
 from ..core.config import settings
 from ..models.schemas import ConfigurationResponse, HealthCheckResponse
 
@@ -19,7 +20,11 @@ async def get_configuration():
 
     return ConfigurationResponse(
         available_models=available_models,
-        default_model=settings.openai_model if settings.openai_api_key else settings.anthropic_model,
+        default_model=(
+            settings.openai_model
+            if settings.openai_api_key
+            else settings.anthropic_model
+        ),
         available_tools=[
             "analyze_code_defects",
             "compile_project",
@@ -28,14 +33,14 @@ async def get_configuration():
             "explore_project_structure",
             "analyze_code_complexity",
             "http_request",
-            "web_search"
+            "web_search",
         ],
         system_info={
             "app_name": settings.app_name,
             "app_version": settings.app_version,
             "debug": settings.debug,
-            "workspace_root": settings.workspace_root
-        }
+            "workspace_root": settings.workspace_root,
+        },
     )
 
 
@@ -51,6 +56,10 @@ async def health_check():
         services={
             "database": "connected",
             "websocket": "available",
-            "ai_models": "configured" if (settings.openai_api_key or settings.anthropic_api_key) else "not_configured"
-        }
+            "ai_models": (
+                "configured"
+                if (settings.openai_api_key or settings.anthropic_api_key)
+                else "not_configured"
+            ),
+        },
     )

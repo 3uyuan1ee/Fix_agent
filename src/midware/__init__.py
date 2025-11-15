@@ -3,11 +3,11 @@ Middleware包初始化文件
 """
 
 from .agent_memory import AgentMemoryMiddleware
-from .performance_monitor import PerformanceMonitorMiddleware
-from .layered_memory import LayeredMemoryMiddleware
 from .context_enhancement import ContextEnhancementMiddleware
-from .security import SecurityMiddleware
+from .layered_memory import LayeredMemoryMiddleware
 from .logging import LoggingMiddleware
+from .performance_monitor import PerformanceMonitorMiddleware
+from .security import SecurityMiddleware
 
 __all__ = [
     "AgentMemoryMiddleware",

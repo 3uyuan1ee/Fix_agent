@@ -61,6 +61,7 @@ class Settings(BaseSettings):
 # 全局设置实例
 settings = Settings()
 
+
 # 确保必要的目录存在
 def ensure_directories():
     """Create necessary directories if they don't exist."""

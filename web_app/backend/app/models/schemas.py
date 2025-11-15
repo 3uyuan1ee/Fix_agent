@@ -1,7 +1,7 @@
 """Pydantic schemas for API request/response models."""
 
 from datetime import datetime
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 # Base schemas
 class BaseResponse(BaseModel):
     """Base response schema."""
+
     success: bool = True
     message: Optional[str] = None
 
@@ -16,12 +17,14 @@ class BaseResponse(BaseModel):
 # Session schemas
 class SessionCreate(BaseModel):
     """Create session request."""
+
     title: Optional[str] = "New Session"
     workspace_path: Optional[str] = None
 
 
 class SessionResponse(BaseResponse):
     """Session response."""
+
     session_id: str
     title: str
     workspace_path: str
@@ -33,6 +36,7 @@ class SessionResponse(BaseResponse):
 
 class SessionList(BaseModel):
     """List of sessions."""
+
     sessions: List[SessionResponse]
     total: int
 
@@ -40,6 +44,7 @@ class SessionList(BaseModel):
 # Message schemas
 class MessageCreate(BaseModel):
     """Create message request."""
+
     content: str
     session_id: str
     file_references: Optional[List[str]] = []
@@ -47,6 +52,7 @@ class MessageCreate(BaseModel):
 
 class MessageResponse(BaseResponse):
     """Message response."""
+
     id: int
     session_id: str
     content: str
@@ -57,6 +63,7 @@ class MessageResponse(BaseResponse):
 
 class ChatStreamChunk(BaseModel):
     """WebSocket streaming chunk."""
+
     type: str  # message, tool_call, todos, error, status
     content: Optional[str] = None
     session_id: str
@@ -69,6 +76,7 @@ class ChatStreamChunk(BaseModel):
 # File schemas
 class FileUploadResponse(BaseResponse):
     """File upload response."""
+
     file_id: int
     filename: str
     original_filename: str
@@ -79,12 +87,14 @@ class FileUploadResponse(BaseResponse):
 
 class FileListResponse(BaseResponse):
     """List files in workspace."""
+
     files: List[Dict[str, Any]]
     total_count: int
 
 
 class FileContentResponse(BaseResponse):
     """File content response."""
+
     content: str
     file_path: str
     file_size: int
@@ -94,6 +104,7 @@ class FileContentResponse(BaseResponse):
 # Project schemas
 class ProjectCreate(BaseModel):
     """Create project request."""
+
     name: str
     description: Optional[str] = None
     project_path: str
@@ -101,6 +112,7 @@ class ProjectCreate(BaseModel):
 
 class ProjectResponse(BaseResponse):
     """Project response."""
+
     id: int
     name: str
     description: Optional[str]
@@ -114,12 +126,20 @@ class ProjectResponse(BaseResponse):
 
 class ProjectAnalysisRequest(BaseModel):
     """Request project analysis."""
+
     analysis_type: str = "defect_analysis"
-    file_patterns: Optional[List[str]] = ["**/*.py", "**/*.js", "**/*.ts", "**/*.java", "**/*.cpp"]
+    file_patterns: Optional[List[str]] = [
+        "**/*.py",
+        "**/*.js",
+        "**/*.ts",
+        "**/*.java",
+        "**/*.cpp",
+    ]
 
 
 class AnalysisResultResponse(BaseResponse):
     """Analysis result response."""
+
     analysis_id: int
     project_id: int
     analysis_type: str
@@ -132,23 +152,27 @@ class AnalysisResultResponse(BaseResponse):
 # Memory schemas
 class MemoryFileList(BaseResponse):
     """Memory files list."""
+
     files: List[str]
 
 
 class MemoryFileContent(BaseResponse):
     """Memory file content."""
+
     content: str
     file_path: str
 
 
 class MemoryFileUpdate(BaseModel):
     """Update memory file request."""
+
     content: str
 
 
 # User schemas
 class UserCreate(BaseModel):
     """Create user request."""
+
     email: str
     password: str
     full_name: Optional[str] = None
@@ -156,6 +180,7 @@ class UserCreate(BaseModel):
 
 class UserResponse(BaseResponse):
     """User response."""
+
     id: int
     email: str
     full_name: Optional[str]
@@ -165,12 +190,14 @@ class UserResponse(BaseResponse):
 
 class UserLogin(BaseModel):
     """User login request."""
+
     email: str
     password: str
 
 
 class TokenResponse(BaseResponse):
     """Authentication token response."""
+
     access_token: str
     token_type: str = "bearer"
     expires_in: int
@@ -179,6 +206,7 @@ class TokenResponse(BaseResponse):
 # Configuration schemas
 class ConfigurationResponse(BaseResponse):
     """Configuration response."""
+
     available_models: List[str]
     default_model: str
     available_tools: List[str]
@@ -187,6 +215,7 @@ class ConfigurationResponse(BaseResponse):
 
 class HealthCheckResponse(BaseModel):
     """Health check response."""
+
     status: str
     version: str
     timestamp: datetime

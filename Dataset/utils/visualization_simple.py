@@ -6,10 +6,12 @@
 
 import json
 import time
-from pathlib import Path
-from typing import Dict, List, Any
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Dict, List
+
 from .metrics_simple import calculate_basic_metrics
+
 
 @dataclass
 class EvaluationVisualizer:
@@ -29,7 +31,7 @@ class EvaluationVisualizer:
         # 生成文本报告
         text_report = self._generate_text_report()
         text_file = output_path / "evaluation_report.txt"
-        with open(text_file, 'w', encoding='utf-8') as f:
+        with open(text_file, "w", encoding="utf-8") as f:
             f.write(text_report)
         print(f"[可视化] 文本报告已生成: {text_file}")
 
@@ -37,14 +39,14 @@ class EvaluationVisualizer:
         if self.results:
             metrics = calculate_basic_metrics(self.results)
             json_file = output_path / "metrics.json"
-            with open(json_file, 'w', encoding='utf-8') as f:
+            with open(json_file, "w", encoding="utf-8") as f:
                 json.dump(metrics, f, indent=2, ensure_ascii=False, default=str)
             print(f"[可视化] JSON指标已保存: {json_file}")
 
         # 生成HTML报告（简化版）
         html_report = self._generate_html_report()
         html_file = output_path / "report.html"
-        with open(html_file, 'w', encoding='utf-8') as f:
+        with open(html_file, "w", encoding="utf-8") as f:
             f.write(html_report)
         print(f"[可视化] HTML报告已生成: {html_file}")
 
@@ -90,12 +92,14 @@ class EvaluationVisualizer:
         if not self.results:
             return "  无数据可分析"
 
-        success_count = sum(1 for r in self.results if isinstance(r, dict) and r.get("success", False))
+        success_count = sum(
+            1 for r in self.results if isinstance(r, dict) and r.get("success", False)
+        )
         fail_count = len(self.results) - success_count
 
         lines = [
             f"  成功任务: {success_count} ({success_count/len(self.results):.1%})",
-            f"  失败任务: {fail_count} ({fail_count/len(self.results):.1%})"
+            f"  失败任务: {fail_count} ({fail_count/len(self.results):.1%})",
         ]
 
         # 分析错误类型
@@ -107,7 +111,9 @@ class EvaluationVisualizer:
 
         if error_types:
             lines.append("\n  错误类型分布:")
-            for error, count in sorted(error_types.items(), key=lambda x: x[1], reverse=True)[:5]:
+            for error, count in sorted(
+                error_types.items(), key=lambda x: x[1], reverse=True
+            )[:5]:
                 lines.append(f"    - {error}: {count}次")
 
         return "\n".join(lines)

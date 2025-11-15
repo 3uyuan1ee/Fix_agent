@@ -3,32 +3,30 @@
 基于AgentMemoryMiddleware的标准实现模式，提供完整的性能监控功能。
 """
 
-import time
-import psutil
-import threading
-from collections.abc import Awaitable, Callable
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
-from dataclasses import dataclass
-from pathlib import Path
 import json
+import threading
+import time
+from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
 from datetime import datetime, timedelta
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
+
+import psutil
 
 if TYPE_CHECKING:
     from langgraph.runtime import Runtime
 
 from deepagents.backends.protocol import BackendProtocol
-from langchain.agents.middleware.types import (
-    AgentMiddleware,
-    AgentState,
-    ModelRequest,
-    ModelResponse,
-)
+from langchain.agents.middleware.types import (AgentMiddleware, AgentState,
+                                               ModelRequest, ModelResponse)
 from typing_extensions import NotRequired, TypedDict
 
 
 @dataclass
 class PerformanceRecord:
     """性能记录数据类"""
+
     timestamp: float
     response_time: float
     token_count: int = 0
@@ -68,14 +66,16 @@ class PerformanceCollector:
         with self._lock:
             self.records.append(record)
             if len(self.records) > self.max_history:
-                self.records = self.records[-self.max_history:]
+                self.records = self.records[-self.max_history :]
 
             if record.session_id:
                 if record.session_id not in self.session_records:
                     self.session_records[record.session_id] = []
                 self.session_records[record.session_id].append(record)
 
-    def update_tool_stats(self, tool_name: str, execution_time: float, success: bool = True) -> None:
+    def update_tool_stats(
+        self, tool_name: str, execution_time: float, success: bool = True
+    ) -> None:
         """更新工具统计"""
         with self._lock:
             if tool_name not in self.tool_stats:
@@ -83,7 +83,7 @@ class PerformanceCollector:
                     "count": 0,
                     "total_time": 0.0,
                     "errors": 0,
-                    "successes": 0
+                    "successes": 0,
                 }
 
             stats = self.tool_stats[tool_name]
@@ -98,9 +98,7 @@ class PerformanceCollector:
         """获取性能摘要"""
         with self._lock:
             cutoff_time = time.time() - (time_window_minutes * 60)
-            recent_records = [
-                r for r in self.records if r.timestamp > cutoff_time
-            ]
+            recent_records = [r for r in self.records if r.timestamp > cutoff_time]
 
             if not recent_records:
                 return {"error": "No data available"}
@@ -115,13 +113,16 @@ class PerformanceCollector:
                 "avg_response_time": sum(response_times) / len(response_times),
                 "min_response_time": min(response_times),
                 "max_response_time": max(response_times),
-                "avg_token_count": sum(r.token_count for r in recent_records) / len(recent_records),
+                "avg_token_count": sum(r.token_count for r in recent_records)
+                / len(recent_records),
                 "total_tokens": sum(r.token_count for r in recent_records),
                 "total_tool_calls": sum(r.tool_calls for r in recent_records),
-                "avg_memory_usage": sum(r.memory_usage for r in recent_records) / len(recent_records),
-                "avg_cpu_usage": sum(r.cpu_usage for r in recent_records) / len(recent_records),
+                "avg_memory_usage": sum(r.memory_usage for r in recent_records)
+                / len(recent_records),
+                "avg_cpu_usage": sum(r.cpu_usage for r in recent_records)
+                / len(recent_records),
                 "active_sessions": len(self.session_records),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
 
@@ -176,12 +177,15 @@ class PerformanceMonitorMiddleware(AgentMiddleware):
         self._monitor_thread = None
 
         if enable_system_monitoring:
-            self._monitor_thread = threading.Thread(target=self._monitor_system, daemon=True)
+            self._monitor_thread = threading.Thread(
+                target=self._monitor_system, daemon=True
+            )
             self._monitor_thread.start()
 
     def _generate_session_id(self) -> str:
         """生成会话ID"""
         import uuid
+
         return str(uuid.uuid4())[:8]
 
     def _monitor_system(self) -> None:
@@ -229,15 +233,17 @@ class PerformanceMonitorMiddleware(AgentMiddleware):
 
         # 估算token数量
         request_tokens = 0
-        if hasattr(request, 'content') and request.content:
+        if hasattr(request, "content") and request.content:
             request_tokens = self._estimate_tokens(request.content)
-        elif hasattr(request, 'messages') and request.messages:
+        elif hasattr(request, "messages") and request.messages:
             # 从messages中提取内容
             content = ""
             for msg in request.messages:
-                if hasattr(msg, 'content') and msg.content:
+                if hasattr(msg, "content") and msg.content:
                     content += str(msg.content) + " "
-            request_tokens = self._estimate_tokens(content.strip()) if content.strip() else 0
+            request_tokens = (
+                self._estimate_tokens(content.strip()) if content.strip() else 0
+            )
 
         try:
             # 执行模型调用
@@ -249,19 +255,23 @@ class PerformanceMonitorMiddleware(AgentMiddleware):
 
             # 估算响应token数量
             response_tokens = 0
-            if hasattr(response, 'content') and response.content:
+            if hasattr(response, "content") and response.content:
                 response_tokens = self._estimate_tokens(response.content)
-            elif hasattr(response, 'messages') and response.messages:
+            elif hasattr(response, "messages") and response.messages:
                 # 从messages中提取内容
                 content = ""
                 for msg in response.messages:
-                    if hasattr(msg, 'content') and msg.content:
+                    if hasattr(msg, "content") and msg.content:
                         content += str(msg.content) + " "
-                response_tokens = self._estimate_tokens(content.strip()) if content.strip() else 0
+                response_tokens = (
+                    self._estimate_tokens(content.strip()) if content.strip() else 0
+                )
             total_tokens = request_tokens + response_tokens
 
             # 获取工具调用数量
-            tool_calls = len(response.get('tool_results', [])) if hasattr(response, 'get') else 0
+            tool_calls = (
+                len(response.get("tool_results", [])) if hasattr(response, "get") else 0
+            )
 
             # 创建性能记录
             record = PerformanceRecord(
@@ -273,7 +283,7 @@ class PerformanceMonitorMiddleware(AgentMiddleware):
                 memory_usage=current_memory,
                 cpu_usage=current_cpu,
                 session_id=request.state.get("session_id", ""),
-                request_type="model_call"
+                request_type="model_call",
             )
 
             # 记录性能数据
@@ -299,7 +309,7 @@ class PerformanceMonitorMiddleware(AgentMiddleware):
                 memory_usage=current_memory,
                 cpu_usage=current_cpu,
                 session_id=request.state.get("session_id", ""),
-                request_type="model_call_error"
+                request_type="model_call_error",
             )
 
             self.collector.add_record(error_record)
@@ -320,15 +330,17 @@ class PerformanceMonitorMiddleware(AgentMiddleware):
         current_memory = self._memory_usage
 
         request_tokens = 0
-        if hasattr(request, 'content') and request.content:
+        if hasattr(request, "content") and request.content:
             request_tokens = self._estimate_tokens(request.content)
-        elif hasattr(request, 'messages') and request.messages:
+        elif hasattr(request, "messages") and request.messages:
             # 从messages中提取内容
             content = ""
             for msg in request.messages:
-                if hasattr(msg, 'content') and msg.content:
+                if hasattr(msg, "content") and msg.content:
                     content += str(msg.content) + " "
-            request_tokens = self._estimate_tokens(content.strip()) if content.strip() else 0
+            request_tokens = (
+                self._estimate_tokens(content.strip()) if content.strip() else 0
+            )
 
         try:
             # 执行异步模型调用
@@ -338,17 +350,21 @@ class PerformanceMonitorMiddleware(AgentMiddleware):
             response_time = end_time - start_time
 
             response_tokens = 0
-            if hasattr(response, 'content') and response.content:
+            if hasattr(response, "content") and response.content:
                 response_tokens = self._estimate_tokens(response.content)
-            elif hasattr(response, 'messages') and response.messages:
+            elif hasattr(response, "messages") and response.messages:
                 # 从messages中提取内容
                 content = ""
                 for msg in response.messages:
-                    if hasattr(msg, 'content') and msg.content:
+                    if hasattr(msg, "content") and msg.content:
                         content += str(msg.content) + " "
-                response_tokens = self._estimate_tokens(content.strip()) if content.strip() else 0
+                response_tokens = (
+                    self._estimate_tokens(content.strip()) if content.strip() else 0
+                )
             total_tokens = request_tokens + response_tokens
-            tool_calls = len(response.get('tool_results', [])) if hasattr(response, 'get') else 0
+            tool_calls = (
+                len(response.get("tool_results", [])) if hasattr(response, "get") else 0
+            )
 
             record = PerformanceRecord(
                 timestamp=start_time,
@@ -359,7 +375,7 @@ class PerformanceMonitorMiddleware(AgentMiddleware):
                 memory_usage=current_memory,
                 cpu_usage=current_cpu,
                 session_id=request.state.get("session_id", ""),
-                request_type="model_call"
+                request_type="model_call",
             )
 
             self.collector.add_record(record)
@@ -379,7 +395,7 @@ class PerformanceMonitorMiddleware(AgentMiddleware):
                 memory_usage=current_memory,
                 cpu_usage=current_cpu,
                 session_id=request.state.get("session_id", ""),
-                request_type="model_call_error"
+                request_type="model_call_error",
             )
 
             self.collector.add_record(error_record)
@@ -393,7 +409,7 @@ class PerformanceMonitorMiddleware(AgentMiddleware):
 
         # 对于中文：约1.5个字符 = 1个token
         # 对于英文：约4个字符 = 1个token
-        chinese_chars = len([c for c in text if '\u4e00' <= c <= '\u9fff'])
+        chinese_chars = len([c for c in text if "\u4e00" <= c <= "\u9fff"])
         english_chars = len(text) - chinese_chars
 
         estimated_tokens = (english_chars / 4) + (chinese_chars / 1.5)
@@ -415,7 +431,7 @@ class PerformanceMonitorMiddleware(AgentMiddleware):
                         "avg_execution_time": stats["total_time"] / stats["count"],
                         "success_rate": success_rate,
                         "error_rate": 100 - success_rate,
-                        "total_time": stats["total_time"]
+                        "total_time": stats["total_time"],
                     }
             return result
 
@@ -428,22 +444,24 @@ class PerformanceMonitorMiddleware(AgentMiddleware):
         # 准备导出数据
         data = {
             "export_timestamp": datetime.now().isoformat(),
-            "performance_summary": self.get_performance_summary(time_window_minutes=1440),  # 24小时
+            "performance_summary": self.get_performance_summary(
+                time_window_minutes=1440
+            ),  # 24小时
             "tool_performance": self.get_tool_performance(),
             "active_sessions": len(self.collector.session_records),
             "total_records": len(self.collector.records),
             "configuration": {
                 "enable_system_monitoring": self.enable_system_monitoring,
                 "max_records": self.max_records,
-                "metrics_path": self.metrics_path
-            }
+                "metrics_path": self.metrics_path,
+            },
         }
 
         # 导出到文件
         try:
             # 先写入临时文件，然后重命名
             temp_file = Path(f"temp_{filename}")
-            with open(temp_file, 'w', encoding='utf-8') as f:
+            with open(temp_file, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
 
             # 如果使用后端，尝试通过后端保存
@@ -469,8 +487,12 @@ class PerformanceMonitorMiddleware(AgentMiddleware):
             return {
                 "session_id": session_id,
                 "total_requests": len(session_records),
-                "error_rate": (errors / len(session_records)) * 100 if session_records else 0,
-                "avg_response_time": sum(response_times) / len(response_times) if response_times else 0,
+                "error_rate": (
+                    (errors / len(session_records)) * 100 if session_records else 0
+                ),
+                "avg_response_time": (
+                    sum(response_times) / len(response_times) if response_times else 0
+                ),
                 "min_response_time": min(response_times) if response_times else 0,
                 "max_response_time": max(response_times) if response_times else 0,
                 "total_tokens": sum(r.token_count for r in session_records),

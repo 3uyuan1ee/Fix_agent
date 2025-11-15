@@ -2,18 +2,15 @@
 
 from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING, Any
+
 from ..prompt.prompt_template import LONGTERM_MEMORY_SYSTEM_PROMPT
 
 if TYPE_CHECKING:
     from langgraph.runtime import Runtime
 
 from deepagents.backends.protocol import BackendProtocol
-from langchain.agents.middleware.types import (
-    AgentMiddleware,
-    AgentState,
-    ModelRequest,
-    ModelResponse,
-)
+from langchain.agents.middleware.types import (AgentMiddleware, AgentState,
+                                               ModelRequest, ModelResponse)
 from typing_extensions import NotRequired, TypedDict
 
 

@@ -1,6 +1,7 @@
 """记忆中间件适配器"""
 
 from typing import TYPE_CHECKING, Optional
+
 from .agent_memory import AgentMemoryMiddleware
 from .layered_memory import LayeredMemoryMiddleware
 
@@ -16,7 +17,7 @@ def create_memory_middleware(
     working_memory_size: int = 10,
     enable_semantic_memory: bool = True,
     enable_episodic_memory: bool = True,
-    **kwargs
+    **kwargs,
 ):
     """创建记忆中间件的工厂函数
 
@@ -37,11 +38,7 @@ def create_memory_middleware(
     """
     if mode == "legacy":
         # 使用原有的AgentMemoryMiddleware
-        return AgentMemoryMiddleware(
-            backend=backend,
-            memory_path=memory_path,
-            **kwargs
-        )
+        return AgentMemoryMiddleware(backend=backend, memory_path=memory_path, **kwargs)
 
     elif mode == "layered":
         # 使用新的LayeredMemoryMiddleware
@@ -51,15 +48,13 @@ def create_memory_middleware(
             working_memory_size=working_memory_size,
             enable_semantic_memory=enable_semantic_memory,
             enable_episodic_memory=enable_episodic_memory,
-            **kwargs
+            **kwargs,
         )
 
     elif mode == "hybrid":
         # 混合模式：先使用原有记忆，再叠加分层记忆
         legacy_middleware = AgentMemoryMiddleware(
-            backend=backend,
-            memory_path=memory_path,
-            **kwargs
+            backend=backend, memory_path=memory_path, **kwargs
         )
 
         layered_middleware = LayeredMemoryMiddleware(
@@ -69,13 +64,15 @@ def create_memory_middleware(
             enable_semantic_memory=enable_semantic_memory,
             enable_episodic_memory=enable_episodic_memory,
             legacy_mode=True,  # 启用兼容模式
-            **kwargs
+            **kwargs,
         )
 
         return [layered_middleware, legacy_middleware]
 
     else:
-        raise ValueError(f"Unknown memory mode: {mode}. Use 'legacy', 'layered', or 'hybrid'.")
+        raise ValueError(
+            f"Unknown memory mode: {mode}. Use 'legacy', 'layered', or 'hybrid'."
+        )
 
 
 class MemoryMiddlewareFactory:
@@ -83,16 +80,11 @@ class MemoryMiddlewareFactory:
 
     @staticmethod
     def create_legacy_memory(
-        backend: "BackendProtocol",
-        memory_path: str = "/memories/",
-        **kwargs
+        backend: "BackendProtocol", memory_path: str = "/memories/", **kwargs
     ) -> AgentMemoryMiddleware:
         """创建传统的记忆中间件"""
         return create_memory_middleware(
-            backend=backend,
-            memory_path=memory_path,
-            mode="legacy",
-            **kwargs
+            backend=backend, memory_path=memory_path, mode="legacy", **kwargs
         )
 
     @staticmethod
@@ -102,7 +94,7 @@ class MemoryMiddlewareFactory:
         working_memory_size: int = 10,
         enable_semantic_memory: bool = True,
         enable_episodic_memory: bool = True,
-        **kwargs
+        **kwargs,
     ) -> LayeredMemoryMiddleware:
         """创建分层记忆中间件"""
         return create_memory_middleware(
@@ -112,7 +104,7 @@ class MemoryMiddlewareFactory:
             working_memory_size=working_memory_size,
             enable_semantic_memory=enable_semantic_memory,
             enable_episodic_memory=enable_episodic_memory,
-            **kwargs
+            **kwargs,
         )
 
     @staticmethod
@@ -122,7 +114,7 @@ class MemoryMiddlewareFactory:
         working_memory_size: int = 10,
         enable_semantic_memory: bool = True,
         enable_episodic_memory: bool = True,
-        **kwargs
+        **kwargs,
     ) -> list:
         """创建混合记忆中间件"""
         return create_memory_middleware(
@@ -132,7 +124,7 @@ class MemoryMiddlewareFactory:
             working_memory_size=working_memory_size,
             enable_semantic_memory=enable_semantic_memory,
             enable_episodic_memory=enable_episodic_memory,
-            **kwargs
+            **kwargs,
         )
 
     @staticmethod
@@ -140,7 +132,7 @@ class MemoryMiddlewareFactory:
         backend: "BackendProtocol",
         memory_path: str = "/memories/",
         enable_layered: bool = None,
-        **kwargs
+        **kwargs,
     ):
         """自动选择最佳记忆配置
 
@@ -159,37 +151,27 @@ class MemoryMiddlewareFactory:
                 if agent_data and agent_data.strip():
                     # 有现有记忆，使用混合模式
                     return MemoryMiddlewareFactory.create_hybrid_memory(
-                        backend=backend,
-                        memory_path=memory_path,
-                        **kwargs
+                        backend=backend, memory_path=memory_path, **kwargs
                     )
                 else:
                     # 无现有记忆，使用分层模式
                     return MemoryMiddlewareFactory.create_layered_memory(
-                        backend=backend,
-                        memory_path=memory_path,
-                        **kwargs
+                        backend=backend, memory_path=memory_path, **kwargs
                     )
             except:
                 # 读取失败，使用分层模式
                 return MemoryMiddlewareFactory.create_layered_memory(
-                    backend=backend,
-                    memory_path=memory_path,
-                    **kwargs
+                    backend=backend, memory_path=memory_path, **kwargs
                 )
         else:
             # 根据参数选择
             if enable_layered:
                 return MemoryMiddlewareFactory.create_layered_memory(
-                    backend=backend,
-                    memory_path=memory_path,
-                    **kwargs
+                    backend=backend, memory_path=memory_path, **kwargs
                 )
             else:
                 return MemoryMiddlewareFactory.create_legacy_memory(
-                    backend=backend,
-                    memory_path=memory_path,
-                    **kwargs
+                    backend=backend, memory_path=memory_path, **kwargs
                 )
 
 

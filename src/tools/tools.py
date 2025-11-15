@@ -1,41 +1,28 @@
 """统一的工具导出模块 - CLI agent的自定义工具总入口"""
 
-from typing import Optional, List
 import json
+from typing import List, Optional
+
 from langchain_core.tools import tool
 
-# 导入网络工具
-from .network_tools import http_request, web_search
-
+from .defect_aggregator import aggregate_defects_tool as aggregate_defects
+# 直接导入error_detector中的工具（已经是@tool装饰过的，避免双重包装）
+from .error_detector import (analyze_existing_logs, compile_project,
+                             run_and_monitor, run_tests_with_error_capture)
 # 导入代码分析工具链模块
 from .multilang_code_analyzers import analyze_code_file as analyze_file
-from .defect_aggregator import aggregate_defects_tool as aggregate_defects
-
-# 直接导入error_detector中的工具（已经是@tool装饰过的，避免双重包装）
-from .error_detector import (
-    compile_project,
-    run_and_monitor,
-    run_tests_with_error_capture,
-    analyze_existing_logs
-)
-
-# 导入project_explorer中的工具
-from .project_explorer import (
-    explore_project_structure,
-    analyze_code_complexity
-)
-
+# 导入网络工具
+from .network_tools import http_request, web_search
 # 导入代码格式化工具
-from .professional_formatter import (
-    format_code_professional,
-    batch_format_professional
-)
-
+from .professional_formatter import (batch_format_professional,
+                                     format_code_professional)
+# 导入project_explorer中的工具
+from .project_explorer import (analyze_code_complexity,
+                               explore_project_structure)
 # 导入智能测试生成工具
-from .test_generator import (
-    generate_validation_tests_tool,
-    execute_test_suite_tool
-)
+from .test_generator import (execute_test_suite_tool,
+                             generate_validation_tests_tool)
+
 
 # 保持原有的analyze_code_defects工具链实现
 @tool(
@@ -109,28 +96,36 @@ def analyze_code_defects(file_path: str, language: Optional[str] = None) -> str:
     """
     try:
         # 第一步：执行代码静态分析
-        analysis_result = analyze_file.invoke({"file_path": file_path, "language": language})
+        analysis_result = analyze_file.invoke(
+            {"file_path": file_path, "language": language}
+        )
 
         # 解析分析结果
         try:
             analysis_data = json.loads(analysis_result)
             if not analysis_data.get("success", False):
-                return json.dumps({
-                    "success": False,
-                    "error": f"代码分析失败: {analysis_data.get('error', '未知错误')}",
-                    "file_path": file_path
-                })
+                return json.dumps(
+                    {
+                        "success": False,
+                        "error": f"代码分析失败: {analysis_data.get('error', '未知错误')}",
+                        "file_path": file_path,
+                    }
+                )
         except json.JSONDecodeError:
-            return json.dumps({
-                "success": False,
-                "error": "代码分析结果格式错误",
-                "file_path": file_path
-            })
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "代码分析结果格式错误",
+                    "file_path": file_path,
+                }
+            )
 
         # 第二步：聚合和智能分析缺陷
         defects = analysis_data.get("detailed_result", {}).get("issues", [])
         if defects:
-            aggregation_result = aggregate_defects.invoke({"defects_json": json.dumps(defects)})
+            aggregation_result = aggregate_defects.invoke(
+                {"defects_json": json.dumps(defects)}
+            )
             try:
                 aggregation_data = json.loads(aggregation_result)
             except json.JSONDecodeError:
@@ -140,8 +135,8 @@ def analyze_code_defects(file_path: str, language: Optional[str] = None) -> str:
                     "result": {
                         "total_defects": len(defects),
                         "clusters": [],
-                        "recommendations": ["缺陷聚合失败，请查看原始分析结果"]
-                    }
+                        "recommendations": ["缺陷聚合失败，请查看原始分析结果"],
+                    },
                 }
         else:
             # 没有发现缺陷
@@ -150,8 +145,8 @@ def analyze_code_defects(file_path: str, language: Optional[str] = None) -> str:
                 "result": {
                     "total_defects": 0,
                     "clusters": [],
-                    "recommendations": ["代码质量良好，未发现需要修复的缺陷"]
-                }
+                    "recommendations": ["代码质量良好，未发现需要修复的缺陷"],
+                },
             }
 
         # 组合结果
@@ -166,38 +161,46 @@ def analyze_code_defects(file_path: str, language: Optional[str] = None) -> str:
                 "issues": defects,
                 "score": detailed_result.get("score", 0),
                 "execution_time": detailed_result.get("execution_time", 0),
-                "success": detailed_result.get("success", False)
+                "success": detailed_result.get("success", False),
             },
             "aggregation": aggregation_data.get("result", {}),
             "metadata": {
-                "analysis_timestamp": detailed_result.get("metadata", {}).get("aggregation_timestamp", ""),
+                "analysis_timestamp": detailed_result.get("metadata", {}).get(
+                    "aggregation_timestamp", ""
+                ),
                 "toolchain_version": "1.0.0",
-                "language_detected": detailed_result.get("language", "unknown")
-            }
+                "language_detected": detailed_result.get("language", "unknown"),
+            },
         }
 
         return json.dumps(combined_result, indent=2, ensure_ascii=False)
 
     except ImportError as e:
-        return json.dumps({
-            "success": False,
-            "error": f"工具模块导入失败: {str(e)}",
-            "file_path": file_path,
-            "suggestion": "请确保multilang_code_analyzers.py和defect_aggregator.py模块可用"
-        })
+        return json.dumps(
+            {
+                "success": False,
+                "error": f"工具模块导入失败: {str(e)}",
+                "file_path": file_path,
+                "suggestion": "请确保multilang_code_analyzers.py和defect_aggregator.py模块可用",
+            }
+        )
     except json.JSONDecodeError as e:
-        return json.dumps({
-            "success": False,
-            "error": f"JSON解析错误: {str(e)}",
-            "file_path": file_path
-        })
+        return json.dumps(
+            {
+                "success": False,
+                "error": f"JSON解析错误: {str(e)}",
+                "file_path": file_path,
+            }
+        )
     except Exception as e:
-        return json.dumps({
-            "success": False,
-            "error": f"工具链执行失败: {str(e)}",
-            "file_path": file_path,
-            "suggestion": "请检查文件路径是否正确，以及相关工具是否已安装"
-        })
+        return json.dumps(
+            {
+                "success": False,
+                "error": f"工具链执行失败: {str(e)}",
+                "file_path": file_path,
+                "suggestion": "请检查文件路径是否正确，以及相关工具是否已安装",
+            }
+        )
 
 
 # 统一导出所有工具
@@ -205,24 +208,19 @@ __all__ = [
     # 网络工具
     "http_request",
     "web_search",
-
     # 代码分析工具链
     "analyze_code_defects",
-
     # 错误检测工具（直接从error_detector导入）
     "compile_project",
     "run_and_monitor",
     "run_tests_with_error_capture",
     "analyze_existing_logs",
-
     # 项目探索工具（从project_explorer导入）
     "explore_project_structure",
     "analyze_code_complexity",
-
     # 代码格式化工具（从professional_formatter导入）
     "format_code_professional",
     "batch_format_professional",
-
     # 智能测试工具（从test_generator导入）
     "generate_validation_tests_tool",
     "execute_test_suite_tool",
@@ -232,17 +230,22 @@ __all__ = [
 TOOL_CATEGORIES = {
     "网络工具": ["http_request", "web_search"],
     "代码分析": ["analyze_code_defects", "analyze_code_complexity"],
-    "错误检测": ["compile_project", "run_and_monitor", "run_tests_with_error_capture", "analyze_existing_logs"],
+    "错误检测": [
+        "compile_project",
+        "run_and_monitor",
+        "run_tests_with_error_capture",
+        "analyze_existing_logs",
+    ],
     "项目探索": ["explore_project_structure"],
     "代码格式化": ["format_code_professional", "batch_format_professional"],
     "测试生成": ["generate_validation_tests_tool", "execute_test_suite_tool"],
 }
 
+
 def get_all_tools():
     """获取所有可用工具的字典"""
-    return {
-        name: globals()[name] for name in __all__ if name in globals()
-    }
+    return {name: globals()[name] for name in __all__ if name in globals()}
+
 
 def get_tools_by_category(category: str):
     """按分类获取工具"""

@@ -137,7 +137,7 @@ system_prompt = f"""### 当前工作目录
 
 现在请协调你的专业团队来帮助用户完成代码缺陷分析和修复任务。"""
 
-defect_analyzer_subagent_system_prompt="""# 代码缺陷分析专家
+defect_analyzer_subagent_system_prompt = """# 代码缺陷分析专家
 
 你是专业的代码缺陷分析专家，拥有深厚的代码审查和质量保证经验。
 
@@ -227,7 +227,7 @@ defect_analyzer_subagent_system_prompt="""# 代码缺陷分析专家
 
 **重要**：只进行分析和诊断，不修改任何代码。专注于发现问题并提供清晰的修复指导。"""
 
-code_fixer_subagent_system_prompt="""# 代码修复专家
+code_fixer_subagent_system_prompt = """# 代码修复专家
 
 你是专业的代码修复专家，精通多种编程语言和框架，能够精确高效地修复各类代码缺陷。
 
@@ -343,7 +343,7 @@ code_fixer_subagent_system_prompt="""# 代码修复专家
 
 **重要**：每次修复都要说明修复策略和理由，修复后详细说明改动内容和验证结果。确保修复不仅解决了当前问题，还提升了整体代码质量。"""
 
-fix_validator_subagent_system_prompt="""你是一个专业的代码修复验证专家。你的任务是：
+fix_validator_subagent_system_prompt = """你是一个专业的代码修复验证专家。你的任务是：
 
 1. **功能验证**：确认修复后代码功能正常，原有行为保持
 2. **缺陷验证**：验证原缺陷确实被修复，不会重现
@@ -366,7 +366,7 @@ fix_validator_subagent_system_prompt="""你是一个专业的代码修复验证�
 
 如果发现问题，给出具体改进建议。"""
 
-memory_default_prompt="""你是一个帮助用户处理各种任务的AI助手，包括编码、研究和分析。
+memory_default_prompt = """你是一个帮助用户处理各种任务的AI助手，包括编码、研究和分析。
 
 # 核心角色
 你的核心角色和行为可能会根据用户反馈和指令进行更新。当用户告诉你应该如何表现或你的角色应该是什么时，立即更新这个记忆文件以反映该指导。

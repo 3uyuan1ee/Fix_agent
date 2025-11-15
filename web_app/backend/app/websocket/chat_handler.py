@@ -2,9 +2,9 @@
 
 import json
 import logging
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
-from fastapi import WebSocket, WebSocketDisconnect, Depends
+from fastapi import Depends, WebSocket, WebSocketDisconnect
 
 from ..services.session_service import SessionService
 from .connection_manager import manager
@@ -19,10 +19,7 @@ class ChatHandler:
         self.session_service = session_service
 
     async def handle_connection(
-        self,
-        websocket: WebSocket,
-        session_id: str,
-        user_id: int = None
+        self, websocket: WebSocket, session_id: str, user_id: int = None
     ):
         """Handle a new WebSocket connection."""
         await manager.connect(websocket, session_id, user_id)
@@ -31,44 +28,45 @@ class ChatHandler:
             # Get AI adapter for this session
             ai_adapter = self.session_service.get_ai_adapter(session_id)
             if not ai_adapter:
-                await manager.send_personal_message({
-                    "type": "error",
-                    "content": "Session not found or inactive",
-                    "session_id": session_id
-                }, websocket)
+                await manager.send_personal_message(
+                    {
+                        "type": "error",
+                        "content": "Session not found or inactive",
+                        "session_id": session_id,
+                    },
+                    websocket,
+                )
                 return
 
             # Send welcome message
-            await manager.send_personal_message({
-                "type": "status",
-                "content": "Connected to Fix Agent",
-                "session_id": session_id,
-                "metadata": {
-                    "model": "AI Agent Ready",
-                    "tools_available": True
-                }
-            }, websocket)
+            await manager.send_personal_message(
+                {
+                    "type": "status",
+                    "content": "Connected to Fix Agent",
+                    "session_id": session_id,
+                    "metadata": {"model": "AI Agent Ready", "tools_available": True},
+                },
+                websocket,
+            )
 
             # Handle messages
             await self._handle_messages(websocket, session_id, ai_adapter)
 
         except Exception as e:
             logger.error(f"Error in chat handler: {e}")
-            await manager.send_personal_message({
-                "type": "error",
-                "content": f"Internal error: {str(e)}",
-                "session_id": session_id
-            }, websocket)
+            await manager.send_personal_message(
+                {
+                    "type": "error",
+                    "content": f"Internal error: {str(e)}",
+                    "session_id": session_id,
+                },
+                websocket,
+            )
 
         finally:
             manager.disconnect(websocket)
 
-    async def _handle_messages(
-        self,
-        websocket: WebSocket,
-        session_id: str,
-        ai_adapter
-    ):
+    async def _handle_messages(self, websocket: WebSocket, session_id: str, ai_adapter):
         """Handle incoming WebSocket messages."""
         while True:
             try:
@@ -83,10 +81,9 @@ class ChatHandler:
                         websocket, session_id, ai_adapter, message_data
                     )
                 elif message_type == "ping":
-                    await manager.send_personal_message({
-                        "type": "pong",
-                        "session_id": session_id
-                    }, websocket)
+                    await manager.send_personal_message(
+                        {"type": "pong", "session_id": session_id}, websocket
+                    )
                 elif message_type == "memory_list":
                     await self._handle_memory_list(websocket, session_id, ai_adapter)
                 elif message_type == "memory_read":
@@ -98,39 +95,48 @@ class ChatHandler:
                         websocket, session_id, ai_adapter, message_data
                     )
                 else:
-                    await manager.send_personal_message({
-                        "type": "error",
-                        "content": f"Unknown message type: {message_type}",
-                        "session_id": session_id
-                    }, websocket)
+                    await manager.send_personal_message(
+                        {
+                            "type": "error",
+                            "content": f"Unknown message type: {message_type}",
+                            "session_id": session_id,
+                        },
+                        websocket,
+                    )
 
             except WebSocketDisconnect:
                 break
             except Exception as e:
                 logger.error(f"Error handling message: {e}")
-                await manager.send_personal_message({
-                    "type": "error",
-                    "content": f"Error processing message: {str(e)}",
-                    "session_id": session_id
-                }, websocket)
+                await manager.send_personal_message(
+                    {
+                        "type": "error",
+                        "content": f"Error processing message: {str(e)}",
+                        "session_id": session_id,
+                    },
+                    websocket,
+                )
 
     async def _handle_chat_message(
         self,
         websocket: WebSocket,
         session_id: str,
         ai_adapter,
-        message_data: Dict[str, Any]
+        message_data: Dict[str, Any],
     ):
         """Handle chat message and stream AI response."""
         content = message_data.get("content", "")
         file_references = message_data.get("file_references", [])
 
         if not content.strip():
-            await manager.send_personal_message({
-                "type": "error",
-                "content": "Message content cannot be empty",
-                "session_id": session_id
-            }, websocket)
+            await manager.send_personal_message(
+                {
+                    "type": "error",
+                    "content": "Message content cannot be empty",
+                    "session_id": session_id,
+                },
+                websocket,
+            )
             return
 
         # Save user message to database
@@ -138,16 +144,19 @@ class ChatHandler:
             session_id=session_id,
             content=content,
             role="user",
-            metadata={"file_references": file_references}
+            metadata={"file_references": file_references},
         )
 
         # Send "thinking" status
-        await manager.send_personal_message({
-            "type": "status",
-            "content": "AI is thinking...",
-            "session_id": session_id,
-            "metadata": {"state": "thinking"}
-        }, websocket)
+        await manager.send_personal_message(
+            {
+                "type": "status",
+                "content": "AI is thinking...",
+                "session_id": session_id,
+                "metadata": {"state": "thinking"},
+            },
+            websocket,
+        )
 
         try:
             # Stream AI response
@@ -166,107 +175,134 @@ class ChatHandler:
                     session_id=session_id,
                     content=full_response,
                     role="assistant",
-                    metadata={"streamed": True}
+                    metadata={"streamed": True},
                 )
 
             # Send completion status
-            await manager.send_personal_message({
-                "type": "status",
-                "content": "Response complete",
-                "session_id": session_id,
-                "metadata": {"state": "complete"}
-            }, websocket)
+            await manager.send_personal_message(
+                {
+                    "type": "status",
+                    "content": "Response complete",
+                    "session_id": session_id,
+                    "metadata": {"state": "complete"},
+                },
+                websocket,
+            )
 
         except Exception as e:
             logger.error(f"Error in AI streaming: {e}")
-            await manager.send_personal_message({
-                "type": "error",
-                "content": f"AI response error: {str(e)}",
-                "session_id": session_id
-            }, websocket)
+            await manager.send_personal_message(
+                {
+                    "type": "error",
+                    "content": f"AI response error: {str(e)}",
+                    "session_id": session_id,
+                },
+                websocket,
+            )
 
     async def _handle_memory_list(
-        self,
-        websocket: WebSocket,
-        session_id: str,
-        ai_adapter
+        self, websocket: WebSocket, session_id: str, ai_adapter
     ):
         """Handle memory list request."""
         try:
             memory_files = ai_adapter.get_memory_files()
-            await manager.send_personal_message({
-                "type": "memory_list",
-                "files": memory_files,
-                "session_id": session_id
-            }, websocket)
+            await manager.send_personal_message(
+                {
+                    "type": "memory_list",
+                    "files": memory_files,
+                    "session_id": session_id,
+                },
+                websocket,
+            )
         except Exception as e:
-            await manager.send_personal_message({
-                "type": "error",
-                "content": f"Error listing memory files: {str(e)}",
-                "session_id": session_id
-            }, websocket)
+            await manager.send_personal_message(
+                {
+                    "type": "error",
+                    "content": f"Error listing memory files: {str(e)}",
+                    "session_id": session_id,
+                },
+                websocket,
+            )
 
     async def _handle_memory_read(
         self,
         websocket: WebSocket,
         session_id: str,
         ai_adapter,
-        message_data: Dict[str, Any]
+        message_data: Dict[str, Any],
     ):
         """Handle memory file read request."""
         file_path = message_data.get("file_path", "")
         if not file_path:
-            await manager.send_personal_message({
-                "type": "error",
-                "content": "File path is required",
-                "session_id": session_id
-            }, websocket)
+            await manager.send_personal_message(
+                {
+                    "type": "error",
+                    "content": "File path is required",
+                    "session_id": session_id,
+                },
+                websocket,
+            )
             return
 
         try:
             content = ai_adapter.read_memory_file(file_path)
-            await manager.send_personal_message({
-                "type": "memory_content",
-                "file_path": file_path,
-                "content": content,
-                "session_id": session_id
-            }, websocket)
+            await manager.send_personal_message(
+                {
+                    "type": "memory_content",
+                    "file_path": file_path,
+                    "content": content,
+                    "session_id": session_id,
+                },
+                websocket,
+            )
         except Exception as e:
-            await manager.send_personal_message({
-                "type": "error",
-                "content": f"Error reading memory file: {str(e)}",
-                "session_id": session_id
-            }, websocket)
+            await manager.send_personal_message(
+                {
+                    "type": "error",
+                    "content": f"Error reading memory file: {str(e)}",
+                    "session_id": session_id,
+                },
+                websocket,
+            )
 
     async def _handle_memory_write(
         self,
         websocket: WebSocket,
         session_id: str,
         ai_adapter,
-        message_data: Dict[str, Any]
+        message_data: Dict[str, Any],
     ):
         """Handle memory file write request."""
         file_path = message_data.get("file_path", "")
         content = message_data.get("content", "")
 
         if not file_path:
-            await manager.send_personal_message({
-                "type": "error",
-                "content": "File path is required",
-                "session_id": session_id
-            }, websocket)
+            await manager.send_personal_message(
+                {
+                    "type": "error",
+                    "content": "File path is required",
+                    "session_id": session_id,
+                },
+                websocket,
+            )
             return
 
         try:
             ai_adapter.write_memory_file(file_path, content)
-            await manager.send_personal_message({
-                "type": "status",
-                "content": f"Memory file saved: {file_path}",
-                "session_id": session_id
-            }, websocket)
+            await manager.send_personal_message(
+                {
+                    "type": "status",
+                    "content": f"Memory file saved: {file_path}",
+                    "session_id": session_id,
+                },
+                websocket,
+            )
         except Exception as e:
-            await manager.send_personal_message({
-                "type": "error",
-                "content": f"Error writing memory file: {str(e)}",
-                "session_id": session_id
-            }, websocket)
+            await manager.send_personal_message(
+                {
+                    "type": "error",
+                    "content": f"Error writing memory file: {str(e)}",
+                    "session_id": session_id,
+                },
+                websocket,
+            )

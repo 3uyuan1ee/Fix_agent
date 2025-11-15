@@ -1,28 +1,21 @@
 """/command和bash执行的命令处理器。"""
 
-import subprocess
 import os
+import subprocess
 from pathlib import Path
 
 from langgraph.checkpoint.memory import InMemorySaver
 
-from ..config.config import COLORS, DEEP_AGENTS_ASCII, console
-from ..ui.ui import TokenTracker, show_interactive_help
-from ..ui.dynamicCli import typewriter
 from ..agents.agent import get_current_assistant_id
-from .memory_commands import (
-    MemoryManager,
-    handle_memory_edit,
-    view_agent_memory,
-    handle_memory_search,
-    handle_memory_export,
-    handle_memory_import,
-    handle_memory_backup,
-    handle_memory_restore,
-    handle_memory_clear,
-    handle_memory_stats,
-    show_memory_menu
-)
+from ..config.config import COLORS, DEEP_AGENTS_ASCII, console
+from ..ui.dynamicCli import typewriter
+from ..ui.ui import TokenTracker, show_interactive_help
+from .memory_commands import (MemoryManager, handle_memory_backup,
+                              handle_memory_clear, handle_memory_edit,
+                              handle_memory_export, handle_memory_import,
+                              handle_memory_restore, handle_memory_search,
+                              handle_memory_stats, show_memory_menu,
+                              view_agent_memory)
 
 
 def handle_command(command: str, agent, token_tracker: TokenTracker) -> str | bool:
@@ -47,7 +40,9 @@ def handle_command(command: str, agent, token_tracker: TokenTracker) -> str | bo
         console.print(DEEP_AGENTS_ASCII, style=f"bold {COLORS['primary']}")
         console.print()
         # 使用滑入动画显示重置消息
-        typewriter.slide_in_text("Fresh start! Screen cleared and conversation reset.", style="agent")
+        typewriter.slide_in_text(
+            "Fresh start! Screen cleared and conversation reset.", style="agent"
+        )
         console.print()
         return True
 
@@ -114,7 +109,7 @@ def handle_config_command(args: list[str]) -> bool:
         display_env_status(env_path)
 
         # Ask user what they want to do
-        typewriter.print_with_random_speed("Configuration Options:","primary")
+        typewriter.print_with_random_speed("Configuration Options:", "primary")
         typewriter.print_fast(
             """""
             Configuration Options:
@@ -123,8 +118,9 @@ def handle_config_command(args: list[str]) -> bool:
             3. Create backup
             4. Restore from backup
             5. Cancel
-            """""  ,
-            "warning"
+            """
+            "",
+            "warning",
         )
         console.print()
 
@@ -179,6 +175,7 @@ def create_env_from_template() -> bool:
     try:
         # Copy template to .env
         import shutil
+
         shutil.copy(template_path, env_path)
         typewriter.success(f" Created .env file from template: {env_path}")
         typewriter.info("Please edit the file and add your API keys")
@@ -192,9 +189,12 @@ def display_env_status(env_path: Path) -> bool:
     """Display current .env configuration status."""
     try:
         import dotenv
+
         config = dotenv.dotenv_values(env_path)
 
-        console.print("[bold]Current Configuration Status:[/bold]", style=COLORS["primary"])
+        console.print(
+            "[bold]Current Configuration Status:[/bold]", style=COLORS["primary"]
+        )
 
         # Check API keys
         api_keys_status = []
@@ -232,7 +232,9 @@ def get_user_choice(prompt: str, valid_choices: list[str]) -> str:
             choice = input(prompt).strip()
             if choice in valid_choices:
                 return choice
-            typewriter.error_shake(f"Invalid choice. Please enter one of: {', '.join(valid_choices)}")
+            typewriter.error_shake(
+                f"Invalid choice. Please enter one of: {', '.join(valid_choices)}"
+            )
         except (EOFError, KeyboardInterrupt):
             return "5"  # Default to cancel
 
@@ -260,6 +262,7 @@ def edit_env_file(env_path: Path) -> bool:
 
         # Reload environment variables
         import dotenv
+
         dotenv.load_dotenv(env_path, override=True)
 
         typewriter.info("🔄 Environment variables reloaded")
@@ -269,8 +272,12 @@ def edit_env_file(env_path: Path) -> bool:
         typewriter.error_shake(f"❌ Editor exited with error: {e}")
         return True
     except FileNotFoundError:
-        typewriter.error_shake(f"❌ Editor '{editor}' not found. Please set EDITOR environment variable.")
-        typewriter.info("Windows users can set EDITOR=notepad or EDITOR=path/to/your/editor")
+        typewriter.error_shake(
+            f"❌ Editor '{editor}' not found. Please set EDITOR environment variable."
+        )
+        typewriter.info(
+            "Windows users can set EDITOR=notepad or EDITOR=path/to/your/editor"
+        )
         return True
     except Exception as e:
         typewriter.error_shake(f"❌ Error opening editor: {e}")
@@ -283,7 +290,7 @@ def show_env_content(env_path: Path) -> bool:
         console.print(f"[bold]Content of {env_path}:[/bold]", style=COLORS["primary"])
         console.print()
 
-        with open(env_path, 'r') as f:
+        with open(env_path, "r") as f:
             lines = f.readlines()
 
         for i, line in enumerate(lines, 1):
@@ -294,7 +301,11 @@ def show_env_content(env_path: Path) -> bool:
                     key, value = line.split("=", 1)
                     if value.strip():
                         # Show first few characters and mask the rest
-                        masked_value = value[:8] + "*" * (len(value) - 8) if len(value) > 8 else "*" * len(value)
+                        masked_value = (
+                            value[:8] + "*" * (len(value) - 8)
+                            if len(value) > 8
+                            else "*" * len(value)
+                        )
                         line = f"{key}={masked_value}"
 
             # Print line with line number
@@ -331,6 +342,7 @@ def restore_env_file(env_path: Path) -> bool:
     try:
         # Find backup files
         import glob
+
         backup_pattern = env_path.parent / ".env.backup.*"
         backup_files = sorted(glob.glob(str(backup_pattern)), reverse=True)
 
@@ -346,7 +358,10 @@ def restore_env_file(env_path: Path) -> bool:
             console.print(f"  {i}. {backup_name}")
 
         # Get user choice
-        choice = get_user_choice("Choose backup to restore (1-5): ", [str(i) for i in range(1, min(len(backup_files), 5) + 1)] + ["cancel"])
+        choice = get_user_choice(
+            "Choose backup to restore (1-5): ",
+            [str(i) for i in range(1, min(len(backup_files), 5) + 1)] + ["cancel"],
+        )
 
         if choice.lower() == "cancel":
             typewriter.info("Cancelled restore operation")
@@ -355,12 +370,14 @@ def restore_env_file(env_path: Path) -> bool:
         # Restore selected backup
         selected_backup = backup_files[int(choice) - 1]
         import shutil
+
         shutil.copy2(selected_backup, env_path)
 
         typewriter.success(f"✅ Restored from: {Path(selected_backup).name}")
 
         # Reload environment variables
         import dotenv
+
         dotenv.load_dotenv(env_path, override=True)
         typewriter.info("🔄 Environment variables reloaded")
 
@@ -373,10 +390,10 @@ def restore_env_file(env_path: Path) -> bool:
 
 def handle_cd_command(args: list[str]) -> bool:
     """Handle /cd command to change directory.
-    
+
     Args:
         args: Command arguments, should contain path to change to
-        
+
     Returns:
         True if command was handled
     """
@@ -390,7 +407,7 @@ def handle_cd_command(args: list[str]) -> bool:
         return True
 
     target_path_str = args[0]
-    
+
     # Handle special paths
     if target_path_str == "~":
         target_path = Path.home()
@@ -413,24 +430,24 @@ def handle_cd_command(args: list[str]) -> bool:
     try:
         # Resolve path to handle relative paths and check if it exists
         resolved_path = target_path.resolve()
-        
+
         if not resolved_path.exists():
             typewriter.error_shake(f"❌ Directory does not exist: {target_path_str}")
             typewriter.info(f"Resolved path: {resolved_path}")
             return True
-            
+
         if not resolved_path.is_dir():
             typewriter.error_shake(f"❌ Path is not a directory: {target_path_str}")
             typewriter.info(f"Resolved path: {resolved_path}")
             return True
-            
+
         # Change working directory
         os.chdir(resolved_path)
-        
+
         # Show success animation with new directory info
         current_dir = Path.cwd()
         typewriter.success(f" Changed directory to: {current_dir}")
-        
+
         # Display directory contents (cross-platform)
         try:
             console.print()
@@ -438,6 +455,7 @@ def handle_cd_command(args: list[str]) -> bool:
 
             # 使用Python内置功能，避免依赖系统命令
             import platform
+
             if platform.system() == "Windows":
                 # Windows: 使用dir命令
                 result = subprocess.run(
@@ -446,7 +464,7 @@ def handle_cd_command(args: list[str]) -> bool:
                     capture_output=True,
                     text=True,
                     timeout=10,
-                    cwd=current_dir
+                    cwd=current_dir,
                 )
             else:
                 # Unix/Linux: 使用ls -la
@@ -456,7 +474,7 @@ def handle_cd_command(args: list[str]) -> bool:
                     capture_output=True,
                     text=True,
                     timeout=10,
-                    cwd=current_dir
+                    cwd=current_dir,
                 )
             console.print(result.stdout, style=COLORS["dim"], markup=False)
         except (subprocess.TimeoutExpired, subprocess.CalledProcessError, Exception):
@@ -475,9 +493,9 @@ def handle_cd_command(args: list[str]) -> bool:
             except Exception:
                 console.print("[dim]Unable to list directory contents[/dim]")
         console.print()
-        
+
         return True
-        
+
     except (OSError, ValueError) as e:
         typewriter.error_shake(f"❌ Error changing directory: {e}")
         typewriter.info(f"Target path: {target_path}")
@@ -489,29 +507,29 @@ def handle_cd_command(args: list[str]) -> bool:
 
 def is_path_safe(path: Path) -> bool:
     """Validate that a path is safe (no path traversal attempts).
-    
+
     Args:
         path: Path to validate
-        
+
     Returns:
         True if path is safe, False otherwise
     """
     try:
         # Resolve path to get absolute path
         resolved_path = path.resolve()
-        
+
         # Check for path traversal attempts
         # We'll allow paths within current working directory and home directory
         current_dir = Path.cwd().resolve()
         home_dir = Path.home().resolve()
-        
+
         # Check if resolved path is within allowed directories
         is_within_current = str(resolved_path).startswith(str(current_dir))
         is_within_home = str(resolved_path).startswith(str(home_dir))
-        
+
         # Allow paths within current directory or home directory
         return is_within_current or is_within_home
-        
+
     except (OSError, ValueError):
         return False
 
@@ -587,7 +605,9 @@ def execute_bash_command(command: str) -> bool:
         return True
     except FileNotFoundError as e:
         if platform.system() == "Windows":
-            console.print(f"[red]Command not found. Try using 'powershell {cmd}' or ensure the command is in PATH[/red]")
+            console.print(
+                f"[red]Command not found. Try using 'powershell {cmd}' or ensure the command is in PATH[/red]"
+            )
         else:
             console.print(f"[red]Command not found: {e}[/red]")
         console.print()
@@ -610,7 +630,7 @@ def get_system_info() -> dict:
         "processor": platform.processor(),
         "python_version": platform.python_version(),
         "wsl": False,
-        "powershell_available": False
+        "powershell_available": False,
     }
 
     # WSL检测
@@ -627,17 +647,13 @@ def get_system_info() -> dict:
     if platform.system() == "Windows":
         try:
             result = subprocess.run(
-                ["powershell", "-Command", "Get-Host"],
-                capture_output=True,
-                timeout=5
+                ["powershell", "-Command", "Get-Host"], capture_output=True, timeout=5
             )
             info["powershell_available"] = result.returncode == 0
         except:
             try:
                 result = subprocess.run(
-                    ["pwsh", "-Command", "Get-Host"],
-                    capture_output=True,
-                    timeout=5
+                    ["pwsh", "-Command", "Get-Host"], capture_output=True, timeout=5
                 )
                 info["powershell_available"] = result.returncode == 0
             except:
@@ -655,7 +671,9 @@ def handle_system_info_command(args: list[str]) -> bool:
         console.print()
 
         # 基本信息
-        console.print(f"[dim]Operating System:[/dim] {info['system']} {info['version']}")
+        console.print(
+            f"[dim]Operating System:[/dim] {info['system']} {info['version']}"
+        )
         console.print(f"[dim]Architecture:[/dim] {info['machine']}")
         console.print(f"[dim]Processor:[/dim] {info['processor']}")
         console.print(f"[dim]Python Version:[/dim] {info['python_version']}")
@@ -664,25 +682,31 @@ def handle_system_info_command(args: list[str]) -> bool:
         console.print()
         console.print("[bold]Special Features:[/bold]", style=COLORS["primary"])
 
-        if info['wsl']:
-            console.print(f"🐧 WSL: [green]Enabled[/green] (Windows Subsystem for Linux)")
+        if info["wsl"]:
+            console.print(
+                f"🐧 WSL: [green]Enabled[/green] (Windows Subsystem for Linux)"
+            )
         else:
             console.print(f"🐧 WSL: [dim]Not detected[/dim]")
 
-        if info['powershell_available']:
+        if info["powershell_available"]:
             console.print(f"💻 PowerShell: [green]Available[/green]")
         else:
             console.print(f"💻 PowerShell: [red]Not available[/red]")
 
         # 平台特定提示
         console.print()
-        console.print("[bold]Platform-Specific Features:[/bold]", style=COLORS["primary"])
+        console.print(
+            "[bold]Platform-Specific Features:[/bold]", style=COLORS["primary"]
+        )
 
-        if info['system'] == "Windows":
-            console.print("🔧 Use 'pwsh' or 'powershell' prefix for PowerShell commands")
+        if info["system"] == "Windows":
+            console.print(
+                "🔧 Use 'pwsh' or 'powershell' prefix for PowerShell commands"
+            )
             console.print("🔧 Use '/services' to view Windows services")
             console.print("🔧 Default editor: notepad")
-        elif info['wsl']:
+        elif info["wsl"]:
             console.print("🐧 Running in WSL - Windows integration available")
             console.print("🔧 Can access Windows files via /mnt/c/")
         else:
@@ -709,7 +733,9 @@ def handle_services_command(args: list[str]) -> bool:
     try:
         if not args:
             # 显示帮助信息
-            console.print("[bold]🔧 Windows Services Management:[/bold]", style=COLORS["primary"])
+            console.print(
+                "[bold]🔧 Windows Services Management:[/bold]", style=COLORS["primary"]
+            )
             console.print()
             typewriter.print_fast("Available commands:", "primary")
             console.print("  /services list           - List running services")
@@ -747,10 +773,14 @@ def list_windows_services() -> bool:
         console.print("[dim]Fetching Windows services...[/dim]")
 
         result = subprocess.run(
-            ["powershell", "-Command", "Get-Service | Select-Object Name, Status, DisplayName | Format-Table -AutoSize"],
+            [
+                "powershell",
+                "-Command",
+                "Get-Service | Select-Object Name, Status, DisplayName | Format-Table -AutoSize",
+            ],
             capture_output=True,
             text=True,
-            timeout=30
+            timeout=30,
         )
 
         if result.returncode == 0:
@@ -781,7 +811,7 @@ def search_windows_service(service_name: str) -> bool:
             ["powershell", "-Command", ps_command],
             capture_output=True,
             text=True,
-            timeout=15
+            timeout=15,
         )
 
         if result.returncode == 0:
@@ -814,13 +844,15 @@ def get_service_status(service_name: str) -> bool:
             ["powershell", "-Command", ps_command],
             capture_output=True,
             text=True,
-            timeout=15
+            timeout=15,
         )
 
         if result.returncode == 0:
             console.print(result.stdout, style=COLORS["dim"], markup=False)
         else:
-            console.print(f"[red]Service '{service_name}' not found or error occurred[/red]")
+            console.print(
+                f"[red]Service '{service_name}' not found or error occurred[/red]"
+            )
             console.print(result.stderr, style="red")
 
         console.print()
@@ -842,7 +874,7 @@ def manage_windows_service(action: str, service_name: str) -> bool:
         console.print("[dim]This may require administrator privileges[/dim]")
 
         choice = input("Continue? (y/N): ").strip().lower()
-        if choice != 'y' and choice != 'yes':
+        if choice != "y" and choice != "yes":
             typewriter.info("Operation cancelled")
             return True
 
@@ -850,7 +882,7 @@ def manage_windows_service(action: str, service_name: str) -> bool:
         actions = {
             "start": "Start-Service",
             "stop": "Stop-Service",
-            "restart": "Restart-Service"
+            "restart": "Restart-Service",
         }
 
         ps_command = f'Try {{ {actions[action]} -Name "*{service_name}*" -ErrorAction Stop; Write-Host "Service {action}ed successfully" -ForegroundColor Green }} Catch {{ Write-Host "Error: $_" -ForegroundColor Red }}'
@@ -861,10 +893,13 @@ def manage_windows_service(action: str, service_name: str) -> bool:
             ["powershell", "-Command", ps_command],
             capture_output=True,
             text=True,
-            timeout=30
+            timeout=30,
         )
 
-        console.print(result.stdout, style="green" if "successfully" in result.stdout.lower() else "red")
+        console.print(
+            result.stdout,
+            style="green" if "successfully" in result.stdout.lower() else "red",
+        )
         if result.stderr:
             console.print(result.stderr, style="red")
 
@@ -923,7 +958,10 @@ def handle_memory_command(agent, args: list[str]) -> bool:
                 return True
             query = subcommand_args[0]
             memory_type = subcommand_args[1] if len(subcommand_args) > 1 else "all"
-            return handle_memory_search(memory_manager, [query, memory_type] if memory_type != "all" else [query])
+            return handle_memory_search(
+                memory_manager,
+                [query, memory_type] if memory_type != "all" else [query],
+            )
 
         elif subcommand == "export":
             return handle_memory_export(memory_manager, subcommand_args)

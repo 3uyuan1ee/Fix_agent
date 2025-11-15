@@ -1,28 +1,30 @@
 """记忆管理命令 - /memory 命令集"""
 
-import os
 import json
+import os
 import shutil
-from pathlib import Path
-from typing import Dict, List, Optional, Any
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 from rich.console import Console
-from rich.table import Table
-from rich.prompt import Prompt, IntPrompt, Confirm
+from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.prompt import Confirm, IntPrompt, Prompt
 from rich.syntax import Syntax
+from rich.table import Table
 from rich.text import Text
-from rich.markdown import Markdown
+
 from ..config.config import COLORS, console
 
 
 def safe_get_content(memory_item) -> str:
     """安全地从记忆项中获取内容，支持字典和Message对象"""
-    if hasattr(memory_item, 'content'):
+    if hasattr(memory_item, "content"):
         # LangChain Message对象
         return memory_item.content
-    elif hasattr(memory_item, 'get'):
+    elif hasattr(memory_item, "get"):
         # 字典对象
         return memory_item.get("content", "")
     else:
@@ -34,7 +36,7 @@ def safe_get_attribute(memory_item, attr_name: str, default=None):
     """安全地从记忆项中获取属性，支持字典和Message对象"""
     if hasattr(memory_item, attr_name):
         return getattr(memory_item, attr_name)
-    elif hasattr(memory_item, 'get'):
+    elif hasattr(memory_item, "get"):
         return memory_item.get(attr_name, default)
     else:
         return default
@@ -60,7 +62,7 @@ class MemoryManager:
     def read_agent_memory(self) -> str:
         """读取agent主记忆文件"""
         if self.agent_memory_file.exists():
-            return self.agent_memory_file.read_text(encoding='utf-8')
+            return self.agent_memory_file.read_text(encoding="utf-8")
         return ""
 
     def write_agent_memory(self, content: str) -> bool:
@@ -70,7 +72,7 @@ class MemoryManager:
             self._create_backup(self.agent_memory_file)
 
             # 写入新内容
-            self.agent_memory_file.write_text(content, encoding='utf-8')
+            self.agent_memory_file.write_text(content, encoding="utf-8")
             return True
         except Exception as e:
             console.print(f"[red]❌ 写入记忆失败: {e}[/red]")
@@ -80,7 +82,7 @@ class MemoryManager:
         """读取语义记忆"""
         if self.semantic_memory_file.exists():
             try:
-                content = self.semantic_memory_file.read_text(encoding='utf-8')
+                content = self.semantic_memory_file.read_text(encoding="utf-8")
                 if content.strip():
                     return json.loads(content)
             except json.JSONDecodeError:
@@ -96,8 +98,7 @@ class MemoryManager:
 
             # 写入记忆
             self.semantic_memory_file.write_text(
-                json.dumps(memories, ensure_ascii=False, indent=2),
-                encoding='utf-8'
+                json.dumps(memories, ensure_ascii=False, indent=2), encoding="utf-8"
             )
             return True
         except Exception as e:
@@ -108,7 +109,7 @@ class MemoryManager:
         """读取情节记忆"""
         if self.episodic_memory_file.exists():
             try:
-                content = self.episodic_memory_file.read_text(encoding='utf-8')
+                content = self.episodic_memory_file.read_text(encoding="utf-8")
                 if content.strip():
                     return json.loads(content)
             except json.JSONDecodeError:
@@ -124,8 +125,7 @@ class MemoryManager:
 
             # 写入记忆
             self.episodic_memory_file.write_text(
-                json.dumps(memories, ensure_ascii=False, indent=2),
-                encoding='utf-8'
+                json.dumps(memories, ensure_ascii=False, indent=2), encoding="utf-8"
             )
             return True
         except Exception as e:
@@ -137,7 +137,10 @@ class MemoryManager:
         try:
             if file_path.exists():
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                backup_path = file_path.parent / f"{file_path.stem}_backup_{timestamp}{file_path.suffix}"
+                backup_path = (
+                    file_path.parent
+                    / f"{file_path.stem}_backup_{timestamp}{file_path.suffix}"
+                )
                 shutil.copy2(file_path, backup_path)
         except Exception:
             pass  # 备份失败不影响主要功能
@@ -145,19 +148,21 @@ class MemoryManager:
     def _repair_json_file(self, file_path: Path) -> List[Dict]:
         """修复损坏的JSON文件"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             # 简单的JSON修复
             # 尝试移除常见的JSON错误
-            content = content.replace(',,', ',')
-            content = content.replace(',}', '}')
+            content = content.replace(",,", ",")
+            content = content.replace(",}", "}")
 
             # 尝试解析修复后的内容
             try:
                 return json.loads(content)
             except json.JSONDecodeError:
-                console.print(f"[yellow]⚠️ 无法修复文件 {file_path.name}，返回空列表[/yellow]")
+                console.print(
+                    f"[yellow]⚠️ 无法修复文件 {file_path.name}，返回空列表[/yellow]"
+                )
                 return []
         except Exception:
             return []
@@ -170,21 +175,19 @@ class MemoryManager:
 
         return {
             "agent_memory_size": len(agent_content),
-            "agent_memory_lines": len(agent_content.splitlines()) if agent_content else 0,
+            "agent_memory_lines": (
+                len(agent_content.splitlines()) if agent_content else 0
+            ),
             "semantic_memory_count": semantic_count,
             "episodic_memory_count": episodic_count,
             "total_memories": semantic_count + episodic_count,
             "memory_dir": str(self.memories_dir),
-            "last_modified": datetime.now().isoformat()
+            "last_modified": datetime.now().isoformat(),
         }
 
     def search_memories(self, query: str, memory_type: str = "all") -> Dict[str, Any]:
         """搜索记忆内容"""
-        results = {
-            "agent_memory": [],
-            "semantic_memory": [],
-            "episodic_memory": []
-        }
+        results = {"agent_memory": [], "semantic_memory": [], "episodic_memory": []}
 
         query_lower = query.lower()
 
@@ -195,11 +198,9 @@ class MemoryManager:
                 lines = agent_content.splitlines()
                 for i, line in enumerate(lines, 1):
                     if query_lower in line.lower():
-                        results["agent_memory"].append({
-                            "line": i,
-                            "content": line.strip(),
-                            "type": "agent_memory"
-                        })
+                        results["agent_memory"].append(
+                            {"line": i, "content": line.strip(), "type": "agent_memory"}
+                        )
 
         # 搜索语义记忆
         if memory_type in ["semantic", "all"]:
@@ -207,12 +208,14 @@ class MemoryManager:
             for memory in semantic_memories:
                 content = safe_get_content(memory)
                 if query_lower in content.lower():
-                    results["semantic_memory"].append({
-                        "timestamp": safe_get_attribute(memory, 'timestamp'),
-                        "content": content,
-                        "importance": safe_get_attribute(memory, 'importance', 1.0),
-                        "type": "semantic_memory"
-                    })
+                    results["semantic_memory"].append(
+                        {
+                            "timestamp": safe_get_attribute(memory, "timestamp"),
+                            "content": content,
+                            "importance": safe_get_attribute(memory, "importance", 1.0),
+                            "type": "semantic_memory",
+                        }
+                    )
 
         # 搜索情节记忆
         if memory_type in ["episodic", "all"]:
@@ -220,12 +223,14 @@ class MemoryManager:
             for memory in episodic_memories:
                 content = safe_get_content(memory)
                 if query_lower in content.lower():
-                    results["episodic_memory"].append({
-                        "timestamp": safe_get_attribute(memory, 'timestamp'),
-                        "content": content,
-                        "importance": safe_get_attribute(memory, 'importance', 0.8),
-                        "type": "episodic_memory"
-                    })
+                    results["episodic_memory"].append(
+                        {
+                            "timestamp": safe_get_attribute(memory, "timestamp"),
+                            "content": content,
+                            "importance": safe_get_attribute(memory, "importance", 0.8),
+                            "type": "episodic_memory",
+                        }
+                    )
 
         return results
 
@@ -247,7 +252,7 @@ class MemoryManager:
 
         try:
             export_path = Path(export_path)
-            with open(export_path, 'w', encoding='utf-8') as f:
+            with open(export_path, "w", encoding="utf-8") as f:
                 json.dump(export_data, f, ensure_ascii=False, indent=2)
 
             console.print(f"[green]✅ 记忆已导出到: {export_path}[/green]")
@@ -264,7 +269,7 @@ class MemoryManager:
                 console.print(f"[red]❌ 导入文件不存在: {import_path}[/red]")
                 return False
 
-            with open(import_path, 'r', encoding='utf-8') as f:
+            with open(import_path, "r", encoding="utf-8") as f:
                 import_data = json.load(f)
 
             # 验证导入数据格式
@@ -276,15 +281,23 @@ class MemoryManager:
             # 导入记忆数据
             success = True
             success &= self.write_agent_memory(import_data.get("agent_memory", ""))
-            success &= self.write_semantic_memory(import_data.get("semantic_memory", []))
-            success &= self.write_episodic_memory(import_data.get("episodic_memory", []))
+            success &= self.write_semantic_memory(
+                import_data.get("semantic_memory", [])
+            )
+            success &= self.write_episodic_memory(
+                import_data.get("episodic_memory", [])
+            )
 
             if success:
                 console.print(f"[green]✅ 记忆已从 {import_path} 导入[/green]")
-                agent_memory_content = import_data.get('agent_memory', '')
+                agent_memory_content = import_data.get("agent_memory", "")
                 console.print(f"   - Agent记忆: {len(agent_memory_content)} 字符")
-                console.print(f"   - 语义记忆: {len(import_data.get('semantic_memory', []))} 条")
-                console.print(f"   - 情节记忆: {len(import_data.get('episodic_memory', []))} 条")
+                console.print(
+                    f"   - 语义记忆: {len(import_data.get('semantic_memory', []))} 条"
+                )
+                console.print(
+                    f"   - 情节记忆: {len(import_data.get('episodic_memory', []))} 条"
+                )
 
             return success
         except Exception as e:
@@ -297,35 +310,47 @@ class MemoryManager:
 
         # 主记忆文件
         if self.agent_memory_file.exists():
-            files.append({
-                "name": "agent.md",
-                "type": "主记忆",
-                "path": str(self.agent_memory_file),
-                "size": self.agent_memory_file.stat().st_size,
-                "modified": datetime.fromtimestamp(self.agent_memory_file.stat().st_mtime).isoformat()
-            })
+            files.append(
+                {
+                    "name": "agent.md",
+                    "type": "主记忆",
+                    "path": str(self.agent_memory_file),
+                    "size": self.agent_memory_file.stat().st_size,
+                    "modified": datetime.fromtimestamp(
+                        self.agent_memory_file.stat().st_mtime
+                    ).isoformat(),
+                }
+            )
 
         # 分层记忆文件
         for file_path in [self.semantic_memory_file, self.episodic_memory_file]:
             if file_path.exists():
-                files.append({
-                    "name": file_path.name,
-                    "type": "分层记忆",
-                    "path": str(file_path),
-                    "size": file_path.stat().st_size,
-                    "modified": datetime.fromtimestamp(file_path.stat().st_mtime).isoformat()
-                })
+                files.append(
+                    {
+                        "name": file_path.name,
+                        "type": "分层记忆",
+                        "path": str(file_path),
+                        "size": file_path.stat().st_size,
+                        "modified": datetime.fromtimestamp(
+                            file_path.stat().st_mtime
+                        ).isoformat(),
+                    }
+                )
 
         # 备份文件
         for file_path in self.agent_dir.rglob("*_backup_*.md"):
             if file_path.is_file():
-                files.append({
-                    "name": file_path.name,
-                    "type": "备份文件",
-                    "path": str(file_path),
-                    "size": file_path.stat().st_size,
-                    "modified": datetime.fromtimestamp(file_path.stat().st_mtime).isoformat()
-                })
+                files.append(
+                    {
+                        "name": file_path.name,
+                        "type": "备份文件",
+                        "path": str(file_path),
+                        "size": file_path.stat().st_size,
+                        "modified": datetime.fromtimestamp(
+                            file_path.stat().st_mtime
+                        ).isoformat(),
+                    }
+                )
 
         return sorted(files, key=lambda x: x["modified"], reverse=True)
 
@@ -340,6 +365,7 @@ def handle_memory_command(args: List[str]) -> bool:
     # 获取assistant_id
     try:
         from agents.agent import get_current_assistant_id
+
         assistant_id = get_current_assistant_id()
     except ImportError:
         console.print("[red]❌ 无法获取当前assistant ID[/red]")
@@ -457,7 +483,9 @@ def handle_memory_edit(memory_manager: MemoryManager, args: List[str]) -> bool:
             edit_episodic_memory(memory_manager)
         else:
             console.print(f"[red]❌ 未知的记忆文件: {file_name}[/red]")
-            console.print("可用的文件名: agent.md, semantic_memory.json, episodic_memory.json")
+            console.print(
+                "可用的文件名: agent.md, semantic_memory.json, episodic_memory.json"
+            )
     else:
         # 显示可编辑的文件列表
         show_editable_files(memory_manager)
@@ -472,20 +500,32 @@ def show_editable_files(memory_manager: MemoryManager):
             "name": "agent.md",
             "description": "Agent主记忆文件",
             "type": "主记忆",
-            "size": memory_manager.agent_memory_file.stat().st_size if memory_manager.agent_memory_file.exists() else 0
+            "size": (
+                memory_manager.agent_memory_file.stat().st_size
+                if memory_manager.agent_memory_file.exists()
+                else 0
+            ),
         },
         {
             "name": "semantic_memory.json",
             "description": "语义记忆（概念、规则、偏好）",
             "type": "分层记忆",
-            "size": memory_manager.semantic_memory_file.stat().st_size if memory_manager.semantic_memory_file.exists() else 0
+            "size": (
+                memory_manager.semantic_memory_file.stat().st_size
+                if memory_manager.semantic_memory_file.exists()
+                else 0
+            ),
         },
         {
             "name": "episodic_memory.json",
             "description": "情节记忆（重要事件、对话）",
             "type": "分层记忆",
-            "size": memory_manager.episodic_memory_file.stat().st_size if memory_manager.episodic_memory_file.exists() else 0
-        }
+            "size": (
+                memory_manager.episodic_memory_file.stat().st_size
+                if memory_manager.episodic_memory_file.exists()
+                else 0
+            ),
+        },
     ]
 
     table = Table(title="📝 可编辑的记忆文件")
@@ -497,10 +537,7 @@ def show_editable_files(memory_manager: MemoryManager):
     for file_info in files:
         size_text = f"{file_info['size']} bytes"
         table.add_row(
-            file_info["name"],
-            file_info["type"],
-            file_info["description"],
-            size_text
+            file_info["name"], file_info["type"], file_info["description"], size_text
         )
 
     console.print(table)
@@ -516,16 +553,19 @@ def edit_agent_memory(memory_manager: MemoryManager):
     current_content = memory_manager.read_agent_memory()
 
     # 获取编辑器偏好
-    editor = os.environ.get('EDITOR', 'nano')  # 默认使用nano
+    editor = os.environ.get("EDITOR", "nano")  # 默认使用nano
 
     # 检查编辑器可用性
     if not shutil.which(editor):
         console.print(f"[yellow]⚠ 编辑器 '{editor}' 不可用，使用默认编辑器[/yellow]")
-        editor = 'nano'
+        editor = "nano"
 
     # 写入临时文件
     import tempfile
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False, encoding='utf-8') as temp_file:
+
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".md", delete=False, encoding="utf-8"
+    ) as temp_file:
         temp_file.write(current_content)
         temp_path = temp_file.name
 
@@ -535,7 +575,7 @@ def edit_agent_memory(memory_manager: MemoryManager):
 
     # 读取编辑后的内容
     try:
-        new_content = Path(temp_path).read_text(encoding='utf-8')
+        new_content = Path(temp_path).read_text(encoding="utf-8")
 
         # 检查内容是否有变化
         if new_content != current_content:
@@ -545,7 +585,9 @@ def edit_agent_memory(memory_manager: MemoryManager):
                 # 显示内容统计
                 line_count = len(new_content.splitlines())
                 char_count = len(new_content)
-                console.print(f"[dim]更新内容: {line_count} 行, {char_count} 字符[/dim]")
+                console.print(
+                    f"[dim]更新内容: {line_count} 行, {char_count} 字符[/dim]"
+                )
             else:
                 console.print("[yellow]⚠️ 内容没有变化，保持原样[/yellow]")
         else:
@@ -579,31 +621,33 @@ def edit_semantic_memory(memory_manager: MemoryManager):
             content_preview = content[:50]
             if len(content) > 50:
                 content_preview += "..."
-            importance = safe_get_attribute(memory, 'importance', 1.0)
-            timestamp = safe_get_attribute(memory, 'timestamp', 0)
+            importance = safe_get_attribute(memory, "importance", 1.0)
+            timestamp = safe_get_attribute(memory, "timestamp", 0)
 
             table.add_row(
                 i,
                 content_preview,
                 f"{importance:.2f}",
-                datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M")
+                datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M"),
             )
 
         console.print(table)
 
         if len(current_memories) > 10:
-            console.print(f"[dim]还有 {len(current_memories) - 10} 条语义记忆未显示[/dim]")
+            console.print(
+                f"[dim]还有 {len(current_memories) - 10} 条语义记忆未显示[/dim]"
+            )
 
     console.print("\n[dim]语义记忆包含: 概念、规则、用户偏好等长期知识[/dim]")
     console.print("[dim]使用 'vs code <文件名>' 或其他编辑器编辑原始JSON文件[/dim]")
 
     # 直接编辑JSON文件
     file_path = memory_manager.semantic_memory_file
-    editor = os.environ.get('EDITOR', 'nano')
+    editor = os.environ.get("EDITOR", "nano")
 
     if not shutil.which(editor):
         console.print(f"[yellow]⚠ 编辑器 '{editor}' 不可用，使用nano[/yellow]")
-        editor = 'nano'
+        editor = "nano"
 
     console.print(f"[dim]使用编辑器: {editor} {file_path}[/dim]")
     os.system(f"{editor} {file_path}")
@@ -628,31 +672,33 @@ def edit_episodic_memory(memory_manager: MemoryManager):
             content_preview = content[:50]
             if len(content) > 50:
                 content_preview += "..."
-            importance = safe_get_attribute(memory, 'importance', 0.8)
-            timestamp = safe_get_attribute(memory, 'timestamp', 0)
+            importance = safe_get_attribute(memory, "importance", 0.8)
+            timestamp = safe_get_attribute(memory, "timestamp", 0)
 
             table.add_row(
                 i,
                 content_preview,
                 f"{importance:.2f}",
-                datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M")
+                datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M"),
             )
 
         console.print(table)
 
         if len(current_memories) > 10:
-            console.print(f"[dim]还有 {len(current_memories) - 10} 条情节记忆未显示[/dim]")
+            console.print(
+                f"[dim]还有 {len(current_memories) - 10} 条情节记忆未显示[/dim]"
+            )
 
     console.print("\n[dim]情节记忆包含: 重要事件、具体对话、交互记录[/dim]")
     console.print("[dim]使用 'vs code <文件名>' 或其他编辑器编辑原始JSON文件[/dim]")
 
     # 直接编辑JSON文件
     file_path = memory_manager.episodic_memory_file
-    editor = os.environ.get('EDITOR', 'nano')
+    editor = os.environ.get("EDITOR", "nano")
 
     if not shutil.which(editor):
         console.print(f"[yellow]⚠ 编辑器 '{editor}' 不可用，使用nano[/yellow]")
-        editor = 'nano'
+        editor = "nano"
 
     console.print(f"[dim]使用编辑器: {editor} {file_path}[/dim]")
     os.system(f"{editor} {file_path}")
@@ -719,14 +765,14 @@ def view_semantic_memory(memory_manager: MemoryManager):
 
     for i, memory in enumerate(memories, 1):
         content = safe_get_content(memory)
-        importance = safe_get_attribute(memory, 'importance', 1.0)
-        timestamp = safe_get_attribute(memory, 'timestamp', 0)
+        importance = safe_get_attribute(memory, "importance", 1.0)
+        timestamp = safe_get_attribute(memory, "timestamp", 0)
 
         table.add_row(
             i,
             content[:80] + ("..." if len(content) > 80 else ""),
             f"{importance:.2f}",
-            datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
+            datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S"),
         )
 
     console.print(table)
@@ -751,14 +797,14 @@ def view_episodic_memory(memory_manager: MemoryManager):
 
     for i, memory in enumerate(memories, 1):
         content = safe_get_content(memory)
-        importance = safe_get_attribute(memory, 'importance', 0.8)
-        timestamp = safe_get_attribute(memory, 'timestamp', 0)
+        importance = safe_get_attribute(memory, "importance", 0.8)
+        timestamp = safe_get_attribute(memory, "timestamp", 0)
 
         table.add_row(
             i,
             content[:80] + ("..." if len(content) > 80 else ""),
             f"{importance:.2f}",
-            datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
+            datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S"),
         )
 
     console.print(table)
@@ -774,7 +820,7 @@ def view_memory_file(memory_manager: MemoryManager, file_path: str):
         return
 
     try:
-        content = full_path.read_text(encoding='utf-8')
+        content = full_path.read_text(encoding="utf-8")
         file_size = full_path.stat().st_size
         file_mtime = datetime.fromtimestamp(full_path.stat().st_mtime)
 
@@ -784,15 +830,17 @@ def view_memory_file(memory_manager: MemoryManager, file_path: str):
         console.print()
 
         # 根据文件类型选择显示方式
-        if file_path.endswith('.json'):
+        if file_path.endswith(".json"):
             # JSON文件 - 美化显示
             try:
                 json_data = json.loads(content)
-                console.print(Panel(
-                    json.dumps(json_data, ensure_ascii=False, indent=2),
-                    title="JSON文件内容",
-                    border_style="blue"
-                ))
+                console.print(
+                    Panel(
+                        json.dumps(json_data, ensure_ascii=False, indent=2),
+                        title="JSON文件内容",
+                        border_style="blue",
+                    )
+                )
             except json.JSONDecodeError:
                 console.print("[yellow]⚠ JSON格式错误，显示原始内容[/yellow]")
                 console.print(Panel(content, title="文件内容", border_style="red"))
@@ -800,22 +848,24 @@ def view_memory_file(memory_manager: MemoryManager, file_path: str):
             # 普通文件 - 语法高亮
             try:
                 # 根据文件扩展名确定语法高亮
-                if file_path.endswith('.md'):
+                if file_path.endswith(".md"):
                     syntax = "markdown"
-                elif file_path.endswith('.py'):
+                elif file_path.endswith(".py"):
                     syntax = "python"
-                elif file_path.endswith('.js'):
+                elif file_path.endswith(".js"):
                     syntax = "javascript"
-                elif file_path.endswith('.json'):
+                elif file_path.endswith(".json"):
                     syntax = "json"
                 else:
                     syntax = "text"
 
-                console.print(Panel(
-                    Syntax(content, syntax=syntax),
-                    title=f"文件内容 ({syntax})",
-                    border_style="blue"
-                ))
+                console.print(
+                    Panel(
+                        Syntax(content, syntax=syntax),
+                        title=f"文件内容 ({syntax})",
+                        border_style="blue",
+                    )
+                )
             except Exception:
                 console.print(Panel(content, title="文件内容", border_style="blue"))
 
@@ -839,23 +889,15 @@ def view_all_memories(memory_manager: MemoryManager):
     stats_table.add_row(
         "Agent主记忆",
         f"{stats['agent_memory_lines']} 行 / {stats['agent_memory_size']} 字符",
-        "AI Agent的核心指令和配置信息"
+        "AI Agent的核心指令和配置信息",
     )
     stats_table.add_row(
-        "语义记忆",
-        f"{stats['semantic_memory_count']} 条",
-        "概念、规则、偏好等长期知识"
+        "语义记忆", f"{stats['semantic_memory_count']} 条", "概念、规则、偏好等长期知识"
     )
     stats_table.add_row(
-        "情节记忆",
-        f"{stats['episodic_memory_count']} 条",
-        "重要事件、对话、交互记录"
+        "情节记忆", f"{stats['episodic_memory_count']} 条", "重要事件、对话、交互记录"
     )
-    stats_table.add_row(
-        "总计",
-        f"{stats['total_memories']} 条",
-        "所有类型的记忆"
-    )
+    stats_table.add_row("总计", f"{stats['total_memories']} 条", "所有类型的记忆")
 
     console.print(stats_table)
 
@@ -872,13 +914,10 @@ def view_all_memories(memory_manager: MemoryManager):
 
         for file_info in files:
             size_text = f"{file_info['size']} bytes"
-            modified_time = file_info['modified'][:19]  # 只显示前19个字符
+            modified_time = file_info["modified"][:19]  # 只显示前19个字符
 
             files_table.add_row(
-                file_info['name'],
-                file_info['type'],
-                size_text,
-                modified_time
+                file_info["name"], file_info["type"], size_text, modified_time
             )
 
         console.print(files_table)
@@ -898,13 +937,17 @@ def handle_memory_search(memory_manager: MemoryManager, args: List[str]) -> bool
         query = " ".join(args[:-1])
         memory_type = args[-1]
 
-    console.print(f"[bold blue]🔍 搜索记忆: '{query}' (类型: {memory_type})[/bold blue]")
+    console.print(
+        f"[bold blue]🔍 搜索记忆: '{query}' (类型: {memory_type})[/bold blue]"
+    )
 
     results = memory_manager.search_memories(query, memory_type)
 
-    total_results = (len(results["agent_memory"]) +
-                     len(results["semantic_memory"]) +
-                     len(results["episodic_memory"]))
+    total_results = (
+        len(results["agent_memory"])
+        + len(results["semantic_memory"])
+        + len(results["episodic_memory"])
+    )
 
     if total_results == 0:
         console.print(f"[yellow]⚠ 没有找到包含 '{query}' 的记忆[/yellow]")
@@ -917,10 +960,14 @@ def handle_memory_search(memory_manager: MemoryManager, args: List[str]) -> bool
     if results["agent_memory"]:
         console.print("\n[bold blue]📝 Agent记忆匹配项:[/bold blue]")
         for i, result in enumerate(results["agent_memory"][:10], 1):
-            console.print(f"  {i}. [cyan]第{result['line']}行[/cyan]: {result['content']}")
+            console.print(
+                f"  {i}. [cyan]第{result['line']}行[/cyan]: {result['content']}"
+            )
 
         if len(results["agent_memory"]) > 10:
-            console.print(f"[dim]... 还有 {len(results['agent_memory']) - 10} 个匹配项[/dim]")
+            console.print(
+                f"[dim]... 还有 {len(results['agent_memory']) - 10} 个匹配项[/dim]"
+            )
 
     # 显示语义记忆结果
     if results["semantic_memory"]:
@@ -928,10 +975,14 @@ def handle_memory_search(memory_manager: MemoryManager, args: List[str]) -> bool
         for i, result in enumerate(results["semantic_memory"][:5], 1):
             timestamp = result.get("timestamp", 0)
             time_str = datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
-            console.print(f"  {i}. [magenta]{result['content'][:80]}...[/magenta] (重要性: {result['importance']}, 时间: {time_str})")
+            console.print(
+                f"  {i}. [magenta]{result['content'][:80]}...[/magenta] (重要性: {result['importance']}, 时间: {time_str})"
+            )
 
         if len(results["semantic_memory"]) > 5:
-            console.print(f"[dim]... 还有 {len(results['semantic_memory']) - 5} 个匹配项[/dim]")
+            console.print(
+                f"[dim]... 还有 {len(results['semantic_memory']) - 5} 个匹配项[/dim]"
+            )
 
     # 显示情节记忆结果
     if results["episodic_memory"]:
@@ -939,10 +990,14 @@ def handle_memory_search(memory_manager: MemoryManager, args: List[str]) -> bool
         for i, result in enumerate(results["episodic_memory"][:5], 1):
             timestamp = result.get("timestamp", 0)
             time_str = datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
-            console.print(f"  {i}. [green]{result['content'][:80]}...[/green] (重要性: {result['importance']}, 时间: {time_str})")
+            console.print(
+                f"  {i}. [green]{result['content'][:80]}...[/green] (重要性: {result['importance']}, 时间: {time_str})"
+            )
 
         if len(results["episodic_memory"]) > 5:
-            console.print(f"[dim]... 还有 {len(results['episodic_memory']) - 5} 个匹配项[/dim]")
+            console.print(
+                f"[dim]... 还有 {len(results['episodic_memory']) - 5} 个匹配项[/dim]"
+            )
 
     console.print(f"\n[dim]提示: 使用 '/memory view <类型>' 查看详细内容[/dim]")
 
@@ -961,41 +1016,15 @@ def handle_memory_stats(memory_manager: MemoryManager, args: List[str]) -> bool:
     table.add_column("数值", style="green")
     table.add_column("说明", style="blue")
 
+    table.add_row("Agent记忆行数", stats["agent_memory_lines"], "Agent主记忆的总行数")
     table.add_row(
-        "Agent记忆行数",
-        stats['agent_memory_lines'],
-        "Agent主记忆的总行数"
+        "Agent记忆大小", f"{stats['agent_memory_size']} 字符", "Agent主记忆文件的大小"
     )
-    table.add_row(
-        "Agent记忆大小",
-        f"{stats['agent_memory_size']} 字符",
-        "Agent主记忆文件的大小"
-    )
-    table.add_row(
-        "语义记忆条数",
-        stats['semantic_memory_count'],
-        "语义记忆的条目数量"
-    )
-    table.add_row(
-        "情节记忆条数",
-        stats['episodic_memory_count'],
-        "情节记忆的条目数量"
-    )
-    table.add_row(
-        "总记忆条目",
-        stats['total_memories'],
-        "所有记忆类型的总条目数"
-    )
-    table.add_row(
-        "记忆目录",
-        stats['memory_dir'],
-        "记忆存储的目录路径"
-    )
-    table.add_row(
-        "最后更新",
-        stats['last_modified'],
-        "记忆的最后更新时间"
-    )
+    table.add_row("语义记忆条数", stats["semantic_memory_count"], "语义记忆的条目数量")
+    table.add_row("情节记忆条数", stats["episodic_memory_count"], "情节记忆的条目数量")
+    table.add_row("总记忆条目", stats["total_memories"], "所有记忆类型的总条目数")
+    table.add_row("记忆目录", stats["memory_dir"], "记忆存储的目录路径")
+    table.add_row("最后更新", stats["last_modified"], "记忆的最后更新时间")
 
     console.print(table)
 
@@ -1010,27 +1039,31 @@ def handle_memory_stats(memory_manager: MemoryManager, args: List[str]) -> bool:
         console.print(f"\n[bold blue]💾 内存使用:[/bold blue]")
         console.print(f"  记忆目录大小: {dir_size / 1024:.2f} KB")
 
-        if stats['total_memories'] > 0:
-            avg_size = dir_size / stats['total_memories']
+        if stats["total_memories"] > 0:
+            avg_size = dir_size / stats["total_memories"]
             console.print(f"  平均记忆项大小: {avg_size:.2f} bytes")
     except Exception:
         pass
 
     # 记忆分布
-    semantic_count = stats['semantic_memory_count']
-    episodic_count = stats['episodic_memory_count']
+    semantic_count = stats["semantic_memory_count"]
+    episodic_count = stats["episodic_memory_count"]
 
     if semantic_count + episodic_count > 0:
         console.print(f"\n[bold blue]📈 记忆分布:[/bold blue]")
         total = semantic_count + episodic_count
-        console.print(f"  语义记忆: {semantic_count} 条 ({semantic_count/total*100:.1f}%)")
-        console.print(f"  情节记忆: {episodic_count} 条 ({episodic_count/total*100:.1f}%)")
+        console.print(
+            f"  语义记忆: {semantic_count} 条 ({semantic_count/total*100:.1f}%)"
+        )
+        console.print(
+            f"  情节记忆: {episodic_count} 条 ({episodic_count/total*100:.1f}%)"
+        )
 
     # 使用建议
     console.print(f"\n[bold blue]💡 使用建议:[/bold blue]")
-    if stats['agent_memory_size'] == 0:
+    if stats["agent_memory_size"] == 0:
         console.print("  • Agent主记忆为空，建议添加基础配置信息")
-    if stats['total_memories'] == 0:
+    if stats["total_memories"] == 0:
         console.print("  • 还没有分层记忆，通过对话会自动创建")
     console.print("  • 定期导出记忆备份，防止数据丢失")
     console.print("  • 使用搜索功能快速查找相关信息")
@@ -1100,22 +1133,22 @@ def handle_memory_list(memory_manager: MemoryManager, args: List[str]) -> bool:
 
     for file_info in files:
         table.add_row(
-            file_info['name'],
-            file_info['type'],
+            file_info["name"],
+            file_info["type"],
             f"{file_info['size']} bytes",
-            file_info['modified']
+            file_info["modified"],
         )
 
     console.print(table)
 
     # 显示存储使用情况
-    total_size = sum(f['size'] for f in files)
+    total_size = sum(f["size"] for f in files)
     console.print(f"\n[dim]总存储: {total_size / 1024:.2f} KB[/dim]")
 
     # 按类型统计
     type_counts = {}
     for file_info in files:
-        file_type = file_info['type']
+        file_type = file_info["type"]
         type_counts[file_type] = type_counts.get(file_type, 0) + 1
 
     if type_counts:
@@ -1158,7 +1191,9 @@ def handle_memory_backup(memory_manager: MemoryManager, args: List[str]) -> bool
             console.print(f"✅ 备份: {backup_file.name}")
 
         if backup_files:
-            console.print(f"\n[green]✅ 备份完成！共 {len(backup_files)} 个文件[/green]")
+            console.print(
+                f"\n[green]✅ 备份完成！共 {len(backup_files)} 个文件[/green]"
+            )
             console.print(f"备份目录: {backup_dir}")
             console.print(f"备份时间: {timestamp}")
             return True
@@ -1194,7 +1229,9 @@ def handle_memory_restore(memory_manager: MemoryManager, args: List[str]) -> boo
         console.print(f"[cyan]找到 {len(backup_files)} 个匹配的备份文件:[/cyan]")
         for i, file_path in enumerate(backup_files, 1):
             file_name = file_path.name
-            modified_time = datetime.fromtimestamp(file_path.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
+            modified_time = datetime.fromtimestamp(file_path.stat().st_mtime).strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
             console.log(f"  {i}. {file_name} ({modified_time})")
 
         # 让用户选择
@@ -1246,8 +1283,7 @@ def handle_memory_clear(memory_manager: MemoryManager, args: List[str]) -> bool:
     console.print(f"[bold red]⚠ 清空记忆: {memory_type}[/bold red]")
 
     confirmed = Confirm.ask(
-        f"确定要清空 {memory_type} 类型的所有记忆吗？此操作不可撤销！",
-        default=False
+        f"确定要清空 {memory_type} 类型的所有记忆吗？此操作不可撤销！", default=False
     )
 
     if not confirmed:
@@ -1268,7 +1304,9 @@ def handle_memory_clear(memory_manager: MemoryManager, args: List[str]) -> bool:
 
         if memory_type in ["semantic", "all"]:
             # 清空语义记忆
-            backup_file = memory_manager.semantic_memory_file.with_suffix(".backup_clear")
+            backup_file = memory_manager.semantic_memory_file.with_suffix(
+                ".backup_clear"
+            )
             memory_manager._create_backup(memory_manager.semantic_memory_file)
 
             memory_manager.write_semantic_memory([])  # 清空列表
@@ -1277,7 +1315,9 @@ def handle_memory_clear(memory_manager: MemoryManager, args: List[str]) -> bool:
 
         if memory_type in ["episodic", "all"]:
             # 清空情节记忆
-            backup_file = memory_manager.episodic_memory_file.with_suffix(".backup_clear")
+            backup_file = memory_manager.episodic_memory_file.with_suffix(
+                ".backup_clear"
+            )
             memory_manager._create_backup(memory_manager.episodic_memory_file)
 
             memory_manager.write_episodic_memory([])  # 清空列表
@@ -1309,6 +1349,7 @@ def export_memories(export_path: Optional[str] = None):
     # 获取当前助手ID并创建记忆管理器
     try:
         from ..agents.agent import get_current_assistant_id
+
         assistant_id = get_current_assistant_id()
         manager = MemoryManager(assistant_id)
         return manager.export_memories(export_path)
@@ -1320,6 +1361,7 @@ def import_memories(import_path: str):
     """导入记忆（兼容函数）"""
     try:
         from ..agents.agent import get_current_assistant_id
+
         assistant_id = get_current_assistant_id()
         manager = MemoryManager(assistant_id)
         return manager.import_memories(import_path)

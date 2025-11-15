@@ -6,12 +6,13 @@ from pathlib import Path
 
 import dotenv
 from rich.console import Console
-from ..prompt.prompt_template import system_prompt,memory_default_prompt
+
+from ..prompt.prompt_template import memory_default_prompt, system_prompt
 
 dotenv.load_dotenv()
 
-modelName= os.environ.get("OPENAI_MODEL", "DefaultModel")
-baseUrl = os.environ.get("OPENAI_API_BASE",'defaultUrl')
+modelName = os.environ.get("OPENAI_MODEL", "DefaultModel")
+baseUrl = os.environ.get("OPENAI_API_BASE", "defaultUrl")
 
 # Color scheme with deep green and deep blue
 COLORS = {
@@ -28,16 +29,17 @@ COLORS = {
     "info": "#0000ff",  # 蓝色 - 信息提示
 }
 
+
 def get_project_version():
     """Get project version from pyproject.toml."""
     try:
         pyproject_path = Path(__file__).parent.parent.parent / "pyproject.toml"
         if pyproject_path.exists():
-            with open(pyproject_path, 'r', encoding='utf-8') as f:
+            with open(pyproject_path, "r", encoding="utf-8") as f:
                 content = f.read()
-                for line in content.split('\n'):
-                    if line.strip().startswith('version = '):
-                        return line.split('=')[1].strip().strip('"\'')
+                for line in content.split("\n"):
+                    if line.strip().startswith("version = "):
+                        return line.split("=")[1].strip().strip("\"'")
         return "0.1.0"  # Default version
     except Exception:
         return "0.1.0"
@@ -68,6 +70,7 @@ def get_ascii_banner():
 \033[38;2;5;150;105m Using OpenAI model: {modelName}\033[0m
 \033[38;2;5;150;105m Base URL: {baseUrl}\033[0m
 """
+
 
 # ASCII art banner function
 DEEP_AGENTS_ASCII = get_ascii_banner()
@@ -149,11 +152,11 @@ def get_default_coding_instructions() -> str:
 
     # 修复 Windows 编码问题，强制使用 UTF-8 编码
     try:
-        return default_prompt_path.read_text(encoding='utf-8')
+        return default_prompt_path.read_text(encoding="utf-8")
     except UnicodeDecodeError:
         # 如果 UTF-8 失败，尝试其他编码
         try:
-            return default_prompt_path.read_text(encoding='gbk')
+            return default_prompt_path.read_text(encoding="gbk")
         except UnicodeDecodeError:
             # 如果都失败，使用备用内容
             return get_fallback_prompt()
@@ -212,8 +215,12 @@ def create_model():
         from langchain_anthropic import ChatAnthropic
 
         # Anthropic特定配置
-        anthropic_base_url = os.environ.get("ANTHROPIC_BASE_URL") or os.environ.get("ANTHROPIC_API_BASE")
-        model_name = os.environ.get("ANTHROPIC_MODEL") or os.environ.get("ANTHROPIC_MODEL_NAME", "claude-sonnet-4-5-20250929")
+        anthropic_base_url = os.environ.get("ANTHROPIC_BASE_URL") or os.environ.get(
+            "ANTHROPIC_API_BASE"
+        )
+        model_name = os.environ.get("ANTHROPIC_MODEL") or os.environ.get(
+            "ANTHROPIC_MODEL_NAME", "claude-sonnet-4-5-20250929"
+        )
 
         # 构建模型参数
         model_kwargs = {
@@ -248,6 +255,7 @@ def create_model():
     # 尝试运行首次配置向导
     try:
         from ..utils.first_time_setup import create_interactive_env
+
         if create_interactive_env():
             # 配置成功，重新加载环境变量并重试
             dotenv.load_dotenv(override=True)
@@ -255,7 +263,9 @@ def create_model():
             return create_model()
         else:
             # 用户取消了配置
-            console.print("[bold red]❌ Configuration cancelled. Cannot proceed without API keys.[/bold red]")
+            console.print(
+                "[bold red]❌ Configuration cancelled. Cannot proceed without API keys.[/bold red]"
+            )
             sys.exit(1)
     except ImportError:
         # 无法导入配置向导，显示原始错误信息
@@ -269,6 +279,7 @@ def create_model():
 
         # 显示跨平台的设置说明
         import platform
+
         if platform.system() == "Windows":
             console.print("\n[bold cyan]Windows setup:[/bold cyan]")
             console.print("  Command line (temporary):")
@@ -280,7 +291,9 @@ def create_model():
             console.print("  Command line (temporary):")
             console.print("    export OPENAI_API_KEY=your_api_key_here")
             console.print("  Add to shell profile (permanent):")
-            console.print("    echo 'export OPENAI_API_KEY=your_api_key_here' >> ~/.bashrc")
+            console.print(
+                "    echo 'export OPENAI_API_KEY=your_api_key_here' >> ~/.bashrc"
+            )
 
         console.print("\n[yellow]Or add it to your .env file.[/yellow]")
         sys.exit(1)

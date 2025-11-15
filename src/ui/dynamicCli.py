@@ -131,14 +131,15 @@ class TypewriterPrinter:
 
     def loading_progress(self, task_name: str = "处理中", duration: float = 2.0):
         """显示加载进度条动画"""
-        from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
+        from rich.progress import (BarColumn, Progress, SpinnerColumn,
+                                   TaskProgressColumn, TextColumn)
 
         with Progress(
             SpinnerColumn(),
             TextColumn("[bold blue]{task.description}"),
             BarColumn(),
             TaskProgressColumn(),
-            console=console
+            console=console,
         ) as progress:
             task = progress.add_task(task_name, total=100)
 
@@ -151,7 +152,23 @@ class TypewriterPrinter:
         from rich.live import Live
 
         final_style = COLORS.get(style, style)
-        cursor_chars = ["▏", "▎", "▍", "▌", "▋", "▊", "▉", "█", "▉", "▊", "▋", "▌", "▍", "▎", "▏"]
+        cursor_chars = [
+            "▏",
+            "▎",
+            "▍",
+            "▌",
+            "▋",
+            "▊",
+            "▉",
+            "█",
+            "▉",
+            "▊",
+            "▋",
+            "▌",
+            "▍",
+            "▎",
+            "▏",
+        ]
         cursor_index = 0
 
         with Live("", console=console, refresh_per_second=30) as live:
@@ -160,7 +177,9 @@ class TypewriterPrinter:
                 current_text += char
                 cursor = cursor_chars[cursor_index % len(cursor_chars)]
                 cursor_index += 1
-                live.update(f"[{final_style}]{current_text}[white]{cursor}[/{final_style}]")
+                live.update(
+                    f"[{final_style}]{current_text}[white]{cursor}[/{final_style}]"
+                )
                 time.sleep(0.05)
 
             # 完成后移除光标
@@ -168,8 +187,8 @@ class TypewriterPrinter:
 
     def rainbow_text(self, text: str):
         """彩虹色文字效果"""
-        from rich.text import Text
         from rich.live import Live
+        from rich.text import Text
 
         colors = ["red", "yellow", "green", "cyan", "blue", "magenta"]
 
@@ -222,9 +241,10 @@ class TypewriterPrinter:
 
     def matrix_rain(self, text: str, style: str = "green"):
         """矩阵雨效果"""
+        import random
+
         from rich.live import Live
         from rich.text import Text
-        import random
 
         final_style = COLORS.get(style, style)
 
@@ -248,13 +268,7 @@ class TypewriterPrinter:
 
     def success_animation(self, message: str):
         """成功消息动画"""
-        steps = [
-            "   ○     ",
-            "  ○○    ",
-            " ○○○○   ",
-            "○○○○○○○○",
-            f"✅ {message}"
-        ]
+        steps = ["   ○     ", "  ○○    ", " ○○○○   ", "○○○○○○○○", f"✅ {message}"]
 
         for step in steps:
             console.print(f"[green]{step}[/green]")

@@ -7,38 +7,42 @@ BugsInPy是一个专注于Python项目bug修复的数据集，
 
 import json
 import os
-import subprocess
-from typing import List, Dict, Optional, Any
-from pathlib import Path
-import requests
-import tempfile
 import shutil
+import subprocess
+import tempfile
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import requests
 
 # 使用多层导入策略
 try:
-    from .base import BaseDatasetLoader
     from ..data_types import EvaluationTask
+    from .base import BaseDatasetLoader
 except ImportError:
     try:
         from base import BaseDatasetLoader
         from data_types import EvaluationTask
     except ImportError:
         try:
-            from Dataset.loaders.base import BaseDatasetLoader
             from Dataset.data_types import EvaluationTask
+            from Dataset.loaders.base import BaseDatasetLoader
         except ImportError:
             # 最后尝试：从当前目录导入
             import sys
             from pathlib import Path
+
             current_dir = Path(__file__).parent
             if str(current_dir) not in sys.path:
                 sys.path.insert(0, str(current_dir))
             from base import BaseDatasetLoader
+
             # 从根目录导入data_types
             root_dir = current_dir.parent
             if str(root_dir) not in sys.path:
                 sys.path.insert(0, str(root_dir))
             from ..data_types import EvaluationTask
+
 
 class BugsInPyLoader(BaseDatasetLoader):
     """
@@ -51,7 +55,9 @@ class BugsInPyLoader(BaseDatasetLoader):
     - 提供bug类型分类
     """
 
-    def __init__(self, dataset_path: str = "./datasets/BugsInPy", cache_dir: str = None):
+    def __init__(
+        self, dataset_path: str = "./datasets/BugsInPy", cache_dir: str = None
+    ):
         super().__init__(dataset_path, cache_dir)
         self.bugs_dir = self.dataset_path / "bugs"
         self.metadata_file = self.dataset_path / "metadata.json"
@@ -78,17 +84,17 @@ class BugsInPyLoader(BaseDatasetLoader):
                     "git@github.com:soarsanu/BugsInPy.git",
                     "git@github.com:wenmin-wu/BugsInPy.git",
                     "https://github.com/soarsanu/BugsInPy.git",
-                    "https://github.com/wenmin-wu/BugsInPy.git"
+                    "https://github.com/wenmin-wu/BugsInPy.git",
                 ]
 
                 clone_success = False
                 for repo_url in repo_urls:
                     print(f"[BugsInPyLoader] 尝试克隆: {repo_url}")
-                    result = subprocess.run([
-                        "git", "clone",
-                        repo_url,
-                        str(self.dataset_path / "BugsInPy")
-                    ], capture_output=True, text=True)
+                    result = subprocess.run(
+                        ["git", "clone", repo_url, str(self.dataset_path / "BugsInPy")],
+                        capture_output=True,
+                        text=True,
+                    )
 
                     if result.returncode == 0:
                         print(f"[BugsInPyLoader] 成功克隆: {repo_url}")
@@ -99,8 +105,12 @@ class BugsInPyLoader(BaseDatasetLoader):
                         print(f"[BugsInPyLoader] 错误信息: {result.stderr.strip()}")
 
                 if not clone_success:
-                    print("[BugsInPyLoader] 所有仓库地址都无法访问，将创建模拟数据集结构")
-                    print("[BugsInPyLoader] 注意: 这是用于测试的模拟数据，不包含真实的bug数据")
+                    print(
+                        "[BugsInPyLoader] 所有仓库地址都无法访问，将创建模拟数据集结构"
+                    )
+                    print(
+                        "[BugsInPyLoader] 注意: 这是用于测试的模拟数据，不包含真实的bug数据"
+                    )
 
                     # 创建模拟的BugsInPy数据结构
                     return self._create_mock_dataset()
@@ -126,7 +136,7 @@ class BugsInPyLoader(BaseDatasetLoader):
                     ["python", str(download_script)],
                     cwd=self.dataset_path,
                     capture_output=True,
-                    text=True
+                    text=True,
                 )
 
                 if result.returncode != 0:
@@ -140,7 +150,12 @@ class BugsInPyLoader(BaseDatasetLoader):
             print(f"[BugsInPyLoader] 下载失败: {e}")
             return False
 
-    def load_tasks(self, sample_size: int = None, difficulty_filter: str = None, bug_type_filter: str = None) -> List[EvaluationTask]:
+    def load_tasks(
+        self,
+        sample_size: int = None,
+        difficulty_filter: str = None,
+        bug_type_filter: str = None,
+    ) -> List[EvaluationTask]:
         """
         加载BugsInPy评估任务
 
@@ -152,10 +167,14 @@ class BugsInPyLoader(BaseDatasetLoader):
         Returns:
             List[EvaluationTask]: 评估任务列表
         """
-        print(f"[BugsInPyLoader] 加载任务，样本大小: {sample_size}, 难度过滤: {difficulty_filter}, Bug类型过滤: {bug_type_filter}")
+        print(
+            f"[BugsInPyLoader] 加载任务，样本大小: {sample_size}, 难度过滤: {difficulty_filter}, Bug类型过滤: {bug_type_filter}"
+        )
 
         # 检查缓存
-        cache_key = f"bugsinpy_tasks_{sample_size}_{difficulty_filter}_{bug_type_filter}"
+        cache_key = (
+            f"bugsinpy_tasks_{sample_size}_{difficulty_filter}_{bug_type_filter}"
+        )
         cached_tasks = self.load_cache(cache_key)
         if cached_tasks:
             print(f"[BugsInPyLoader] 从缓存加载 {len(cached_tasks)} 个任务")
@@ -189,7 +208,9 @@ class BugsInPyLoader(BaseDatasetLoader):
                     task = self._load_single_bug(project_name, bug_dir)
                     if task:
                         # 应用过滤器
-                        if self._should_include_task(task, difficulty_filter, bug_type_filter):
+                        if self._should_include_task(
+                            task, difficulty_filter, bug_type_filter
+                        ):
                             all_tasks.append(task)
                 except Exception as e:
                     print(f"[BugsInPyLoader] 加载bug失败 {bug_dir.name}: {e}")
@@ -199,6 +220,7 @@ class BugsInPyLoader(BaseDatasetLoader):
         # 采样
         if sample_size and sample_size < len(all_tasks):
             import random
+
             random.seed(42)  # 确保可重现
             all_tasks = random.sample(all_tasks, sample_size)
 
@@ -243,7 +265,7 @@ class BugsInPyLoader(BaseDatasetLoader):
             "projects": projects,
             "bug_types": bug_types,
             "path": str(self.dataset_path),
-            "description": "Real-world Python bugs with verified fixes"
+            "description": "Real-world Python bugs with verified fixes",
         }
 
     def get_required_files(self) -> List[str]:
@@ -263,10 +285,7 @@ class BugsInPyLoader(BaseDatasetLoader):
         if mock_metadata.exists():
             return ["metadata.json", "bugs"]
 
-        return [
-            "download_data.py",
-            "README.md"
-        ]
+        return ["download_data.py", "README.md"]
 
     def validate_dataset(self) -> bool:
         """
@@ -285,7 +304,7 @@ class BugsInPyLoader(BaseDatasetLoader):
 
         if mock_metadata.exists() and bugs_dir.exists():
             try:
-                with open(mock_metadata, 'r', encoding='utf-8') as f:
+                with open(mock_metadata, "r", encoding="utf-8") as f:
                     metadata = json.load(f)
                 if metadata.get("version") == "1.0-mock":
                     print("[BugsInPyLoader] 检测到模拟数据集，验证通过")
@@ -302,7 +321,9 @@ class BugsInPyLoader(BaseDatasetLoader):
 
         return True
 
-    def _load_single_bug(self, project_name: str, bug_dir: Path) -> Optional[EvaluationTask]:
+    def _load_single_bug(
+        self, project_name: str, bug_dir: Path
+    ) -> Optional[EvaluationTask]:
         """
         加载单个bug
 
@@ -319,14 +340,14 @@ class BugsInPyLoader(BaseDatasetLoader):
             print(f"[BugsInPyLoader] bug.json不存在: {bug_json}")
             return None
 
-        with open(bug_json, 'r', encoding='utf-8') as f:
+        with open(bug_json, "r", encoding="utf-8") as f:
             bug_info = json.load(f)
 
         # 读取失败的测试
         failing_test_file = bug_dir / "failing_test.txt"
         failing_tests = []
         if failing_test_file.exists():
-            with open(failing_test_file, 'r', encoding='utf-8') as f:
+            with open(failing_test_file, "r", encoding="utf-8") as f:
                 failing_tests = [line.strip() for line in f if line.strip()]
 
         # 检查patch文件
@@ -343,7 +364,7 @@ class BugsInPyLoader(BaseDatasetLoader):
             "language": "python",
             "framework": self._infer_framework_from_project(project_name),
             "bug_type": bug_info.get("type", "unknown"),
-            "severity": bug_info.get("severity", "unknown")
+            "severity": bug_info.get("severity", "unknown"),
         }
 
         # 构建测试命令
@@ -363,7 +384,7 @@ class BugsInPyLoader(BaseDatasetLoader):
             setup_commands=setup_commands,
             timeout=300,
             repo_info=repo_info,
-            ground_truth=patch_path
+            ground_truth=patch_path,
         )
 
     def _infer_framework_from_project(self, project_name: str) -> Optional[str]:
@@ -386,7 +407,7 @@ class BugsInPyLoader(BaseDatasetLoader):
             "scipy": "scipy",
             "sphinx": "sphinx",
             "sqlalchemy": "sqlalchemy",
-            "tornado": "tornado"
+            "tornado": "tornado",
         }
 
         for framework, mapped_framework in framework_mapping.items():
@@ -439,10 +460,9 @@ class BugsInPyLoader(BaseDatasetLoader):
 
         # 项目特定的设置
         if "django" in project_name.lower():
-            commands.extend([
-                "pip install -r requirements/tests.txt",
-                "pip install pytest-django"
-            ])
+            commands.extend(
+                ["pip install -r requirements/tests.txt", "pip install pytest-django"]
+            )
         elif "flask" in project_name.lower():
             commands.append("pip install -e .[dev]")
         elif "requests" in project_name.lower():
@@ -456,7 +476,9 @@ class BugsInPyLoader(BaseDatasetLoader):
 
         return commands
 
-    def _should_include_task(self, task: EvaluationTask, difficulty_filter: str, bug_type_filter: str) -> bool:
+    def _should_include_task(
+        self, task: EvaluationTask, difficulty_filter: str, bug_type_filter: str
+    ) -> bool:
         """
         判断是否应该包含该任务
 
@@ -546,7 +568,7 @@ class BugsInPyLoader(BaseDatasetLoader):
                 bug_json = bug_dir / "bug.json"
                 if bug_json.exists():
                     try:
-                        with open(bug_json, 'r', encoding='utf-8') as f:
+                        with open(bug_json, "r", encoding="utf-8") as f:
                             bug_info = json.load(f)
                             bug_type = bug_info.get("type", "unknown")
                             bug_types[bug_type] = bug_types.get(bug_type, 0) + 1
@@ -577,8 +599,10 @@ class BugsInPyLoader(BaseDatasetLoader):
                         "type": "authentication",
                         "severity": "medium",
                         "description": "Django认证系统中的密码验证存在问题",
-                        "failing_tests": ["tests/test_auth.py::test_password_validation"],
-                        "patch": "@@ -15,2 +15,2 @@\n def validate_password(password, user):\n-    return len(password) >= 6\n+    return len(password) >= 8 and any(c.isdigit() for c in password)"
+                        "failing_tests": [
+                            "tests/test_auth.py::test_password_validation"
+                        ],
+                        "patch": "@@ -15,2 +15,2 @@\n def validate_password(password, user):\n-    return len(password) >= 6\n+    return len(password) >= 8 and any(c.isdigit() for c in password)",
                     },
                     {
                         "id": "bug_002",
@@ -586,8 +610,8 @@ class BugsInPyLoader(BaseDatasetLoader):
                         "severity": "high",
                         "description": "查询构建器中存在SQL注入漏洞",
                         "failing_tests": ["tests/test_sql.py::test_query_sanitization"],
-                        "patch": "@@ -25,1 +25,1 @@\n def build_query(table, where_clause):\n-    return f\"SELECT * FROM {table} WHERE {where_clause}\"\n+    return f\"SELECT * FROM {table} WHERE {sanitize_input(where_clause)}\""
-                    }
+                        "patch": '@@ -25,1 +25,1 @@\n def build_query(table, where_clause):\n-    return f"SELECT * FROM {table} WHERE {where_clause}"\n+    return f"SELECT * FROM {table} WHERE {sanitize_input(where_clause)}"',
+                    },
                 ],
                 "flask": [
                     {
@@ -596,7 +620,7 @@ class BugsInPyLoader(BaseDatasetLoader):
                         "severity": "low",
                         "description": "路由参数匹配过于宽泛",
                         "failing_tests": ["tests/test_routing.py::test_route_matching"],
-                        "patch": "@@ -10,1 +10,1 @@\n @app.route('/user/<username>')\n-    def user_profile(username):\n+    def user_profile(username: str):"
+                        "patch": "@@ -10,1 +10,1 @@\n @app.route('/user/<username>')\n-    def user_profile(username):\n+    def user_profile(username: str):",
                     }
                 ],
                 "requests": [
@@ -605,10 +629,12 @@ class BugsInPyLoader(BaseDatasetLoader):
                         "type": "timeout",
                         "severity": "medium",
                         "description": "长时间请求未正确处理超时",
-                        "failing_tests": ["tests/test_timeout.py::test_request_timeout"],
-                        "patch": "@@ -45,2 +45,3 @@\n def send_request(url, timeout=None):\n     if timeout is None:\n         timeout = 30\n+    import signal\n+    signal.alarm(timeout + 5)"
+                        "failing_tests": [
+                            "tests/test_timeout.py::test_request_timeout"
+                        ],
+                        "patch": "@@ -45,2 +45,3 @@\n def send_request(url, timeout=None):\n     if timeout is None:\n         timeout = 30\n+    import signal\n+    signal.alarm(timeout + 5)",
                     }
-                ]
+                ],
             }
 
             # 为每个项目创建模拟数据
@@ -624,17 +650,17 @@ class BugsInPyLoader(BaseDatasetLoader):
                     bug_info = {
                         "type": bug_data["type"],
                         "severity": bug_data["severity"],
-                        "description": bug_data["description"]
+                        "description": bug_data["description"],
                     }
-                    with open(bug_dir / "bug.json", "w", encoding='utf-8') as f:
+                    with open(bug_dir / "bug.json", "w", encoding="utf-8") as f:
                         json.dump(bug_info, f, indent=2)
 
                     # 创建failing_test.txt
-                    with open(bug_dir / "failing_test.txt", "w", encoding='utf-8') as f:
+                    with open(bug_dir / "failing_test.txt", "w", encoding="utf-8") as f:
                         f.write("\n".join(bug_data["failing_tests"]) + "\n")
 
                     # 创建patch.txt
-                    with open(bug_dir / "patch.txt", "w", encoding='utf-8') as f:
+                    with open(bug_dir / "patch.txt", "w", encoding="utf-8") as f:
                         f.write(bug_data["patch"])
 
             # 创建metadata.json
@@ -643,12 +669,14 @@ class BugsInPyLoader(BaseDatasetLoader):
                 "description": "模拟BugsInPy数据集，用于测试目的",
                 "projects": list(mock_projects.keys()),
                 "total_bugs": sum(len(bugs) for bugs in mock_projects.values()),
-                "note": "这不是真实的BugsInPy数据集，仅用于测试框架功能"
+                "note": "这不是真实的BugsInPy数据集，仅用于测试框架功能",
             }
-            with open(self.dataset_path / "metadata.json", "w", encoding='utf-8') as f:
+            with open(self.dataset_path / "metadata.json", "w", encoding="utf-8") as f:
                 json.dump(metadata, f, indent=2)
 
-            print(f"[BugsInPyLoader] 模拟数据集创建成功，包含 {metadata['total_bugs']} 个bug")
+            print(
+                f"[BugsInPyLoader] 模拟数据集创建成功，包含 {metadata['total_bugs']} 个bug"
+            )
             print("[BugsInPyLoader] 模拟项目:", ", ".join(mock_projects.keys()))
 
             return True

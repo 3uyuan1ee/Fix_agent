@@ -16,8 +16,8 @@ __author__ = "Fix Agent Team"
 
 from .core.agent import DatasetAgent
 from .core.evaluation import EvaluationFramework
-from .loaders.swe_bench import SWEBenchLoader
 from .loaders.bugs_in_py import BugsInPyLoader
+from .loaders.swe_bench import SWEBenchLoader
 from .utils.metrics import MetricsCalculator
 
 __all__ = [
@@ -25,5 +25,5 @@ __all__ = [
     "EvaluationFramework",
     "SWEBenchLoader",
     "BugsInPyLoader",
-    "MetricsCalculator"
+    "MetricsCalculator",
 ]

@@ -1,12 +1,12 @@
 """CLI agent的自定义工具。"""
 
 import os
-from typing import Any, Literal, Optional, List
+from typing import Any, List, Literal, Optional
 
-import requests
-from tavily import TavilyClient
 import dotenv
+import requests
 from langchain_core.tools import tool
+from tavily import TavilyClient
 
 dotenv.load_dotenv()
 
@@ -40,7 +40,11 @@ def http_request(
         包含响应数据的字典，包括状态、头和内容
     """
     try:
-        kwargs: dict[str, Any] = {"url": url, "method": method.upper(), "timeout": timeout}
+        kwargs: dict[str, Any] = {
+            "url": url,
+            "method": method.upper(),
+            "timeout": timeout,
+        }
 
         if headers:
             kwargs["headers"] = headers
@@ -195,34 +199,44 @@ def analyze_code_defects(file_path: str, language: Optional[str] = None) -> str:
         - 建议在代码提交前执行分析
     """
     import json
+
     try:
         # 导入其他工具模块
+        from .defect_aggregator import \
+            aggregate_defects_tool as aggregate_defects
         from .multilang_code_analyzers import analyze_code_file as analyze_file
-        from .defect_aggregator import aggregate_defects_tool as aggregate_defects
 
         # 第一步：执行代码静态分析
-        analysis_result = analyze_file.invoke({"file_path": file_path, "language": language})
+        analysis_result = analyze_file.invoke(
+            {"file_path": file_path, "language": language}
+        )
 
         # 解析分析结果
         try:
             analysis_data = json.loads(analysis_result)
             if not analysis_data.get("success", False):
-                return json.dumps({
-                    "success": False,
-                    "error": f"代码分析失败: {analysis_data.get('error', '未知错误')}",
-                    "file_path": file_path
-                })
+                return json.dumps(
+                    {
+                        "success": False,
+                        "error": f"代码分析失败: {analysis_data.get('error', '未知错误')}",
+                        "file_path": file_path,
+                    }
+                )
         except json.JSONDecodeError:
-            return json.dumps({
-                "success": False,
-                "error": "代码分析结果格式错误",
-                "file_path": file_path
-            })
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "代码分析结果格式错误",
+                    "file_path": file_path,
+                }
+            )
 
         # 第二步：聚合和智能分析缺陷
         defects = analysis_data.get("detailed_result", {}).get("issues", [])
         if defects:
-            aggregation_result = aggregate_defects.invoke({"defects_json": json.dumps(defects)})
+            aggregation_result = aggregate_defects.invoke(
+                {"defects_json": json.dumps(defects)}
+            )
             try:
                 aggregation_data = json.loads(aggregation_result)
             except json.JSONDecodeError:
@@ -232,8 +246,8 @@ def analyze_code_defects(file_path: str, language: Optional[str] = None) -> str:
                     "result": {
                         "total_defects": len(defects),
                         "clusters": [],
-                        "recommendations": ["缺陷聚合失败，请查看原始分析结果"]
-                    }
+                        "recommendations": ["缺陷聚合失败，请查看原始分析结果"],
+                    },
                 }
         else:
             # 没有发现缺陷
@@ -242,8 +256,8 @@ def analyze_code_defects(file_path: str, language: Optional[str] = None) -> str:
                 "result": {
                     "total_defects": 0,
                     "clusters": [],
-                    "recommendations": ["代码质量良好，未发现需要修复的缺陷"]
-                }
+                    "recommendations": ["代码质量良好，未发现需要修复的缺陷"],
+                },
             }
 
         # 组合结果
@@ -258,38 +272,46 @@ def analyze_code_defects(file_path: str, language: Optional[str] = None) -> str:
                 "issues": defects,
                 "score": detailed_result.get("score", 0),
                 "execution_time": detailed_result.get("execution_time", 0),
-                "success": detailed_result.get("success", False)
+                "success": detailed_result.get("success", False),
             },
             "aggregation": aggregation_data.get("result", {}),
             "metadata": {
-                "analysis_timestamp": detailed_result.get("metadata", {}).get("aggregation_timestamp", ""),
+                "analysis_timestamp": detailed_result.get("metadata", {}).get(
+                    "aggregation_timestamp", ""
+                ),
                 "toolchain_version": "1.0.0",
-                "language_detected": detailed_result.get("language", "unknown")
-            }
+                "language_detected": detailed_result.get("language", "unknown"),
+            },
         }
 
         return json.dumps(combined_result, indent=2, ensure_ascii=False)
 
     except ImportError as e:
-        return json.dumps({
-            "success": False,
-            "error": f"工具模块导入失败: {str(e)}",
-            "file_path": file_path,
-            "suggestion": "请确保multilang_code_analyzers.py和defect_aggregator.py模块可用"
-        })
+        return json.dumps(
+            {
+                "success": False,
+                "error": f"工具模块导入失败: {str(e)}",
+                "file_path": file_path,
+                "suggestion": "请确保multilang_code_analyzers.py和defect_aggregator.py模块可用",
+            }
+        )
     except json.JSONDecodeError as e:
-        return json.dumps({
-            "success": False,
-            "error": f"JSON解析错误: {str(e)}",
-            "file_path": file_path
-        })
+        return json.dumps(
+            {
+                "success": False,
+                "error": f"JSON解析错误: {str(e)}",
+                "file_path": file_path,
+            }
+        )
     except Exception as e:
-        return json.dumps({
-            "success": False,
-            "error": f"工具链执行失败: {str(e)}",
-            "file_path": file_path,
-            "suggestion": "请检查文件路径是否正确，以及相关工具是否已安装"
-        })
+        return json.dumps(
+            {
+                "success": False,
+                "error": f"工具链执行失败: {str(e)}",
+                "file_path": file_path,
+                "suggestion": "请检查文件路径是否正确，以及相关工具是否已安装",
+            }
+        )
 
 
 @tool(
@@ -340,46 +362,52 @@ def compile_project(project_path: str, build_config: Optional[str] = None) -> st
         - 建议在项目根目录执行
     """
     import json
+
     try:
         from .error_detector import compile_project as compile_project_impl
 
         # 调用原始实现
-        result = compile_project_impl.invoke({"project_path": project_path, "build_config": build_config})
+        result = compile_project_impl.invoke(
+            {"project_path": project_path, "build_config": build_config}
+        )
 
         # 确保返回有效的JSON格式
         try:
             parsed_result = json.loads(result)
             return json.dumps(parsed_result, indent=2, ensure_ascii=False)
         except json.JSONDecodeError:
-            return json.dumps({
-                "success": False,
-                "error": "编译结果格式错误",
-                "raw_result": result
-            }, indent=2, ensure_ascii=False)
+            return json.dumps(
+                {"success": False, "error": "编译结果格式错误", "raw_result": result},
+                indent=2,
+                ensure_ascii=False,
+            )
 
     except ImportError as e:
-        return json.dumps({
-            "success": False,
-            "error": f"编译模块导入失败: {str(e)}",
-            "project_path": project_path,
-            "suggestion": "请确保error_detector.py模块可用"
-        })
+        return json.dumps(
+            {
+                "success": False,
+                "error": f"编译模块导入失败: {str(e)}",
+                "project_path": project_path,
+                "suggestion": "请确保error_detector.py模块可用",
+            }
+        )
     except Exception as e:
-        return json.dumps({
-            "success": False,
-            "error": f"编译检查失败: {str(e)}",
-            "project_path": project_path
-        }, indent=2, ensure_ascii=False)
+        return json.dumps(
+            {
+                "success": False,
+                "error": f"编译检查失败: {str(e)}",
+                "project_path": project_path,
+            },
+            indent=2,
+            ensure_ascii=False,
+        )
 
 
 @tool(
     description="运行项目并监控运行时错误。实时监控程序执行过程，捕获和分析运行时错误、异常和系统错误。支持自定义运行命令、超时设置和日志捕获。提供详细的错误堆栈跟踪和诊断信息。"
 )
 def run_and_monitor(
-    project_path: str,
-    run_command: str,
-    timeout: int = 30,
-    capture_logs: bool = True
+    project_path: str, run_command: str, timeout: int = 30, capture_logs: bool = True
 ) -> str:
     """
     运行项目并监控运行时错误，提供给agent使用的程序运行监控工具。
@@ -425,49 +453,61 @@ def run_and_monitor(
         - 某些交互式程序可能无法正常监控
     """
     import json
+
     try:
         from .error_detector import run_and_monitor as run_and_monitor_impl
 
         # 调用原始实现
-        result = run_and_monitor_impl.invoke({
-            "project_path": project_path,
-            "run_command": run_command,
-            "timeout": timeout,
-            "capture_logs": capture_logs
-        })
+        result = run_and_monitor_impl.invoke(
+            {
+                "project_path": project_path,
+                "run_command": run_command,
+                "timeout": timeout,
+                "capture_logs": capture_logs,
+            }
+        )
 
         # 确保返回有效的JSON格式
         try:
             parsed_result = json.loads(result)
             return json.dumps(parsed_result, indent=2, ensure_ascii=False)
         except json.JSONDecodeError:
-            return json.dumps({
-                "success": False,
-                "error": "运行监控结果格式错误",
-                "raw_result": result
-            }, indent=2, ensure_ascii=False)
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "运行监控结果格式错误",
+                    "raw_result": result,
+                },
+                indent=2,
+                ensure_ascii=False,
+            )
 
     except ImportError as e:
-        return json.dumps({
-            "success": False,
-            "error": f"运行监控模块导入失败: {str(e)}",
-            "project_path": project_path,
-            "suggestion": "请确保error_detector.py模块可用"
-        })
+        return json.dumps(
+            {
+                "success": False,
+                "error": f"运行监控模块导入失败: {str(e)}",
+                "project_path": project_path,
+                "suggestion": "请确保error_detector.py模块可用",
+            }
+        )
     except Exception as e:
-        return json.dumps({
-            "success": False,
-            "error": f"运行时监控失败: {str(e)}",
-            "project_path": project_path
-        }, indent=2, ensure_ascii=False)
+        return json.dumps(
+            {
+                "success": False,
+                "error": f"运行时监控失败: {str(e)}",
+                "project_path": project_path,
+            },
+            indent=2,
+            ensure_ascii=False,
+        )
 
 
 @tool(
     description="运行测试并捕获测试错误。支持多种测试框架（pytest、jest、junit、go test等），自动检测项目使用的测试框架，执行测试并捕获测试失败和错误信息。提供详细的测试结果和错误诊断。"
 )
 def run_tests_with_error_capture(
-    project_path: str,
-    test_framework: str = "auto"
+    project_path: str, test_framework: str = "auto"
 ) -> str:
     """
     运行测试并捕获测试错误，提供给agent使用的自动化测试执行工具。
@@ -518,44 +558,53 @@ def run_tests_with_error_capture(
         - 某些测试可能需要特定的环境依赖
     """
     import json
+
     try:
-        from .error_detector import run_tests_with_error_capture as run_tests_impl
+        from .error_detector import \
+            run_tests_with_error_capture as run_tests_impl
 
         # 调用原始实现
-        result = run_tests_impl.invoke({"project_path": project_path, "test_framework": test_framework})
+        result = run_tests_impl.invoke(
+            {"project_path": project_path, "test_framework": test_framework}
+        )
 
         # 确保返回有效的JSON格式
         try:
             parsed_result = json.loads(result)
             return json.dumps(parsed_result, indent=2, ensure_ascii=False)
         except json.JSONDecodeError:
-            return json.dumps({
-                "success": False,
-                "error": "测试结果格式错误",
-                "raw_result": result
-            }, indent=2, ensure_ascii=False)
+            return json.dumps(
+                {"success": False, "error": "测试结果格式错误", "raw_result": result},
+                indent=2,
+                ensure_ascii=False,
+            )
 
     except ImportError as e:
-        return json.dumps({
-            "success": False,
-            "error": f"测试模块导入失败: {str(e)}",
-            "project_path": project_path,
-            "suggestion": "请确保error_detector.py模块可用"
-        })
+        return json.dumps(
+            {
+                "success": False,
+                "error": f"测试模块导入失败: {str(e)}",
+                "project_path": project_path,
+                "suggestion": "请确保error_detector.py模块可用",
+            }
+        )
     except Exception as e:
-        return json.dumps({
-            "success": False,
-            "error": f"测试执行失败: {str(e)}",
-            "project_path": project_path
-        }, indent=2, ensure_ascii=False)
+        return json.dumps(
+            {
+                "success": False,
+                "error": f"测试执行失败: {str(e)}",
+                "project_path": project_path,
+            },
+            indent=2,
+            ensure_ascii=False,
+        )
 
 
 @tool(
     description="分析现有日志文件中的错误。智能搜索和分析项目中的日志文件，识别错误、异常和关键事件。支持多种日志格式和模式匹配，提供错误统计、分类和趋势分析。"
 )
 def analyze_existing_logs(
-    project_path: str,
-    log_patterns: Optional[List[str]] = None
+    project_path: str, log_patterns: Optional[List[str]] = None
 ) -> str:
     """
     分析现有日志文件中的错误，提供给agent使用的日志分析工具。
@@ -602,33 +651,46 @@ def analyze_existing_logs(
         - 敏感信息日志需要谨慎处理
     """
     import json
+
     try:
         from .error_detector import analyze_existing_logs as analyze_logs_impl
 
         # 调用原始实现
-        result = analyze_logs_impl.invoke({"project_path": project_path, "log_patterns": log_patterns})
+        result = analyze_logs_impl.invoke(
+            {"project_path": project_path, "log_patterns": log_patterns}
+        )
 
         # 确保返回有效的JSON格式
         try:
             parsed_result = json.loads(result)
             return json.dumps(parsed_result, indent=2, ensure_ascii=False)
         except json.JSONDecodeError:
-            return json.dumps({
-                "success": False,
-                "error": "日志分析结果格式错误",
-                "raw_result": result
-            }, indent=2, ensure_ascii=False)
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "日志分析结果格式错误",
+                    "raw_result": result,
+                },
+                indent=2,
+                ensure_ascii=False,
+            )
 
     except ImportError as e:
-        return json.dumps({
-            "success": False,
-            "error": f"日志分析模块导入失败: {str(e)}",
-            "project_path": project_path,
-            "suggestion": "请确保error_detector.py模块可用"
-        })
+        return json.dumps(
+            {
+                "success": False,
+                "error": f"日志分析模块导入失败: {str(e)}",
+                "project_path": project_path,
+                "suggestion": "请确保error_detector.py模块可用",
+            }
+        )
     except Exception as e:
-        return json.dumps({
-            "success": False,
-            "error": f"日志分析失败: {str(e)}",
-            "project_path": project_path
-        }, indent=2, ensure_ascii=False)
+        return json.dumps(
+            {
+                "success": False,
+                "error": f"日志分析失败: {str(e)}",
+                "project_path": project_path,
+            },
+            indent=2,
+            ensure_ascii=False,
+        )

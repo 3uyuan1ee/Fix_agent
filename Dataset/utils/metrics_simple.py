@@ -4,11 +4,12 @@
 不依赖numpy等外部库，提供基础的指标计算功能。
 """
 
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass
 import json
 import time
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 
 def calculate_basic_metrics(results: List[Any]) -> Dict[str, Any]:
     """计算基础指标，不依赖外部库"""
@@ -35,9 +36,9 @@ def calculate_basic_metrics(results: List[Any]) -> Dict[str, Any]:
         else:
             # 尝试获取success属性
             try:
-                if hasattr(result, 'success') and result.success:
+                if hasattr(result, "success") and result.success:
                     successful_tasks += 1
-                    if hasattr(result, 'execution_time'):
+                    if hasattr(result, "execution_time"):
                         execution_times.append(result.execution_time)
                 else:
                     failed_tasks += 1
@@ -46,7 +47,9 @@ def calculate_basic_metrics(results: List[Any]) -> Dict[str, Any]:
 
     # 计算基础统计
     avg_time = sum(execution_times) / len(execution_times) if execution_times else 0
-    median_time = sorted(execution_times)[len(execution_times)//2] if execution_times else 0
+    median_time = (
+        sorted(execution_times)[len(execution_times) // 2] if execution_times else 0
+    )
 
     return {
         "total_tasks": total_tasks,
@@ -58,9 +61,16 @@ def calculate_basic_metrics(results: List[Any]) -> Dict[str, Any]:
         "median_execution_time": median_time,
         "min_execution_time": min(execution_times) if execution_times else 0,
         "max_execution_time": max(execution_times) if execution_times else 0,
-        "total_execution_time": sum(execution_time for execution_time in execution_times),
-        "tasks_per_hour": len(execution_times) / (sum(execution_times) / 3600) if sum(execution_times) > 0 else 0
+        "total_execution_time": sum(
+            execution_time for execution_time in execution_times
+        ),
+        "tasks_per_hour": (
+            len(execution_times) / (sum(execution_times) / 3600)
+            if sum(execution_times) > 0
+            else 0
+        ),
     }
+
 
 @dataclass
 class MetricsCalculator:
@@ -74,7 +84,9 @@ class MetricsCalculator:
         """计算基础指标"""
         return calculate_basic_metrics(results)
 
-    def generate_comprehensive_report(self, results: List[Any], results_history: List[List[Any]] = None) -> Dict[str, Any]:
+    def generate_comprehensive_report(
+        self, results: List[Any], results_history: List[List[Any]] = None
+    ) -> Dict[str, Any]:
         """生成综合报告"""
         basic_metrics = calculate_basic_metrics(results)
 
@@ -82,7 +94,7 @@ class MetricsCalculator:
             "generation_time": time.strftime("%Y-%m-%d %H:%M:%S"),
             "basic_metrics": basic_metrics,
             "analysis": "使用简化版指标计算器",
-            "note": "部分高级功能需要安装matplotlib和seaborn等依赖库"
+            "note": "部分高级功能需要安装matplotlib和seaborn等依赖库",
         }
 
         return report
@@ -92,7 +104,7 @@ class MetricsCalculator:
         output_file = Path(output_path)
         output_file.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(output_file, 'w', encoding='utf-8') as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             json.dump(metrics, f, indent=2, ensure_ascii=False, default=str)
 
         print(f"[MetricsCalculator] 指标已保存到: {output_file}")

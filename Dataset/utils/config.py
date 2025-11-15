@@ -6,9 +6,10 @@
 
 import json
 import os
-from typing import Dict, Any, Optional
-from pathlib import Path
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Dict, Optional
+
 
 @dataclass
 class EvaluationConfig:
@@ -47,6 +48,7 @@ class EvaluationConfig:
     log_level: str = "INFO"
     log_file: str = "evaluation.log"
 
+
 class ConfigManager:
     """配置管理器"""
 
@@ -74,7 +76,7 @@ class ConfigManager:
             bool: 是否加载成功
         """
         try:
-            with open(config_file, 'r', encoding='utf-8') as f:
+            with open(config_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
             # 更新配置
@@ -94,52 +96,67 @@ class ConfigManager:
         """从字典更新配置"""
 
         # Agent配置
-        if 'agent' in data:
-            agent_config = data['agent']
-            for key in ['model', 'api_key', 'api_base', 'temperature', 'max_tokens']:
+        if "agent" in data:
+            agent_config = data["agent"]
+            for key in ["model", "api_key", "api_base", "temperature", "max_tokens"]:
                 if key in agent_config:
                     setattr(self.config, key, agent_config[key])
 
         # 评估配置
-        if 'evaluation' in data:
-            eval_config = data['evaluation']
-            for key in ['default_timeout', 'max_workers', 'enable_caching', 'cache_dir', 'auto_cleanup']:
+        if "evaluation" in data:
+            eval_config = data["evaluation"]
+            for key in [
+                "default_timeout",
+                "max_workers",
+                "enable_caching",
+                "cache_dir",
+                "auto_cleanup",
+            ]:
                 if key in eval_config:
                     setattr(self.config, key, eval_config[key])
 
         # 数据集配置
-        if 'dataset' in data:
-            dataset_config = data['dataset']
-            if 'swe_bench' in dataset_config:
-                swe_config = dataset_config['swe_bench']
-                if 'default_samples' in swe_config:
-                    self.config.swe_bench_samples = swe_config['default_samples']
+        if "dataset" in data:
+            dataset_config = data["dataset"]
+            if "swe_bench" in dataset_config:
+                swe_config = dataset_config["swe_bench"]
+                if "default_samples" in swe_config:
+                    self.config.swe_bench_samples = swe_config["default_samples"]
 
-            if 'bugs_in_py' in dataset_config:
-                bug_config = dataset_config['bugs_in_py']
-                if 'default_samples' in bug_config:
-                    self.config.bugs_in_py_samples = bug_config['default_samples']
+            if "bugs_in_py" in dataset_config:
+                bug_config = dataset_config["bugs_in_py"]
+                if "default_samples" in bug_config:
+                    self.config.bugs_in_py_samples = bug_config["default_samples"]
 
         # 输出配置
-        if 'output' in data:
-            output_config = data['output']
-            for key in ['default_dir', 'save_intermediate_results', 'generate_visualizations', 'save_agent_logs']:
+        if "output" in data:
+            output_config = data["output"]
+            for key in [
+                "default_dir",
+                "save_intermediate_results",
+                "generate_visualizations",
+                "save_agent_logs",
+            ]:
                 if key in output_config:
                     setattr(self.config, key, output_config[key])
 
         # 性能配置
-        if 'performance' in data:
-            perf_config = data['performance']
-            for key in ['enable_profiling', 'memory_limit_gb', 'monitor_system_resources']:
+        if "performance" in data:
+            perf_config = data["performance"]
+            for key in [
+                "enable_profiling",
+                "memory_limit_gb",
+                "monitor_system_resources",
+            ]:
                 if key in perf_config:
                     setattr(self.config, key, perf_config[key])
 
         # 日志配置
-        if 'logging' in data:
-            log_config = data['logging']
-            for key in ['level', 'file', 'format']:
+        if "logging" in data:
+            log_config = data["logging"]
+            for key in ["level", "file", "format"]:
                 if key in log_config:
-                    attr_name = f"log_{key}" if key != 'level' else 'log_level'
+                    attr_name = f"log_{key}" if key != "level" else "log_level"
                     setattr(self.config, attr_name, log_config[key])
 
     def validate_config(self):
@@ -169,7 +186,7 @@ class ConfigManager:
             "api_key": self.config.api_key or os.getenv("OPENAI_API_KEY"),
             "api_base": self.config.api_base or os.getenv("OPENAI_API_BASE"),
             "temperature": self.config.temperature,
-            "max_tokens": self.config.max_tokens
+            "max_tokens": self.config.max_tokens,
         }
 
     def get_evaluation_config(self) -> Dict[str, Any]:
@@ -179,7 +196,7 @@ class ConfigManager:
             "max_workers": self.config.max_workers,
             "enable_caching": self.config.enable_caching,
             "cache_dir": self.config.cache_dir,
-            "auto_cleanup": self.config.auto_cleanup
+            "auto_cleanup": self.config.auto_cleanup,
         }
 
     def get_output_config(self) -> Dict[str, Any]:
@@ -188,7 +205,7 @@ class ConfigManager:
             "default_dir": self.config.default_dir,
             "save_intermediate_results": self.config.save_intermediate_results,
             "generate_visualizations": self.config.generate_visualizations,
-            "save_agent_logs": self.config.save_agent_logs
+            "save_agent_logs": self.config.save_agent_logs,
         }
 
     def save_config(self, output_file: str):
@@ -200,42 +217,35 @@ class ConfigManager:
                 "api_key": self.config.api_key,
                 "api_base": self.config.api_base,
                 "temperature": self.config.temperature,
-                "max_tokens": self.config.max_tokens
+                "max_tokens": self.config.max_tokens,
             },
             "evaluation": {
                 "default_timeout": self.config.default_timeout,
                 "max_workers": self.config.max_workers,
                 "enable_caching": self.config.enable_caching,
                 "cache_dir": self.config.cache_dir,
-                "auto_cleanup": self.config.auto_cleanup
+                "auto_cleanup": self.config.auto_cleanup,
             },
             "dataset": {
-                "swe_bench": {
-                    "default_samples": self.config.swe_bench_samples
-                },
-                "bugs_in_py": {
-                    "default_samples": self.config.bugs_in_py_samples
-                }
+                "swe_bench": {"default_samples": self.config.swe_bench_samples},
+                "bugs_in_py": {"default_samples": self.config.bugs_in_py_samples},
             },
             "output": {
                 "default_dir": self.config.default_dir,
                 "save_intermediate_results": self.config.save_intermediate_results,
                 "generate_visualizations": self.config.generate_visualizations,
-                "save_agent_logs": self.config.save_agent_logs
+                "save_agent_logs": self.config.save_agent_logs,
             },
             "performance": {
                 "enable_profiling": self.config.enable_profiling,
                 "memory_limit_gb": self.config.memory_limit_gb,
-                "monitor_system_resources": self.config.monitor_system_resources
+                "monitor_system_resources": self.config.monitor_system_resources,
             },
-            "logging": {
-                "level": self.config.log_level,
-                "file": self.config.log_file
-            }
+            "logging": {"level": self.config.log_level, "file": self.config.log_file},
         }
 
         try:
-            with open(output_file, 'w', encoding='utf-8') as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 json.dump(config_dict, f, indent=2, ensure_ascii=False)
 
             print(f"[ConfigManager] 配置已保存到 {output_file}")
@@ -266,8 +276,10 @@ class ConfigManager:
         print(f"  输出目录: {self.config.default_dir}")
         print(f"  日志级别: {self.config.log_level}")
 
+
 # 全局配置实例
 _global_config = None
+
 
 def get_config(config_file: Optional[str] = None) -> ConfigManager:
     """获取全局配置实例"""
@@ -277,6 +289,7 @@ def get_config(config_file: Optional[str] = None) -> ConfigManager:
         _global_config = ConfigManager(config_file)
 
     return _global_config
+
 
 def reset_config():
     """重置全局配置"""

@@ -9,11 +9,13 @@ import sys
 # 跨平台兼容的readline模块导入
 try:
     import readline
+
     READLINE_AVAILABLE = True
 except ImportError:
     # Windows系统可能需要使用pyreadline或者直接跳过
     try:
         import pyreadline as readline
+
         READLINE_AVAILABLE = True
     except ImportError:
         READLINE_AVAILABLE = False

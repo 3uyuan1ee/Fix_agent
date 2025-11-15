@@ -4,6 +4,7 @@
 为了避免与主项目的相对导入冲突，这里提供独立的配置。
 """
 
+
 def get_evaluation_system_prompt() -> str:
     """获取评估模式的系统提示"""
 
@@ -46,6 +47,7 @@ def get_evaluation_system_prompt() -> str:
 现在请按照上述流程处理收到的代码修复任务。
 """
 
+
 # 子代理配置（简化版本，避免相对导入）
 def get_defect_analyzer_subagent():
     """获取缺陷分析子代理配置"""
@@ -70,8 +72,9 @@ def get_defect_analyzer_subagent():
 - 修复建议
 - 预期影响
 
-请只进行分析，不要修改代码。"""
+请只进行分析，不要修改代码。""",
     }
+
 
 def get_code_fixer_subagent():
     """获取代码修复子代理配置"""
@@ -94,8 +97,9 @@ def get_code_fixer_subagent():
 3. 实施修复
 4. 验证修复效果
 
-请确保修复后的代码能够正常工作。"""
+请确保修复后的代码能够正常工作。""",
     }
+
 
 def get_fix_validator_subagent():
     """获取修复验证子代理配置"""
@@ -118,8 +122,9 @@ def get_fix_validator_subagent():
 - 功能性测试
 - 性能对比
 
-如果发现问题，请提供具体的改进建议。"""
+如果发现问题，请提供具体的改进建议。""",
     }
+
 
 # 子代理列表
 def get_evaluation_subagents():
@@ -127,5 +132,5 @@ def get_evaluation_subagents():
     return [
         get_defect_analyzer_subagent(),
         get_code_fixer_subagent(),
-        get_fix_validator_subagent()
+        get_fix_validator_subagent(),
     ]

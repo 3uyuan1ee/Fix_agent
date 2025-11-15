@@ -5,46 +5,30 @@
 测试文件: src/midware/*.py
 """
 
-import pytest
-import tempfile
-import os
 import json
+import os
+import tempfile
 import time
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock, AsyncMock
-from typing import Optional, Dict, List
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Dict, List, Optional
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
+import pytest
+
+from src.midware.context_enhancement import (ContextEnhancementMiddleware,
+                                             ContextEnhancementState)
 # 导入实际的项目模块
-from src.midware.layered_memory import (
-    LayeredMemoryMiddleware,
-    MemoryItem,
-    LayeredMemoryState,
-    WorkingMemory,
-    SessionMemory,
-    LongTermMemory
-)
-from src.midware.performance_monitor import (
-    PerformanceMonitorMiddleware,
-    PerformanceCollector,
-    PerformanceRecord
-)
-
-from src.midware.security import (
-    SecurityMiddleware,
-    SecurityViolation,
-    SecurityState
-)
-
-from src.midware.logging import (
-    LoggingMiddleware,
-    LoggingState
-)
-
-from src.midware.context_enhancement import (
-    ContextEnhancementMiddleware,
-    ContextEnhancementState
-)
+from src.midware.layered_memory import (LayeredMemoryMiddleware,
+                                        LayeredMemoryState, LongTermMemory,
+                                        MemoryItem, SessionMemory,
+                                        WorkingMemory)
+from src.midware.logging import LoggingMiddleware, LoggingState
+from src.midware.performance_monitor import (PerformanceCollector,
+                                             PerformanceMonitorMiddleware,
+                                             PerformanceRecord)
+from src.midware.security import (SecurityMiddleware, SecurityState,
+                                  SecurityViolation)
 
 
 class TestMemoryItem:
@@ -57,7 +41,7 @@ class TestMemoryItem:
             content="Test memory content",
             timestamp=timestamp,
             importance=0.8,
-            tags=["test", "important"]
+            tags=["test", "important"],
         )
 
         assert item.content == "Test memory content"
@@ -70,10 +54,7 @@ class TestMemoryItem:
     def test_memory_item_default_values(self):
         """测试MemoryItem默认值"""
         timestamp = time.time()
-        item = MemoryItem(
-            content="Test content",
-            timestamp=timestamp
-        )
+        item = MemoryItem(content="Test content", timestamp=timestamp)
 
         assert item.importance == 1.0
         assert item.tags == []
@@ -83,11 +64,7 @@ class TestMemoryItem:
     def test_memory_item_post_init(self):
         """测试MemoryItem后处理"""
         timestamp = time.time()
-        item = MemoryItem(
-            content="Test",
-            timestamp=timestamp,
-            last_accessed=0.0
-        )
+        item = MemoryItem(content="Test", timestamp=timestamp, last_accessed=0.0)
 
         # last_accessed应该被设置为timestamp
         assert item.last_accessed == timestamp
@@ -99,7 +76,7 @@ class TestMemoryItem:
             content="Test",
             timestamp=timestamp,
             access_count=5,
-            last_accessed=timestamp - 100
+            last_accessed=timestamp - 100,
         )
 
         # 模拟访问
@@ -133,7 +110,7 @@ class TestWorkingMemory:
         assert len(working_memory.items) == 3
         # 验证items包含的是字典，不是字符串
         items_list = list(working_memory.items)
-        contents = [item['content'] for item in items_list]
+        contents = [item["content"] for item in items_list]
         assert "item1" in contents
         assert "item2" in contents
         assert "item3" in contents
@@ -151,7 +128,7 @@ class TestWorkingMemory:
         assert len(working_memory.items) == 3
         # 验证items包含的是字典，不是字符串
         items_list = list(working_memory.items)
-        contents = [item['content'] for item in items_list]
+        contents = [item["content"] for item in items_list]
         assert "item1" not in contents  # 最旧的被移除
         assert "item4" in contents
         assert "item2" in contents
@@ -247,10 +224,12 @@ class TestLongTermMemory:
         mock_backend = Mock()
         mock_backend.exists.return_value = False
         mock_backend.write.return_value = None
-        mock_backend.read.return_value = json.dumps({
-            "knowledge": "Python is a programming language",
-            "facts": ["Python was created by Guido van Rossum"]
-        })
+        mock_backend.read.return_value = json.dumps(
+            {
+                "knowledge": "Python is a programming language",
+                "facts": ["Python was created by Guido van Rossum"],
+            }
+        )
 
         long_term_memory = LongTermMemory(mock_backend, "/memories/")
 
@@ -273,15 +252,17 @@ class TestLongTermMemory:
         mock_backend = Mock()
         mock_backend.exists.return_value = False
         mock_backend.write.return_value = None
-        mock_backend.read.return_value = json.dumps({
-            "events": [
-                {
-                    "type": "user_feedback",
-                    "content": "用户建议改进代码质量",
-                    "timestamp": "2023-01-01T10:00:00Z"
-                }
-            ]
-        })
+        mock_backend.read.return_value = json.dumps(
+            {
+                "events": [
+                    {
+                        "type": "user_feedback",
+                        "content": "用户建议改进代码质量",
+                        "timestamp": "2023-01-01T10:00:00Z",
+                    }
+                ]
+            }
+        )
 
         long_term_memory = LongTermMemory(mock_backend, "/memories/")
 
@@ -347,7 +328,7 @@ class TestLayeredMemoryMiddleware:
             memory_path=memory_path,
             working_memory_size=working_memory_size,
             enable_semantic_memory=enable_semantic,
-            enable_episodic_memory=enable_episodic
+            enable_episodic_memory=enable_episodic,
         )
 
         assert middleware.backend == mock_backend
@@ -359,15 +340,14 @@ class TestLayeredMemoryMiddleware:
     def test_layered_memory_middleware_decorator(self, mock_backend, sample_runtime):
         """测试分层记忆中间件基本功能"""
         middleware = LayeredMemoryMiddleware(
-            backend=mock_backend,
-            memory_path="/memories/"
+            backend=mock_backend, memory_path="/memories/"
         )
 
         # 测试基本属性
-        assert hasattr(middleware, 'working_memory')
-        assert hasattr(middleware, 'session_memory')
-        assert hasattr(middleware, 'long_term_memory')
-        assert hasattr(middleware, 'memory_path')
+        assert hasattr(middleware, "working_memory")
+        assert hasattr(middleware, "session_memory")
+        assert hasattr(middleware, "long_term_memory")
+        assert hasattr(middleware, "memory_path")
 
         # 测试记忆类型
         assert middleware.working_memory is not None
@@ -377,20 +357,19 @@ class TestLayeredMemoryMiddleware:
     def test_layered_memory_state_initialization(self, mock_backend):
         """测试状态初始化"""
         middleware = LayeredMemoryMiddleware(
-            backend=mock_backend,
-            memory_path="/memories/"
+            backend=mock_backend, memory_path="/memories/"
         )
 
         # 测试记忆组件初始化
-        assert hasattr(middleware, 'working_memory')
-        assert hasattr(middleware, 'session_memory')
-        assert hasattr(middleware, 'long_term_memory')
+        assert hasattr(middleware, "working_memory")
+        assert hasattr(middleware, "session_memory")
+        assert hasattr(middleware, "long_term_memory")
 
         # 测试记忆组件的方法存在
-        assert hasattr(middleware.working_memory, 'add')
-        assert hasattr(middleware.long_term_memory, 'add_semantic_memory')
-        assert hasattr(middleware.long_term_memory, 'add_episodic_memory')
-        assert hasattr(middleware.long_term_memory, 'search_memory')
+        assert hasattr(middleware.working_memory, "add")
+        assert hasattr(middleware.long_term_memory, "add_semantic_memory")
+        assert hasattr(middleware.long_term_memory, "add_episodic_memory")
+        assert hasattr(middleware.long_term_memory, "search_memory")
 
         # session_memory是字典，不是对象
         assert isinstance(middleware.session_memory, dict)
@@ -398,8 +377,7 @@ class TestLayeredMemoryMiddleware:
     def test_layered_memory_upgrades(self, mock_backend):
         """测试记忆层级功能"""
         middleware = LayeredMemoryMiddleware(
-            backend=mock_backend,
-            memory_path="/memories/"
+            backend=mock_backend, memory_path="/memories/"
         )
 
         # 测试工作记忆添加项目
@@ -420,24 +398,21 @@ class TestLayeredMemoryMiddleware:
     def test_working_memory_integration(self, mock_backend):
         """测试工作记忆集成"""
         middleware = LayeredMemoryMiddleware(
-            backend=mock_backend,
-            memory_path="/memories/",
-            working_memory_size=3
+            backend=mock_backend, memory_path="/memories/", working_memory_size=3
         )
 
         # 验证工作记忆创建
-        assert hasattr(middleware, 'working_memory')
+        assert hasattr(middleware, "working_memory")
         assert middleware.working_memory.max_size == 3
 
     def test_session_memory_integration(self, mock_backend):
         """测试会话记忆集成"""
         middleware = LayeredMemoryMiddleware(
-            backend=mock_backend,
-            memory_path="/memories/"
+            backend=mock_backend, memory_path="/memories/"
         )
 
         # 验证会话记忆字典创建
-        assert hasattr(middleware, 'session_memory')
+        assert hasattr(middleware, "session_memory")
         assert isinstance(middleware.session_memory, dict)
 
 
@@ -459,7 +434,7 @@ class TestPerformanceMonitorMiddleware:
             backend=mock_backend,
             metrics_path=metrics_path,
             enable_system_monitoring=enable_monitoring,
-            max_records=max_records
+            max_records=max_records,
         )
 
         assert middleware.backend == mock_backend
@@ -472,23 +447,23 @@ class TestPerformanceMonitorMiddleware:
         middleware = PerformanceMonitorMiddleware(
             backend=mock_backend,
             metrics_path="/performance/",
-            enable_system_monitoring=False  # 禁用系统监控以避免线程问题
+            enable_system_monitoring=False,  # 禁用系统监控以避免线程问题
         )
 
         # 测试中间件有正确的属性
-        assert hasattr(middleware, 'collector')
-        assert hasattr(middleware, 'session_id')
+        assert hasattr(middleware, "collector")
+        assert hasattr(middleware, "session_id")
 
     def test_performance_tracking(self, mock_backend):
         """测试性能跟踪"""
         middleware = PerformanceMonitorMiddleware(
             backend=mock_backend,
             metrics_path="/performance/",
-            enable_system_monitoring=False  # 禁用系统监控
+            enable_system_monitoring=False,  # 禁用系统监控
         )
 
         # 测试性能收集器
-        assert hasattr(middleware.collector, 'get_summary')
+        assert hasattr(middleware.collector, "get_summary")
 
         summary = middleware.collector.get_summary()
         assert isinstance(summary, dict)
@@ -498,11 +473,11 @@ class TestPerformanceMonitorMiddleware:
         middleware = PerformanceMonitorMiddleware(
             backend=mock_backend,
             metrics_path="/performance/",
-            enable_system_monitoring=False
+            enable_system_monitoring=False,
         )
 
         # 测试内存相关属性
-        assert hasattr(middleware, '_memory_usage')
+        assert hasattr(middleware, "_memory_usage")
         assert isinstance(middleware._memory_usage, (int, float))
 
     def test_cpu_monitor(self, mock_backend):
@@ -510,11 +485,11 @@ class TestPerformanceMonitorMiddleware:
         middleware = PerformanceMonitorMiddleware(
             backend=mock_backend,
             metrics_path="/performance/",
-            enable_system_monitoring=False
+            enable_system_monitoring=False,
         )
 
         # 测试CPU相关属性
-        assert hasattr(middleware, '_cpu_usage')
+        assert hasattr(middleware, "_cpu_usage")
         assert isinstance(middleware._cpu_usage, (int, float))
 
 
@@ -540,7 +515,7 @@ class TestSecurityMiddleware:
             security_level=security_level,
             enable_file_security=enable_file_security,
             enable_command_security=enable_command_security,
-            max_file_size=max_file_size
+            max_file_size=max_file_size,
         )
 
         assert middleware.workspace_root == Path(workspace_root).resolve()
@@ -554,30 +529,30 @@ class TestSecurityMiddleware:
         middleware = SecurityMiddleware(
             backend=mock_backend,
             workspace_root="/safe/workspace",
-            security_level="medium"
+            security_level="medium",
         )
 
         # 测试基本属性
-        assert hasattr(middleware, 'backend')
-        assert hasattr(middleware, 'workspace_root')
-        assert hasattr(middleware, 'security_level')
+        assert hasattr(middleware, "backend")
+        assert hasattr(middleware, "workspace_root")
+        assert hasattr(middleware, "security_level")
         assert middleware.security_level == "medium"
 
         # 测试安全方法存在
-        assert hasattr(middleware, '_check_file_security')
-        assert hasattr(middleware, '_check_command_security')
-        assert hasattr(middleware, '_check_content_security')
+        assert hasattr(middleware, "_check_file_security")
+        assert hasattr(middleware, "_check_command_security")
+        assert hasattr(middleware, "_check_content_security")
 
         # 测试安全设置
         assert isinstance(middleware.blocked_extensions, list)
-        assert '.exe' in middleware.blocked_extensions
+        assert ".exe" in middleware.blocked_extensions
 
     def test_path_validator(self, mock_backend):
         """测试文件安全检查"""
         middleware = SecurityMiddleware(
             backend=mock_backend,
             workspace_root="/safe/workspace",
-            security_level="medium"
+            security_level="medium",
         )
 
         # 测试安全路径检查
@@ -585,15 +560,12 @@ class TestSecurityMiddleware:
         assert violation is None  # 安全路径应该无违规
 
         # 测试不安全路径检查 - 这里主要测试方法存在
-        assert hasattr(middleware, '_check_file_security')
+        assert hasattr(middleware, "_check_file_security")
         assert callable(middleware._check_file_security)
 
     def test_command_validator(self, mock_backend):
         """测试命令安全检查"""
-        middleware = SecurityMiddleware(
-            backend=mock_backend,
-            security_level="high"
-        )
+        middleware = SecurityMiddleware(backend=mock_backend, security_level="high")
 
         # 测试安全命令
         safe_command = "ls -la"
@@ -609,17 +581,14 @@ class TestSecurityMiddleware:
 
     def test_command_validator_unsafe_commands(self, mock_backend):
         """测试多个危险命令"""
-        middleware = SecurityMiddleware(
-            backend=mock_backend,
-            security_level="high"
-        )
+        middleware = SecurityMiddleware(backend=mock_backend, security_level="high")
 
         # 测试确实会被检测到的危险命令
         definitely_dangerous_commands = [
             "rm -rf /",
             "sudo rm -rf /*",
             "dd if=/dev/zero of=/dev/sda",
-            "chmod 777 /etc/passwd"
+            "chmod 777 /etc/passwd",
         ]
 
         violations_found = 0
@@ -634,25 +603,21 @@ class TestSecurityMiddleware:
     def test_file_size_validation(self, mock_backend):
         """测试文件大小配置"""
         middleware = SecurityMiddleware(
-            backend=mock_backend,
-            workspace_root="/safe/workspace"
+            backend=mock_backend, workspace_root="/safe/workspace"
         )
 
         # 测试文件大小属性存在
-        assert hasattr(middleware, 'max_file_size')
+        assert hasattr(middleware, "max_file_size")
         assert isinstance(middleware.max_file_size, int)
         assert middleware.max_file_size > 0
 
         # 测试文件大小限制检查功能存在
-        assert hasattr(middleware, '_check_file_security')
+        assert hasattr(middleware, "_check_file_security")
         assert callable(middleware._check_file_security)
 
     def test_content_security_check(self, mock_backend):
         """测试内容安全检查"""
-        middleware = SecurityMiddleware(
-            backend=mock_backend,
-            security_level="medium"
-        )
+        middleware = SecurityMiddleware(backend=mock_backend, security_level="medium")
 
         # 测试安全内容
         safe_content = "This is a normal text file with no sensitive information."
@@ -684,7 +649,7 @@ class TestLoggingMiddleware:
             backend=mock_backend,
             log_path=log_path,
             session_id=session_id,
-            max_file_size=max_file_size
+            max_file_size=max_file_size,
         )
 
         assert middleware.backend == mock_backend
@@ -700,12 +665,12 @@ class TestLoggingMiddleware:
             enable_conversation_logging=True,
             enable_tool_logging=False,
             enable_performance_logging=False,
-            enable_error_logging=False
+            enable_error_logging=False,
         )
 
         # 测试基本属性
-        assert hasattr(middleware, 'session_id')
-        assert hasattr(middleware, 'log_path')
+        assert hasattr(middleware, "session_id")
+        assert hasattr(middleware, "log_path")
         assert middleware.enable_conversation_logging is True
         assert middleware.enable_tool_logging is False
 
@@ -717,17 +682,17 @@ class TestLoggingMiddleware:
             enable_conversation_logging=True,
             enable_tool_logging=True,
             enable_performance_logging=True,
-            enable_error_logging=True
+            enable_error_logging=True,
         )
 
         # 测试日志路径属性
-        assert hasattr(middleware, 'conversation_log_path')
-        assert hasattr(middleware, 'tool_log_path')
-        assert hasattr(middleware, 'performance_log_path')
-        assert hasattr(middleware, 'error_log_path')
+        assert hasattr(middleware, "conversation_log_path")
+        assert hasattr(middleware, "tool_log_path")
+        assert hasattr(middleware, "performance_log_path")
+        assert hasattr(middleware, "error_log_path")
 
         # 测试日志级别
-        assert hasattr(middleware, 'log_level')
+        assert hasattr(middleware, "log_level")
         assert middleware.log_level is not None
 
     def test_log_rotation(self, mock_backend):
@@ -737,7 +702,7 @@ class TestLoggingMiddleware:
             log_path="/logs/",
             max_log_files=5,
             max_file_size=1024 * 1024,  # 1MB
-            rotate_interval=12  # 12 hours
+            rotate_interval=12,  # 12 hours
         )
 
         # 验证轮转配置
@@ -766,7 +731,7 @@ class TestContextEnhancementMiddleware:
             context_path=context_path,
             enable_project_analysis=enable_project_analysis,
             enable_user_preferences=enable_user_preferences,
-            max_context_length=max_context_length
+            max_context_length=max_context_length,
         )
 
         assert middleware.backend == mock_backend
@@ -781,24 +746,23 @@ class TestContextEnhancementMiddleware:
             backend=mock_backend,
             enable_project_analysis=True,
             enable_user_preferences=True,
-            enable_conversation_enhancement=True
+            enable_conversation_enhancement=True,
         )
 
         # 测试基本属性
-        assert hasattr(middleware, 'context_path')
-        assert hasattr(middleware, 'enable_project_analysis')
-        assert hasattr(middleware, 'enable_user_preferences')
-        assert hasattr(middleware, 'enable_conversation_enhancement')
+        assert hasattr(middleware, "context_path")
+        assert hasattr(middleware, "enable_project_analysis")
+        assert hasattr(middleware, "enable_user_preferences")
+        assert hasattr(middleware, "enable_conversation_enhancement")
 
         # 测试分析方法存在
-        assert hasattr(middleware, '_analyze_project_structure')
+        assert hasattr(middleware, "_analyze_project_structure")
         assert callable(middleware._analyze_project_structure)
 
     def test_context_builder(self, mock_backend):
         """测试项目结构分析功能"""
         middleware = ContextEnhancementMiddleware(
-            backend=mock_backend,
-            enable_project_analysis=True
+            backend=mock_backend, enable_project_analysis=True
         )
 
         # 测试项目分析方法
@@ -820,13 +784,12 @@ class TestContextEnhancementMiddleware:
     def test_context_enhancement_functionality(self, mock_backend):
         """测试上下文增强基本配置"""
         middleware = ContextEnhancementMiddleware(
-            backend=mock_backend,
-            max_context_length=1000
+            backend=mock_backend, max_context_length=1000
         )
 
         # 测试基本配置
         assert middleware.max_context_length == 1000
-        assert hasattr(middleware, 'backend')
+        assert hasattr(middleware, "backend")
         assert middleware.backend == mock_backend
 
 
@@ -842,8 +805,7 @@ class TestMiddlewareIntegration:
             # 创建多个中间件
             logging_middleware = LoggingMiddleware(mock_backend, f"{temp_dir}/logs/")
             security_middleware = SecurityMiddleware(
-                backend=mock_backend,
-                workspace_root=workspace_root
+                backend=mock_backend, workspace_root=workspace_root
             )
             performance_middleware = PerformanceMonitorMiddleware(mock_backend)
 
@@ -851,7 +813,7 @@ class TestMiddlewareIntegration:
             middleware_chain = [
                 logging_middleware,
                 security_middleware,
-                performance_middleware
+                performance_middleware,
             ]
 
             assert len(middleware_chain) == 3
@@ -869,14 +831,16 @@ class TestMiddlewareIntegration:
                         result = func(*args, **kwargs)
                         execution_order.append(f"{name}_after")
                         return result
+
                     return wrapper
+
             return TestMiddleware()
 
         # 创建中间件链
         middlewares = [
             create_middleware("logging"),
             create_middleware("security"),
-            create_middleware("performance")
+            create_middleware("performance"),
         ]
 
         # 应用中间件
@@ -904,13 +868,15 @@ class TestMiddlewareIntegration:
                             raise Exception("Test error")
                         execution_order.append(f"{name}_after")
                         return func(*args, **kwargs)
+
                     return wrapper
+
             return FailingMiddleware()
 
         middlewares = [
             create_middleware("logging"),
             create_middleware("failing"),
-            create_middleware("performance")
+            create_middleware("performance"),
         ]
 
         decorated_function = lambda: "should_not_execute"
@@ -940,7 +906,7 @@ class TestMiddlewarePerformance:
                 middleware = LoggingMiddleware(
                     backend=mock_backend,
                     log_path=f"/logs/test_{i}/",
-                    session_id=f"test_session_{i}"
+                    session_id=f"test_session_{i}",
                 )
                 middlewares.append(middleware)
             return middlewares
@@ -972,7 +938,7 @@ class TestMiddlewarePerformance:
                 middleware = PerformanceMonitorMiddleware(
                     backend=mock_backend,
                     metrics_path=f"/performance/test_{threading.get_ident()}/",
-                    enable_system_monitoring=False  # 禁用系统监控避免测试复杂性
+                    enable_system_monitoring=False,  # 禁用系统监控避免测试复杂性
                 )
                 results.append(middleware)
             except Exception as e:
@@ -994,8 +960,8 @@ class TestMiddlewarePerformance:
         assert len(results) == 5
         for middleware in results:
             assert middleware is not None
-            assert hasattr(middleware, 'backend')
-            assert hasattr(middleware, 'metrics_path')
+            assert hasattr(middleware, "backend")
+            assert hasattr(middleware, "metrics_path")
 
 
 # 运行测试的入口

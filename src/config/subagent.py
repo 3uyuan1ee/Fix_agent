@@ -1,6 +1,6 @@
-from ..prompt.prompt_template import defect_analyzer_subagent_system_prompt,code_fixer_subagent_system_prompt,fix_validator_subagent_system_prompt
-
-
+from ..prompt.prompt_template import (code_fixer_subagent_system_prompt,
+                                      defect_analyzer_subagent_system_prompt,
+                                      fix_validator_subagent_system_prompt)
 
 # 创建子代理配置
 defect_analyzer_subagent = {

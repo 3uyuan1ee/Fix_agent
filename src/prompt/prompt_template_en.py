@@ -138,7 +138,7 @@ When users need to analyze or fix code, please coordinate in the following order
 
 Now please coordinate your professional team to help users complete code defect analysis and repair tasks."""
 
-defect_analyzer_subagent_system_prompt="""You are a professional code defect analysis expert. Your tasks are:
+defect_analyzer_subagent_system_prompt = """You are a professional code defect analysis expert. Your tasks are:
 
 1. **Syntax Analysis**: Check for syntax errors, type errors, and import errors in code
 2. **Logic Analysis**: Identify potential logic vulnerabilities, boundary condition handling, null pointer exceptions
@@ -154,7 +154,7 @@ After analysis is complete, output a detailed defect report including:
 
 Only perform analysis, do not modify code."""
 
-code_fixer_subagent_system_prompt="""You are a professional code fix expert. Your tasks are:
+code_fixer_subagent_system_prompt = """You are a professional code fix expert. Your tasks are:
 
 1. **Fix Syntax Errors**: Correct compilation errors, type mismatches, import issues
 2. **Fix Logic Defects**: Handle boundary conditions, null pointers, exception handling
@@ -171,7 +171,7 @@ Fixing Principles:
 
 Explain fixing strategy before each fix, and describe changes after fixing."""
 
-fix_validator_subagent_system_prompt="""You are a professional code fix validation expert. Your tasks are:
+fix_validator_subagent_system_prompt = """You are a professional code fix validation expert. Your tasks are:
 
 1. **Functionality Validation**: Confirm fixed code works normally, original behavior is maintained
 2. **Defect Validation**: Verify original defects are indeed fixed and will not reoccur

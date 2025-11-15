@@ -3,7 +3,7 @@
 import os
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, AsyncGenerator
+from typing import Any, AsyncGenerator, Dict, List, Optional
 
 # 导入应用配置
 from .config import settings
@@ -31,36 +31,41 @@ else:
             print(f"✅ CLI root found at alternative path: {alt_path}")
             break
 
+
 # 延迟导入CLI模块
 def _import_cli_modules():
     """Import CLI modules safely."""
     try:
-        from src.agents.agent import create_agent_with_config
-        from src.config.config import create_model
-        from src.tools.tools import get_all_tools
-        from src.midware.agent_memory import AgentMemoryMiddleware
-        from src.midware.performance_monitor import PerformanceMonitorMiddleware
-        from deepagents.backends.filesystem import FilesystemBackend
         from deepagents.backends.composite import CompositeBackend
-        from deepagents.middleware.resumable_shell import ResumableShellToolMiddleware
+        from deepagents.backends.filesystem import FilesystemBackend
+        from deepagents.middleware.resumable_shell import \
+            ResumableShellToolMiddleware
         from langchain.agents.middleware import HostExecutionPolicy
         from langgraph.checkpoint.memory import InMemorySaver
 
+        from src.agents.agent import create_agent_with_config
+        from src.config.config import create_model
+        from src.midware.agent_memory import AgentMemoryMiddleware
+        from src.midware.performance_monitor import \
+            PerformanceMonitorMiddleware
+        from src.tools.tools import get_all_tools
+
         return {
-            'create_agent_with_config': create_agent_with_config,
-            'create_model': create_model,
-            'get_all_tools': get_all_tools,
-            'AgentMemoryMiddleware': AgentMemoryMiddleware,
-            'PerformanceMonitorMiddleware': PerformanceMonitorMiddleware,
-            'FilesystemBackend': FilesystemBackend,
-            'CompositeBackend': CompositeBackend,
-            'ResumableShellToolMiddleware': ResumableShellToolMiddleware,
-            'HostExecutionPolicy': HostExecutionPolicy,
-            'InMemorySaver': InMemorySaver
+            "create_agent_with_config": create_agent_with_config,
+            "create_model": create_model,
+            "get_all_tools": get_all_tools,
+            "AgentMemoryMiddleware": AgentMemoryMiddleware,
+            "PerformanceMonitorMiddleware": PerformanceMonitorMiddleware,
+            "FilesystemBackend": FilesystemBackend,
+            "CompositeBackend": CompositeBackend,
+            "ResumableShellToolMiddleware": ResumableShellToolMiddleware,
+            "HostExecutionPolicy": HostExecutionPolicy,
+            "InMemorySaver": InMemorySaver,
         }
     except ImportError as e:
         print(f"Warning: CLI modules not available: {e}")
         return None
+
 
 cli_modules = _import_cli_modules()
 
@@ -119,14 +124,12 @@ class AIAdapter:
             agent_middleware = self._create_middleware()
 
             # 创建代理
-            self.agent = cli_modules['create_agent_with_config'](
-                model=model,
-                assistant_id=self.session_id,
-                tools=tools
+            self.agent = cli_modules["create_agent_with_config"](
+                model=model, assistant_id=self.session_id, tools=tools
             )
 
             # 设置内存检查点
-            self.checkpointer = cli_modules['InMemorySaver']()
+            self.checkpointer = cli_modules["InMemorySaver"]()
             self.agent.checkpointer = self.checkpointer
 
             print(f"✅ AI Agent initialized for session {self.session_id}")
@@ -143,10 +146,11 @@ class AIAdapter:
         try:
             # 导入环境变量
             from dotenv import load_dotenv
+
             load_dotenv()
 
             # 复用CLI的模型创建逻辑
-            return cli_modules['create_model']()
+            return cli_modules["create_model"]()
         except Exception as e:
             print(f"Failed to create model: {e}")
             return None
@@ -157,7 +161,7 @@ class AIAdapter:
             return []
 
         try:
-            return list(cli_modules['get_all_tools']().values())
+            return list(cli_modules["get_all_tools"]().values())
         except Exception as e:
             print(f"Failed to get tools: {e}")
             return []
@@ -169,37 +173,35 @@ class AIAdapter:
 
         try:
             # Shell中间件（限制在用户工作空间）
-            shell_middleware = cli_modules['ResumableShellToolMiddleware'](
+            shell_middleware = cli_modules["ResumableShellToolMiddleware"](
                 workspace_root=str(self.workspace_path),
-                execution_policy=cli_modules['HostExecutionPolicy']()
+                execution_policy=cli_modules["HostExecutionPolicy"](),
             )
 
             # 记忆后端
-            long_term_backend = cli_modules['FilesystemBackend'](
-                root_dir=self.memory_dir,
-                virtual_mode=True
+            long_term_backend = cli_modules["FilesystemBackend"](
+                root_dir=self.memory_dir, virtual_mode=True
             )
 
             # 复合后端
-            backend = cli_modules['CompositeBackend'](
-                default=cli_modules['FilesystemBackend'](),
-                routes={"/memories/": long_term_backend}
+            backend = cli_modules["CompositeBackend"](
+                default=cli_modules["FilesystemBackend"](),
+                routes={"/memories/": long_term_backend},
             )
 
             # 记忆中间件
-            memory_middleware = cli_modules['AgentMemoryMiddleware'](
-                backend=long_term_backend,
-                memory_path="/memories/"
+            memory_middleware = cli_modules["AgentMemoryMiddleware"](
+                backend=long_term_backend, memory_path="/memories/"
             )
 
             # 性能监控中间件（可选）
             performance_middleware = None
             try:
-                performance_middleware = cli_modules['PerformanceMonitorMiddleware'](
+                performance_middleware = cli_modules["PerformanceMonitorMiddleware"](
                     backend=long_term_backend,
                     metrics_path="/performance/",
                     enable_system_monitoring=True,
-                    max_records=1000
+                    max_records=1000,
                 )
             except Exception as e:
                 print(f"Warning: Performance monitoring middleware disabled: {e}")
@@ -214,7 +216,9 @@ class AIAdapter:
             print(f"Failed to create middleware: {e}")
             return []
 
-    async def stream_response(self, message: str, file_references: List[str] = None) -> AsyncGenerator[Dict[str, Any], None]:
+    async def stream_response(
+        self, message: str, file_references: List[str] = None
+    ) -> AsyncGenerator[Dict[str, Any], None]:
         """Stream AI response for web interface.
 
         Args:
@@ -233,7 +237,7 @@ class AIAdapter:
             yield {
                 "type": "message",
                 "content": f"我收到了你的消息: '{message}'。这是一个模拟的AI响应。完整版本将集成CLI的AI代理功能。",
-                "session_id": self.session_id
+                "session_id": self.session_id,
             }
             return
 
@@ -242,7 +246,7 @@ class AIAdapter:
             "type": "status",
             "content": "AI正在思考...",
             "session_id": self.session_id,
-            "metadata": {"state": "thinking"}
+            "metadata": {"state": "thinking"},
         }
 
         # 构建完整输入（包含文件引用）
@@ -283,7 +287,7 @@ class AIAdapter:
             yield {
                 "type": "error",
                 "content": f"AI响应错误: {str(e)}",
-                "session_id": self.session_id
+                "session_id": self.session_id,
             }
 
     def _build_input_with_files(self, message: str, file_paths: List[str]) -> str:
@@ -297,7 +301,7 @@ class AIAdapter:
             try:
                 full_path = self.workspace_path / file_path
                 if full_path.exists():
-                    content = full_path.read_text(encoding='utf-8')
+                    content = full_path.read_text(encoding="utf-8")
                     # 限制文件大小
                     if len(content) > 50000:
                         content = content[:50000] + "\n... (file truncated)"
@@ -314,8 +318,7 @@ class AIAdapter:
                     )
             except Exception as e:
                 context_parts.append(
-                    f"\n### {Path(file_path).name}\n"
-                    f"[Error reading file: {e}]"
+                    f"\n### {Path(file_path).name}\n" f"[Error reading file: {e}]"
                 )
 
         return "\n".join(context_parts)
@@ -336,7 +339,7 @@ class AIAdapter:
                 message, metadata = data
 
                 # 处理AI消息
-                if hasattr(message, 'content_blocks'):
+                if hasattr(message, "content_blocks"):
                     # 先处理工具调用块（优先级最高）
                     tool_calls_found = False
                     for block in message.content_blocks:
@@ -351,7 +354,7 @@ class AIAdapter:
                                 self.tool_call_buffers[tool_call_id] = {
                                     "name": tool_name,
                                     "args": "",
-                                    "complete": False
+                                    "complete": False,
                                 }
 
                             buffer = self.tool_call_buffers[tool_call_id]
@@ -361,14 +364,16 @@ class AIAdapter:
                             # 检查工具调用是否完成
                             if block.get("complete", False):
                                 buffer["complete"] = True
-                                results.append({
-                                    "type": "tool_call",
-                                    "tool": buffer["name"],
-                                    "args": buffer["args"],
-                                    "session_id": self.session_id,
-                                    "tool_call_id": tool_call_id,
-                                    "complete": True
-                                })
+                                results.append(
+                                    {
+                                        "type": "tool_call",
+                                        "tool": buffer["name"],
+                                        "args": buffer["args"],
+                                        "session_id": self.session_id,
+                                        "tool_call_id": tool_call_id,
+                                        "complete": True,
+                                    }
+                                )
                                 del self.tool_call_buffers[tool_call_id]
 
                     # 然后处理文本块
@@ -379,13 +384,17 @@ class AIAdapter:
                                 # 检查是否是工具输出的JSON数组格式
                                 if self._is_tool_output(text_content):
                                     # 转换工具输出为友好格式
-                                    formatted_output = self._format_tool_output(text_content)
+                                    formatted_output = self._format_tool_output(
+                                        text_content
+                                    )
                                     if formatted_output:
-                                        results.append({
-                                            "type": "tool_result",
-                                            "content": formatted_output,
-                                            "session_id": self.session_id
-                                        })
+                                        results.append(
+                                            {
+                                                "type": "tool_result",
+                                                "content": formatted_output,
+                                                "session_id": self.session_id,
+                                            }
+                                        )
                                 else:
                                     # 累积文本到缓冲区
                                     self.pending_text += text_content
@@ -398,19 +407,23 @@ class AIAdapter:
                     # HITL批准请求
                     interrupt_data = data["__interrupt__"]
                     if interrupt_data and interrupt_data.get("action_requests"):
-                        results.append({
-                            "type": "approval_request",
-                            "approval_data": interrupt_data,
-                            "session_id": self.session_id
-                        })
+                        results.append(
+                            {
+                                "type": "approval_request",
+                                "approval_data": interrupt_data,
+                                "session_id": self.session_id,
+                            }
+                        )
 
                 elif "todos" in data:
                     # 待办事项更新
-                    results.append({
-                        "type": "todos",
-                        "todos": data["todos"],
-                        "session_id": self.session_id
-                    })
+                    results.append(
+                        {
+                            "type": "todos",
+                            "todos": data["todos"],
+                            "session_id": self.session_id,
+                        }
+                    )
 
         # 智能文本发送策略 - 只有在没有工具调用时才考虑发送文本
         should_flush_text = False
@@ -421,7 +434,10 @@ class AIAdapter:
             if time_elapsed > self.chunk_timeout:
                 should_flush_text = True
             # 条件2：文本包含完整句子
-            elif self._has_complete_sentence(self.pending_text) and len(self.pending_text) > 30:
+            elif (
+                self._has_complete_sentence(self.pending_text)
+                and len(self.pending_text) > 30
+            ):
                 should_flush_text = True
             # 条件3：文本很长
             elif len(self.pending_text) > 200:
@@ -430,21 +446,30 @@ class AIAdapter:
         if should_flush_text:
             text_to_send = self.pending_text.rstrip()
             if text_to_send:
-                results.append({
-                    "type": "message",
-                    "content": text_to_send,
-                    "session_id": self.session_id,
-                    "is_stream": True
-                })
+                results.append(
+                    {
+                        "type": "message",
+                        "content": text_to_send,
+                        "session_id": self.session_id,
+                        "is_stream": True,
+                    }
+                )
                 self.pending_text = ""
                 self.last_chunk_time = current_time
 
         # 返回结果（优先级：工具调用 > 工具结果 > 状态 > 其他 > 文本）
         if results:
             tool_call_messages = [r for r in results if r.get("type") == "tool_call"]
-            tool_result_messages = [r for r in results if r.get("type") == "tool_result"]
+            tool_result_messages = [
+                r for r in results if r.get("type") == "tool_result"
+            ]
             status_messages = [r for r in results if r.get("type") == "status"]
-            other_messages = [r for r in results if r.get("type") not in ["tool_call", "tool_result", "status", "message"]]
+            other_messages = [
+                r
+                for r in results
+                if r.get("type")
+                not in ["tool_call", "tool_result", "status", "message"]
+            ]
             text_messages = [r for r in results if r.get("type") == "message"]
 
             if tool_call_messages:
@@ -467,7 +492,7 @@ class AIAdapter:
         text_stripped = text.strip()
 
         # 检查是否是JSON数组格式
-        if (text_stripped.startswith('[') and text_stripped.endswith(']')):
+        if text_stripped.startswith("[") and text_stripped.endswith("]"):
             try:
                 # 尝试解析JSON
                 parsed = json.loads(text_stripped)
@@ -493,12 +518,14 @@ class AIAdapter:
                     main_item = item[0] if isinstance(item[0], str) else str(item[0])
 
                     # 如果是文件路径列表，显示为文件列表
-                    if main_item.startswith('/') or ('/' in main_item and '.' in main_item):
+                    if main_item.startswith("/") or (
+                        "/" in main_item and "." in main_item
+                    ):
                         formatted_lines.append(f"📁 {main_item}")
                         # 添加子项作为缩进列表
                         for sub_item in item[1:]:
                             if isinstance(sub_item, str) and sub_item.strip():
-                                if sub_item.startswith('/'):
+                                if sub_item.startswith("/"):
                                     formatted_lines.append(f"   📄 {sub_item}")
                                 else:
                                     formatted_lines.append(f"   • {sub_item}")
@@ -510,12 +537,12 @@ class AIAdapter:
                                 formatted_lines.append(f"   • {sub_item}")
                 elif isinstance(item, str):
                     # 字符串项
-                    if item.startswith('/'):
+                    if item.startswith("/"):
                         formatted_lines.append(f"📁 {item}")
                     else:
                         formatted_lines.append(f"• {item}")
 
-            return '\n'.join(formatted_lines) if formatted_lines else None
+            return "\n".join(formatted_lines) if formatted_lines else None
 
         except (json.JSONDecodeError, Exception):
             return None
@@ -531,28 +558,32 @@ class AIAdapter:
             return False
 
         # 检查是否以句子结束符结尾
-        end_chars = ['.', '!', '?', '。', '！', '？', '\n']
+        end_chars = [".", "!", "?", "。", "！", "？", "\n"]
         ends_with_sentence = any(text_stripped.endswith(char) for char in end_chars)
 
         # 检查是否有常见的句子结构模式
         sentence_patterns = [
-            r'.*[。！？]\s*$',  # 中文句子结尾
-            r'[.!?]\s*$',      # 英文句子结尾
-            r'：\s*.*[。！？.!?]',  # 有解释的句子
-            r'\s*\n\s*$',       # 换行结尾
+            r".*[。！？]\s*$",  # 中文句子结尾
+            r"[.!?]\s*$",  # 英文句子结尾
+            r"：\s*.*[。！？.!?]",  # 有解释的句子
+            r"\s*\n\s*$",  # 换行结尾
         ]
 
-        has_sentence_structure = any(re.match(pattern, text_stripped) for pattern in sentence_patterns)
+        has_sentence_structure = any(
+            re.match(pattern, text_stripped) for pattern in sentence_patterns
+        )
 
         # 避免在代码块或列表中间分割
         avoid_split_patterns = [
-            r'.*```$',           # 代码块开始
-            r'.*`[^`]*$',        # 不完整的代码标记
-            r'.*\d+\.$',         # 数字列表（如 "1."）
-            r'.*[-*+]\s*$',      # 项目符号列表
+            r".*```$",  # 代码块开始
+            r".*`[^`]*$",  # 不完整的代码标记
+            r".*\d+\.$",  # 数字列表（如 "1."）
+            r".*[-*+]\s*$",  # 项目符号列表
         ]
 
-        should_avoid_split = any(re.match(pattern, text_stripped) for pattern in avoid_split_patterns)
+        should_avoid_split = any(
+            re.match(pattern, text_stripped) for pattern in avoid_split_patterns
+        )
 
         return ends_with_sentence and has_sentence_structure and not should_avoid_split
 
@@ -562,12 +593,14 @@ class AIAdapter:
         if self.pending_text and (final or self.pending_text.strip()):
             text_to_send = self.pending_text.rstrip()
             if text_to_send:
-                results.append({
-                    "type": "message",
-                    "content": text_to_send,
-                    "session_id": self.session_id,
-                    "is_stream": not final
-                })
+                results.append(
+                    {
+                        "type": "message",
+                        "content": text_to_send,
+                        "session_id": self.session_id,
+                        "is_stream": not final,
+                    }
+                )
                 self.pending_text = ""
 
         # 流结束时重置所有状态
@@ -592,11 +625,11 @@ class AIAdapter:
         """Read content from a memory file."""
         full_path = self.memory_dir / file_path
         if full_path.exists() and full_path.is_file():
-            return full_path.read_text(encoding='utf-8')
+            return full_path.read_text(encoding="utf-8")
         return ""
 
     def write_memory_file(self, file_path: str, content: str):
         """Write content to a memory file."""
         full_path = self.memory_dir / file_path
         full_path.parent.mkdir(parents=True, exist_ok=True)
-        full_path.write_text(content, encoding='utf-8')
+        full_path.write_text(content, encoding="utf-8")

@@ -6,11 +6,13 @@ Fix Agent Web应用停止工具
 允许通过fixagent-web-stop命令停止正在运行的服务器。
 """
 
-import sys
-import subprocess
-import psutil
 import argparse
+import subprocess
+import sys
 from pathlib import Path
+
+import psutil
+
 
 def stop_web_servers():
     """停止所有Fix Agent Web服务器"""
@@ -18,20 +20,22 @@ def stop_web_servers():
 
     try:
         # 查找所有运行中的uvicorn进程
-        for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+        for proc in psutil.process_iter(["pid", "name", "cmdline"]):
             try:
-                cmdline = proc.info.get('cmdline', [])
+                cmdline = proc.info.get("cmdline", [])
                 if not cmdline:
                     continue
 
                 # 检查是否是我们的uvicorn进程
-                if (len(cmdline) >= 3 and
-                    cmdline[0].endswith('python') and
-                    cmdline[1] == '-m' and
-                    cmdline[2] == 'uvicorn' and
-                    any('main:app' in arg for arg in cmdline)):
+                if (
+                    len(cmdline) >= 3
+                    and cmdline[0].endswith("python")
+                    and cmdline[1] == "-m"
+                    and cmdline[2] == "uvicorn"
+                    and any("main:app" in arg for arg in cmdline)
+                ):
 
-                    pid = proc.info['pid']
+                    pid = proc.info["pid"]
                     print(f"🛑 正在停止Fix Agent Web服务器 (PID: {pid})")
 
                     # 优雅地停止进程
@@ -61,18 +65,18 @@ def stop_web_servers():
 
     return 0
 
+
 def stop_by_port(port):
     """通过端口号停止服务器"""
     try:
         # 查找占用指定端口的进程
-        for proc in psutil.process_iter(['pid', 'name', 'connections']):
+        for proc in psutil.process_iter(["pid", "name", "connections"]):
             try:
-                connections = proc.info.get('connections', [])
+                connections = proc.info.get("connections", [])
                 for conn in connections:
-                    if (conn.status == psutil.CONN_LISTEN and
-                        conn.laddr.port == port):
+                    if conn.status == psutil.CONN_LISTEN and conn.laddr.port == port:
 
-                        pid = proc.info['pid']
+                        pid = proc.info["pid"]
                         print(f"🛑 正在停止占用端口 {port} 的服务器 (PID: {pid})")
 
                         proc.terminate()
@@ -95,6 +99,7 @@ def stop_by_port(port):
         print(f"❌ 停止服务器时发生错误: {e}")
         return 1
 
+
 def list_web_servers():
     """列出所有运行中的Web服务器"""
     found = False
@@ -103,21 +108,23 @@ def list_web_servers():
         print("🔍 搜索运行中的Fix Agent Web服务器...")
         print("")
 
-        for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+        for proc in psutil.process_iter(["pid", "name", "cmdline"]):
             try:
-                cmdline = proc.info.get('cmdline', [])
+                cmdline = proc.info.get("cmdline", [])
                 if not cmdline:
                     continue
 
                 # 检查是否是我们的uvicorn进程
-                if (len(cmdline) >= 3 and
-                    cmdline[0].endswith('python') and
-                    cmdline[1] == '-m' and
-                    cmdline[2] == 'uvicorn' and
-                    any('main:app' in arg for arg in cmdline)):
+                if (
+                    len(cmdline) >= 3
+                    and cmdline[0].endswith("python")
+                    and cmdline[1] == "-m"
+                    and cmdline[2] == "uvicorn"
+                    and any("main:app" in arg for arg in cmdline)
+                ):
 
                     found = True
-                    pid = proc.info['pid']
+                    pid = proc.info["pid"]
 
                     # 获取端口信息
                     ports = []
@@ -129,7 +136,9 @@ def list_web_servers():
                     except (psutil.AccessDenied, psutil.NoSuchProcess):
                         pass
 
-                    ports_str = ", ".join(f":{port}" for port in ports) if ports else "未知"
+                    ports_str = (
+                        ", ".join(f":{port}" for port in ports) if ports else "未知"
+                    )
                     print(f"📡 Fix Agent Web服务器")
                     print(f"   PID: {pid}")
                     print(f"   端口: {ports_str}")
@@ -148,29 +157,21 @@ def list_web_servers():
 
     return 0
 
+
 def cli_main():
     """停止Web应用的CLI主入口点函数"""
     parser = argparse.ArgumentParser(
-        prog="fixagent-web-stop",
-        description="停止Fix Agent Web应用服务器"
+        prog="fixagent-web-stop", description="停止Fix Agent Web应用服务器"
+    )
+
+    parser.add_argument("--port", "-p", type=int, help="停止占用指定端口的服务器")
+
+    parser.add_argument(
+        "--list", "-l", action="store_true", help="列出所有运行中的Web服务器"
     )
 
     parser.add_argument(
-        "--port", "-p",
-        type=int,
-        help="停止占用指定端口的服务器"
-    )
-
-    parser.add_argument(
-        "--list", "-l",
-        action="store_true",
-        help="列出所有运行中的Web服务器"
-    )
-
-    parser.add_argument(
-        "--version",
-        action="version",
-        version="Fix Agent Web Stop 1.0.0"
+        "--version", action="version", version="Fix Agent Web Stop 1.0.0"
     )
 
     args = parser.parse_args()
@@ -181,6 +182,7 @@ def cli_main():
         return stop_by_port(args.port)
     else:
         return stop_web_servers()
+
 
 if __name__ == "__main__":
     sys.exit(cli_main())

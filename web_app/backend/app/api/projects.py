@@ -1,11 +1,12 @@
 # Projects API routes
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
 from typing import List
 
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
 from ..models.database import get_db
-from ..models.schemas import ProjectResponse, AnalysisResultResponse
+from ..models.schemas import AnalysisResultResponse, ProjectResponse
 
 router = APIRouter()
 

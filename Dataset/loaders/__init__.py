@@ -7,12 +7,8 @@
 - 其他可扩展的数据集格式
 """
 
-from .swe_bench import SWEBenchLoader
-from .bugs_in_py import BugsInPyLoader
 from .base import BaseDatasetLoader
+from .bugs_in_py import BugsInPyLoader
+from .swe_bench import SWEBenchLoader
 
-__all__ = [
-    "BaseDatasetLoader",
-    "SWEBenchLoader",
-    "BugsInPyLoader"
-]
+__all__ = ["BaseDatasetLoader", "SWEBenchLoader", "BugsInPyLoader"]

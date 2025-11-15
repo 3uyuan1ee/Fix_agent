@@ -10,22 +10,19 @@ from deepagents.backends.filesystem import FilesystemBackend
 from deepagents.middleware.resumable_shell import ResumableShellToolMiddleware
 from langchain.agents.middleware import HostExecutionPolicy
 from langgraph.checkpoint.memory import InMemorySaver
-from ..config.subagent import defect_analyzer_subagent, code_fixer_subagent, fix_validator_subagent
 
-from ..config.config import (
-    COLORS,
-    config,
-    console,
-    get_default_coding_instructions,
-    get_system_prompt,
-)
+from ..config.config import (COLORS, config, console,
+                             get_default_coding_instructions,
+                             get_system_prompt)
+from ..config.subagent import (code_fixer_subagent, defect_analyzer_subagent,
+                               fix_validator_subagent)
 from ..midware.agent_memory import AgentMemoryMiddleware
-from ..midware.performance_monitor import PerformanceMonitorMiddleware
-from ..midware.layered_memory import LayeredMemoryMiddleware
 from ..midware.context_enhancement import ContextEnhancementMiddleware
-from ..midware.security import SecurityMiddleware
+from ..midware.layered_memory import LayeredMemoryMiddleware
 from ..midware.logging import LoggingMiddleware
 from ..midware.memory_adapter import MemoryMiddlewareFactory
+from ..midware.performance_monitor import PerformanceMonitorMiddleware
+from ..midware.security import SecurityMiddleware
 
 
 def list_agents():
@@ -97,7 +94,9 @@ def reset_agent(agent_name: str, source_agent: str = None):
     console.print(f"Location: {agent_dir}\n", style=COLORS["dim"])
 
 
-def create_agent_with_config(model, assistant_id: str, tools: list, memory_mode: str = "auto"):
+def create_agent_with_config(
+    model, assistant_id: str, tools: list, memory_mode: str = "auto"
+):
     """使用自定义架构创建并配置具有指定模型和工具的代理"""
     shell_middleware = ResumableShellToolMiddleware(
         workspace_root=os.getcwd(), execution_policy=HostExecutionPolicy()
@@ -133,7 +132,7 @@ def create_agent_with_config(model, assistant_id: str, tools: list, memory_mode:
             backend=long_term_backend,
             metrics_path="/performance/",
             enable_system_monitoring=True,
-            max_records=1000
+            max_records=1000,
         )
         agent_middleware.append(performance_middleware)
         console.print("[green]✓[/green] 性能监控中间件 (最外层)")
@@ -149,7 +148,7 @@ def create_agent_with_config(model, assistant_id: str, tools: list, memory_mode:
             enable_conversation_logging=True,
             enable_tool_logging=True,
             enable_performance_logging=True,
-            enable_error_logging=True
+            enable_error_logging=True,
         )
         agent_middleware.append(logging_middleware)
         console.print("[green]✓[/green] 日志记录中间件")
@@ -165,7 +164,7 @@ def create_agent_with_config(model, assistant_id: str, tools: list, memory_mode:
             enable_project_analysis=True,
             enable_user_preferences=True,
             enable_conversation_enhancement=True,
-            max_context_length=4000
+            max_context_length=4000,
         )
         agent_middleware.append(context_middleware)
         console.print("[green]✓[/green] 上下文增强中间件")
@@ -180,7 +179,7 @@ def create_agent_with_config(model, assistant_id: str, tools: list, memory_mode:
             enable_layered=None,  # 自动检测
             working_memory_size=10,
             enable_semantic_memory=True,
-            enable_episodic_memory=True
+            enable_episodic_memory=True,
         )
 
         if isinstance(memory_middleware, list):
@@ -190,7 +189,7 @@ def create_agent_with_config(model, assistant_id: str, tools: list, memory_mode:
         else:
             # 单个中间件
             agent_middleware.append(memory_middleware)
-            if hasattr(memory_middleware, '__class__'):
+            if hasattr(memory_middleware, "__class__"):
                 if isinstance(memory_middleware, LayeredMemoryMiddleware):
                     console.print("[green]✓[/green] 分层记忆系统")
                 elif isinstance(memory_middleware, AgentMemoryMiddleware):
@@ -205,7 +204,9 @@ def create_agent_with_config(model, assistant_id: str, tools: list, memory_mode:
 
     # 第三层：框架默认中间件（会自动追加到这里）
     # 框架会自动添加：TodoList, Filesystem, SubAgent, Summarization, Caching, PatchToolCalls
-    console.print("""[green]✓[/green] 任务管理,文件系统操作,子代理管理,对话摘要,提示缓存,工具调用补丁中间件""")
+    console.print(
+        """[green]✓[/green] 任务管理,文件系统操作,子代理管理,对话摘要,提示缓存,工具调用补丁中间件"""
+    )
 
     # 第四层：工具层（最内层）
     # 5. 安全检查中间件
@@ -218,7 +219,7 @@ def create_agent_with_config(model, assistant_id: str, tools: list, memory_mode:
             enable_command_security=True,
             enable_content_security=True,
             allow_path_traversal=False,
-            max_file_size=10 * 1024 * 1024  # 10MB
+            max_file_size=10 * 1024 * 1024,  # 10MB
         )
         agent_middleware.append(security_middleware)
         console.print("[green]✓[/green] 安全检查中间件")
@@ -229,9 +230,11 @@ def create_agent_with_config(model, assistant_id: str, tools: list, memory_mode:
     agent_middleware.append(shell_middleware)
     console.print("[green]✓[/green] Shell工具中间件 (最内层)")
 
-    console.print(f"[bold green]🎉 中间件管道构建完成！共 {len(agent_middleware)} 个中间件[/bold green]")
+    console.print(
+        f"[bold green]🎉 中间件管道构建完成！共 {len(agent_middleware)} 个中间件[/bold green]"
+    )
 
-    #创建subagents
+    # 创建subagents
     subagents = [defect_analyzer_subagent, code_fixer_subagent, fix_validator_subagent]
 
     # Helper functions for formatting tool descriptions in HITL prompts
@@ -369,6 +372,7 @@ def get_current_assistant_id() -> str:
         if (cwd / "pyproject.toml").exists():
             try:
                 import toml
+
                 pyproject = toml.load(cwd / "pyproject.toml")
                 project_name = pyproject.get("project", {}).get("name")
                 if project_name:

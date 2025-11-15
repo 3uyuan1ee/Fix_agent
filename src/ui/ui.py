@@ -9,7 +9,8 @@ from rich.panel import Panel
 from rich.syntax import Syntax
 from rich.text import Text
 
-from ..config.config import COLORS, COMMANDS, DEEP_AGENTS_ASCII, MAX_ARG_LENGTH, console
+from ..config.config import (COLORS, COMMANDS, DEEP_AGENTS_ASCII,
+                             MAX_ARG_LENGTH, console)
 from ..tools.file_ops import FileOperationRecord
 
 
@@ -524,12 +525,8 @@ def show_help():
     console.print(
         "  /help           Show available commands and features", style=COLORS["dim"]
     )
-    console.print(
-        "  /cd <path>      Change working directory", style=COLORS["dim"]
-    )
-    console.print(
-        "  /config         Edit .env configuration file", style=COLORS["dim"]
-    )
+    console.print("  /cd <path>      Change working directory", style=COLORS["dim"])
+    console.print("  /config         Edit .env configuration file", style=COLORS["dim"])
     console.print(
         "  /clear          Clear screen and reset conversation", style=COLORS["dim"]
     )
@@ -540,7 +537,8 @@ def show_help():
         "  /tokens         Show token usage for current session", style=COLORS["dim"]
     )
     console.print(
-        "  /sys, /system, /info  Show system information and platform features", style=COLORS["dim"]
+        "  /sys, /system, /info  Show system information and platform features",
+        style=COLORS["dim"],
     )
     console.print(
         "  /services, /svc  Manage Windows services (Windows only)", style=COLORS["dim"]

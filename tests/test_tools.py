@@ -5,32 +5,25 @@
 测试文件: src/tools/tools.py, src/tools/*.py
 """
 
-import pytest
-import tempfile
-import os
 import json
+import os
+import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
 from typing import Optional
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 # 导入实际的项目模块
-from src.tools.tools import (
-    analyze_code_defects,
-    http_request,
-    web_search,
-    analyze_file,
-    aggregate_defects,
-    compile_project,
-    run_and_monitor,
-    run_tests_with_error_capture,
-    analyze_existing_logs,
-    explore_project_structure,
-    analyze_code_complexity,
-    format_code_professional,
-    batch_format_professional,
-    generate_validation_tests_tool,
-    execute_test_suite_tool
-)
+from src.tools.tools import (aggregate_defects, analyze_code_complexity,
+                             analyze_code_defects, analyze_existing_logs,
+                             analyze_file, batch_format_professional,
+                             compile_project, execute_test_suite_tool,
+                             explore_project_structure,
+                             format_code_professional,
+                             generate_validation_tests_tool, http_request,
+                             run_and_monitor, run_tests_with_error_capture,
+                             web_search)
 
 
 class TestAnalyzeCodeDefects:
@@ -39,8 +32,9 @@ class TestAnalyzeCodeDefects:
     @pytest.fixture
     def sample_python_file(self):
         """创建Python示例文件"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-            f.write("""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(
+                """
 def calculate_sum(a, b):
     return a + b
 
@@ -61,14 +55,16 @@ class Calculator:
         result = a + b
         self.history.append(f"{a} + {b} = {result}")
         return result
-""")
+"""
+            )
             return f.name
 
     @pytest.fixture
     def sample_javascript_file(self):
         """创建JavaScript示例文件"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.js', delete=False) as f:
-            f.write("""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".js", delete=False) as f:
+            f.write(
+                """
 function calculateSum(a, b) {
     return a + b;
 }
@@ -87,12 +83,15 @@ function processArray(items) {
 
 let x = null;
 console.log(x.value);  // null引用错误
-""")
+"""
+            )
             return f.name
 
-    @patch('src.tools.tools.analyze_file')
-    @patch('src.tools.tools.aggregate_defects')
-    def test_analyze_code_defects_python_success(self, mock_aggregate, mock_analyze_file, sample_python_file):
+    @patch("src.tools.tools.analyze_file")
+    @patch("src.tools.tools.aggregate_defects")
+    def test_analyze_code_defects_python_success(
+        self, mock_aggregate, mock_analyze_file, sample_python_file
+    ):
         """测试Python代码缺陷分析成功情况"""
         try:
             os.unlink(sample_python_file)
@@ -109,41 +108,33 @@ console.log(x.value);  // null引用错误
                     "type": "potential-zero-division",
                     "line": 4,
                     "message": "Division by zero possible",
-                    "severity": "medium"
+                    "severity": "medium",
                 }
             ],
-            "score": 85
+            "score": 85,
         }
 
         mock_aggregate.invoke.return_value = {
             "total_defects": 3,
-            "clusters": [
-                {
-                    "type": "division-safety",
-                    "count": 1,
-                    "severity": "medium"
-                }
-            ],
-            "priority_ranking": [
-                {
-                    "issue": "potential-zero-division",
-                    "priority": 2
-                }
-            ]
+            "clusters": [{"type": "division-safety", "count": 1, "severity": "medium"}],
+            "priority_ranking": [{"issue": "potential-zero-division", "priority": 2}],
         }
 
         try:
             # 调用工具的invoke方法
-            result = analyze_code_defects.invoke({
-                "file_path": sample_python_file,
-                "language": "python"
-            })
+            result = analyze_code_defects.invoke(
+                {"file_path": sample_python_file, "language": "python"}
+            )
             assert result is not None
             assert isinstance(result, str)
 
             # 验证返回的是JSON字符串
             result_json = json.loads(result)
-            assert "success" in result_json or "analysis" in result_json or "error" in result_json
+            assert (
+                "success" in result_json
+                or "analysis" in result_json
+                or "error" in result_json
+            )
         except (FileNotFoundError, AttributeError):
             # 如果文件不存在或工具不可调用，跳过测试
             pytest.skip("Tool not available or test file not found")
@@ -153,9 +144,11 @@ console.log(x.value);  // null引用错误
             except:
                 pass
 
-    @patch('src.tools.tools.analyze_file')
-    @patch('src.tools.tools.aggregate_defects')
-    def test_analyze_code_defects_javascript(self, mock_aggregate, mock_analyze_file, sample_javascript_file):
+    @patch("src.tools.tools.analyze_file")
+    @patch("src.tools.tools.aggregate_defects")
+    def test_analyze_code_defects_javascript(
+        self, mock_aggregate, mock_analyze_file, sample_javascript_file
+    ):
         """测试JavaScript代码缺陷分析"""
         try:
             os.unlink(sample_javascript_file)
@@ -171,28 +164,21 @@ console.log(x.value);  // null引用错误
                     "type": "no-unused-vars",
                     "line": 12,
                     "message": "'x' is assigned a value but never used",
-                    "severity": "low"
+                    "severity": "low",
                 }
             ],
-            "score": 90
+            "score": 90,
         }
 
         mock_aggregate.invoke.return_value = {
             "total_defects": 2,
-            "clusters": [
-                {
-                    "type": "unused-variables",
-                    "count": 1,
-                    "severity": "low"
-                }
-            ]
+            "clusters": [{"type": "unused-variables", "count": 1, "severity": "low"}],
         }
 
         try:
-            result = analyze_code_defects.invoke({
-                "file_path": sample_javascript_file,
-                "language": "javascript"
-            })
+            result = analyze_code_defects.invoke(
+                {"file_path": sample_javascript_file, "language": "javascript"}
+            )
             assert result is not None
             assert isinstance(result, str)
         except FileNotFoundError:
@@ -206,31 +192,30 @@ console.log(x.value);  // null引用错误
     def test_analyze_code_defects_auto_language_detection(self):
         """测试自动语言检测"""
         # 创建临时文件
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
             f.write("print('Hello, Python!')")
             file_path = f.name
 
         try:
-            with patch('src.tools.tools.analyze_file') as mock_analyze_file:
-                with patch('src.tools.tools.aggregate_defects') as mock_aggregate:
+            with patch("src.tools.tools.analyze_file") as mock_analyze_file:
+                with patch("src.tools.tools.aggregate_defects") as mock_aggregate:
                     mock_analyze_file.invoke.return_value = {
                         "file_path": file_path,
                         "language": "python",
                         "tool_name": "pylint",
                         "issues": [],
-                        "score": 95
+                        "score": 95,
                     }
 
                     mock_aggregate.invoke.return_value = {
                         "total_defects": 0,
-                        "clusters": []
+                        "clusters": [],
                     }
 
                     # 不指定语言，让工具自动检测
-                    result = analyze_code_defects.invoke({
-                "file_path": file_path,
-                "language": None
-            })
+                    result = analyze_code_defects.invoke(
+                        {"file_path": file_path, "language": None}
+                    )
                     assert result is not None
                     assert isinstance(result, str)
 
@@ -241,15 +226,16 @@ console.log(x.value);  // null引用错误
 
     def test_analyze_code_defects_nonexistent_file(self):
         """测试分析不存在的文件"""
-        with patch('src.tools.tools.analyze_file') as mock_analyze_file:
-            with patch('src.tools.tools.aggregate_defects') as mock_aggregate:
+        with patch("src.tools.tools.analyze_file") as mock_analyze_file:
+            with patch("src.tools.tools.aggregate_defects") as mock_aggregate:
                 # 模拟文件不存在的情况
-                mock_analyze_file.invoke.side_effect = FileNotFoundError("File not found")
+                mock_analyze_file.invoke.side_effect = FileNotFoundError(
+                    "File not found"
+                )
 
-                result = analyze_code_defects.invoke({
-                    "file_path": "/nonexistent/file.py",
-                    "language": "python"
-                })
+                result = analyze_code_defects.invoke(
+                    {"file_path": "/nonexistent/file.py", "language": "python"}
+                )
                 assert result is not None
                 assert isinstance(result, str)
 
@@ -259,13 +245,12 @@ console.log(x.value);  // null引用错误
 
     def test_analyze_code_defects_analyzer_error(self):
         """测试分析器错误处理"""
-        with patch('src.tools.tools.analyze_file') as mock_analyze_file:
+        with patch("src.tools.tools.analyze_file") as mock_analyze_file:
             mock_analyze_file.invoke.side_effect = Exception("Analyzer error")
 
-            result = analyze_code_defects.invoke({
-                "file_path": "test.py",
-                "language": "python"
-            })
+            result = analyze_code_defects.invoke(
+                {"file_path": "test.py", "language": "python"}
+            )
             assert result is not None
             assert isinstance(result, str)
 
@@ -277,15 +262,23 @@ console.log(x.value);  // null引用错误
 class TestNetworkTools:
     """测试网络工具"""
 
-    @patch('src.tools.network_tools.tavily_client')
+    @patch("src.tools.network_tools.tavily_client")
     def test_web_search_success(self, mock_tavily):
         """测试网络搜索成功"""
         mock_tavily.search.return_value = {
             "results": [
-                {"title": "Test Result 1", "url": "https://example.com/1", "content": "Test content 1"},
-                {"title": "Test Result 2", "url": "https://example.com/2", "content": "Test content 2"}
+                {
+                    "title": "Test Result 1",
+                    "url": "https://example.com/1",
+                    "content": "Test content 1",
+                },
+                {
+                    "title": "Test Result 2",
+                    "url": "https://example.com/2",
+                    "content": "Test content 2",
+                },
             ],
-            "query": "Python programming"
+            "query": "Python programming",
         }
 
         result = web_search("Python programming", max_results=5)
@@ -299,10 +292,10 @@ class TestNetworkTools:
             "Python programming",
             max_results=5,
             include_raw_content=False,
-            topic="general"
+            topic="general",
         )
 
-    @patch('src.tools.network_tools.tavily_client')
+    @patch("src.tools.network_tools.tavily_client")
     def test_web_search_failure(self, mock_tavily):
         """测试网络搜索失败"""
         mock_tavily.search.side_effect = Exception("API error")
@@ -314,7 +307,7 @@ class TestNetworkTools:
         assert "query" in result
         assert result["query"] == "test query"
 
-    @patch('src.tools.network_tools.requests')
+    @patch("src.tools.network_tools.requests")
     def test_http_request_get_success(self, mock_requests):
         """测试HTTP GET请求成功"""
         mock_response = Mock()
@@ -334,7 +327,7 @@ class TestNetworkTools:
 
         mock_requests.request.assert_called_once()
 
-    @patch('src.tools.network_tools.requests')
+    @patch("src.tools.network_tools.requests")
     def test_http_request_post_success(self, mock_requests):
         """测试HTTP POST请求成功"""
         mock_response = Mock()
@@ -346,7 +339,9 @@ class TestNetworkTools:
         mock_requests.request.return_value = mock_response
 
         data = {"name": "test", "value": 123}
-        result = http_request("https://api.example.com/create", method="POST", data=data)
+        result = http_request(
+            "https://api.example.com/create", method="POST", data=data
+        )
         assert result is not None
         assert isinstance(result, dict)
         assert result["success"] is True
@@ -368,13 +363,11 @@ class TestNetworkTools:
 class TestErrorDetectionTools:
     """测试错误检测工具"""
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_compile_project_success(self, mock_subprocess):
         """测试项目编译成功"""
         mock_subprocess.return_value = Mock(
-            returncode=0,
-            stdout="Compilation successful",
-            stderr=""
+            returncode=0, stdout="Compilation successful", stderr=""
         )
 
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -384,13 +377,11 @@ class TestErrorDetectionTools:
 
             mock_subprocess.assert_called_once()
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_compile_project_failure(self, mock_subprocess):
         """测试项目编译失败"""
         mock_subprocess.return_value = Mock(
-            returncode=1,
-            stdout="",
-            stderr="Syntax error: invalid syntax"
+            returncode=1, stdout="", stderr="Syntax error: invalid syntax"
         )
 
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -398,45 +389,41 @@ class TestErrorDetectionTools:
             assert result is not None
             assert isinstance(result, str)
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_run_and_monitor_success(self, mock_subprocess):
         """测试程序运行监控成功"""
         mock_subprocess.return_value = Mock(
-            returncode=0,
-            stdout="Program completed successfully",
-            stderr=""
+            returncode=0, stdout="Program completed successfully", stderr=""
         )
 
         result = run_and_monitor("python -c 'print(\"Hello\")'")
         assert result is not None
         assert isinstance(result, str)
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_run_tests_with_error_capture_success(self, mock_subprocess):
         """测试测试执行和错误捕获成功"""
         mock_subprocess.return_value = Mock(
-            returncode=0,
-            stdout="All tests passed",
-            stderr=""
+            returncode=0, stdout="All tests passed", stderr=""
         )
 
         result = run_tests_with_error_capture("python -m pytest")
         assert result is not None
         assert isinstance(result, str)
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_analyze_existing_logs_success(self, mock_subprocess):
         """测试日志文件分析成功"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.log', delete=False) as f:
-            f.write("2023-01-01 10:00:00 INFO Application started\n"
-                   "2023-01-01 10:00:01 ERROR Something went wrong\n")
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".log", delete=False) as f:
+            f.write(
+                "2023-01-01 10:00:00 INFO Application started\n"
+                "2023-01-01 10:00:01 ERROR Something went wrong\n"
+            )
             log_file = f.name
 
         try:
             mock_subprocess.return_value = Mock(
-                returncode=0,
-                stdout="Log analysis completed",
-                stderr=""
+                returncode=0, stdout="Log analysis completed", stderr=""
             )
 
             result = analyze_existing_logs(log_file)
@@ -474,8 +461,9 @@ class TestProjectExplorerTools:
 
     def test_analyze_code_complexity(self):
         """测试代码复杂度分析"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-            f.write("""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(
+                """
 def complex_function(data):
     result = []
     for item in data:
@@ -485,7 +473,8 @@ def complex_function(data):
                     for j in range(3):
                         result.append(item[i] * j)
     return result
-""")
+"""
+            )
             file_path = f.name
 
         try:
@@ -501,18 +490,20 @@ class TestCodeFormattingTools:
 
     def test_format_code_professional(self):
         """测试专业代码格式化"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-            f.write("""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(
+                """
 def test_function(x,y,z):
     if x>0:
         return x+y+z
     else:
         return 0
-""")
+"""
+            )
             file_path = f.name
 
         try:
-            with patch('subprocess.run') as mock_subprocess:
+            with patch("subprocess.run") as mock_subprocess:
                 mock_subprocess.return_value = Mock(returncode=0)
 
                 result = format_code_professional(file_path, style="black")
@@ -533,7 +524,7 @@ def test_function(x,y,z):
                 file_path.write_text(f"def func_{i}():return {i}")
 
             try:
-                with patch('subprocess.run') as mock_subprocess:
+                with patch("subprocess.run") as mock_subprocess:
                     mock_subprocess.return_value = Mock(returncode=0)
 
                     result = batch_format_professional(temp_dir, style="black")
@@ -549,23 +540,27 @@ class TestTestGenerationTools:
 
     def test_generate_validation_tests(self):
         """测试验证测试生成"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-            f.write("""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(
+                """
 def calculate_area(length, width):
     return length * width
 
 def calculate_perimeter(length, width):
     return 2 * (length + width)
-""")
+"""
+            )
             file_path = f.name
 
         try:
-            result = generate_validation_tests_tool.invoke({
-                "file_path": file_path,
-                "language": "python",
-                "defects_json": json.dumps([]),
-                "fixes_json": json.dumps([])
-            })
+            result = generate_validation_tests_tool.invoke(
+                {
+                    "file_path": file_path,
+                    "language": "python",
+                    "defects_json": json.dumps([]),
+                    "fixes_json": json.dumps([]),
+                }
+            )
             assert result is not None
             assert isinstance(result, str)
         finally:
@@ -576,13 +571,15 @@ def calculate_perimeter(length, width):
         with tempfile.TemporaryDirectory() as temp_dir:
             # 创建测试文件
             test_file = Path(temp_dir) / "test_math.py"
-            test_file.write_text("""
+            test_file.write_text(
+                """
 def test_addition():
     assert 1 + 1 == 2
 
 def test_subtraction():
     assert 5 - 3 == 2
-""")
+"""
+            )
 
             try:
                 result = execute_test_suite_tool(str(test_file))
@@ -598,8 +595,9 @@ class TestToolIntegration:
 
     def test_tool_chain_integration(self):
         """测试工具链集成"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-            f.write("""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(
+                """
 def calculate_sum(a, b):
     return a + b
 
@@ -614,45 +612,38 @@ class Calculator:
         result = a + b
         self.history.append(f"{a}+{b}={result}")
         return result
-""")
+"""
+            )
             file_path = f.name
 
         try:
             # 模拟完整的分析流程
-            with patch('src.tools.tools.analyze_file') as mock_analyze:
-                with patch('src.tools.tools.aggregate_defects') as mock_aggregate:
+            with patch("src.tools.tools.analyze_file") as mock_analyze:
+                with patch("src.tools.tools.aggregate_defects") as mock_aggregate:
                     mock_analyze.invoke.return_value = {
                         "file_path": file_path,
                         "language": "python",
                         "tool_name": "pylint",
                         "issues": [
                             {"type": "missing-docstring", "line": 2},
-                            {"type": "missing-docstring", "line": 5}
+                            {"type": "missing-docstring", "line": 5},
                         ],
-                        "score": 88
+                        "score": 88,
                     }
 
                     mock_aggregate.invoke.return_value = {
                         "total_defects": 2,
                         "clusters": [
-                            {
-                                "type": "documentation",
-                                "count": 2,
-                                "severity": "low"
-                            }
+                            {"type": "documentation", "count": 2, "severity": "low"}
                         ],
                         "priority_ranking": [
-                            {
-                                "issue": "missing-docstring",
-                                "priority": 3
-                            }
-                        ]
+                            {"issue": "missing-docstring", "priority": 3}
+                        ],
                     }
 
-                    result = analyze_code_defects.invoke({
-                "file_path": file_path,
-                "language": None
-            })
+                    result = analyze_code_defects.invoke(
+                        {"file_path": file_path, "language": None}
+                    )
                     assert result is not None
 
                     # 验证结果结构
@@ -666,40 +657,43 @@ class Calculator:
         languages_and_extensions = [
             ("python", ".py"),
             ("javascript", ".js"),
-            ("java", ".java")
+            ("java", ".java"),
         ]
 
         for language, ext in languages_and_extensions:
-            with tempfile.NamedTemporaryFile(mode='w', suffix=ext, delete=False) as f:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=ext, delete=False) as f:
                 if language == "python":
                     f.write("def hello(): print('Hello')")
                 elif language == "javascript":
                     f.write("function hello() { console.log('Hello'); }")
                 elif language == "java":
-                    f.write("public class Hello { public static void main(String[] args) { System.out.println(\"Hello\"); } }")
+                    f.write(
+                        'public class Hello { public static void main(String[] args) { System.out.println("Hello"); } }'
+                    )
 
                 file_path = f.name
 
                 try:
-                    with patch('src.tools.tools.analyze_file') as mock_analyze:
-                        with patch('src.tools.tools.aggregate_defects') as mock_aggregate:
+                    with patch("src.tools.tools.analyze_file") as mock_analyze:
+                        with patch(
+                            "src.tools.tools.aggregate_defects"
+                        ) as mock_aggregate:
                             mock_analyze.invoke.return_value = {
                                 "file_path": file_path,
                                 "language": language,
                                 "tool_name": f"{language}-analyzer",
                                 "issues": [],
-                                "score": 95
+                                "score": 95,
                             }
 
                             mock_aggregate.invoke.return_value = {
                                 "total_defects": 0,
-                                "clusters": []
+                                "clusters": [],
                             }
 
-                            result = analyze_code_defects.invoke({
-                "file_path": file_path,
-                "language": language
-            })
+                            result = analyze_code_defects.invoke(
+                                {"file_path": file_path, "language": language}
+                            )
                             assert result is not None
 
                             # 简化验证 - 只确保有结果返回
@@ -716,18 +710,17 @@ class TestToolErrorHandling:
         # 测试analyze_code_defects的无效参数
         invalid_params = [
             None,  # None作为文件路径
-            "",    # 空字符串
-            "   ", # 空白字符
+            "",  # 空字符串
+            "   ",  # 空白字符
         ]
 
         for file_path in invalid_params:
             if file_path is None:
                 continue  # 跳过None，因为它会导致TypeError
             try:
-                result = analyze_code_defects.invoke({
-                "file_path": file_path,
-                "language": None
-            })
+                result = analyze_code_defects.invoke(
+                    {"file_path": file_path, "language": None}
+                )
                 assert result is not None
                 assert isinstance(result, str)
 
@@ -744,10 +737,9 @@ class TestToolErrorHandling:
         restricted_path = "/root/restricted_file.py"
 
         try:
-            result = analyze_code_defects.invoke({
-                "file_path": restricted_path,
-                "language": "python"
-            })
+            result = analyze_code_defects.invoke(
+                {"file_path": restricted_path, "language": "python"}
+            )
             assert result is not None
             assert isinstance(result, str)
 
@@ -760,16 +752,15 @@ class TestToolErrorHandling:
 
     def test_malformed_file_handling(self):
         """测试畸形文件处理"""
-        with tempfile.NamedTemporaryFile(mode='wb', suffix='.py', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="wb", suffix=".py", delete=False) as f:
             # 写入二进制垃圾数据
-            f.write(b'\x00\x01\x02\x03\x04\x05')
+            f.write(b"\x00\x01\x02\x03\x04\x05")
             file_path = f.name
 
         try:
-            result = analyze_code_defects.invoke({
-                "file_path": file_path,
-                "language": None
-            })
+            result = analyze_code_defects.invoke(
+                {"file_path": file_path, "language": None}
+            )
             assert result is not None
             assert isinstance(result, str)
 
@@ -801,32 +792,31 @@ def function_{i}():
     return result
 """
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
             f.write(large_code)
             file_path = f.name
 
         try:
-            with patch('src.tools.tools.analyze_file') as mock_analyze:
-                with patch('src.tools.tools.aggregate_defects') as mock_aggregate:
+            with patch("src.tools.tools.analyze_file") as mock_analyze:
+                with patch("src.tools.tools.aggregate_defects") as mock_aggregate:
                     # 模拟快速分析
                     mock_analyze.invoke.return_value = {
                         "file_path": file_path,
                         "language": "python",
                         "tool_name": "pylint",
                         "issues": [],
-                        "score": 90
+                        "score": 90,
                     }
 
                     mock_aggregate.invoke.return_value = {
                         "total_defects": 0,
-                        "clusters": []
+                        "clusters": [],
                     }
 
                     start_time = time.time()
-                    result = analyze_code_defects.invoke({
-                "file_path": file_path,
-                "language": None
-            })
+                    result = analyze_code_defects.invoke(
+                        {"file_path": file_path, "language": None}
+                    )
                     end_time = time.time()
 
                     analysis_time = end_time - start_time
@@ -843,30 +833,29 @@ def function_{i}():
         results = []
 
         def run_analysis():
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
                 f.write("def test_func(): return 'test'")
                 file_path = f.name
 
             try:
-                with patch('src.tools.tools.analyze_file') as mock_analyze:
-                    with patch('src.tools.tools.aggregate_defects') as mock_aggregate:
+                with patch("src.tools.tools.analyze_file") as mock_analyze:
+                    with patch("src.tools.tools.aggregate_defects") as mock_aggregate:
                         mock_analyze.invoke.return_value = {
                             "file_path": file_path,
                             "language": "python",
                             "tool_name": "pylint",
                             "issues": [],
-                            "score": 95
+                            "score": 95,
                         }
 
                         mock_aggregate.invoke.return_value = {
                             "total_defects": 0,
-                            "clusters": []
+                            "clusters": [],
                         }
 
-                        result = analyze_code_defects.invoke({
-                "file_path": file_path,
-                "language": None
-            })
+                        result = analyze_code_defects.invoke(
+                            {"file_path": file_path, "language": None}
+                        )
                         results.append(result)
             finally:
                 os.unlink(file_path)

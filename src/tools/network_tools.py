@@ -1,10 +1,10 @@
 import os
 from typing import Any, Literal
 
-import requests
-from tavily import TavilyClient
 import dotenv
+import requests
 from langchain_core.tools import tool
+from tavily import TavilyClient
 
 dotenv.load_dotenv()
 
@@ -17,12 +17,12 @@ tavily_client = (
 
 
 def http_request(
-        url: str,
-        method: str = "GET",
-        headers: dict[str, str] = None,
-        data: str | dict = None,
-        params: dict[str, str] = None,
-        timeout: int = 30,
+    url: str,
+    method: str = "GET",
+    headers: dict[str, str] = None,
+    data: str | dict = None,
+    params: dict[str, str] = None,
+    timeout: int = 30,
 ) -> dict[str, Any]:
     """向API和Web服务发起HTTP请求。
 
@@ -38,7 +38,11 @@ def http_request(
         包含响应数据的字典，包括状态、头和内容
     """
     try:
-        kwargs: dict[str, Any] = {"url": url, "method": method.upper(), "timeout": timeout}
+        kwargs: dict[str, Any] = {
+            "url": url,
+            "method": method.upper(),
+            "timeout": timeout,
+        }
 
         if headers:
             kwargs["headers"] = headers
@@ -92,10 +96,10 @@ def http_request(
 
 
 def web_search(
-        query: str,
-        max_results: int = 5,
-        topic: Literal["general", "news", "finance"] = "general",
-        include_raw_content: bool = False,
+    query: str,
+    max_results: int = 5,
+    topic: Literal["general", "news", "finance"] = "general",
+    include_raw_content: bool = False,
 ):
     """使用 Tavily 搜索网络以获取当前的信息和文档。
     此工具会搜索网络并返回相关结果。收到结果后，您必须将信息整合成自然、有用的回答提供给用户。

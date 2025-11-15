@@ -4,6 +4,7 @@
 提供统一的导入函数来处理不同的导入场景。
 """
 
+
 def safe_import(module_path: str, fallback_paths: list = None):
     """
     安全的导入函数
@@ -27,7 +28,7 @@ def safe_import(module_path: str, fallback_paths: list = None):
 
     # 尝试从当前包导入
     try:
-        return __import__(module_path, fromlist=[module_path.split('.')[-1]])
+        return __import__(module_path, fromlist=[module_path.split(".")[-1]])
     except ImportError:
         pass
 
@@ -39,6 +40,7 @@ def safe_import(module_path: str, fallback_paths: list = None):
             continue
 
     return None
+
 
 def safe_relative_import(module_path: str, relative_to: str = None):
     """

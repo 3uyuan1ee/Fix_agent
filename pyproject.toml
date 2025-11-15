@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "Fix_agent"
-version = "0.2.0"
+version = "1.0.0"
 description = "AI Coding Assistant - 代码缺陷修复和分析工具"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -129,6 +129,19 @@ windows = [
     "wmi>=1.5.1",    # Windows管理接口
 ]
 
+# Web应用依赖
+web = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "sqlalchemy>=2.0.0",
+    "alembic>=1.12.0",
+    "python-jose[cryptography]>=3.3.0",
+    "passlib[bcrypt]>=1.7.4",
+    "python-multipart>=0.0.6",
+    "aiofiles>=23.0.0",
+    "psutil>=5.9.0",
+]
+
 [project.urls]
 Homepage = "https://github.com/3uyuan1ee/Fix_agent"
 Documentation = "https://github.com/3uyuan1ee/Fix_agent#readme"
@@ -139,6 +152,9 @@ Repository = "https://github.com/3uyuan1ee/Fix_agent"
 [project.scripts]
 fix-agent = "src.main:cli_main"
 fixagent = "src.main:cli_main"
+fixagent-web = "src.web_app_main:cli_main"
+fixagent-web-dev = "src.web_app_main:web_main"
+fixagent-web-stop = "src.web_app_stop:cli_main"
 
 [tool.setuptools.packages.find]
 where = ["."]

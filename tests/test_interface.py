@@ -11,66 +11,59 @@
 7. 用户交互界面
 """
 
-import pytest
-import tempfile
-import os
-import json
 import asyncio
-from unittest.mock import Mock, patch, MagicMock, AsyncMock
-from pathlib import Path
-from io import StringIO
+import json
+import os
+import tempfile
 from datetime import datetime
+from io import StringIO
+from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
+import pytest
 
 # 实际的导入路径
 try:
-    from src.interface.execution import (
-        execute_task,
-        prompt_for_tool_approval,
-        is_summary_message,
-        _extract_tool_args
-    )
-    from src.interface.commands import (
-        handle_command,
-        handle_memory_command as handle_command_memory,
-        handle_cd_command,
-        handle_config_command,
-        execute_bash_command,
-        get_system_info,
-        handle_system_info_command,
-        handle_services_command
-    )
-    from src.interface.memory_commands import (
-        MemoryManager,
-        handle_memory_edit,
-        view_agent_memory,
-        handle_memory_search,
-        handle_memory_export,
-        handle_memory_import,
-        handle_memory_backup,
-        handle_memory_restore,
-        handle_memory_clear,
-        handle_memory_stats,
-        show_memory_menu,
-        create_memory_file,
-        search_memory_files,
-        edit_memory_file
-    )
-    from src.ui.ui import (
-        TokenTracker,
-        format_tool_display,
-        render_diff_block,
-        render_summary_panel,
-        truncate_value
-    )
+    from src.interface.commands import (execute_bash_command, get_system_info,
+                                        handle_cd_command, handle_command,
+                                        handle_config_command)
+    from src.interface.commands import \
+        handle_memory_command as handle_command_memory
+    from src.interface.commands import (handle_services_command,
+                                        handle_system_info_command)
+    from src.interface.execution import (_extract_tool_args, execute_task,
+                                         is_summary_message,
+                                         prompt_for_tool_approval)
+    from src.interface.memory_commands import (MemoryManager,
+                                               create_memory_file,
+                                               edit_memory_file,
+                                               handle_memory_backup,
+                                               handle_memory_clear,
+                                               handle_memory_edit,
+                                               handle_memory_export,
+                                               handle_memory_import,
+                                               handle_memory_restore,
+                                               handle_memory_search,
+                                               handle_memory_stats,
+                                               search_memory_files,
+                                               show_memory_menu,
+                                               view_agent_memory)
+    from src.ui.ui import (TokenTracker, format_tool_display,
+                           render_diff_block, render_summary_panel,
+                           truncate_value)
 except ImportError as e:
     # 如果导入失败，创建Mock对象用于测试
     print(f"Import warning: {e}")
+
     def execute_task(*args, **kwargs):
         return {"status": "completed"}
+
     def prompt_for_tool_approval(*args, **kwargs):
         return {"type": "approve"}
+
     def is_summary_message(content):
         return "summary" in content.lower()
+
     def _extract_tool_args(action_request):
         return action_request.get("args", {})
 
@@ -80,64 +73,89 @@ except ImportError as e:
 
     def handle_command(*args, **kwargs):
         return True
+
     def handle_command_memory(*args, **kwargs):
         return True
+
     def handle_cd_command(*args, **kwargs):
         return True
+
     def handle_config_command(*args, **kwargs):
         return True
+
     def execute_bash_command(*args, **kwargs):
         return True
+
     def get_system_info():
         return {}
+
     def handle_system_info_command(*args, **kwargs):
         return True
+
     def handle_services_command(*args, **kwargs):
         return True
 
     def handle_memory_edit(*args, **kwargs):
         return True
+
     def view_agent_memory(*args, **kwargs):
         return True
+
     def handle_memory_search(*args, **kwargs):
         return True
+
     def handle_memory_export(*args, **kwargs):
         return True
+
     def handle_memory_import(*args, **kwargs):
         return True
+
     def handle_memory_backup(*args, **kwargs):
         return True
+
     def handle_memory_restore(*args, **kwargs):
         return True
+
     def handle_memory_clear(*args, **kwargs):
         return True
+
     def handle_memory_stats(*args, **kwargs):
         return True
+
     def show_memory_menu():
         return True
+
     def create_memory_file(*args, **kwargs):
         return True
+
     def search_memory_files(*args, **kwargs):
         return []
+
     def edit_memory_file(*args, **kwargs):
         return True
 
     class TokenTracker:
         def __init__(self):
             self.tokens_used = 0
+
         def add(self, input_tokens, output_tokens):
             self.tokens_used += input_tokens + output_tokens
+
         def reset(self):
             self.tokens_used = 0
+
         def display_session(self):
             pass
 
     def format_tool_display(tool_name, args):
         return f"{tool_name}({args})"
+
     def render_diff_block(diff, title):
         return f"Diff: {title}"
+
     def render_summary_panel(content):
         return f"Summary: {content}"
+
     def truncate_value(value, max_length=100):
         return str(value)[:max_length]
 
@@ -155,7 +173,7 @@ class TestTaskExecution:
             action_request = {
                 "tool_call": {
                     "name": "analyze_code_defects",
-                    "args": {"file_path": "test.py", "language": "python"}
+                    "args": {"file_path": "test.py", "language": "python"},
                 }
             }
 
@@ -171,9 +189,7 @@ class TestTaskExecution:
         try:
             from src.interface.execution import _extract_tool_args
 
-            action_request = {
-                "args": {"query": "test", "limit": 10}
-            }
+            action_request = {"args": {"query": "test", "limit": 10}}
 
             args = _extract_tool_args(action_request)
             assert args is not None
@@ -203,7 +219,7 @@ class TestTaskExecution:
                 "This is a conversation summary",
                 "Previous conversation history:",
                 "Summary: User asked about code analysis",
-                "I have summarized the conversation"
+                "I have summarized the conversation",
             ]
 
             for message in summary_messages:
@@ -220,7 +236,7 @@ class TestTaskExecution:
                 "This is a regular message",
                 "User input: help me analyze code",
                 "Response: here is the analysis",
-                "Normal conversation text"
+                "Normal conversation text",
             ]
 
             for message in non_summary_messages:
@@ -234,7 +250,7 @@ class TestTaskExecution:
             action_request = {
                 "name": "read_file",
                 "description": "Read file content",
-                "args": {"file_path": "test.txt"}
+                "args": {"file_path": "test.txt"},
             }
 
             result = prompt_for_tool_approval(action_request, "test_assistant")
@@ -244,7 +260,7 @@ class TestTaskExecution:
         except (NameError, TypeError, AttributeError):
             pytest.skip("prompt_for_tool_approval function not available")
 
-    @patch('src.interface.execution.prompt_for_tool_approval')
+    @patch("src.interface.execution.prompt_for_tool_approval")
     def test_tool_approval_rejection(self, mock_approval):
         """测试工具审批拒绝"""
         mock_approval.return_value = {"type": "reject", "message": "User rejected"}
@@ -252,7 +268,7 @@ class TestTaskExecution:
         action_request = {
             "name": "execute_bash",
             "description": "Execute system command",
-            "args": {"command": "rm -rf /"}
+            "args": {"command": "rm -rf /"},
         }
 
         result = prompt_for_tool_approval(action_request, "test_assistant")
@@ -271,6 +287,7 @@ class TestTaskExecution:
         try:
             # 只测试函数调用的参数部分，不实际执行完整流程
             from src.interface.execution import parse_file_mentions
+
             # 测试输入处理部分工作正常
             prompt_text, mentioned_files = parse_file_mentions("Hello, how are you?")
             assert prompt_text == "Hello, how are you?"
@@ -296,7 +313,7 @@ class TestCommandHandling:
             assert result == "exit"
 
             # 测试帮助命令
-            with patch('src.ui.ui.show_interactive_help') as mock_help:
+            with patch("src.ui.ui.show_interactive_help") as mock_help:
                 result = handle_command("/help", Mock(), Mock())
                 assert result is True
                 mock_help.assert_called_once()
@@ -309,7 +326,7 @@ class TestCommandHandling:
         """测试带token跟踪的命令处理"""
         try:
             token_tracker = TokenTracker()
-            with patch('src.ui.ui.show_interactive_help'):
+            with patch("src.ui.ui.show_interactive_help"):
                 result = handle_command("/tokens", Mock(), token_tracker)
                 assert result is True
         except (AttributeError, TypeError):
@@ -342,8 +359,10 @@ class TestCommandHandling:
     def test_bash_command_execution(self):
         """测试bash命令执行"""
         try:
-            with patch('subprocess.run') as mock_run:
-                mock_run.return_value = Mock(returncode=0, stdout="test output", stderr="")
+            with patch("subprocess.run") as mock_run:
+                mock_run.return_value = Mock(
+                    returncode=0, stdout="test output", stderr=""
+                )
                 result = execute_bash_command("echo test")
                 assert isinstance(result, bool)
         except (AttributeError, TypeError):
@@ -401,7 +420,7 @@ class TestMemoryCommandHandling:
         try:
             with tempfile.TemporaryDirectory() as temp_dir:
                 # Mock the agent directory
-                with patch.object(MemoryManager, '__init__', return_value=None):
+                with patch.object(MemoryManager, "__init__", return_value=None):
                     manager = MemoryManager.__new__(MemoryManager)
                     manager.agent_memory_file = Path(temp_dir) / "agent.md"
 
@@ -422,7 +441,7 @@ class TestMemoryCommandHandling:
         """测试记忆搜索功能"""
         try:
             with tempfile.TemporaryDirectory() as temp_dir:
-                with patch.object(MemoryManager, '__init__', return_value=None):
+                with patch.object(MemoryManager, "__init__", return_value=None):
                     manager = MemoryManager.__new__(MemoryManager)
                     manager.agent_memory_file = Path(temp_dir) / "agent.md"
                     manager.semantic_memory_file = Path(temp_dir) / "semantic.json"
@@ -430,8 +449,8 @@ class TestMemoryCommandHandling:
 
                     # 创建测试数据
                     manager.agent_memory_file.write_text("Python programming tips")
-                    manager.semantic_memory_file.write_text('[]')
-                    manager.episodic_memory_file.write_text('[]')
+                    manager.semantic_memory_file.write_text("[]")
+                    manager.episodic_memory_file.write_text("[]")
 
                     # 搜索记忆
                     results = manager.search_memories("Python")
@@ -446,7 +465,7 @@ class TestMemoryCommandHandling:
         """测试获取记忆统计"""
         try:
             with tempfile.TemporaryDirectory() as temp_dir:
-                with patch.object(MemoryManager, '__init__', return_value=None):
+                with patch.object(MemoryManager, "__init__", return_value=None):
                     manager = MemoryManager.__new__(MemoryManager)
                     manager.agent_memory_file = Path(temp_dir) / "agent.md"
                     manager.semantic_memory_file = Path(temp_dir) / "semantic.json"
@@ -455,8 +474,8 @@ class TestMemoryCommandHandling:
 
                     # 创建测试文件
                     manager.agent_memory_file.write_text("Test content\nLine 2")
-                    manager.semantic_memory_file.write_text('[]')
-                    manager.episodic_memory_file.write_text('[]')
+                    manager.semantic_memory_file.write_text("[]")
+                    manager.episodic_memory_file.write_text("[]")
 
                     stats = manager.get_memory_stats()
                     assert isinstance(stats, dict)
@@ -502,7 +521,7 @@ class TestMemoryCommandHandling:
                 manager.search_memories.return_value = {
                     "agent_memory": [{"content": "Python code"}],
                     "semantic_memory": [],
-                    "episodic_memory": []
+                    "episodic_memory": [],
                 }
 
                 result = handle_memory_search(manager, ["Python"])
@@ -515,7 +534,9 @@ class TestMemoryCommandHandling:
         try:
             with tempfile.TemporaryDirectory() as temp_dir:
                 manager = Mock()
-                manager.export_memories.return_value = str(Path(temp_dir) / "export.json")
+                manager.export_memories.return_value = str(
+                    Path(temp_dir) / "export.json"
+                )
 
                 result = handle_memory_export(manager, [])
                 assert isinstance(result, bool)
@@ -539,7 +560,7 @@ class TestUIComponents:
         """测试Token跟踪器初始化"""
         tracker = TokenTracker()
         assert tracker is not None
-        assert hasattr(tracker, 'tokens_used')
+        assert hasattr(tracker, "tokens_used")
         assert tracker.tokens_used == 0
 
     def test_token_tracker_addition(self):
@@ -625,7 +646,7 @@ class TestErrorHandling:
             {},
             {"name": None},
             {"description": 123},
-            {"args": "invalid_args_type"}
+            {"args": "invalid_args_type"},
         ]
 
         for request in invalid_requests:
@@ -649,7 +670,7 @@ class TestErrorHandling:
 
         for user_input in malformed_inputs:
             try:
-                with patch('src.interface.execution.agent') as mock_agent:
+                with patch("src.interface.execution.agent") as mock_agent:
                     mock_agent.stream.return_value = iter([])
 
                     result = execute_task(
@@ -657,7 +678,7 @@ class TestErrorHandling:
                         agent=mock_agent,
                         assistant_id="test_assistant",
                         session_state=Mock(),
-                        token_tracker=None
+                        token_tracker=None,
                     )
                     # 应该优雅地处理
                     assert True
@@ -666,7 +687,7 @@ class TestErrorHandling:
 
     def test_agent_failure_handling(self):
         """测试Agent失败处理"""
-        with patch('src.interface.execution.agent') as mock_agent:
+        with patch("src.interface.execution.agent") as mock_agent:
             # 模拟agent抛出异常
             mock_agent.stream.side_effect = Exception("Agent error")
 
@@ -679,7 +700,7 @@ class TestErrorHandling:
                     agent=mock_agent,
                     assistant_id="test_assistant",
                     session_state=session_state,
-                    token_tracker=None
+                    token_tracker=None,
                 )
                 # 应该处理异常或传播
                 assert True
@@ -725,7 +746,7 @@ class TestInterruptHandling:
 
     def test_keyboard_interrupt_handling(self):
         """测试键盘中断处理"""
-        with patch('src.interface.execution.agent') as mock_agent:
+        with patch("src.interface.execution.agent") as mock_agent:
             # 模拟键盘中断
             mock_agent.stream.side_effect = KeyboardInterrupt()
 
@@ -738,7 +759,7 @@ class TestInterruptHandling:
                     agent=mock_agent,
                     assistant_id="test_assistant",
                     session_state=session_state,
-                    token_tracker=None
+                    token_tracker=None,
                 )
                 # 应该处理键盘中断
                 assert True
@@ -747,10 +768,11 @@ class TestInterruptHandling:
 
     def test_task_timeout_handling(self):
         """测试任务超时处理"""
-        with patch('src.interface.execution.agent') as mock_agent:
+        with patch("src.interface.execution.agent") as mock_agent:
             # 模拟长时间运行的任务
             def long_running_task(*args, **kwargs):
                 import time
+
                 time.sleep(5)  # 模拟长时间运行
                 return []
 
@@ -762,6 +784,7 @@ class TestInterruptHandling:
             try:
                 # 这里应该有超时处理机制
                 import threading
+
                 result = []
 
                 def run_task():
@@ -771,7 +794,7 @@ class TestInterruptHandling:
                             agent=mock_agent,
                             assistant_id="test_assistant",
                             session_state=session_state,
-                            token_tracker=None
+                            token_tracker=None,
                         )
                         result.append(r)
                     except Exception:
@@ -798,10 +821,13 @@ class TestPerformanceOptimization:
         # 生成大输入
         large_input = "Analyze this code: " + "def test(): pass\n" * 10000
 
-        with patch('src.interface.execution.agent') as mock_agent:
-            mock_agent.stream.return_value = iter([Mock(content="Processed large input")])
+        with patch("src.interface.execution.agent") as mock_agent:
+            mock_agent.stream.return_value = iter(
+                [Mock(content="Processed large input")]
+            )
 
             import time
+
             start_time = time.time()
 
             result = execute_task(
@@ -809,7 +835,7 @@ class TestPerformanceOptimization:
                 agent=mock_agent,
                 assistant_id="test_assistant",
                 session_state=Mock(),
-                token_tracker=None
+                token_tracker=None,
             )
 
             end_time = time.time()
@@ -863,7 +889,8 @@ class TestIntegrationScenarios:
         with tempfile.TemporaryDirectory() as temp_dir:
             # 创建测试文件
             test_file = Path(temp_dir) / "test_code.py"
-            test_file.write_text("""
+            test_file.write_text(
+                """
 def calculate_sum(a, b):
     return a + b
 
@@ -873,15 +900,18 @@ def main():
 
 if __name__ == "__main__":
     main()
-""")
+"""
+            )
 
             # 模拟完整工作流
-            with patch('src.interface.execution.agent') as mock_agent:
+            with patch("src.interface.execution.agent") as mock_agent:
                 # 模拟agent响应流
                 responses = [
                     Mock(content="I'll analyze your Python code."),
                     Mock(content="The code looks good. No obvious defects found."),
-                    Mock(content="Would you like me to generate some tests for this code?")
+                    Mock(
+                        content="Would you like me to generate some tests for this code?"
+                    ),
                 ]
                 mock_agent.stream.return_value = iter(responses)
 
@@ -894,7 +924,7 @@ if __name__ == "__main__":
                     agent=mock_agent,
                     assistant_id="test_assistant",
                     session_state=session_state,
-                    token_tracker=TokenTracker()
+                    token_tracker=TokenTracker(),
                 )
 
                 # 验证工作流完成
@@ -911,11 +941,15 @@ if __name__ == "__main__":
 
             # 创建记忆文件
             memory_file = memory_dir / "python_patterns.md"
-            memory_file.write_text("## Python Design Patterns\n\n### Singleton Pattern\n...")
+            memory_file.write_text(
+                "## Python Design Patterns\n\n### Singleton Pattern\n..."
+            )
 
             try:
                 # 搜索记忆
-                search_result = handler.handle_memory_command(f"search patterns {memory_dir}")
+                search_result = handler.handle_memory_command(
+                    f"search patterns {memory_dir}"
+                )
                 assert search_result is not None
 
                 # 获取统计
@@ -931,18 +965,18 @@ if __name__ == "__main__":
             {
                 "name": "read_file",
                 "description": "Read source code file",
-                "args": {"file_path": "safe_file.py"}
+                "args": {"file_path": "safe_file.py"},
             },
             {
                 "name": "execute_bash",
                 "description": "Execute system command",
-                "args": {"command": "ls -la"}
+                "args": {"command": "ls -la"},
             },
             {
                 "name": "write_file",
                 "description": "Write to file",
-                "args": {"file_path": "output.txt", "content": "test"}
-            }
+                "args": {"file_path": "output.txt", "content": "test"},
+            },
         ]
 
         for request in action_requests:

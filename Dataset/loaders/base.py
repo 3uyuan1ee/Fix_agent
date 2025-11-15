@@ -4,14 +4,14 @@
 定义数据集加载器的通用接口和基础功能。
 """
 
-from abc import ABC, abstractmethod
-from typing import List, Dict, Optional, Any
-from pathlib import Path
 import json
 import os
+import shutil
 import subprocess
 import tempfile
-import shutil
+from abc import ABC, abstractmethod
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 # 使用本地数据类型定义以避免循环导入
 try:
@@ -21,6 +21,7 @@ except ImportError:
         from data_types import EvaluationTask
     except ImportError:
         from Dataset.data_types import EvaluationTask
+
 
 class BaseDatasetLoader(ABC):
     """
@@ -45,7 +46,9 @@ class BaseDatasetLoader(ABC):
         pass
 
     @abstractmethod
-    def load_tasks(self, sample_size: int = None, difficulty_filter: str = None) -> List[EvaluationTask]:
+    def load_tasks(
+        self, sample_size: int = None, difficulty_filter: str = None
+    ) -> List[EvaluationTask]:
         """
         加载评估任务
 
@@ -98,7 +101,9 @@ class BaseDatasetLoader(ABC):
         """
         pass
 
-    def clone_repository(self, repo_url: str, commit_hash: str, target_dir: Path) -> bool:
+    def clone_repository(
+        self, repo_url: str, commit_hash: str, target_dir: Path
+    ) -> bool:
         """
         克隆Git仓库到指定commit
 
@@ -115,7 +120,7 @@ class BaseDatasetLoader(ABC):
             result = subprocess.run(
                 ["git", "clone", repo_url, str(target_dir)],
                 capture_output=True,
-                text=True
+                text=True,
             )
 
             if result.returncode != 0:
@@ -127,7 +132,7 @@ class BaseDatasetLoader(ABC):
                 ["git", "checkout", commit_hash],
                 cwd=target_dir,
                 capture_output=True,
-                text=True
+                text=True,
             )
 
             if result.returncode != 0:
@@ -140,7 +145,9 @@ class BaseDatasetLoader(ABC):
             print(f"[BaseDatasetLoader] 克隆仓库异常: {e}")
             return False
 
-    def install_dependencies(self, workspace_path: Path, requirements: List[str]) -> bool:
+    def install_dependencies(
+        self, workspace_path: Path, requirements: List[str]
+    ) -> bool:
         """
         安装项目依赖
 
@@ -154,9 +161,7 @@ class BaseDatasetLoader(ABC):
         try:
             for requirement in requirements:
                 result = subprocess.run(
-                    ["pip", "install", requirement],
-                    capture_output=True,
-                    text=True
+                    ["pip", "install", requirement], capture_output=True, text=True
                 )
 
                 if result.returncode != 0:
@@ -184,7 +189,7 @@ class BaseDatasetLoader(ABC):
             "language": "unknown",
             "framework": None,
             "test_framework": None,
-            "build_system": None
+            "build_system": None,
         }
 
         # 检测主要语言
@@ -204,7 +209,7 @@ class BaseDatasetLoader(ABC):
                 ".cpp": "cpp",
                 ".c": "c",
                 ".go": "go",
-                ".rs": "rust"
+                ".rs": "rust",
             }
             project_info["language"] = language_map.get(max_ext, "unknown")
 
@@ -216,7 +221,7 @@ class BaseDatasetLoader(ABC):
             ("vue", "vue"),
             ("angular", "angular"),
             ("spring", "spring"),
-            ("rails", "rails")
+            ("rails", "rails"),
         ]
 
         for framework, file_pattern in framework_files:
@@ -230,7 +235,7 @@ class BaseDatasetLoader(ABC):
             ("unittest", "unittest"),
             ("jest", "jest"),
             ("mocha", "mocha"),
-            ("junit", "junit")
+            ("junit", "junit"),
         ]
 
         for test_framework, indicator in test_indicators:
@@ -246,7 +251,7 @@ class BaseDatasetLoader(ABC):
             ("pom.xml", "maven"),
             ("build.gradle", "gradle"),
             ("Cargo.toml", "cargo"),
-            ("go.mod", "go_modules")
+            ("go.mod", "go_modules"),
         ]
 
         for build_file, build_system in build_files:
@@ -281,7 +286,7 @@ class BaseDatasetLoader(ABC):
         cache_file = self.get_cache_path(key)
         if cache_file.exists():
             try:
-                with open(cache_file, 'r', encoding='utf-8') as f:
+                with open(cache_file, "r", encoding="utf-8") as f:
                     return json.load(f)
             except Exception as e:
                 print(f"[BaseDatasetLoader] 加载缓存失败 {key}: {e}")
@@ -297,7 +302,7 @@ class BaseDatasetLoader(ABC):
         """
         cache_file = self.get_cache_path(key)
         try:
-            with open(cache_file, 'w', encoding='utf-8') as f:
+            with open(cache_file, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
         except Exception as e:
             print(f"[BaseDatasetLoader] 保存缓存失败 {key}: {e}")
