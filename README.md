@@ -3,51 +3,17 @@
 [![LangChain](https://img.shields.io/badge/LangChain-1.0-brightgreen.svg)](https://python.langchain.com)
 [![DeepAgent](https://img.shields.io/badge/DeepAgent-Framework-orange.svg)](https://github.com/3uyuan1ee/Fix_agent)
 
-```
- ███████╗██╗██╗  ██╗
- ██╔════╝██║╚██╗██╔╝
- █████╗  ██║ ╚███╔╝
- ██╔══╝  ██║ ██╔██╗
- ██║     ██║██╔╝ ██╗
- ╚═╝     ╚═╝╚═╝  ╚═╝
-
-  █████╗  ██████╗ ███████╗ ██████╗ ███╗   ██╗████████╗
- ██╔══██╗██╔════╝ ██╔════╝██╔════╝ ████╗  ██║╚══██╔══╝
- ███████║██║  ███╗█████╗  ██║  ███╗██╔██╗ ██║   ██║
- ██╔══██║██║   ██║██╔══╝  ██║   ██║██║╚██╗██║   ██║
- ██║  ██║╚██████╔╝███████╗╚██████╔╝██║ ╚████║   ██║
-
-```
+![img](https://raw.githubusercontent.com/3uyuan1ee/Fix_agent/main/images/title.png)
 
 基于Langchian1.0和Deepagents，实现项目问题检测->自动修复->效果验证的闭环
-- **智能分析** - 自动识别语法、逻辑、性能和安全缺陷
+- **人机交互** - 直观高效的命令行界面，同时支持web界面
 - **精准修复** - 基于深度分析提供针对性修复方案并在human-in-loop下执行修复
-- **自动验证** - 确保修复不破坏现有功能
 - **持续学习** - 具备记忆能力，越用越智能
-
-![img](https://raw.githubusercontent.com/3uyuan1ee/Fix_agent/main/images/Agents_and_Command.gif)
-
-### 与众不同的技术架构
-
-Fix Agent采用Langchain1.0的中间件管道系统，提供6层处理：
-
-```mermaid
-graph LR
-    A[用户输入] --> B[性能监控]
-    B --> C[日志记录]
-    C --> D[上下文增强]
-    D --> E[分层记忆]
-    E --> F[框架默认]
-    F --> G[安全检查]
-    G --> H[Shell工具]
-```
-
-确保了代码修复的高效性和安全性，同时提供了智能化的用户体验。
 
 ---
 
 ### 基于Deepagents的Three-subagents架构
-
+![img](https://raw.githubusercontent.com/3uyuan1ee/Fix_agent/main/images/agents.gif)
 #### 1. 缺陷分析代理 (defect-analyzer)
 - **语法分析** - 检测语法错误、类型错误、导入错误
 - **逻辑分析** - 识别逻辑漏洞、边界条件处理不当
@@ -74,7 +40,7 @@ graph LR
 - **数据科学** - Python, R
 
 ### 智能工具生态
-
+![img](https://raw.githubusercontent.com/3uyuan1ee/Fix_agent/main/images/tools.gif)
 - **统一工具链** - 集成pylint, flake8, mypy, bandit, black, eslint等
 - **智能聚合** - 语义相似度缺陷聚类分析
 - **项目探索** - 结构分析和复杂度评估
@@ -83,35 +49,12 @@ graph LR
 ---
 
 ## 现代化用户体验
-
-### 直观的命令行界面
-
-Fix Agent提供了优雅的终端交互体验：
-
-```bash
-# 启动Fix Agent
-fixagent
-
-# 智能文件引用
-> 分析 @src/main.py 中的性能问题
-
-# 命令系统操作
-> /cd src
-> /memory view
-
-# Shell命令集成
-> !git status
-```
-![img](https://raw.githubusercontent.com/3uyuan1ee/Fix_agent/main/images/Commands.gif)
-
 ### 双模式支持
 
 **CLI模式** 
 - 快速、高效的命令行交互
 - 丰富的键盘快捷键和自动补全
 - 支持多行输入和编辑器集成
-
-
 
 **Web模式** - 直观的图形化界面
 - 友好的浏览器界面
@@ -123,7 +66,7 @@ fixagent
 - **实时进度指示** - 清晰显示处理进度，实时监控Agent的行为，调用工具manual和auto两种模式
 - **智能提示系统** - /command建议和补全
 - **中断支持** - 随时中断长时间运行的分析
-
+  ![img](https://raw.githubusercontent.com/3uyuan1ee/Fix_agent/main/images/Commands.gif)
 ---
 
 ## 安全防护
@@ -141,7 +84,7 @@ fixagent
 ### 环境要求
 
 - Python 3.11+
-- 支持的操作系统：Windows, macOS, Linux
+- 支持的操作系统：macOS, Linux
 
 ### 安装
 #### Clone
@@ -159,7 +102,7 @@ pip install -e .
 #### PYPI
 包已上传到PYPI,支持在python环境下pip一键安装
 
-```
+```bash
 # 建议在虚拟python环境下安装
 pip install Fix-agent
 ```
@@ -167,23 +110,23 @@ pip install Fix-agent
 ### 配置
 
 ```bash
+# 支持自动配置，若检测到为配置，启动会引导进行配置，只需获取API即可
+
+#手动配置
 # 配置环境变量
 export OPENAI_API_KEY="your-api-key"
 
 # 或创建.env文件
 echo "OPENAI_API_KEY=your-api-key" > .env
 
-#支持自动配置，若检测到为配置，启动会引导进行配置，只需获取API即可
-
-#如需使用国内模型还需配置base_url
+# 如需使用国内模型还需配置base_url
 OPENAI_API_BASE=https://open.bigmodel.cn/api/paas/v4/
 
-#若要启动联网搜索，还需配置Tavily API Key
+# 若要启动联网搜索，还需配置Tavily API Key
 
 TAVILY_API_KEY=your_tavily_api_key_here
 ```
 点这里获取[TAVILY_API](https://www.tavily.com/)
-
 
 
 ### 启动使用
@@ -195,7 +138,7 @@ fixagent
 # 查看帮助
 fixagent help
 
-# 列出可用的代理
+# 列出可用的agents
 fixagent list
 ```
 
@@ -208,11 +151,14 @@ fixagent list
 
 Fix Agent具备长期记忆能力，能够：
 
-- **记住项目结构** - 下次分析时无需重新扫描
+- **支持编辑记忆** - 可根据需求给予Agents记忆和知识
 - **学习修复模式** - 根据历史修复优化建议
 - **个性化偏好** - 记住用户的编码风格和偏好
 
 ```bash
+# 编辑记忆内容
+/memory edit
+
 # 查看记忆内容
 /memory view
 
@@ -226,14 +172,11 @@ Fix Agent具备长期记忆能力，能够：
 
 ## 技术架构
 
-Fix Agent采用现代化的技术架构：
-
 - **异步处理** - 基于asyncio的高性能异步架构
 - **流式处理** - 实时显示分析进度和结果
 - **模块化设计** - 插件化的工具和中间件系统，用户可自定义
-- **类型安全** - 完整的类型注解和静态检查
 
-### 中间件系统
+### 系统架构
 
 ```mermaid
 graph TD
@@ -245,7 +188,7 @@ graph TD
     B --> G[框架默认]
     B --> H[安全检查]
     B --> I[Shell工具]
-    B --> T[智能工具链]
+    J --> T[智能工具链]
 
     T --> T1[代码分析工具]
     T --> T2[静态检查工具]
@@ -277,7 +220,7 @@ graph TD
 我们欢迎社区贡献！您可以通过以下方式参与：
 
 ### 报告问题
-- 在Issues中报告bug
+- 在[Issues](https://github.com/3uyuan1ee/Fix_agent/issues)中报告bug
 - 提供详细的重现步骤
 - 附上相关的日志信息
 - 或联系[我](1481059602@qq.com)
@@ -301,19 +244,11 @@ graph TD
 
 ## 许可证
 
-本项目采用MIT许可证，详见[LICENSE](LICENSE)文件。
-
----
-
-## 联系我
-
-- **GitHub**: https://github.com/3uyuan1ee/Fix_agent
-- **Issues**: https://github.com/3uyuan1ee/Fix_agent/issues
-- **3uyuan1ee**: 1481059602@qq.com
+本项目采用MPL-2.0许可证，详见[LICENSE](LICENSE)文件。
 
 ---
 
 ## 致谢
 
-感谢所有为Fix Agent项目做出贡献的开发者和用户。特别感谢开源社区提供的优秀工具和库，让这个项目成为可能。
+感谢所有为Fix Agent项目做出贡献的开发者和用户,感谢开源社区提供的优秀工具和库，让这个项目成为可能。
 
