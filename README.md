@@ -4,7 +4,7 @@
 [![DeepAgent](https://img.shields.io/badge/DeepAgent-Framework-orange.svg)](https://github.com/3uyuan1ee/Fix_agent)
 
 ---
-![img](https://raw.githubusercontent.com/3uyuan1ee/Fix_agent/main/master/images/Agents_and_Command.gif)
+![img](https://github.com/3uyuan1ee/Fix_agent/blob/main/master/images/Agents_and_Command.gif?raw=true)
 
 基于Langchian1.0和Deepagents，实现项目问题检测->自动修复->效果验证的闭环
 - **智能分析** - 自动识别语法、逻辑、性能和安全缺陷
