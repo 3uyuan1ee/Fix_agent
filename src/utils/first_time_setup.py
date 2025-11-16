@@ -23,6 +23,7 @@ def get_env_template_content_from_package() -> Optional[str]:
         try:
             # 备用方案：尝试从包根目录读取
             import fix_agent
+
             package_dir = Path(fix_agent.__file__).parent
             template_path = package_dir / ".env.template"
             if template_path.exists():
@@ -188,6 +189,7 @@ def create_interactive_env() -> bool:
         env_path = None
         try:
             import fix_agent
+
             package_dir = Path(fix_agent.__file__).parent
             env_path = package_dir / ".env"
             console.print(f"[dim]📁 Will save to package directory: {env_path}[/dim]")
@@ -283,7 +285,14 @@ def interactive_setup(template_content: str, env_path: Path) -> bool:
 
                     model = Prompt.ask(
                         "模型名称",
-                        choices=["gpt-4", "gpt-4-turbo", "gpt-5-mini", "gpt-3.5-turbo","glm-4.5-air","glm-4.6"],
+                        choices=[
+                            "gpt-4",
+                            "gpt-4-turbo",
+                            "gpt-5-mini",
+                            "gpt-3.5-turbo",
+                            "glm-4.5-air",
+                            "glm-4.6",
+                        ],
                         default="gpt-5-mini",
                     )
                     config_values["OPENAI_MODEL"] = model
@@ -504,6 +513,7 @@ def check_env_file_exists() -> bool:
     # 优先检查包目录下的.env文件
     try:
         import fix_agent
+
         package_dir = Path(fix_agent.__file__).parent
         env_path = package_dir / ".env"
         if env_path.exists():

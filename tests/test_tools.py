@@ -7,6 +7,8 @@
 
 import json
 import os
+# Mock导入依赖模块
+import sys
 import tempfile
 from pathlib import Path
 from typing import Optional
@@ -14,18 +16,15 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-# Mock导入依赖模块
-import sys
-from unittest.mock import Mock
-sys.modules['deepagents'] = Mock()
-sys.modules['deepagents.backends'] = Mock()
-sys.modules['deepagents.backends.filesystem'] = Mock()
-sys.modules['deepagents.middleware.resumable_shell'] = Mock()
-sys.modules['langchain'] = Mock()
-sys.modules['langchain.agents'] = Mock()
-sys.modules['langchain.agents.middleware'] = Mock()
-sys.modules['langchain_core'] = Mock()
-sys.modules['langchain_core.tools'] = Mock()
+sys.modules["deepagents"] = Mock()
+sys.modules["deepagents.backends"] = Mock()
+sys.modules["deepagents.backends.filesystem"] = Mock()
+sys.modules["deepagents.middleware.resumable_shell"] = Mock()
+sys.modules["langchain"] = Mock()
+sys.modules["langchain.agents"] = Mock()
+sys.modules["langchain.agents.middleware"] = Mock()
+sys.modules["langchain_core"] = Mock()
+sys.modules["langchain_core.tools"] = Mock()
 
 # 导入实际的项目模块
 try:
@@ -40,6 +39,7 @@ try:
                                  web_search)
 except ImportError as e:
     print(f"Warning: Could not import tools: {e}")
+
     # 创建Mock对象
     class MockTool:
         def invoke(self, *args, **kwargs):
@@ -236,8 +236,12 @@ console.log(x.value);  // null引用错误
             file_path = f.name
 
         try:
-            with patch("src.tools.multilang_code_analyzers.analyze_code_file") as mock_analyze_file:
-                with patch("src.tools.defect_aggregator.aggregate_defects_tool") as mock_aggregate:
+            with patch(
+                "src.tools.multilang_code_analyzers.analyze_code_file"
+            ) as mock_analyze_file:
+                with patch(
+                    "src.tools.defect_aggregator.aggregate_defects_tool"
+                ) as mock_aggregate:
                     mock_analyze_file.invoke.return_value = {
                         "file_path": file_path,
                         "language": "python",

@@ -152,6 +152,7 @@ def find_env_file() -> Path | None:
     # 优先检查包目录下的.env文件
     try:
         import fix_agent
+
         package_dir = Path(fix_agent.__file__).parent
         env_file = package_dir / ".env"
         if env_file.exists():
@@ -188,6 +189,7 @@ def create_env_from_template() -> bool:
     # 使用与配置向导一致的存储逻辑
     try:
         import fix_agent
+
         package_dir = Path(fix_agent.__file__).parent
         env_path = package_dir / ".env"
     except ImportError:
@@ -231,6 +233,7 @@ def get_env_template_content_from_package() -> Optional[str]:
         try:
             # 备用方案：尝试从包根目录读取
             import fix_agent
+
             package_dir = Path(fix_agent.__file__).parent
             template_path = package_dir / ".env.template"
             if template_path.exists():

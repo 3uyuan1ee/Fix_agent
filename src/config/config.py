@@ -12,6 +12,7 @@ from ..prompt.prompt_template import memory_default_prompt, system_prompt
 # 首先尝试从包目录加载.env文件
 try:
     import fix_agent
+
     package_dir = Path(fix_agent.__file__).parent
     env_file = package_dir / ".env"
     if env_file.exists():
@@ -271,6 +272,7 @@ def create_model():
             env_loaded = False
             try:
                 import fix_agent
+
                 package_dir = Path(fix_agent.__file__).parent
                 env_file = package_dir / ".env"
                 if env_file.exists():
@@ -293,7 +295,9 @@ def create_model():
                 for env_file in possible_dirs:
                     if env_file.exists():
                         dotenv.load_dotenv(env_file, override=True)
-                        console.print(f"[dim]✅ Reloaded env from fallback: {env_file}[/dim]")
+                        console.print(
+                            f"[dim]✅ Reloaded env from fallback: {env_file}[/dim]"
+                        )
                         env_loaded = True
                         break
 
@@ -304,7 +308,9 @@ def create_model():
             openai_key = os.environ.get("OPENAI_API_KEY")
             anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
 
-            console.print(f"[dim]🔍 Debug - Keys after reload: OpenAI={'✓' if openai_key else '✗'}, Anthropic={'✓' if anthropic_key else '✗'}[/dim]")
+            console.print(
+                f"[dim]🔍 Debug - Keys after reload: OpenAI={'✓' if openai_key else '✗'}, Anthropic={'✓' if anthropic_key else '✗'}[/dim]"
+            )
 
             # 递归调用 create_model 来重新检查配置
             return create_model()
