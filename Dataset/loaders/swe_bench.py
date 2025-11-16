@@ -1,608 +1,362 @@
 """
-SWE-bench数据集加载器
+SWE-bench Lite数据集加载器 - 简化版本
 
-SWE-bench是一个用于评估软件工程agent能力的数据集，
-包含来自GitHub的真实issue和PR。
+专门为自动评估设计，去除了自动下载功能，专注于处理手动下载的数据。
 """
 
 import json
-import os
-import shutil
-import subprocess
-import tarfile
-import tempfile
+import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import requests
-
-# 使用多层导入策略
-try:
-    from ..data_types import EvaluationTask
-    from .base import BaseDatasetLoader
-except ImportError:
-    try:
-        from base import BaseDatasetLoader
-        from data_types import EvaluationTask
-    except ImportError:
-        try:
-            from Dataset.data_types import EvaluationTask
-            from Dataset.loaders.base import BaseDatasetLoader
-        except ImportError:
-            # 最后尝试：从当前目录导入
-            import sys
-            from pathlib import Path
-
-            current_dir = Path(__file__).parent
-            if str(current_dir) not in sys.path:
-                sys.path.insert(0, str(current_dir))
-            from base import BaseDatasetLoader
-
-            # 从根目录导入data_types
-            root_dir = current_dir.parent
-            if str(root_dir) not in sys.path:
-                sys.path.insert(0, str(root_dir))
-            from ..data_types import EvaluationTask
+from ..data_types import EvaluationTask
 
 
-class SWEBenchLoader(BaseDatasetLoader):
+class SWEBenchLiteLoader:
     """
-    SWE-bench数据集加载器
+    SWE-bench Lite数据集加载器
 
     特点：
-    - 支持SWE-bench-test和SWE-bench-lite
-    - 自动下载和解压数据集
-    - 支持项目级别的缓存
-    - 提供难度分级过滤
+    - 不自动下载，使用手动下载的数据集
+    - 支持SWE-bench Lite格式
+    - 提供灵活的采样和过滤
+    - 生成标准格式的预测文件
     """
 
-    def __init__(
-        self, dataset_path: str = "./datasets/swe-bench", cache_dir: str = None
-    ):
-        super().__init__(dataset_path, cache_dir)
-        self.testbed_path = self.dataset_path / "testbed"
-        self.data_file = self.testbed_path / "swe-bench-test.json"
-
-    def download_dataset(self) -> bool:
+    def __init__(self, dataset_path: str):
         """
-        下载SWE-bench数据集
+        初始化加载器
+
+        Args:
+            dataset_path: SWE-bench数据集文件路径
+        """
+        self.dataset_path = Path(dataset_path)
+        self.logger = logging.getLogger("swe_bench_loader")
+        self.tasks: List[EvaluationTask] = []
+
+    def validate_dataset(self) -> bool:
+        """
+        验证数据集文件格式
 
         Returns:
-            bool: 下载是否成功
+            bool: 验证是否通过
         """
-        print("[SWEBenchLoader] 开始下载SWE-bench数据集...")
-
         try:
-            # 创建数据集目录
-            self.dataset_path.mkdir(parents=True, exist_ok=True)
+            if not self.dataset_path.exists():
+                self.logger.error(f"数据集文件不存在: {self.dataset_path}")
+                return False
 
-            # 下载主仓库
-            if not (self.dataset_path / "SWE-bench").exists():
-                print("[SWEBenchLoader] 克隆SWE-bench仓库...")
-                result = subprocess.run(
-                    [
-                        "git",
-                        "clone",
-                        "git@github.com:princeton-nlp/SWE-bench.git",
-                        str(self.dataset_path / "SWE-bench"),
-                    ],
-                    capture_output=True,
-                    text=True,
-                )
+            # 尝试加载并验证格式
+            with open(self.dataset_path, 'r', encoding='utf-8') as f:
+                if self.dataset_path.suffix == '.jsonl':
+                    # 验证JSONL格式
+                    for i, line in enumerate(f):
+                        if i >= 5:  # 只验证前5行
+                            break
+                        if line.strip():
+                            data = json.loads(line)
+                            self._validate_task_format(data)
+                else:
+                    # 验证JSON格式
+                    data = json.load(f)
+                    if isinstance(data, list):
+                        for item in data[:5]:  # 只验证前5个
+                            self._validate_task_format(item)
 
-                if result.returncode != 0:
-                    print(f"[SWEBenchLoader] 克隆失败: {result.stderr}")
-                    return False
-
-            # 下载testbed数据 - 尝试多个可能的URL
-            if not self.data_file.exists():
-                print("[SWEBenchLoader] 下载testbed数据...")
-
-                # 尝试多个可能的下载URL
-                testbed_urls = [
-                    "https://huggingface.co/datasets/princeton-nlp/SWE-bench/resolve/main/data/testbed.tar.gz",
-                    "https://huggingface.co/datasets/princeton-nlp/SWE-bench-v2/resolve/main/data/testbed.tar.gz",
-                    "https://github.com/princeton-nlp/SWE-bench/raw/main/data/testbed.tar.gz",
-                ]
-
-                download_success = False
-                for testbed_url in testbed_urls:
-                    try:
-                        print(f"[SWEBenchLoader] 尝试下载: {testbed_url}")
-                        testbed_tar = self.testbed_path / "testbed.tar.gz"
-
-                        # 下载文件
-                        response = requests.get(testbed_url, stream=True, timeout=30)
-                        response.raise_for_status()
-
-                        self.testbed_path.mkdir(parents=True, exist_ok=True)
-                        with open(testbed_tar, "wb") as f:
-                            for chunk in response.iter_content(chunk_size=8192):
-                                f.write(chunk)
-
-                        # 解压文件
-                        print("[SWEBenchLoader] 解压testbed数据...")
-                        with tarfile.open(testbed_tar, "r:gz") as tar:
-                            tar.extractall(self.testbed_path)
-
-                        # 删除tar文件
-                        testbed_tar.unlink()
-
-                        print(f"[SWEBenchLoader] 成功下载: {testbed_url}")
-                        download_success = True
-                        break
-
-                    except Exception as e:
-                        print(f"[SWEBenchLoader] 下载失败: {testbed_url}")
-                        print(f"[SWEBenchLoader] 错误信息: {e}")
-                        # 清理失败的下载文件
-                        if (self.testbed_path / "testbed.tar.gz").exists():
-                            (self.testbed_path / "testbed.tar.gz").unlink()
-
-                if not download_success:
-                    print("[SWEBenchLoader] 所有下载链接都无法访问，将创建模拟数据集")
-                    print(
-                        "[SWEBenchLoader] 注意: 这是用于测试的模拟数据，不包含真实的SWE-bench数据"
-                    )
-                    return self._create_mock_swe_bench_dataset()
-
-            print("[SWEBenchLoader] 数据集下载完成")
+            self.logger.info("数据集格式验证通过")
             return True
 
         except Exception as e:
-            print(f"[SWEBenchLoader] 下载失败: {e}")
+            self.logger.error(f"数据集验证失败: {e}")
             return False
+
+    def _validate_task_format(self, task_data: Dict[str, Any]) -> None:
+        """验证单个任务格式"""
+        required_fields = ["instance_id", "repo", "problem_statement", "base_commit"]
+        for field in required_fields:
+            if field not in task_data:
+                raise ValueError(f"缺少必需字段: {field}")
 
     def load_tasks(
-        self, sample_size: int = None, difficulty_filter: str = None
+        self,
+        sample_size: Optional[int] = None,
+        difficulty_filter: Optional[str] = None,
+        repo_filter: Optional[List[str]] = None
     ) -> List[EvaluationTask]:
         """
-        加载SWE-bench评估任务
+        加载数据集任务
 
         Args:
-            sample_size: 采样大小
-            difficulty_filter: 难度过滤器 ('easy', 'medium', 'hard')
-
-        Returns:
-            List[EvaluationTask]: 评估任务列表
-        """
-        print(
-            f"[SWEBenchLoader] 加载任务，样本大小: {sample_size}, 难度过滤: {difficulty_filter}"
-        )
-
-        # 检查缓存
-        cache_key = f"swe_bench_tasks_{sample_size}_{difficulty_filter}"
-        cached_tasks = self.load_cache(cache_key)
-        if cached_tasks:
-            print(f"[SWEBenchLoader] 从缓存加载 {len(cached_tasks)} 个任务")
-            return [EvaluationTask(**task) for task in cached_tasks]
-
-        # 验证数据集
-        if not self.validate_dataset():
-            raise RuntimeError("数据集验证失败")
-
-        # 加载数据
-        with open(self.data_file, "r", encoding="utf-8") as f:
-            dataset = json.load(f)
-
-        print(f"[SWEBenchLoader] 原始数据集大小: {len(dataset)}")
-
-        # 应用难度过滤器
-        if difficulty_filter:
-            dataset = self._apply_difficulty_filter(dataset, difficulty_filter)
-            print(f"[SWEBenchLoader] 过滤后数据集大小: {len(dataset)}")
-
-        # 采样
-        if sample_size and sample_size < len(dataset):
-            dataset = dataset[:sample_size]
-
-        # 转换为EvaluationTask
-        tasks = []
-        for item in dataset:
-            try:
-                task = self._convert_to_evaluation_task(item)
-                if task:
-                    tasks.append(task)
-            except Exception as e:
-                print(
-                    f"[SWEBenchLoader] 转换任务失败 {item.get('instance_id', 'unknown')}: {e}"
-                )
-
-        print(f"[SWEBenchLoader] 成功加载 {len(tasks)} 个任务")
-
-        # 保存缓存
-        self.save_cache(cache_key, [task.__dict__ for task in tasks])
-
-        return tasks
-
-    def get_dataset_info(self) -> Dict[str, Any]:
-        """
-        获取SWE-bench数据集信息
-
-        Returns:
-            Dict[str, Any]: 数据集信息
-        """
-        if not self.validate_dataset():
-            return {"error": "数据集不可用"}
-
-        with open(self.data_file, "r", encoding="utf-8") as f:
-            dataset = json.load(f)
-
-        # 统计信息
-        repos = {}
-        languages = {}
-        difficulties = {"easy": 0, "medium": 0, "hard": 0}
-
-        for item in dataset:
-            # 仓库统计
-            repo = item.get("repo", "")
-            repos[repo] = repos.get(repo, 0) + 1
-
-            # 语言统计（从仓库推断）
-            language = self._infer_language_from_repo(repo)
-            languages[language] = languages.get(language, 0) + 1
-
-            # 难度统计（基于修改的文件数量）
-            difficulty = self._estimate_difficulty(item)
-            difficulties[difficulty] += 1
-
-        return {
-            "name": "SWE-bench",
-            "version": "test",
-            "total_instances": len(dataset),
-            "repositories": repos,
-            "languages": languages,
-            "difficulty_distribution": difficulties,
-            "path": str(self.dataset_path),
-            "description": "Software Engineering Benchmark - GitHub issues and pull requests",
-        }
-
-    def get_required_files(self) -> List[str]:
-        """
-        获取SWE-bench必需的文件列表
-
-        Returns:
-            List[str]: 必需文件列表
-        """
-        return ["SWE-bench/README.md", "testbed/swe-bench-test.json"]
-
-    def _apply_difficulty_filter(
-        self, dataset: List[Dict], difficulty_filter: str
-    ) -> List[Dict]:
-        """
-        应用难度过滤器
-
-        Args:
-            dataset: 原始数据集
+            sample_size: 采样数量
             difficulty_filter: 难度过滤器
+            repo_filter: 仓库过滤器
 
         Returns:
-            List[Dict]: 过滤后的数据集
-        """
-        filtered_dataset = []
-
-        for item in dataset:
-            difficulty = self._estimate_difficulty(item)
-            if difficulty == difficulty_filter:
-                filtered_dataset.append(item)
-
-        return filtered_dataset
-
-    def _estimate_difficulty(self, item: Dict) -> str:
-        """
-        估算任务难度
-
-        Args:
-            item: 数据集项目
-
-        Returns:
-            str: 难度级别 ('easy', 'medium', 'hard')
-        """
-        # 基于patch大小估算难度
-        patch = item.get("patch", "")
-        if not patch:
-            return "unknown"
-
-        # 计算修改的行数
-        lines = patch.split("\n")
-        added_lines = len(
-            [
-                line
-                for line in lines
-                if line.startswith("+") and not line.startswith("+++")
-            ]
-        )
-        removed_lines = len(
-            [
-                line
-                for line in lines
-                if line.startswith("-") and not line.startswith("---")
-            ]
-        )
-        total_changes = added_lines + removed_lines
-
-        # 计算修改的文件数
-        files_changed = len(
-            set(line.split()[1] for line in lines if line.startswith("diff --git"))
-        )
-
-        # 基于启发式规则估算难度
-        if total_changes <= 10 and files_changed <= 2:
-            return "easy"
-        elif total_changes <= 50 and files_changed <= 5:
-            return "medium"
-        else:
-            return "hard"
-
-    def _infer_language_from_repo(self, repo: str) -> str:
-        """
-        从仓库名推断主要编程语言
-
-        Args:
-            repo: 仓库名
-
-        Returns:
-            str: 编程语言
-        """
-        language_mapping = {
-            "django/django": "python",
-            "flask/flask": "python",
-            "pallets/flask": "python",
-            "psf/requests": "python",
-            "scikit-learn/scikit-learn": "python",
-            "sympy/sympy": "python",
-            "pandas-dev/pandas": "python",
-            "numpy/numpy": "python",
-            "matplotlib/matplotlib": "python",
-            "tensorflow/tensorflow": "python",
-            "pytorch/pytorch": "python",
-            "microsoft/vscode": "typescript",
-            "facebook/react": "javascript",
-            "vuejs/vue": "javascript",
-            "angular/angular": "typescript",
-            "nodejs/node": "javascript",
-            "mozilla/firefox": "cpp",
-            "torvalds/linux": "c",
-            "golang/go": "go",
-            "rust-lang/rust": "rust",
-        }
-
-        return language_mapping.get(repo, "unknown")
-
-    def _convert_to_evaluation_task(self, item: Dict) -> Optional[EvaluationTask]:
-        """
-        将SWE-bench项目转换为EvaluationTask
-
-        Args:
-            item: SWE-bench数据集项目
-
-        Returns:
-            Optional[EvaluationTask]: 评估任务
+            List[EvaluationTask]: 加载的任务列表
         """
         try:
-            # 提取基本信息
-            instance_id = item.get("instance_id", "")
-            repo = item.get("repo", "")
-            base_commit = item.get("base_commit", "")
-            problem_statement = item.get("problem_statement", "")
-            test_patch = item.get("test_patch", "")
-            patch = item.get("patch", "")
+            self.logger.info(f"开始加载数据集: {self.dataset_path}")
 
-            # 提取失败的测试用例
-            fail_to_pass = item.get("FAIL_TO_PASS", [])
-            pass_to_pass = item.get("PASS_TO_PASS", [])
+            # 验证数据集
+            if not self.validate_dataset():
+                return []
 
-            # 推断项目信息
-            repo_info = {
-                "name": repo,
-                "language": self._infer_language_from_repo(repo),
-                "framework": self._infer_framework_from_repo(repo),
-                "base_commit": base_commit,
-            }
+            # 加载数据
+            tasks_data = []
 
-            # 构建测试命令
-            test_command = self._build_test_command(repo)
+            with open(self.dataset_path, 'r', encoding='utf-8') as f:
+                if self.dataset_path.suffix == '.jsonl':
+                    # JSONL格式
+                    for line in f:
+                        if line.strip():
+                            tasks_data.append(json.loads(line))
+                else:
+                    # JSON格式
+                    data = json.load(f)
+                    if isinstance(data, list):
+                        tasks_data = data
+                    else:
+                        tasks_data = [data]
 
-            # 构建设置命令
-            setup_commands = self._build_setup_commands(repo)
+            self.logger.info(f"原始数据包含 {len(tasks_data)} 个任务")
 
-            return EvaluationTask(
-                task_id=instance_id,
-                dataset_name="swe-bench",
-                repo_name=repo,
-                problem_description=problem_statement,
-                failing_tests=fail_to_pass,
-                patch_file=patch if patch else None,
-                test_command=test_command,
-                setup_commands=setup_commands,
-                timeout=300,
-                repo_info=repo_info,
-                ground_truth=patch,
-            )
+            # 应用过滤器
+            filtered_tasks = self._apply_filters(tasks_data, difficulty_filter, repo_filter)
+
+            # 采样
+            if sample_size:
+                filtered_tasks = filtered_tasks[:sample_size]
+
+            # 转换为EvaluationTask
+            self.tasks = [self._convert_to_evaluation_task(task_data) for task_data in filtered_tasks]
+
+            self.logger.info(f"成功加载 {len(self.tasks)} 个任务")
+            return self.tasks
 
         except Exception as e:
-            print(f"[SWEBenchLoader] 转换失败: {e}")
-            return None
+            self.logger.error(f"加载数据集失败: {e}")
+            return []
 
-    def _infer_framework_from_repo(self, repo: str) -> Optional[str]:
-        """
-        从仓库名推断框架
+    def _apply_filters(
+        self,
+        tasks_data: List[Dict[str, Any]],
+        difficulty_filter: Optional[str],
+        repo_filter: Optional[List[str]]
+    ) -> List[Dict[str, Any]]:
+        """应用过滤器"""
+        filtered = tasks_data
 
-        Args:
-            repo: 仓库名
-
-        Returns:
-            Optional[str]: 框架名称
-        """
-        if "django" in repo.lower():
-            return "django"
-        elif "flask" in repo.lower():
-            return "flask"
-        elif "tensorflow" in repo.lower():
-            return "tensorflow"
-        elif "pytorch" in repo.lower():
-            return "pytorch"
-        elif "scikit-learn" in repo.lower():
-            return "scikit-learn"
-        elif "matplotlib" in repo.lower():
-            return "matplotlib"
-        elif "pandas" in repo.lower():
-            return "pandas"
-        elif "numpy" in repo.lower():
-            return "numpy"
-        else:
-            return None
-
-    def _build_test_command(self, repo: str) -> str:
-        """
-        为不同仓库构建测试命令
-
-        Args:
-            repo: 仓库名
-
-        Returns:
-            str: 测试命令
-        """
-        if "django" in repo.lower():
-            return "python -m pytest tests/ -v"
-        elif "flask" in repo.lower():
-            return "python -m pytest tests/"
-        elif "requests" in repo.lower():
-            return "python -m pytest tests/"
-        elif "scikit-learn" in repo.lower():
-            return "python -m pytest sklearn/ -v"
-        elif "sympy" in repo.lower():
-            return "python -m pytest sympy/ -v"
-        elif "pandas" in repo.lower():
-            return "python -m pytest pandas/tests/ -v"
-        elif "numpy" in repo.lower():
-            return "python -m pytest numpy/tests/ -v"
-        elif "matplotlib" in repo.lower():
-            return "python -m pytest -v"
-        else:
-            # 通用命令
-            return "python -m pytest . -v"
-
-    def _build_setup_commands(self, repo: str) -> List[str]:
-        """
-        为不同仓库构建设置命令
-
-        Args:
-            repo: 仓库名
-
-        Returns:
-            List[str]: 设置命令列表
-        """
-        commands = []
-
-        # 基础安装
-        commands.append("pip install -e .")
-
-        # 仓库特定的设置
-        if "django" in repo.lower():
-            commands.append("pip install -r requirements/tests.txt")
-        elif "flask" in repo.lower():
-            commands.append("pip install -e .[dev]")
-        elif "requests" in repo.lower():
-            commands.append("pip install -r requirements-dev.txt")
-        elif "scikit-learn" in repo.lower():
-            commands.append("pip install -r requirements.txt")
-        elif "pandas" in repo.lower():
-            commands.append("pip install -r requirements-dev.txt")
-        elif "numpy" in repo.lower():
-            commands.append("pip install -r requirements.txt")
-
-        return commands
-
-    def _create_mock_swe_bench_dataset(self) -> bool:
-        """
-        创建模拟的SWE-bench数据集用于测试
-
-        Returns:
-            bool: 创建是否成功
-        """
-        try:
-            print("[SWEBenchLoader] 创建模拟SWE-bench数据集...")
-
-            # 创建testbed目录
-            self.testbed_path.mkdir(parents=True, exist_ok=True)
-
-            # 创建模拟的SWE-bench数据
-            mock_data = [
-                {
-                    "instance_id": "django__django-12345",
-                    "repo": "django/django",
-                    "base_commit": "abc123def456",
-                    "problem_statement": "Django的查询集在处理空列表时出现IndexError错误",
-                    "patch": "@@ -1,5 +1,5 @@\n class QuerySet:\n     def __getitem__(self, k):\n-        if isinstance(k, slice):\n-            return self._slice(k)\n-        return self._get_obj(k)\n+        if isinstance(k, slice):\n+            return self._slice(k)\n+        if not self.query:\n+            return list()\n+        return self._get_obj(k)",
-                    "test_patch": "",
-                    "FAIL_TO_PASS": [
-                        "tests/queryset/test_empty.py::test_empty_queryset_getitem"
-                    ],
-                    "PASS_TO_PASS": [
-                        "tests/queryset/test_basic.py::test_queryset_creation"
-                    ],
-                },
-                {
-                    "instance_id": "psf__requests-67890",
-                    "repo": "psf/requests",
-                    "base_commit": "def789ghi012",
-                    "problem_statement": "requests库在处理重定向时丢失了原始请求的headers",
-                    "patch": "@@ -10,3 +10,4 @@\n def resolve_redirects(resp, req, stream=False, timeout=None,\n                         verify=True, cert=None, proxies=None, yield_requests=False,\n                         **adapter_kwargs):\n     new_headers = req.headers.copy()\n+    if 'User-Agent' not in new_headers:\n+        new_headers['User-Agent'] = f'requests/{__version__}'\n     # redirect logic...",
-                    "test_patch": "",
-                    "FAIL_TO_PASS": [
-                        "tests/test_redirects.py::test_header_preservation"
-                    ],
-                    "PASS_TO_PASS": ["tests/test_basic.py::test_get_request"],
-                },
-                {
-                    "instance_id": "numpy__numpy-13579",
-                    "repo": "numpy/numpy",
-                    "base_commit": "345678901234",
-                    "problem_statement": "numpy数组广播在特定维度下产生意外的结果",
-                    "patch": "@@ -25,7 +25,10 @@\n def broadcast_shapes(shape_a, shape_b):\n     # existing logic\n     result_shape = []\n     for dim_a, dim_b in zip(reversed(shape_a), reversed(shape_b)):\n-        result_dim = dim_a if dim_a == 1 else dim_b\n+        if dim_a == 1:\n+            result_dim = dim_b\n+        elif dim_b == 1:\n+            result_dim = dim_a\n+        elif dim_a == dim_b:\n+            result_dim = dim_a\n+        else:\n+            raise ValueError(f'Cannot broadcast shapes {shape_a} and {shape_b}')\n         result_shape.append(result_dim)",
-                    "test_patch": "",
-                    "FAIL_TO_PASS": [
-                        "tests/test_broadcast.py::test_incompatible_shapes"
-                    ],
-                    "PASS_TO_PASS": ["tests/test_basic.py::test_array_creation"],
-                },
-                {
-                    "instance_id": "matplotlib__matplotlib-24680",
-                    "repo": "matplotlib/matplotlib",
-                    "base_commit": "567890123456",
-                    "problem_statement": "matplotlib的图例在处理重复标签时显示不正确",
-                    "patch": "@@ -50,3 +50,6 @@\n def filter_duplicate_labels(handles, labels):\n     seen = set()\n     result = []\n     for h, l in zip(handles, labels):\n         if l not in seen:\n             seen.add(l)\n             result.append((h, l))\n     return result",
-                    "test_patch": "",
-                    "FAIL_TO_PASS": ["tests/test_legend.py::test_duplicate_labels"],
-                    "PASS_TO_PASS": ["tests/test_basic.py::test_legend_creation"],
-                },
-                {
-                    "instance_id": "pallets__flask-98765",
-                    "repo": "pallets/flask",
-                    "base_commit": "901234567890",
-                    "problem_statement": "Flask路由在处理特殊字符时出现编码错误",
-                    "patch": "@@ -30,4 +30,5 @@\n def url_quote(segment, charset='utf-8'):\n     try:\n         return quote(segment, safe=SAFE_CHARS, charset=charset)\n-    except UnicodeError:\n+    except (UnicodeError, AttributeError):\n         # fallback to ASCII encoding\n+        segment = str(segment) if not isinstance(segment, str) else segment\n         return quote(segment.encode('ascii', errors='ignore'), safe=SAFE_CHARS)",
-                    "test_patch": "",
-                    "FAIL_TO_PASS": ["tests/test_routing.py::test_special_characters"],
-                    "PASS_TO_PASS": ["tests/test_basic.py::test_route_creation"],
-                },
+        # 难度过滤器（如果数据中有difficulty字段）
+        if difficulty_filter:
+            filtered = [
+                task for task in filtered
+                if task.get("difficulty", "").lower() == difficulty_filter.lower()
             ]
 
-            # 写入模拟数据到JSON文件
-            with open(self.data_file, "w", encoding="utf-8") as f:
-                json.dump(mock_data, f, indent=2, ensure_ascii=False)
+        # 仓库过滤器
+        if repo_filter:
+            repo_set = set(repo_filter)
+            filtered = [
+                task for task in filtered
+                if any(repo in task.get("repo", "") for repo in repo_set)
+            ]
 
-            print(
-                f"[SWEBenchLoader] 模拟SWE-bench数据集创建成功，包含 {len(mock_data)} 个任务"
-            )
-            print(
-                "[SWEBenchLoader] 模拟项目:",
-                ", ".join(set(item["repo"].split("/")[0] for item in mock_data)),
-            )
+        return filtered
 
+    def _convert_to_evaluation_task(self, task_data: Dict[str, Any]) -> EvaluationTask:
+        """将数据转换为EvaluationTask"""
+        # 提取测试信息
+        failing_tests = task_data.get("FAIL_TO_PASS", [])
+        passing_tests = task_data.get("PASS_TO_PASS", [])
+
+        # 构建测试命令
+        test_command = self._build_test_command(task_data)
+
+        # 设置超时时间
+        timeout = task_data.get("timeout", 300)
+
+        return EvaluationTask(
+            task_id=task_data["instance_id"],
+            dataset_name="swe-bench-lite",
+            repo_name=task_data["repo"],
+            problem_description=task_data["problem_statement"],
+            failing_tests=failing_tests,
+            test_command=test_command,
+            timeout=timeout,
+            ground_truth=task_data.get("patch"),
+            repo_info={
+                "base_commit": task_data.get("base_commit"),
+                "hints_text": task_data.get("hints_text"),
+                "created_at": task_data.get("created_at"),
+                "difficulty": task_data.get("difficulty"),
+                "test_patch": task_data.get("test_patch")
+            }
+        )
+
+    def _build_test_command(self, task_data: Dict[str, Any]) -> str:
+        """构建测试命令"""
+        # 根据仓库类型确定测试命令
+        repo = task_data.get("repo", "").lower()
+
+        if "django" in repo:
+            return "python manage.py test"
+        elif "numpy" in repo:
+            return "python -m pytest -xvs"
+        elif "requests" in repo:
+            return "python -m pytest"
+        elif "flask" in repo:
+            return "python -m pytest"
+        elif "matplotlib" in repo:
+            return "python -m pytest"
+        elif "seaborn" in repo:
+            return "python -m pytest"
+        else:
+            # 默认使用pytest
+            return "python -m pytest -xvs"
+
+    def save_predictions(self, predictions: List[Dict[str, Any]], output_path: str) -> bool:
+        """
+        保存预测文件
+
+        Args:
+            predictions: 预测结果列表
+            output_path: 输出文件路径
+
+        Returns:
+            bool: 保存是否成功
+        """
+        try:
+            output_path = Path(output_path)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+
+            # 确保预测数据格式正确
+            formatted_predictions = []
+            for pred in predictions:
+                formatted_pred = {
+                    "instance_id": pred["instance_id"],
+                    "model_patch": pred.get("model_patch", ""),
+                    "model_name_or_path": "fix-agent-dataset"
+                }
+                formatted_predictions.append(formatted_pred)
+
+            # 写入JSONL格式
+            with open(output_path, 'w', encoding='utf-8') as f:
+                for pred in formatted_predictions:
+                    f.write(json.dumps(pred, ensure_ascii=False) + '\n')
+
+            self.logger.info(f"预测文件已保存到: {output_path}")
             return True
 
         except Exception as e:
-            print(f"[SWEBenchLoader] 创建模拟数据集失败: {e}")
+            self.logger.error(f"保存预测文件失败: {e}")
             return False
+
+    def load_predictions(self, predictions_path: str) -> List[Dict[str, Any]]:
+        """
+        加载预测文件
+
+        Args:
+            predictions_path: 预测文件路径
+
+        Returns:
+            List[Dict[str, Any]]: 预测结果列表
+        """
+        try:
+            predictions = []
+            with open(predictions_path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    if line.strip():
+                        pred = json.loads(line)
+                        predictions.append(pred)
+
+            self.logger.info(f"加载了 {len(predictions)} 个预测")
+            return predictions
+
+        except Exception as e:
+            self.logger.error(f"加载预测文件失败: {e}")
+            return []
+
+    def get_dataset_stats(self) -> Dict[str, Any]:
+        """
+        获取数据集统计信息
+
+        Returns:
+            Dict[str, Any]: 统计信息
+        """
+        if not self.tasks:
+            return {}
+
+        repos = {}
+        difficulties = {}
+
+        for task in self.tasks:
+            repo = task.repo_name
+            repos[repo] = repos.get(repo, 0) + 1
+
+            difficulty = task.repo_info.get("difficulty", "unknown")
+            difficulties[difficulty] = difficulties.get(difficulty, 0) + 1
+
+        return {
+            "total_tasks": len(self.tasks),
+            "repositories": repos,
+            "difficulties": difficulties,
+            "average_timeout": sum(task.timeout for task in self.tasks) / len(self.tasks)
+        }
+
+
+class PredictionValidator:
+    """
+    预测结果验证器
+    """
+
+    @staticmethod
+    def validate_predictions(
+        predictions: List[Dict[str, Any]],
+        dataset_tasks: List[EvaluationTask]
+    ) -> Dict[str, Any]:
+        """
+        验证预测结果的完整性和格式
+
+        Args:
+            predictions: 预测结果
+            dataset_tasks: 数据集任务
+
+        Returns:
+            Dict[str, Any]: 验证结果
+        """
+        result = {
+            "valid": True,
+            "errors": [],
+            "warnings": [],
+            "stats": {}
+        }
+
+        # 检查数量
+        dataset_ids = {task.task_id for task in dataset_tasks}
+        prediction_ids = {pred["instance_id"] for pred in predictions}
+
+        missing_predictions = dataset_ids - prediction_ids
+        extra_predictions = prediction_ids - dataset_ids
+
+        if missing_predictions:
+            result["warnings"].append(f"缺少 {len(missing_predictions)} 个预测")
+            result["stats"]["missing_predictions"] = len(missing_predictions)
+
+        if extra_predictions:
+            result["warnings"].append(f"多出 {len(extra_predictions)} 个预测")
+            result["stats"]["extra_predictions"] = len(extra_predictions)
+
+        # 检查预测格式
+        for i, pred in enumerate(predictions):
+            if "instance_id" not in pred:
+                result["errors"].append(f"预测 {i} 缺少 instance_id")
+                result["valid"] = False
+
+            if "model_patch" not in pred:
+                result["errors"].append(f"预测 {i} 缺少 model_patch")
+                result["valid"] = False
+
+        result["stats"]["total_predictions"] = len(predictions)
+        result["stats"]["valid_predictions"] = len([p for p in predictions if p.get("model_patch")])
+
+        return result
