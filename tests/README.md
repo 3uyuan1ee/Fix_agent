@@ -342,13 +342,3 @@ jobs:
 - 更新过时的测试用例
 - 优化慢速测试
 
-## 📚 参考资料
-
-- [pytest官方文档](https://docs.pytest.org/)
-- [pytest-mock文档](https://pytest-mock.readthedocs.io/)
-- [测试覆盖率工具coverage.py](https://coverage.readthedocs.io/)
-- [Python测试最佳实践](https://docs.python-guide.org/writing/tests/)
-
----
-
-*最后更新: 2025年1月*

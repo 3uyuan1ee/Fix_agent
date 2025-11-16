@@ -9,7 +9,17 @@ from rich.console import Console
 
 from ..prompt.prompt_template import memory_default_prompt, system_prompt
 
-dotenv.load_dotenv()
+# 首先尝试从包目录加载.env文件
+try:
+    import Fix_agent
+    package_dir = Path(Fix_agent.__file__).parent
+    env_file = package_dir / ".env"
+    if env_file.exists():
+        dotenv.load_dotenv(env_file)
+    else:
+        dotenv.load_dotenv()
+except ImportError:
+    dotenv.load_dotenv()
 
 modelName = os.environ.get("OPENAI_MODEL", "DefaultModel")
 baseUrl = os.environ.get("OPENAI_API_BASE", "defaultUrl")
@@ -258,7 +268,16 @@ def create_model():
 
         if create_interactive_env():
             # 配置成功，重新加载环境变量并重试
-            dotenv.load_dotenv(override=True)
+            try:
+                import Fix_agent
+                package_dir = Path(Fix_agent.__file__).parent
+                env_file = package_dir / ".env"
+                if env_file.exists():
+                    dotenv.load_dotenv(env_file, override=True)
+                else:
+                    dotenv.load_dotenv(override=True)
+            except ImportError:
+                dotenv.load_dotenv(override=True)
             # 递归调用 create_model 来重新检查配置
             return create_model()
         else:

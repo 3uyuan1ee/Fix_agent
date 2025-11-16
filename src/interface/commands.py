@@ -1,8 +1,10 @@
 """/command和bash执行的命令处理器。"""
 
+import importlib.resources
 import os
 import subprocess
 from pathlib import Path
+from typing import Optional
 
 from langgraph.checkpoint.memory import InMemorySaver
 
@@ -145,7 +147,19 @@ def handle_config_command(args: list[str]) -> bool:
 
 
 def find_env_file() -> Path | None:
-    """Find .env file by searching current directory and parent directories."""
+    """Find .env file by searching package directory first, then current directory and parent directories."""
+
+    # 首先检查包目录下的.env文件
+    try:
+        import Fix_agent
+        package_dir = Path(Fix_agent.__file__).parent
+        env_file = package_dir / ".env"
+        if env_file.exists():
+            return env_file
+    except ImportError:
+        pass
+
+    # 备用：搜索当前目录和父目录
     current_dir = Path.cwd()
 
     # Search up to 5 levels up
@@ -165,24 +179,123 @@ def find_env_file() -> Path | None:
 def create_env_from_template() -> bool:
     """Create .env file from .env.template."""
     template_path = Path.cwd() / ".env.template"
-    env_path = Path.cwd() / ".env"
 
-    if not template_path.exists():
-        typewriter.error_shake("❌ .env.template file not found")
-        typewriter.info("Cannot create .env file without template")
-        return True
+    # 在包目录下保存.env文件
+    try:
+        import Fix_agent
+        package_dir = Path(Fix_agent.__file__).parent
+    except ImportError:
+        # 如果无法导入包，使用当前目录
+        package_dir = Path.cwd()
+
+    env_path = package_dir / ".env"
+
+    # 先尝试当前目录的模板，再尝试包目录的模板
+    template_content = None
+    if template_path.exists():
+        try:
+            template_content = template_path.read_text(encoding="utf-8")
+        except Exception:
+            pass
+
+    if template_content is None:
+        # 备用方案：从包安装目录获取模板内容
+        template_content = get_env_template_content_from_package()
+        if template_content is None:
+            typewriter.error_shake("❌ .env.template file not found")
+            typewriter.info("Cannot create .env file without template")
+            return True
 
     try:
-        # Copy template to .env
-        import shutil
-
-        shutil.copy(template_path, env_path)
-        typewriter.success(f" Created .env file from template: {env_path}")
+        # Write template content to .env file
+        env_path.write_text(template_content, encoding="utf-8")
+        typewriter.success(f"✅ Created .env file from template: {env_path}")
         typewriter.info("Please edit the file and add your API keys")
         return True
     except Exception as e:
         typewriter.error_shake(f"❌ Failed to create .env file: {e}")
         return True
+
+
+def get_env_template_content_from_package() -> Optional[str]:
+    """从包安装目录读取.env.template文件内容"""
+    try:
+        # 尝试使用importlib.resources读取包数据
+        with importlib.resources.open_text(".", ".env.template") as f:
+            return f.read()
+    except Exception:
+        try:
+            # 备用方案：尝试从包根目录读取
+            import Fix_agent
+            package_dir = Path(Fix_agent.__file__).parent
+            template_path = package_dir / ".env.template"
+            if template_path.exists():
+                return template_path.read_text(encoding="utf-8")
+        except Exception:
+            pass
+
+    # 如果以上方法都失败，返回内置的默认模板
+    return get_default_env_template()
+
+
+def get_default_env_template() -> str:
+    """返回默认的.env模板内容"""
+    return """# Fix Agent 环境配置模板
+# 填入你的实际配置后将文件名改为.env
+
+# =============================================================================
+# 网络搜索配置 (可选)
+# =============================================================================
+# Tavily API Key - 用于网络搜索功能
+# 获取地址: https://tavily.com
+# TAVILY_API_KEY=your_tavily_api_key_here
+
+# =============================================================================
+# Anthropic Claude 配置
+# =============================================================================
+# Anthropic API Key
+# 获取地址: https://console.anthropic.com
+# ANTHROPIC_API_KEY=your_anthropic_api_key_here
+
+# Anthropic 模型名称
+# 可选值: claude-sonnet-4-5-20250929, claude-sonnet-4-5-20250402, claude-opus-4-20250229
+# ANTHROPIC_MODEL_NAME=claude-sonnet-4-5-20250929
+
+# =============================================================================
+# OpenAI 兼容模型配置
+# =============================================================================
+# OpenAI API Key
+# 获取地址: https://platform.openai.com
+# OPENAI_API_KEY=your_openai_api_key_here
+
+# OpenAI 模型名称
+# 可选值: gpt-4, gpt-4-turbo, gpt-5-mini, gpt-3.5-turbo
+# OPENAI_MODEL=gpt-4
+
+# =============================================================================
+# 通用模型配置 (适用于所有模型)
+# =============================================================================
+# 模型温度参数 - 控制输出的随机性 (0.0-2.0)
+MODEL_TEMPERATURE=0.3
+
+# 最大输出token数
+MODEL_MAX_TOKENS=50000
+
+# 最大重试次数
+MODEL_MAX_RETRIES=3
+
+# =============================================================================
+# 系统配置
+# =============================================================================
+# 调试模式 - 显示详细的调试信息
+# DEBUG=false
+
+# 人机交互模式 - 是否需要用户确认工具调用
+# HUMAN_IN_LOOP=true
+
+# 持久化存储 - 是否保存会话记忆
+# PERSISTENT_STORAGE=false
+"""
 
 
 def display_env_status(env_path: Path) -> bool:

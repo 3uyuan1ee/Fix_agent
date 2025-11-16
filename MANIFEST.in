@@ -11,10 +11,6 @@ include *.env.template
 include src/prompt/*.md
 include src/prompt/*.yml
 
-# 包含Windows特定文件
-recursive-include windows *.bat *.ps1 *.cmd
-recursive-include docs *.md *.txt *.rst
-
 # 包含配置文件
 recursive-include src *.yml *.yaml *.json *.toml
 

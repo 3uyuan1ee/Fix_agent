@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "Fix_agent"
-version = "1.0.0"
+version = "1.0.2"
 description = "AI Coding Assistant - 代码缺陷修复和分析工具"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -51,8 +51,8 @@ dependencies = [
 
     # AI和ML依赖
     "langchain-openai>=0.1.0",
-    "langchain-core>=0.1.0",
-    "deepagents==0.2.4",
+    "langchain==1.0.5",
+    "deepagents==0.2.6",
     "python-dotenv>=1.0.0",
     "langgraph>=0.1.0",
 
@@ -156,6 +156,9 @@ fixagent-web = "src.web_app_main:cli_main"
 fixagent-web-dev = "src.web_app_main:web_main"
 fixagent-web-stop = "src.web_app_stop:cli_main"
 
+[tool.setuptools]
+include-package-data = true
+
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["src*", "web_app*"]
@@ -163,7 +166,7 @@ include = ["src*", "web_app*"]
 [tool.setuptools.package-data]
 src = ["*.md", "*.txt", "*.yml", "*.yaml", "*.json", "*.toml"]
 web_app = ["**/*.html", "**/*.css", "**/*.js", "**/*.json", "**/*.png", "**/*.jpg", "**/*.ico", "*.md", "*.txt"]
-"*" = [".env.template","src/**/*.md", "src/**/*.txt"]
+"*" = [".env.template"]
 
 
 [tool.black]

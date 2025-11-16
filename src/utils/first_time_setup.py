@@ -1,5 +1,6 @@
 """首次使用环境配置向导 - 基于 /config 命令设计模式"""
 
+import importlib.resources
 import os
 import platform
 import sys
@@ -10,6 +11,87 @@ from rich.panel import Panel
 
 from ..config.config import COLORS, console
 from ..ui.dynamicCli import typewriter
+
+
+def get_env_template_content_from_package() -> Optional[str]:
+    """从包安装目录读取.env.template文件内容"""
+    try:
+        # 尝试使用importlib.resources读取包数据
+        with importlib.resources.open_text(".", ".env.template") as f:
+            return f.read()
+    except Exception:
+        try:
+            # 备用方案：尝试从包根目录读取
+            import Fix_agent
+            package_dir = Path(Fix_agent.__file__).parent
+            template_path = package_dir / ".env.template"
+            if template_path.exists():
+                return template_path.read_text(encoding="utf-8")
+        except Exception:
+            pass
+
+    # 如果以上方法都失败，返回内置的默认模板
+    return get_default_env_template()
+
+
+def get_default_env_template() -> str:
+    """返回默认的.env模板内容"""
+    return """# Fix Agent 环境配置模板
+# 填入你的实际配置后将文件名改为.env
+
+# =============================================================================
+# 网络搜索配置 (可选)
+# =============================================================================
+# Tavily API Key - 用于网络搜索功能
+# 获取地址: https://tavily.com
+# TAVILY_API_KEY=your_tavily_api_key_here
+
+# =============================================================================
+# Anthropic Claude 配置
+# =============================================================================
+# Anthropic API Key
+# 获取地址: https://console.anthropic.com
+# ANTHROPIC_API_KEY=your_anthropic_api_key_here
+
+# Anthropic 模型名称
+# 可选值: claude-sonnet-4-5-20250929, claude-sonnet-4-5-20250402, claude-opus-4-20250229
+# ANTHROPIC_MODEL_NAME=claude-sonnet-4-5-20250929
+
+# =============================================================================
+# OpenAI 兼容模型配置
+# =============================================================================
+# OpenAI API Key
+# 获取地址: https://platform.openai.com
+# OPENAI_API_KEY=your_openai_api_key_here
+
+# OpenAI 模型名称
+# 可选值: gpt-4, gpt-4-turbo, gpt-5-mini, gpt-3.5-turbo
+# OPENAI_MODEL=gpt-4
+
+# =============================================================================
+# 通用模型配置 (适用于所有模型)
+# =============================================================================
+# 模型温度参数 - 控制输出的随机性 (0.0-2.0)
+MODEL_TEMPERATURE=0.3
+
+# 最大输出token数
+MODEL_MAX_TOKENS=50000
+
+# 最大重试次数
+MODEL_MAX_RETRIES=3
+
+# =============================================================================
+# 系统配置
+# =============================================================================
+# 调试模式 - 显示详细的调试信息
+# DEBUG=false
+
+# 人机交互模式 - 是否需要用户确认工具调用
+# HUMAN_IN_LOOP=true
+
+# 持久化存储 - 是否保存会话记忆
+# PERSISTENT_STORAGE=false
+"""
 
 
 def detect_platform() -> str:
@@ -101,14 +183,26 @@ def create_interactive_env() -> bool:
     """交互式创建 .env 文件 - 基于 .env.template"""
     try:
         template_path = Path.cwd() / ".env.template"
-        env_path = Path.cwd() / ".env"
 
-        if not template_path.exists():
-            typewriter.error_shake("❌ .env.template 文件未找到")
-            return False
+        # 在包目录下保存.env文件
+        try:
+            import Fix_agent
+            package_dir = Path(Fix_agent.__file__).parent
+        except ImportError:
+            # 如果无法导入包，使用当前目录
+            package_dir = Path.cwd()
 
-        # 读取模板内容
-        template_content = template_path.read_text(encoding="utf-8")
+        env_path = package_dir / ".env"
+
+        # 读取模板内容 - 先尝试当前目录，再尝试包目录
+        if template_path.exists():
+            template_content = template_path.read_text(encoding="utf-8")
+        else:
+            # 备用方案：从包安装目录读取
+            template_content = get_env_template_content_from_package()
+            if template_content is None:
+                typewriter.error_shake("❌ .env.template 文件未找到")
+                return False
 
         console.print()
         typewriter.print_with_random_speed(
@@ -144,10 +238,10 @@ def create_interactive_env() -> bool:
         elif choice == "3":
             show_platform_specific_instructions()
             typewriter.info("配置完成后请重新运行 fix-agent")
-            return True
+            return False
         elif choice == "4":
             typewriter.info("配置已取消")
-            return True
+            return False
 
     except Exception as e:
         typewriter.error_shake(f"❌ 配置过程中出现错误: {e}")
@@ -187,7 +281,7 @@ def interactive_setup(template_content: str, env_path: Path) -> bool:
 
                     model = Prompt.ask(
                         "模型名称",
-                        choices=["gpt-4", "gpt-4-turbo", "gpt-5-mini", "gpt-3.5-turbo"],
+                        choices=["gpt-4", "gpt-4-turbo", "gpt-5-mini", "gpt-3.5-turbo","glm-4.5-air","glm-4.6"],
                         default="gpt-5-mini",
                     )
                     config_values["OPENAI_MODEL"] = model
@@ -324,10 +418,23 @@ def interactive_setup(template_content: str, env_path: Path) -> bool:
 def create_from_template(template_path: Path, env_path: Path) -> bool:
     """从模板创建 .env 文件 - 参考 /config 命令的模板复制功能"""
     try:
-        import shutil
+        # 获取模板内容 - 先尝试当前目录，再尝试包目录
+        template_content = None
+        if template_path.exists():
+            try:
+                template_content = template_path.read_text(encoding="utf-8")
+            except Exception:
+                pass
 
-        # 复制模板
-        shutil.copy(template_path, env_path)
+        if template_content is None:
+            # 备用方案：从包安装目录获取模板内容
+            template_content = get_env_template_content_from_package()
+            if template_content is None:
+                typewriter.error_shake("❌ 无法获取模板内容")
+                return False
+
+        # 写入模板内容到 .env 文件
+        env_path.write_text(template_content, encoding="utf-8")
         typewriter.success(f"✅ 已从模板创建 .env 文件: {env_path}")
 
         system = detect_platform()
@@ -392,6 +499,17 @@ def generate_env_content(template_content: str, config_values: Dict[str, str]) -
 
 def check_env_file_exists() -> bool:
     """检查 .env 文件是否存在"""
+    # 首先检查包目录下的.env文件
+    try:
+        import Fix_agent
+        package_dir = Path(Fix_agent.__file__).parent
+        env_path = package_dir / ".env"
+        if env_path.exists():
+            return True
+    except ImportError:
+        pass
+
+    # 备用：检查当前目录
     env_path = Path.cwd() / ".env"
     return env_path.exists()
 
