@@ -147,19 +147,24 @@ def handle_config_command(args: list[str]) -> bool:
 
 
 def find_env_file() -> Path | None:
-    """Find .env file by searching package directory first, then current directory and parent directories."""
+    """Find .env file with consistent priority: package dir -> user home -> current dir"""
 
-    # 首先检查包目录下的.env文件
+    # 优先检查包目录下的.env文件
     try:
-        import Fix_agent
-        package_dir = Path(Fix_agent.__file__).parent
+        import fix_agent
+        package_dir = Path(fix_agent.__file__).parent
         env_file = package_dir / ".env"
         if env_file.exists():
             return env_file
     except ImportError:
         pass
 
-    # 备用：搜索当前目录和父目录
+    # 备用：检查用户home目录
+    home_env_path = Path.home() / ".env"
+    if home_env_path.exists():
+        return home_env_path
+
+    # 最后：检查当前目录和父目录
     current_dir = Path.cwd()
 
     # Search up to 5 levels up
@@ -180,15 +185,14 @@ def create_env_from_template() -> bool:
     """Create .env file from .env.template."""
     template_path = Path.cwd() / ".env.template"
 
-    # 在包目录下保存.env文件
+    # 使用与配置向导一致的存储逻辑
     try:
-        import Fix_agent
-        package_dir = Path(Fix_agent.__file__).parent
+        import fix_agent
+        package_dir = Path(fix_agent.__file__).parent
+        env_path = package_dir / ".env"
     except ImportError:
-        # 如果无法导入包，使用当前目录
-        package_dir = Path.cwd()
-
-    env_path = package_dir / ".env"
+        # 如果无法导入包，使用用户home目录
+        env_path = Path.home() / ".env"
 
     # 先尝试当前目录的模板，再尝试包目录的模板
     template_content = None
@@ -226,8 +230,8 @@ def get_env_template_content_from_package() -> Optional[str]:
     except Exception:
         try:
             # 备用方案：尝试从包根目录读取
-            import Fix_agent
-            package_dir = Path(Fix_agent.__file__).parent
+            import fix_agent
+            package_dir = Path(fix_agent.__file__).parent
             template_path = package_dir / ".env.template"
             if template_path.exists():
                 return template_path.read_text(encoding="utf-8")

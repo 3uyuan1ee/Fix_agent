@@ -22,8 +22,8 @@ def get_env_template_content_from_package() -> Optional[str]:
     except Exception:
         try:
             # 备用方案：尝试从包根目录读取
-            import Fix_agent
-            package_dir = Path(Fix_agent.__file__).parent
+            import fix_agent
+            package_dir = Path(fix_agent.__file__).parent
             template_path = package_dir / ".env.template"
             if template_path.exists():
                 return template_path.read_text(encoding="utf-8")
@@ -184,15 +184,17 @@ def create_interactive_env() -> bool:
     try:
         template_path = Path.cwd() / ".env.template"
 
-        # 在包目录下保存.env文件
+        # 优先在包目录下保存.env文件，备用用户目录
+        env_path = None
         try:
-            import Fix_agent
-            package_dir = Path(Fix_agent.__file__).parent
+            import fix_agent
+            package_dir = Path(fix_agent.__file__).parent
+            env_path = package_dir / ".env"
+            console.print(f"[dim]📁 Will save to package directory: {env_path}[/dim]")
         except ImportError:
-            # 如果无法导入包，使用当前目录
-            package_dir = Path.cwd()
-
-        env_path = package_dir / ".env"
+            # 如果无法导入包，使用用户home目录
+            env_path = Path.home() / ".env"
+            console.print(f"[dim]📁 Will save to user home: {env_path}[/dim]")
 
         # 读取模板内容 - 先尝试当前目录，再尝试包目录
         if template_path.exists():
@@ -499,17 +501,22 @@ def generate_env_content(template_content: str, config_values: Dict[str, str]) -
 
 def check_env_file_exists() -> bool:
     """检查 .env 文件是否存在"""
-    # 首先检查包目录下的.env文件
+    # 优先检查包目录下的.env文件
     try:
-        import Fix_agent
-        package_dir = Path(Fix_agent.__file__).parent
+        import fix_agent
+        package_dir = Path(fix_agent.__file__).parent
         env_path = package_dir / ".env"
         if env_path.exists():
             return True
     except ImportError:
         pass
 
-    # 备用：检查当前目录
+    # 备用：检查用户home目录
+    home_env_path = Path.home() / ".env"
+    if home_env_path.exists():
+        return True
+
+    # 最后：检查当前目录
     env_path = Path.cwd() / ".env"
     return env_path.exists()
 

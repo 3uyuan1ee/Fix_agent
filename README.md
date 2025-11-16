@@ -2,6 +2,7 @@
 [![License](https://img.shields.io/badge/license-MPL2.0-green.svg)](LICENSE)
 [![LangChain](https://img.shields.io/badge/LangChain-1.0-brightgreen.svg)](https://python.langchain.com)
 [![DeepAgent](https://img.shields.io/badge/DeepAgent-Framework-orange.svg)](https://github.com/3uyuan1ee/Fix_agent)
+[![OS](https://img.shields.io/badge/OS-MacOS,Linux-yellow.svg)](https://github.com/3uyuan1ee/Fix_agent)
 
 ![img](https://raw.githubusercontent.com/3uyuan1ee/Fix_agent/main/images/title.png)
 

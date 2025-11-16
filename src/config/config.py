@@ -11,8 +11,8 @@ from ..prompt.prompt_template import memory_default_prompt, system_prompt
 
 # 首先尝试从包目录加载.env文件
 try:
-    import Fix_agent
-    package_dir = Path(Fix_agent.__file__).parent
+    import fix_agent
+    package_dir = Path(fix_agent.__file__).parent
     env_file = package_dir / ".env"
     if env_file.exists():
         dotenv.load_dotenv(env_file)
@@ -268,16 +268,44 @@ def create_model():
 
         if create_interactive_env():
             # 配置成功，重新加载环境变量并重试
+            env_loaded = False
             try:
-                import Fix_agent
-                package_dir = Path(Fix_agent.__file__).parent
+                import fix_agent
+                package_dir = Path(fix_agent.__file__).parent
                 env_file = package_dir / ".env"
                 if env_file.exists():
                     dotenv.load_dotenv(env_file, override=True)
+                    console.print(f"[dim]✅ Reloaded env from: {env_file}[/dim]")
+                    env_loaded = True
                 else:
-                    dotenv.load_dotenv(override=True)
-            except ImportError:
-                dotenv.load_dotenv(override=True)
+                    console.print(f"[dim]⚠️  Env file not found at: {env_file}[/dim]")
+            except ImportError as e:
+                console.print(f"[dim]⚠️  Could not import fix_agent package: {e}[/dim]")
+
+            # 如果包导入失败，尝试常见目录
+            if not env_loaded:
+                # 尝试用户home目录和当前目录
+                possible_dirs = [
+                    Path.home() / ".env",  # 用户home目录（优先）
+                    Path.cwd() / ".env",  # 当前工作目录
+                ]
+
+                for env_file in possible_dirs:
+                    if env_file.exists():
+                        dotenv.load_dotenv(env_file, override=True)
+                        console.print(f"[dim]✅ Reloaded env from fallback: {env_file}[/dim]")
+                        env_loaded = True
+                        break
+
+                if not env_loaded:
+                    console.print("[dim]⚠️  No .env file found in any location[/dim]")
+
+            # 强制重新检查环境变量
+            openai_key = os.environ.get("OPENAI_API_KEY")
+            anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
+
+            console.print(f"[dim]🔍 Debug - Keys after reload: OpenAI={'✓' if openai_key else '✗'}, Anthropic={'✓' if anthropic_key else '✗'}[/dim]")
+
             # 递归调用 create_model 来重新检查配置
             return create_model()
         else:
