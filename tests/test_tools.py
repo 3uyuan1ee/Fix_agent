@@ -16,15 +16,21 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
+# Mock所有依赖模块
 sys.modules["deepagents"] = Mock()
 sys.modules["deepagents.backends"] = Mock()
 sys.modules["deepagents.backends.filesystem"] = Mock()
+sys.modules["deepagents.middleware"] = Mock()
 sys.modules["deepagents.middleware.resumable_shell"] = Mock()
 sys.modules["langchain"] = Mock()
 sys.modules["langchain.agents"] = Mock()
 sys.modules["langchain.agents.middleware"] = Mock()
 sys.modules["langchain_core"] = Mock()
 sys.modules["langchain_core.tools"] = Mock()
+sys.modules["langchain_core.runnables"] = Mock()
+sys.modules["langgraph"] = Mock()
+sys.modules["langgraph.checkpoint"] = Mock()
+sys.modules["langgraph.checkpoint.memory"] = Mock()
 
 # 导入实际的项目模块
 try:

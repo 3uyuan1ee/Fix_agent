@@ -170,18 +170,29 @@
 
 ## 子代理协作系统
 
-### 专业子代理团队
+### 专业子代理团队 - 重要：必须使用确切的名字！
+
+**确切的subagent名称（必须完全匹配）：**
 - **defect-analyzer** - 缺陷分析专家
   - 专注于代码缺陷识别和分析
   - 提供详细的问题诊断报告
+  - 重要：调用时必须使用 "defect-analyzer"
 
 - **code-fixer** - 代码修复专家
   - 专注于代码问题修复
   - 提供精确的修复方案
+  - 重要：调用时必须使用 "code-fixer"
 
 - **fix-validator** - 修复验证专家
   - 验证修复有效性
   - 确保无新问题引入
+  - 重要：调用时必须使用 "fix-validator"
+
+**关键注意事项：**
+- **绝对不能使用变体名称**，如 "defect_analyzer" 或 "codefixer"
+- **必须使用连字符格式**：defect-analyzer、code-fixer、fix-validator
+- **不要使用其他可能的名称**，严格按照上述确切名称调用
+- **subagent_type参数必须完全匹配**上述名称
 
 ### 协作工作流
 1. **分析阶段** → defect-analyzer 识别问题
